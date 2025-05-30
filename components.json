@@ -5,7 +5,7 @@
     "tsx": false,
     "tailwind": {
         "config": "tailwind.config.js",
-        "css": "resources/css/app.css",
+        "css": "resources/css/dashboard.css",
         "baseColor": "neutral",
         "cssVariables": true,
         "prefix": ""
