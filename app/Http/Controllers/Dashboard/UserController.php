@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -49,25 +50,48 @@ class UserController extends Controller
 
     public function create()
     {
+        // Obtener roles disponibles para el select
         $roles = Role::all();
-        return inertia('dashboard/users/Create', ['roles' => $roles]);
+
+        return inertia('dashboard/users/Create', [
+            'roles' => $roles
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6|confirmed',
-            'role_id' => 'required|exists:roles,id',
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'role_id' => ['required', 'exists:roles,id'],
+        ], [
+            'name.required' => 'El nombre es obligatorio.',
+            'email.required' => 'El email es obligatorio.',
+            'email.unique' => 'Este email ya está registrado.',
+            'password.required' => 'La contraseña es obligatoria.',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'password.confirmed' => 'Las contraseñas no coinciden.',
+            'role_id.required' => 'Debes seleccionar un rol.',
+            'role_id.exists' => 'El rol seleccionado no es válido.',
         ]);
 
-        User::create([
-            ...$request->only(['name', 'email', 'role_id']),
-            'password' => bcrypt($request->password),
-        ]);
 
-        return redirect()->route('dashboard.users.index');
+        try {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+                'role_id' => $validated['role_id'],
+                'email_verified_at' => now(), // O null si quieres que verifiquen email
+            ]);
+
+            return redirect()->back()->with('success', "Usuario '{$user->name}' creado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al crear usuario: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Ocurrió un error al crear el usuario. Inténtalo de nuevo.');
+        }
     }
 
     public function edit(User $user)

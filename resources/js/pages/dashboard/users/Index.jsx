@@ -3,8 +3,8 @@ import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -43,11 +43,19 @@ export default function Index({ auth, users, filters = {} }) {
 
                 if (!roleName) {
                     return <span className="text-gray-400 italic">Sin rol</span>;
+                } else if (roleName === 'admin') {
+                    return (
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                            {roleName}
+                        </span>
+                    );
+                } else {
+                    return (
+                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
+                            {roleName}
+                        </span>
+                    );
                 }
-
-                return (
-                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{roleName}</span>
-                );
             },
         },
         {
@@ -104,21 +112,13 @@ export default function Index({ auth, users, filters = {} }) {
 
             router.delete(route('dashboard.users.destroy', userId), {
                 onSuccess: (page) => {
-                    // Capturar el mensaje flash del controlador
-                    const flashMessage = page.props.flash?.success;
-                    if (flashMessage) {
-                        toast.success(flashMessage);
-                    } else {
-                        // TODO: verificar que llega
-                        toast.error(flashMessage);
-                    }
-                },
-                onError: (errors) => {
-                    // TODO: verificar que llega y si se muestran bien lñas toast
-                    if (errors.delete) {
-                        toast.error(errors.delete);
-                    } else {
-                        toast.error('Error al eliminar el usuario');
+                    const flashSuccess = page.props.flash?.success;
+                    const flashError = page.props.flash?.error;
+
+                    if (flashSuccess) {
+                        toast.success(flashSuccess);
+                    } else if (flashError) {
+                        toast.error(flashError);
                     }
                 },
                 onFinish: () => {
@@ -141,7 +141,13 @@ export default function Index({ auth, users, filters = {} }) {
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
                                 <h3 className="text-lg font-medium">Lista de Usuarios</h3>
-                                <Button onClick={() => console.log('Crear nuevo usuario')}>Nuevo Usuario</Button>
+                                <Link
+                                    href={route('dashboard.users.create')}
+                                    className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none"
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Nuevo Usuario
+                                </Link>
                             </div>
 
                             <DataTable data={users.data || users} columns={columns} pagination={users.links ? users : null} filters={filters} />
