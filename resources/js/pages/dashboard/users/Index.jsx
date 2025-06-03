@@ -1,10 +1,10 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import DataTable from '@/Components/DataTable';
+import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { MoreHorizontal } from 'lucide-react';
-
-import DataTable from '@/Components/DataTable';
-import { Button } from '@/components/ui/button';
+import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 
 const breadcrumbs = [
     {
@@ -13,14 +13,11 @@ const breadcrumbs = [
     },
 ];
 
-export default function Index({ auth, users }) {
+export default function Index({ auth, users, filters = {} }) {
+    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
+
     // Definir las columnas de la tabla
     const columns = [
-        {
-            key: 'id',
-            label: 'ID',
-            sortable: true,
-        },
         {
             key: 'name',
             label: 'Nombre',
@@ -30,20 +27,26 @@ export default function Index({ auth, users }) {
             key: 'email',
             label: 'Email',
             sortable: true,
+            hideOnMobile: true, // Se oculta en móviles
+            truncate: true, // Texto truncado si es muy largo
         },
         {
-            key: 'created_at',
-            label: 'Fecha de Registro',
-            sortable: true,
-            render: (value) => {
-                return new Date(value).toLocaleDateString('es-ES', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                });
+            key: 'role',
+            label: 'Rol',
+            sortable: false,
+            hideOnMobile: true,
+            render: (value, row) => {
+                const roleName = row.role?.name;
+
+                if (!roleName) {
+                    return <span className="text-gray-400 italic">Sin rol</span>;
+                }
+
+                return (
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">{roleName}</span>
+                );
             },
         },
-        // Versión alternativa para la columna de acciones con Editar/Eliminar
         {
             key: 'actions',
             label: '',
@@ -56,8 +59,17 @@ export default function Index({ auth, users }) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(row.id)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(row.id)} className="text-red-600">
+                        <DropdownMenuItem onClick={() => handleView(row.id)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEdit(row.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleDelete(row.id, row.name)} className="text-red-600 focus:text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
                             Eliminar
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -66,17 +78,28 @@ export default function Index({ auth, users }) {
         },
     ];
 
+    const handleView = (userId) => {
+        // Aquí puedes redirigir a la página de Show
+        console.log('Mostrar usuario:', userId);
+    };
+
     const handleEdit = (userId) => {
         // Aquí puedes redirigir a la página de edición
         console.log('Editar usuario:', userId);
         // Ejemplo: Inertia.visit(`/users/${userId}/edit`);
     };
 
-    const handleDelete = (userId) => {
-        // Aquí puedes manejar la eliminación
-        if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+    const handleDelete = async (userId, userName) => {
+        console.log(userName);
+        const confirmed = await confirmDelete({
+            title: 'Eliminar usuario',
+            description: 'Esta acción no se puede deshacer. ¿Estás seguro de que quieres continuar?',
+            itemName: userName,
+        });
+
+        if (confirmed) {
             console.log('Eliminar usuario:', userId);
-            // Ejemplo: Inertia.delete(`/users/${userId}`);
+            // Inertia.delete(`/users/${userId}`);
         }
     };
 
@@ -88,17 +111,16 @@ export default function Index({ auth, users }) {
         >
             <Head title="Usuarios" />
             <div className="py-12">
-                {/* <pre>{JSON.stringify(auth, null, 2)}</pre> */}
-                <div className="mx-auto">
+                <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
                                 <h3 className="text-lg font-medium">Lista de Usuarios</h3>
                                 <Button onClick={() => console.log('Crear nuevo usuario')}>Nuevo Usuario</Button>
                             </div>
-                            <p>{auth.user.name}</p>
 
-                            <DataTable data={users} columns={columns} />
+                            <DataTable data={users.data || users} columns={columns} pagination={users.links ? users : null} filters={filters} />
+                            <DeleteConfirmationDialog />
                         </div>
                     </div>
                 </div>
