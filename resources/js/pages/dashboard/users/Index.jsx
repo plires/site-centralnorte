@@ -3,8 +3,10 @@ import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
@@ -15,6 +17,7 @@ const breadcrumbs = [
 
 export default function Index({ auth, users, filters = {} }) {
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // Definir las columnas de la tabla
     const columns = [
@@ -70,7 +73,7 @@ export default function Index({ auth, users, filters = {} }) {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleDelete(row.id, row.name)} className="text-red-600 focus:text-red-600">
                             <Trash2 className="mr-2 h-4 w-4" />
-                            Eliminar
+                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
@@ -90,16 +93,38 @@ export default function Index({ auth, users, filters = {} }) {
     };
 
     const handleDelete = async (userId, userName) => {
-        console.log(userName);
         const confirmed = await confirmDelete({
             title: 'Eliminar usuario',
-            description: 'Esta acción no se puede deshacer. ¿Estás seguro de que quieres continuar?',
+            description: 'Esta acción no se puede deshacer. El usuario será eliminado permanentemente del sistema.',
             itemName: userName,
         });
 
         if (confirmed) {
-            console.log('Eliminar usuario:', userId);
-            // Inertia.delete(`/users/${userId}`);
+            setIsDeleting(true);
+
+            router.delete(route('dashboard.users.destroy', userId), {
+                onSuccess: (page) => {
+                    // Capturar el mensaje flash del controlador
+                    const flashMessage = page.props.flash?.success;
+                    if (flashMessage) {
+                        toast.success(flashMessage);
+                    } else {
+                        // TODO: verificar que llega
+                        toast.error(flashMessage);
+                    }
+                },
+                onError: (errors) => {
+                    // TODO: verificar que llega y si se muestran bien lñas toast
+                    if (errors.delete) {
+                        toast.error(errors.delete);
+                    } else {
+                        toast.error('Error al eliminar el usuario');
+                    }
+                },
+                onFinish: () => {
+                    setIsDeleting(false);
+                },
+            });
         }
     };
 

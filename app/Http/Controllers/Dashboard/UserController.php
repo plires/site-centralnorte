@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
@@ -93,7 +94,26 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
-        $user->delete();
-        return back();
+        try {
+            // Verificar que no sea el usuario actual
+            if ($user->id === Auth::id()) {
+                return redirect()->back()->with('error', 'No puedes eliminar tu propia cuenta.');
+            }
+
+            // Verificar que no sea un administrador (opcional)
+            if ($user->role && $user->role->name === 'admin' && User::whereHas('role', function ($q) {
+                $q->where('name', 'admin');
+            })->count() <= 1) {
+                return redirect()->back()->with('error', 'No puedes eliminar el último administrador del sistema.');
+            }
+
+            // Opcional: Soft delete en lugar de eliminación completa
+            $user->delete();
+
+            return redirect()->back()->with('success', "Usuario '{$user->name}' eliminado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar usuario: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al eliminar el usuario. Inténtalo de nuevo.');
+        }
     }
 }
