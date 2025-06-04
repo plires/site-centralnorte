@@ -1,10 +1,9 @@
-import { Button } from '@/components/ui/button';
+import ButtonCustom from '@/components/ButtonCustom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Link } from '@inertiajs/react';
 import { ArrowLeft, Lock, Mail, Save, Shield, User, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -24,13 +23,10 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
                     <div className="p-6 text-gray-900">
                         <div className="mb-6 flex items-center justify-between">
                             <h3 className="text-lg font-medium">{isEditing ? 'Editar Usuario' : 'Crear Usuario'}</h3>
-                            <Link
-                                href={route('dashboard.users.index')}
-                                className="inline-flex items-center rounded-md border border-transparent bg-gray-400 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
-                            >
+                            <ButtonCustom route={route('dashboard.users.index')} variant="secondary" size="md">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Volver
-                            </Link>
+                            </ButtonCustom>
                         </div>
 
                         <Card>
@@ -168,13 +164,11 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
 
                                     {/* Botones */}
                                     <div className="flex items-center justify-end space-x-4 pt-6">
-                                        <Link
-                                            href={route('dashboard.users.index')}
-                                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-                                        >
+                                        <ButtonCustom route={route('dashboard.users.index')} variant="secondary" size="md">
                                             Cancelar
-                                        </Link>
-                                        <Button type="submit" disabled={processing} className="px-6 py-2">
+                                        </ButtonCustom>
+
+                                        <ButtonCustom type="submit" disabled={processing} variant="primary" size="md">
                                             {isEditing ? <Save className="mr-2 h-4 w-4" /> : <UserPlus className="mr-2 h-4 w-4" />}
                                             {processing
                                                 ? isEditing
@@ -183,7 +177,7 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
                                                 : isEditing
                                                   ? 'Actualizar Usuario'
                                                   : 'Crear Usuario'}
-                                        </Button>
+                                        </ButtonCustom>
                                     </div>
                                 </form>
                             </CardContent>

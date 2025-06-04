@@ -1,8 +1,9 @@
+import ButtonCustom from '@/components/ButtonCustom';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { ArrowLeft, Calendar, CheckCircle, Clock, Edit, Mail, Shield, User, XCircle } from 'lucide-react';
 
 const breadcrumbs = [
@@ -56,13 +57,10 @@ export default function Show({ user }) {
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="text-end">
-                            <Link
-                                href={route('dashboard.users.index')}
-                                className="mt-6 mr-6 inline-flex items-center rounded-md border border-transparent bg-gray-400 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
-                            >
+                            <ButtonCustom className="mt-6 mr-6" route={route('dashboard.users.index')} variant="secondary" size="md">
                                 <ArrowLeft className="mr-2 h-4 w-4" />
                                 Volver
-                            </Link>
+                            </ButtonCustom>
                         </div>
                         <div className="p-6">
                             <div className="grid gap-6 md:grid-cols-2">
@@ -176,13 +174,10 @@ export default function Show({ user }) {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex flex-wrap gap-3">
-                                        <Link
-                                            href={route('dashboard.users.edit', user.id)}
-                                            className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none"
-                                        >
+                                        <ButtonCustom route={route('dashboard.users.edit', user.id)} variant="primary" size="md">
                                             <Edit className="mr-2 h-4 w-4" />
                                             Editar Usuario
-                                        </Link>
+                                        </ButtonCustom>
                                     </div>
                                 </CardContent>
                             </Card>

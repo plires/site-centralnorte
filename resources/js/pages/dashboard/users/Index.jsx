@@ -1,9 +1,10 @@
+import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/Components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { userColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -59,13 +60,10 @@ export default function Index({ auth, users, filters = {} }) {
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
                                 <h3 className="text-lg font-medium">Lista de Usuarios</h3>
-                                <Link
-                                    href={route('dashboard.users.create')}
-                                    className="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition-colors duration-200 hover:border-blue-300 hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none"
-                                >
+                                <ButtonCustom route={route('dashboard.users.create')} variant="primary" size="md">
                                     <Plus className="mr-2 h-4 w-4" />
                                     Nuevo Usuario
-                                </Link>
+                                </ButtonCustom>
                             </div>
 
                             <DataTable data={users.data || users} columns={columns} pagination={users.links ? users : null} filters={filters} />
