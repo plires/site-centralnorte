@@ -9,31 +9,36 @@ const breadcrumbs = [
         href: '/dashboard/users',
     },
     {
-        title: 'Crear Usuario',
-        href: '/dashboard/users/create',
+        title: 'Editar Usuario',
+        href: '/dashboard/users/edit',
     },
 ];
 
-export default function Create({ roles }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
-        email: '',
+export default function Edit({ user, roles }) {
+    const { data, setData, put, processing, errors, reset } = useForm({
+        name: user.name || '',
+        email: user.email || '',
         password: '',
         password_confirmation: '',
-        role_id: '',
+        role_id: user.role_id?.toString() || '',
     });
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post(route('dashboard.users.store'), {
+        put(route('dashboard.users.update', user.id), {
             onSuccess: (page) => {
                 const flashSuccess = page.props.flash?.success;
                 const flashError = page.props.flash?.error;
 
                 if (flashSuccess) {
                     toast.success(flashSuccess);
-                    reset();
+                    // Limpiar solo los campos de contraseña
+                    setData((prevData) => ({
+                        ...prevData,
+                        password: '',
+                        password_confirmation: '',
+                    }));
                 } else if (flashError) {
                     toast.error(flashError);
                 }
@@ -47,11 +52,11 @@ export default function Create({ roles }) {
             breadcrumbs={breadcrumbs}
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl leading-tight font-semibold text-gray-800">Crear Nuevo Usuario</h2>
+                    <h2 className="text-xl leading-tight font-semibold text-gray-800">Editar Usuario: {user.name}</h2>
                 </div>
             }
         >
-            <Head title="Crear Usuario" />
+            <Head title={`Editar Usuario - ${user.name}`} />
 
             <UserForm
                 data={data}
@@ -60,7 +65,7 @@ export default function Create({ roles }) {
                 processing={processing}
                 errors={errors}
                 roles={roles}
-                isEditing={false}
+                isEditing={true}
             />
         </AppLayout>
     );

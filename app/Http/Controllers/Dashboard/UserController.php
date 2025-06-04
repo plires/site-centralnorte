@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends Controller
 {
@@ -17,7 +19,6 @@ class UserController extends Controller
     {
 
         $query = User::where('id', '!=', Auth::id());
-        // $query->with('role');
 
         // Búsqueda
         if ($request->filled('search')) {
@@ -58,24 +59,9 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreUserRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'role_id' => ['required', 'exists:roles,id'],
-        ], [
-            'name.required' => 'El nombre es obligatorio.',
-            'email.required' => 'El email es obligatorio.',
-            'email.unique' => 'Este email ya está registrado.',
-            'password.required' => 'La contraseña es obligatoria.',
-            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
-            'password.confirmed' => 'Las contraseñas no coinciden.',
-            'role_id.required' => 'Debes seleccionar un rol.',
-            'role_id.exists' => 'El rol seleccionado no es válido.',
-        ]);
-
+        $validated = $request->validated();
 
         try {
             $user = User::create([
@@ -96,24 +82,39 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        // Obtener roles disponibles para el select
         $roles = Role::all();
+
         return inertia('dashboard/users/Edit', [
-            'user' => $user->load('role'),
-            'roles' => $roles,
+            'user' => $user,
+            'roles' => $roles
         ]);
     }
 
-    public function update(Request $request, User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => "required|email|unique:users,email,{$user->id}",
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $validated = $request->validated();
 
-        $user->update($request->only(['name', 'email', 'role_id']));
+        try {
+            $updateData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role_id' => $validated['role_id'],
+            ];
 
-        return redirect()->route('dashboard.users.index');
+            // Solo actualizar la contraseña si se proporciona
+            if (!empty($validated['password'])) {
+                $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            $user->update($updateData);
+
+            return redirect()->back()->with('success', "Usuario '{$user->name}' actualizado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar usuario: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Ocurrió un error al actualizar el usuario. Inténtalo de nuevo.');
+        }
     }
 
     public function destroy(User $user)

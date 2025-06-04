@@ -96,7 +96,21 @@ export default function Index({ auth, users, filters = {} }) {
 
     const handleEdit = (userId) => {
         // Aquí puedes redirigir a la página de edición
-        console.log('Editar usuario:', userId);
+        router.get(route('dashboard.users.edit', userId), {
+            onSuccess: (page) => {
+                const flashSuccess = page.props.flash?.success;
+                const flashError = page.props.flash?.error;
+
+                if (flashSuccess) {
+                    toast.success(flashSuccess);
+                } else if (flashError) {
+                    toast.error(flashError);
+                }
+            },
+            onFinish: () => {
+                setIsDeleting(false);
+            },
+        });
         // Ejemplo: Inertia.visit(`/users/${userId}/edit`);
     };
 
