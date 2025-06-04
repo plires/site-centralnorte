@@ -1,3 +1,4 @@
+import ButtonCustom from '@/components/ButtonCustom';
 import { Button } from '@/components/ui/button';
 import { Trash2, X } from 'lucide-react';
 import { useState } from 'react';
@@ -57,13 +58,14 @@ export function useDeleteConfirmation() {
                         </div>
 
                         <div className="flex justify-end gap-3">
-                            <Button variant="outline" onClick={handleCancel}>
+                            <ButtonCustom onClick={handleCancel} variant="secondary" size="md">
                                 Cancelar
-                            </Button>
-                            <Button variant="destructive" onClick={handleConfirm} className="flex items-center gap-2">
+                            </ButtonCustom>
+
+                            <ButtonCustom className="flex items-center gap-2" onClick={handleConfirm} variant="destructive" size="md">
                                 <Trash2 className="h-4 w-4" />
                                 Eliminar
-                            </Button>
+                            </ButtonCustom>
                         </div>
                     </div>
                 </div>
