@@ -15,6 +15,16 @@ use App\Http\Requests\UpdateUserRequest;
 
 class UserController extends Controller
 {
+    public function show(User $user)
+    {
+        // Cargar la relación con el rol si existe
+        $user->load('role');
+
+        return inertia('dashboard/users/Show', [
+            'user' => $user
+        ]);
+    }
+
     public function index(Request $request)
     {
 
@@ -105,6 +115,11 @@ class UserController extends Controller
             // Solo actualizar la contraseña si se proporciona
             if (!empty($validated['password'])) {
                 $updateData['password'] = Hash::make($validated['password']);
+            }
+
+            // Manejar verificación manual del email
+            if ($request->boolean('manual_verification') && !$user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
             }
 
             $user->update($updateData);
