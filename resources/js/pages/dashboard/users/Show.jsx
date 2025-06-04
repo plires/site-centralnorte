@@ -49,30 +49,7 @@ export default function Show({ user }) {
     const EmailStatusIcon = emailStatus.icon;
 
     return (
-        <AppLayout
-            breadcrumbs={breadcrumbs}
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl leading-tight font-semibold text-gray-800">Detalles del Usuario</h2>
-                    <div className="flex items-center space-x-3">
-                        <Link
-                            href={route('dashboard.users.edit', user.id)}
-                            className="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-blue-700 focus:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none active:bg-blue-900"
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                        </Link>
-                        <Link
-                            href={route('dashboard.users.index')}
-                            className="inline-flex items-center rounded-md border border-transparent bg-gray-400 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
-                        >
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Volver
-                        </Link>
-                    </div>
-                </div>
-            }
-        >
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Usuario - ${user.name}`} />
 
             <div className="py-12">

@@ -1,11 +1,10 @@
 import DataTable from '@/Components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
-import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { userColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
-import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs = [
@@ -20,76 +19,6 @@ export default function Index({ auth, users, filters = {} }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const { handleCrudResponse } = useInertiaResponse();
-
-    // Definir las columnas de la tabla
-    const columns = [
-        {
-            key: 'name',
-            label: 'Nombre',
-            sortable: true,
-        },
-        {
-            key: 'email',
-            label: 'Email',
-            sortable: true,
-            hideOnMobile: true, // Se oculta en móviles
-            truncate: true, // Texto truncado si es muy largo
-        },
-        {
-            key: 'role',
-            label: 'Rol',
-            sortable: false,
-            hideOnMobile: true,
-            render: (value, row) => {
-                const roleName = row.role?.name;
-
-                if (!roleName) {
-                    return <span className="text-gray-400 italic">Sin rol</span>;
-                } else if (roleName === 'admin') {
-                    return (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
-                            {roleName}
-                        </span>
-                    );
-                } else {
-                    return (
-                        <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
-                            {roleName}
-                        </span>
-                    );
-                }
-            },
-        },
-        {
-            key: 'actions',
-            label: '',
-            render: (value, row) => (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Abrir menú</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleView(row.id)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEdit(row.id)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleDelete(row.id, row.name)} className="text-red-600 focus:text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            ),
-        },
-    ];
 
     const handleView = (userId) => {
         // Redirigir a la página de Show
@@ -118,12 +47,11 @@ export default function Index({ auth, users, filters = {} }) {
         }
     };
 
+    const actions = { view: handleView, edit: handleEdit, delete: handleDelete };
+    const columns = userColumns(actions, isDeleting);
+
     return (
-        <AppLayout
-            breadcrumbs={breadcrumbs}
-            user={auth.user}
-            header={<h2 className="text-xl leading-tight font-semibold text-gray-800">Usuarios</h2>}
-        >
+        <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>
             <Head title="Usuarios" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">

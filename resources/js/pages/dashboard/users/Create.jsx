@@ -38,14 +38,7 @@ export default function Create({ roles }) {
     };
 
     return (
-        <AppLayout
-            breadcrumbs={breadcrumbs}
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl leading-tight font-semibold text-gray-800">Crear Nuevo Usuario</h2>
-                </div>
-            }
-        >
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Usuario" />
 
             <UserForm

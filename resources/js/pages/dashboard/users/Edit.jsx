@@ -44,14 +44,7 @@ export default function Edit({ user, roles }) {
     };
 
     return (
-        <AppLayout
-            breadcrumbs={breadcrumbs}
-            header={
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl leading-tight font-semibold text-gray-800">Editar Usuario: {user.name}</h2>
-                </div>
-            }
-        >
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Editar Usuario - ${user.name}`} />
 
             <UserForm
