@@ -78,6 +78,15 @@ export default function Show({ user }) {
             <div className="py-12">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="text-end">
+                            <Link
+                                href={route('dashboard.users.index')}
+                                className="mt-6 mr-6 inline-flex items-center rounded-md border border-transparent bg-gray-400 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
+                            >
+                                <ArrowLeft className="mr-2 h-4 w-4" />
+                                Volver
+                            </Link>
+                        </div>
                         <div className="p-6">
                             <div className="grid gap-6 md:grid-cols-2">
                                 {/* Información Personal */}
