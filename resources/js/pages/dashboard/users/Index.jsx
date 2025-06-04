@@ -91,12 +91,27 @@ export default function Index({ auth, users, filters = {} }) {
 
     const handleView = (userId) => {
         // Aquí puedes redirigir a la página de Show
-        console.log('Mostrar usuario:', userId);
+        router.get(route('dashboard.users.show', userId), {
+            // TODO: ver y refactorizar
+            onSuccess: (page) => {
+                // const flashSuccess = page.props.flash?.success;
+                // const flashError = page.props.flash?.error;
+                // if (flashSuccess) {
+                //     toast.success(flashSuccess);
+                // } else if (flashError) {
+                //     toast.error(flashError);
+                // }
+            },
+            onFinish: () => {
+                // setIsDeleting(false);
+            },
+        });
     };
 
     const handleEdit = (userId) => {
         // Aquí puedes redirigir a la página de edición
         router.get(route('dashboard.users.edit', userId), {
+            // TODO: ver y refactorizar
             onSuccess: (page) => {
                 const flashSuccess = page.props.flash?.success;
                 const flashError = page.props.flash?.error;
@@ -108,10 +123,10 @@ export default function Index({ auth, users, filters = {} }) {
                 }
             },
             onFinish: () => {
+                // TODO: ver y refactorizar
                 setIsDeleting(false);
             },
         });
-        // Ejemplo: Inertia.visit(`/users/${userId}/edit`);
     };
 
     const handleDelete = async (userId, userName) => {
