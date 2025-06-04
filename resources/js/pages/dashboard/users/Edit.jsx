@@ -1,7 +1,7 @@
 import UserForm from '@/components/UserForm';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
@@ -24,28 +24,23 @@ export default function Edit({ user, roles }) {
         role_id: user.role_id?.toString() || '',
     });
 
+    const { handleResponse } = useInertiaResponse();
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        put(route('dashboard.users.update', user.id), {
-            onSuccess: (page) => {
-                const flashSuccess = page.props.flash?.success;
-                const flashError = page.props.flash?.error;
-
-                if (flashSuccess) {
-                    toast.success(flashSuccess);
-                    // Limpiar solo los campos de contraseña
-                    setData((prevData) => ({
-                        ...prevData,
-                        password: '',
-                        password_confirmation: '',
-                    }));
-                } else if (flashError) {
-                    toast.error(flashError);
-                }
-            },
-            onFinish: () => {},
-        });
+        put(
+            route('dashboard.users.update', user.id),
+            handleResponse(() => {
+                // Callback de éxito: limpiar solo las contraseñas
+                setData((prevData) => ({
+                    ...prevData,
+                    password: '',
+                    password_confirmation: '',
+                    manual_verification: false, // También resetear esto
+                }));
+            }),
+        );
     };
 
     return (

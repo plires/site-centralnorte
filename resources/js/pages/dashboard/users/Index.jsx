@@ -2,11 +2,11 @@ import DataTable from '@/Components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router } from '@inertiajs/react';
 import { Edit, Eye, MoreHorizontal, Plus, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
@@ -18,6 +18,8 @@ const breadcrumbs = [
 export default function Index({ auth, users, filters = {} }) {
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
     const [isDeleting, setIsDeleting] = useState(false);
+
+    const { handleCrudResponse } = useInertiaResponse();
 
     // Definir las columnas de la tabla
     const columns = [
@@ -90,43 +92,13 @@ export default function Index({ auth, users, filters = {} }) {
     ];
 
     const handleView = (userId) => {
-        // Aquí puedes redirigir a la página de Show
-        router.get(route('dashboard.users.show', userId), {
-            // TODO: ver y refactorizar
-            onSuccess: (page) => {
-                // const flashSuccess = page.props.flash?.success;
-                // const flashError = page.props.flash?.error;
-                // if (flashSuccess) {
-                //     toast.success(flashSuccess);
-                // } else if (flashError) {
-                //     toast.error(flashError);
-                // }
-            },
-            onFinish: () => {
-                // setIsDeleting(false);
-            },
-        });
+        // Redirigir a la página de Show
+        router.get(route('dashboard.users.show', userId));
     };
 
     const handleEdit = (userId) => {
-        // Aquí puedes redirigir a la página de edición
-        router.get(route('dashboard.users.edit', userId), {
-            // TODO: ver y refactorizar
-            onSuccess: (page) => {
-                const flashSuccess = page.props.flash?.success;
-                const flashError = page.props.flash?.error;
-
-                if (flashSuccess) {
-                    toast.success(flashSuccess);
-                } else if (flashError) {
-                    toast.error(flashError);
-                }
-            },
-            onFinish: () => {
-                // TODO: ver y refactorizar
-                setIsDeleting(false);
-            },
-        });
+        // Redirigir a la página de edición
+        router.get(route('dashboard.users.edit', userId));
     };
 
     const handleDelete = async (userId, userName) => {
@@ -139,21 +111,10 @@ export default function Index({ auth, users, filters = {} }) {
         if (confirmed) {
             setIsDeleting(true);
 
-            router.delete(route('dashboard.users.destroy', userId), {
-                onSuccess: (page) => {
-                    const flashSuccess = page.props.flash?.success;
-                    const flashError = page.props.flash?.error;
-
-                    if (flashSuccess) {
-                        toast.success(flashSuccess);
-                    } else if (flashError) {
-                        toast.error(flashError);
-                    }
-                },
-                onFinish: () => {
-                    setIsDeleting(false);
-                },
-            });
+            router.delete(
+                route('dashboard.users.destroy', userId),
+                handleCrudResponse(setIsDeleting), // Automáticamente maneja el setIsDeleting(false)
+            );
         }
     };
 

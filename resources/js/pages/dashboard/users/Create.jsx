@@ -1,7 +1,7 @@
 import UserForm from '@/components/UserForm';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
-import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
@@ -23,23 +23,18 @@ export default function Create({ roles }) {
         role_id: '',
     });
 
+    const { handleResponse } = useInertiaResponse();
+
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post(route('dashboard.users.store'), {
-            onSuccess: (page) => {
-                const flashSuccess = page.props.flash?.success;
-                const flashError = page.props.flash?.error;
-
-                if (flashSuccess) {
-                    toast.success(flashSuccess);
-                    reset();
-                } else if (flashError) {
-                    toast.error(flashError);
-                }
-            },
-            onFinish: () => {},
-        });
+        post(
+            route('dashboard.users.store'),
+            handleResponse(() => {
+                // Callback de éxito: limpiar formulario
+                reset();
+            }),
+        );
     };
 
     return (
