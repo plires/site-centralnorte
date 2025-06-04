@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -9,6 +10,12 @@ import { useState } from 'react';
 
 export default function UserForm({ data, setData, handleSubmit, processing, errors, roles, isEditing = false }) {
     const [showPassword, setShowPassword] = useState(false);
+    const isEmailVerified = data?.email_verified_at;
+    const showVerificationOption = isEditing && !isEmailVerified;
+
+    const handleManualVerificationChange = (checked) => {
+        setData('manual_verification', checked);
+    };
 
     return (
         <div className="py-12">
@@ -73,6 +80,27 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
                                         />
                                         {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
                                     </div>
+
+                                    {/* Opción de verificación manual */}
+                                    {showVerificationOption && (
+                                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                            <div className="flex items-start space-x-3">
+                                                <Checkbox
+                                                    id="manual_verification"
+                                                    checked={data.manual_verification || false}
+                                                    onCheckedChange={handleManualVerificationChange}
+                                                />
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="manual_verification" className="cursor-pointer text-sm font-medium">
+                                                        Marcar correo como verificado manualmente
+                                                    </Label>
+                                                    <p className="text-xs text-amber-700">
+                                                        Esta acción marcará el correo electrónico como verificado sin enviar un email de confirmación.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Contraseña */}
                                     <div className="space-y-2">
