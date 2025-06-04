@@ -204,7 +204,17 @@ export default function DataTable({
                         <TableBody>
                             {processedData.length > 0 ? (
                                 processedData.map((row, index) => (
-                                    <TableRow key={row.id || index}>
+                                    <TableRow
+                                        key={row.id || index}
+                                        className="cursor-pointer transition-colors duration-200 hover:bg-gray-50 hover:text-blue-600"
+                                        onClick={(e) => {
+                                            // Verificar si el clic fue en un elemento interactivo
+                                            if (e.target.closest('button, [role="menuitem"], a')) {
+                                                return; // No hacer nada si se clickeó un botón o enlace
+                                            }
+                                            router.visit(route('dashboard.users.show', row.id));
+                                        }}
+                                    >
                                         {columns.map((column) => (
                                             <TableCell
                                                 key={column.key}

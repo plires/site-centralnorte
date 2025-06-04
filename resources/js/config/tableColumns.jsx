@@ -26,7 +26,13 @@ const ActionsDropdown = ({ row, actions, isDeleting = false }) => (
             )}
             {(actions.view || actions.edit) && actions.delete && <DropdownMenuSeparator />}
             {actions.delete && (
-                <DropdownMenuItem onClick={() => actions.delete(row.id, row.name || row.title)} className="text-red-600 focus:text-red-600">
+                <DropdownMenuItem
+                    onClick={(e) => {
+                        e.stopPropagation(); // Por seguridad adicional
+                        actions.delete(row.id, row.name || row.title);
+                    }}
+                    className="text-red-600 focus:text-red-600"
+                >
                     <Trash2 className="mr-2 h-4 w-4" />
                     {isDeleting ? 'Eliminando...' : 'Eliminar'}
                 </DropdownMenuItem>
