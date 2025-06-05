@@ -2,32 +2,24 @@ import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { footerNavItems, mainNavItems } from '@/config/menuSidebar';
+import usePermissions from '@/hooks/use-permissions';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+
 import AppLogo from './app-logo';
-
-const mainNavItems = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
-
-const footerNavItems = [
-    {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
+const sideBarNav = mainNavItems();
+const navFooter = footerNavItems();
 
 export function AppSidebar() {
+    const permissions = usePermissions();
+
+    const filteredItems = sideBarNav.filter((item) => {
+        // Si no requiere permiso, se incluye
+        if (!item.permission) return true;
+        // Si tiene permiso, se incluye solo si el usuario lo tiene
+        return permissions.includes(item.permission);
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -43,11 +35,11 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={mainNavItems} />
+                <NavMain items={filteredItems} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+                <NavFooter items={navFooter} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

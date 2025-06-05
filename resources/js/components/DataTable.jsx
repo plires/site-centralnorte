@@ -242,7 +242,7 @@ export default function DataTable({
             {/* Paginación responsiva */}
             {hasPagination && (
                 <div className="flex flex-col items-center justify-between gap-4 px-2 sm:flex-row">
-                    <div className="text-muted-foreground text-center text-sm text-xs sm:text-left">
+                    <div className="text-muted-foreground text-center text-xs sm:text-left">
                         {pagination.from && pagination.to && pagination.total
                             ? `Mostrando ${pagination.from} a ${pagination.to} de ${pagination.total} resultados`
                             : '0 de 0 resultados'}
@@ -257,7 +257,7 @@ export default function DataTable({
                             <span className="sr-only">Ir a la página anterior</span>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <div className="text-muted-foreground px-2 text-sm text-xs">
+                        <div className="text-muted-foreground px-2 text-xs">
                             <span className="hidden sm:inline">Página </span>
                             {pagination.current_page} de {pagination.last_page}
                         </div>

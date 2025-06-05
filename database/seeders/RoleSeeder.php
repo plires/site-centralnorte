@@ -23,5 +23,10 @@ class RoleSeeder extends Seeder
         Role::factory(1)->create([
             'name' => 'vendedor',
         ]);
+
+        // Crear rol diseñador
+        Role::factory(1)->create([
+            'name' => 'design',
+        ]);
     }
 }

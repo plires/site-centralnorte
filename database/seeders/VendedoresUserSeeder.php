@@ -17,8 +17,8 @@ class VendedoresUserSeeder extends Seeder
     {
 
         $vendedorRole = Role::where('name', 'vendedor')->first();
-        // Crear 10 vendedores
-        User::factory(10)->create([
+        // Crear 20 vendedores
+        User::factory(20)->create([
             'password' => Hash::make('123123123'),
             'role_id' => $vendedorRole->id,
         ]);
