@@ -2,17 +2,28 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller;
-use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Permission;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 
 class RoleController extends Controller
 {
     public function index()
     {
         return Inertia::render('dashboard/roles/Index', [
+            'roles' => Role::with('permissions')->get(),
+            'permissions' => Permission::all()
+        ]);
+    }
+
+    public function create()
+    {
+        $roles = Role::all();
+
+        return inertia('dashboard/roles/Create', [
             'roles' => Role::with('permissions')->get(),
             'permissions' => Permission::all()
         ]);
@@ -46,7 +57,14 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
-        $role->delete();
-        return redirect()->back();
+        try {
+            // Opcional: Soft delete en lugar de eliminación completa
+            $role->delete();
+
+            return redirect()->back()->with('success', "Rol '{$role->name}' eliminado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar el rol: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al eliminar el rol. Inténtalo de nuevo.');
+        }
     }
 }

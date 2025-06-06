@@ -92,6 +92,26 @@ export const userColumns = (actions, isDeleting = false) => [
     },
 ];
 
+export const rolesColumns = (actions, isDeleting = false) => [
+    {
+        key: 'name',
+        label: 'Nombre',
+        sortable: true,
+    },
+    {
+        key: 'created_at',
+        label: 'Fecha de Creación',
+        sortable: true,
+        hideOnMobile: true,
+        truncate: true,
+    },
+    {
+        key: 'actions',
+        label: '',
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+    },
+];
+
 export const productColumns = (actions, isDeleting = false) => [
     {
         key: 'name',

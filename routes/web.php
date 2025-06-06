@@ -17,7 +17,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('dashboard.home');
 });
 
-Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('dashboard.')->group(function () {
+// Usuarios
+Route::middleware(['auth', 'verified', 'permission:gestionar_usuarios'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
@@ -27,12 +28,15 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('dashboard')->name('das
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });
 
-
-Route::middleware(['auth', 'admin', 'permission:gestionar_roles'])->prefix('dashboard')->group(function () {
-    Route::get('/roles', [RoleController::class, 'index']);
-    Route::post('/roles', [RoleController::class, 'store']);
-    Route::put('/roles/{role}', [RoleController::class, 'update']);
-    Route::delete('/roles/{role}', [RoleController::class, 'destroy']);
+// Roles
+Route::middleware(['auth', 'verified', 'permission:gestionar_roles'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{rol}', [RoleController::class, 'show'])->name('roles.show');
+    Route::get('/roles/{rol}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{rol}', [RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{rol}', [RoleController::class, 'destroy'])->name('roles.destroy');
 });
 
 require __DIR__ . '/settings.php';
