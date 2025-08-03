@@ -11,6 +11,14 @@ use App\Http\Controllers\Controller;
 
 class RoleController extends Controller
 {
+    public function show(Role $role)
+    {
+        $role->load(['permissions', 'users']);
+        return Inertia::render('dashboard/roles/Show', [
+            'role' => $role
+        ]);
+    }
+
     public function index()
     {
         return Inertia::render('dashboard/roles/Index', [
@@ -42,6 +50,22 @@ class RoleController extends Controller
         return redirect()->back();
     }
 
+    public function edit(Role $role)
+    {
+        // Obtener todos los permisos disponibles
+        $permissions = Permission::all();
+
+        // Obtener IDs de los permisos que ya tiene el rol
+        $rolePermissions = $role->permissions->pluck('id');
+
+        return inertia('dashboard/roles/Edit', [
+            'role' => $role,
+            'permissions' => $permissions,
+            'rolePermissions' => $rolePermissions, // opcional si querés separar
+        ]);
+    }
+
+
     public function update(Request $request, Role $role)
     {
         $request->validate([
@@ -49,10 +73,15 @@ class RoleController extends Controller
             'permissions' => 'array'
         ]);
 
-        $role->update(['name' => $request->name]);
-        $role->permissions()->sync($request->permissions);
+        try {
+            $role->update(['name' => $request->name]);
+            $role->permissions()->sync($request->permissions);
+            return redirect()->back()->with('success', "Rol '{$role->name}' actualizado correctamente.");
+        } catch (\Throwable $e) {
+            Log::error('Error al actualizar rol: ' . $e->getMessage());
 
-        return redirect()->back();
+            return redirect()->back()->with('error', 'Ocurrió un error al actualizar el rol. Inténtalo de nuevo.');
+        }
     }
 
     public function destroy(Role $role)
