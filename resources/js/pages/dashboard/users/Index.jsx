@@ -66,7 +66,13 @@ export default function Index({ auth, users, filters = {} }) {
                                 </ButtonCustom>
                             </div>
 
-                            <DataTable data={users.data || users} columns={columns} pagination={users.links ? users : null} filters={filters} />
+                            <DataTable
+                                data={users.data || users}
+                                columns={columns}
+                                pagination={users.links ? users : null}
+                                filters={filters}
+                                onRowClick={(row) => router.visit(route('dashboard.users.show', row.id))}
+                            />
                             <DeleteConfirmationDialog />
                         </div>
                     </div>
