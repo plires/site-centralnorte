@@ -28,7 +28,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
 
-        $query = User::where('id', '!=', Auth::id());
+        $query = User::withoutTrashed()->where('id', '!=', Auth::id());
 
         // Búsqueda
         if ($request->filled('search')) {
