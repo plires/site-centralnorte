@@ -13,6 +13,7 @@ export default function DataTable({
     searchPlaceholder = 'Buscar...',
     emptyMessage = 'No se encontraron resultados.',
     className = '',
+    onRowClick = null,
 }) {
     const [sorting, setSorting] = useState({ key: null, direction: 'asc' });
     const [filtering, setFiltering] = useState(filters.search || '');
@@ -212,7 +213,7 @@ export default function DataTable({
                                             if (e.target.closest('button, [role="menuitem"], a')) {
                                                 return; // No hacer nada si se clickeó un botón o enlace
                                             }
-                                            router.visit(route('dashboard.users.show', row.id));
+                                            onRowClick?.(row, index);
                                         }}
                                     >
                                         {columns.map((column) => (
