@@ -119,24 +119,16 @@ export const productColumns = (actions, isDeleting = false) => [
         sortable: true,
     },
     {
-        key: 'category',
+        key: 'category.name',
         label: 'Categoría',
         sortable: true,
         hideOnMobile: true,
         render: (value, row) => row.category?.name || 'Sin categoría',
     },
     {
-        key: 'price',
-        label: 'Precio',
+        key: 'proveedor',
+        label: 'Proveedor',
         sortable: true,
-        render: (value) => `$${value?.toFixed(2) || '0.00'}`,
-    },
-    {
-        key: 'status',
-        label: 'Estado',
-        sortable: false,
-        hideOnMobile: true,
-        render: (value) => <StatusBadge value={value} type={value} />,
     },
     {
         key: 'actions',
