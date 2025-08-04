@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller;
+use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use PhpParser\Node\Stmt\TryCatch;
 
 class ProductController extends Controller
 {
@@ -63,41 +65,61 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sku' => 'required|unique:products,sku',
-            'name' => 'required|string',
+            'sku' => 'required|string|max:255|unique:products,sku,',
+            'name' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string',
-            'proveedor' => 'nullable|string',
+            'proveedor' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'last_price' => 'nullable|numeric',
         ]);
 
-        Product::create($validated);
+        try {
+            $product = Product::create($validated);
 
-        return redirect()->route('dashboard.products.index')->with('success', 'Producto creado correctamente.');
+            return redirect()->back()->with('success', "Producto '{$product->name}' creado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al crear el producto: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Ocurrió un error al crear el producto. Inténtalo de nuevo.');
+        }
     }
 
     public function edit(Product $product)
     {
-        return Inertia::render('dashboard/products/Edit', [
+        $categories = Category::all(); // para el select de categorías
+
+        return inertia('dashboard/products/Edit', [
             'product' => $product,
-            'categories' => Category::all(),
+            'categories' => $categories,
         ]);
     }
 
+
     public function update(Request $request, Product $product)
     {
-        $validated = $request->validate([
-            'sku' => 'required|unique:products,sku,' . $product->id,
-            'name' => 'required|string',
+
+        $request->validate([
+            'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
+            'name' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string',
-            'proveedor' => 'nullable|string',
+            'proveedor' => 'nullable|string|max:255',
             'category_id' => 'required|exists:categories,id',
-            'last_price' => 'nullable|numeric',
         ]);
 
-        $product->update($validated);
+        try {
+            $product->update([
+                'sku' => $request->sku,
+                'name' => $request->name,
+                'description' => $request->description,
+                'proveedor' => $request->proveedor,
+                'category_id' => $request->category_id,
+            ]);
 
-        return redirect()->route('dashboard.products.index')->with('success', 'Producto actualizado.');
+            return redirect()->back()->with('success', "Producto '{$product->name}' actualizado correctamente.");
+        } catch (\Throwable $e) {
+            Log::error('Error al actualizar producto: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Ocurrió un error al actualizar el producto.');
+        }
     }
 
     public function destroy(Product $product)
