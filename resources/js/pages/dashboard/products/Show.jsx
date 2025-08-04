@@ -35,123 +35,125 @@ export default function Show({ product }) {
                             </ButtonCustom>
                         </div>
 
-                        <div className="grid gap-6 p-6 md:grid-cols-2">
-                            {/* Info del producto */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center">
-                                        <Package className="mr-2 h-5 w-5" />
-                                        Información del Producto
-                                    </CardTitle>
-                                    <CardDescription>Datos generales</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Hash className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-medium text-gray-700">SKU</span>
+                        <div className="p-6">
+                            <div className="grid gap-6 md:grid-cols-2">
+                                {/* Info del producto */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center">
+                                            <Package className="mr-2 h-5 w-5" />
+                                            Información del Producto
+                                        </CardTitle>
+                                        <CardDescription>Datos generales</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <Hash className="h-4 w-4 text-gray-500" />
+                                                <span className="text-sm font-medium text-gray-700">SKU</span>
+                                            </div>
+                                            <p className="text-lg text-gray-900">{product.sku}</p>
                                         </div>
-                                        <p className="text-lg text-gray-900">{product.sku}</p>
-                                    </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Tag className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-medium text-gray-700">Nombre</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <Tag className="h-4 w-4 text-gray-500" />
+                                                <span className="text-sm font-medium text-gray-700">Nombre</span>
+                                            </div>
+                                            <p className="text-lg text-gray-900">{product.name}</p>
                                         </div>
-                                        <p className="text-lg text-gray-900">{product.name}</p>
-                                    </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-medium text-gray-700">Descripción</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <FileText className="h-4 w-4 text-gray-500" />
+                                                <span className="text-sm font-medium text-gray-700">Descripción</span>
+                                            </div>
+                                            <p className="text-sm text-gray-900">{product.description || 'Sin descripción'}</p>
                                         </div>
-                                        <p className="text-sm text-gray-900">{product.description || 'Sin descripción'}</p>
-                                    </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <ShoppingCart className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-medium text-gray-700">Proveedor</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <ShoppingCart className="h-4 w-4 text-gray-500" />
+                                                <span className="text-sm font-medium text-gray-700">Proveedor</span>
+                                            </div>
+                                            <p className="text-sm text-gray-900">{product.proveedor || 'No especificado'}</p>
                                         </div>
-                                        <p className="text-sm text-gray-900">{product.proveedor || 'No especificado'}</p>
-                                    </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Tag className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm font-medium text-gray-700">Categoría</span>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <Tag className="h-4 w-4 text-gray-500" />
+                                                <span className="text-sm font-medium text-gray-700">Categoría</span>
+                                            </div>
+                                            <Badge variant="outline" className="text-sm">
+                                                {product.category?.name || 'Sin categoría'}
+                                            </Badge>
                                         </div>
-                                        <Badge variant="outline" className="text-sm">
-                                            {product.category?.name || 'Sin categoría'}
-                                        </Badge>
-                                    </div>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
 
-                            {/* Fechas y sistema */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center">
-                                        <Calendar className="mr-2 h-5 w-5" />
-                                        Información del Sistema
-                                    </CardTitle>
-                                    <CardDescription>Control de registro</CardDescription>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    {/* <div>
+                                {/* Fechas y sistema */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center">
+                                            <Calendar className="mr-2 h-5 w-5" />
+                                            Información del Sistema
+                                        </CardTitle>
+                                        <CardDescription>Control de registro</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="space-y-4">
+                                        {/* <div>
                                         <div className="mb-1 text-sm font-medium text-gray-700">Precio Último</div>
                                         <p className="text-lg text-gray-900">${product.last_price.toFixed(2)}</p>
                                     </div>
 
                                     <Separator /> */}
 
-                                    <div>
-                                        <div className="mb-1 text-sm font-medium text-gray-700">Creado</div>
-                                        <p className="text-sm text-gray-900">{formatDate(product.created_at)}</p>
-                                    </div>
+                                        <div>
+                                            <div className="mb-1 text-sm font-medium text-gray-700">Creado</div>
+                                            <p className="text-sm text-gray-900">{formatDate(product.created_at)}</p>
+                                        </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <div className="mb-1 text-sm font-medium text-gray-700">Última modificación</div>
-                                        <p className="text-sm text-gray-900">{formatDate(product.updated_at)}</p>
-                                    </div>
+                                        <div>
+                                            <div className="mb-1 text-sm font-medium text-gray-700">Última modificación</div>
+                                            <p className="text-sm text-gray-900">{formatDate(product.updated_at)}</p>
+                                        </div>
 
-                                    <Separator />
+                                        <Separator />
 
-                                    <div>
-                                        <span className="text-sm font-medium text-gray-700">ID del Producto</span>
-                                        <Badge variant="secondary" className="mt-1 block font-mono">
-                                            #{product.id}
-                                        </Badge>
-                                    </div>
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-700">ID del Producto</span>
+                                            <Badge variant="secondary" className="mt-1 block font-mono">
+                                                #{product.id}
+                                            </Badge>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Acciones */}
+                            <Card className="mt-6">
+                                <CardHeader>
+                                    <CardTitle>Acciones</CardTitle>
+                                    <CardDescription>Operaciones disponibles</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <ButtonCustom route={route('dashboard.products.edit', product.id)} variant="primary" size="md">
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar Producto
+                                    </ButtonCustom>
                                 </CardContent>
                             </Card>
                         </div>
-
-                        {/* Acciones */}
-                        <Card className="mx-6 mt-6">
-                            <CardHeader>
-                                <CardTitle>Acciones</CardTitle>
-                                <CardDescription>Operaciones disponibles</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ButtonCustom route={route('dashboard.products.edit', product.id)} variant="primary" size="md">
-                                    <Edit className="mr-2 h-4 w-4" />
-                                    Editar Producto
-                                </ButtonCustom>
-                            </CardContent>
-                        </Card>
                     </div>
                 </div>
             </div>
