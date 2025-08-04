@@ -39,15 +39,20 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|unique:roles,name',
             'permissions' => 'array'
         ]);
 
-        $role = Role::create(['name' => $request->name]);
-        $role->permissions()->sync($request->permissions);
+        try {
+            $role = Role::create($validated);
 
-        return redirect()->back();
+            return redirect()->back()->with('success', "Role '{$role->name}' creado correctamente.");
+        } catch (\Exception $e) {
+            Log::error('Error al crear el rol: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Ocurrió un error al crear el rol. Inténtalo de nuevo.');
+        }
     }
 
     public function edit(Role $role)
