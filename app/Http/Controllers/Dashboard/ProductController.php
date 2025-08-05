@@ -14,7 +14,8 @@ class ProductController extends Controller
 {
     public function show(Product $product)
     {
-        $product->load('category');
+
+        $product->load('category', 'images', 'featuredImage'); // featuredImage en las vistas se recibe como featured_image (Laravel, por defecto, convierte los nombres de atributos de los modelos y relaciones a snake_case cuando los transforma a JSON (que es lo que Inertia pasa a React).)
 
         return inertia('dashboard/products/Show', [
             'product' => $product
