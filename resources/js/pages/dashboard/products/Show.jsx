@@ -1,10 +1,26 @@
 import ButtonCustom from '@/components/ButtonCustom';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import UploadProductImagesForm from '@/components/UploadProductImagesForm';
+import { useInertiaResponse } from '@/hooks/use-inertia-response'; // ajustá la ruta si cambia
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import { ArrowLeft, Calendar, Edit, FileText, Hash, Package, ShoppingCart, Tag } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Head, router } from '@inertiajs/react';
+import { ArrowLeft, Calendar, Edit, FileText, Hash, Package, ShoppingCart, Star, StarOff, Tag, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
 const breadcrumbs = [
     { title: 'Productos', href: '/dashboard/products' },
@@ -12,6 +28,7 @@ const breadcrumbs = [
 ];
 
 export default function Show({ product }) {
+    const [imageToDelete, setImageToDelete] = useState(null); // estado para almacenar la imagen a eliminar
     const formatDate = (date) =>
         new Date(date).toLocaleDateString('es-ES', {
             year: 'numeric',
@@ -20,6 +37,27 @@ export default function Show({ product }) {
             hour: '2-digit',
             minute: '2-digit',
         });
+
+    const { handleResponse } = useInertiaResponse();
+
+    const handleDeleteImage = (productId, imageId) => {
+        router.delete(
+            route('dashboard.products.images.destroy', { product: productId, image: imageId }),
+            handleResponse(() => {
+                //if (refreshCallback) refreshCallback(); // recargar imágenes
+            }),
+        );
+    };
+
+    const handleSetFeaturedImage = (productId, imageId) => {
+        router.patch(
+            route('dashboard.products.images.set-featured', { product: productId, image: imageId }),
+            {}, // sin datos adicionales
+            handleResponse(() => {
+                //if (refreshCallback) refreshCallback(); // recargar imágenes
+            }),
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -151,6 +189,95 @@ export default function Show({ product }) {
                                         <Edit className="mr-2 h-4 w-4" />
                                         Editar Producto
                                     </ButtonCustom>
+                                </CardContent>
+                            </Card>
+
+                            <Card className="mt-6">
+                                <CardHeader>
+                                    <CardTitle>Imágenes</CardTitle>
+                                    <CardDescription>
+                                        {product.images.length > 0 ? 'Imágenes del producto' : 'El Producto aún no tiene imágenes'}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    {/* Listado de imágenes */}
+
+                                    {product.images.length > 0 && (
+                                        <div className="mb-5">
+                                            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                                                {product.images.map((img) => {
+                                                    const isFeatured = product.featured_image && product.featured_image.id === img.id;
+
+                                                    return (
+                                                        <div
+                                                            key={img.id}
+                                                            className={cn(
+                                                                'group relative rounded-md border p-1 transition-all duration-200',
+                                                                isFeatured
+                                                                    ? 'bg-primary/10 scale-[1.02] shadow-md ring-3 ring-green-600'
+                                                                    : 'hover:ring-muted hover:ring-1',
+                                                            )}
+                                                        >
+                                                            <img
+                                                                src={img.full_url}
+                                                                width={300}
+                                                                height={300}
+                                                                alt={`Imagen del producto ${product.name}`}
+                                                                className="h-auto w-full rounded-md object-cover"
+                                                            />
+
+                                                            {/* Botón Eliminar con AlertDialog */}
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="absolute top-2 right-2 cursor-pointer bg-white/80 transition hover:bg-red-500 hover:text-white"
+                                                                        onClick={() => setImageToDelete(img.id)}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                </AlertDialogTrigger>
+
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>¿Eliminar esta imagen?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            Esta acción no se puede deshacer. La imagen será eliminada permanentemente
+                                                                            del producto.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                        <AlertDialogAction
+                                                                            onClick={() => {
+                                                                                handleDeleteImage(product.id, imageToDelete);
+                                                                                setImageToDelete(null);
+                                                                            }}
+                                                                        >
+                                                                            Eliminar
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+
+                                                            {/* Botón Destacar */}
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className={`absolute top-2 left-2 cursor-pointer bg-white/80 transition hover:bg-green-600 hover:text-white ${isFeatured && 'cursor-default bg-green-600 text-white'}`}
+                                                                // onClick={() => handleSetFeaturedImage(product.id, img.id)}
+                                                                onClick={!isFeatured ? () => handleSetFeaturedImage(product.id, img.id) : undefined}
+                                                            >
+                                                                {isFeatured ? <Star className="h-4 w-4" /> : <StarOff className="h-4 w-4" />}
+                                                            </Button>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+                                    <UploadProductImagesForm productId={product.id} />
                                 </CardContent>
                             </Card>
                         </div>
