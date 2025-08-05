@@ -7,6 +7,7 @@ use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Public\NosotrosController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Dashboard\ProductImageController;
 
 Route::get('/', [HomeController::class, 'index'])
     ->name('public.home');
@@ -16,6 +17,13 @@ Route::get('/nosotros', [NosotrosController::class, 'index'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard.home');
+});
+
+// Images Products
+Route::middleware(['auth', 'verified', 'permission:gestionar_imagenes_de_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::delete('/products/images/{product}/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
+    Route::patch('/products/images/{product}/{image}/set-featured', [ProductImageController::class, 'setFeatured'])->name('products.images.set-featured');
+    Route::post('/products/images/{product}', [ProductImageController::class, 'store'])->name('products.images.store');
 });
 
 // Usuarios
