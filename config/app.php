@@ -123,4 +123,10 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    // en 'aliases':
+    'Image' => Intervention\Image\Laravel\Facades\Image::class,
+
+    // en 'providers':
+    Intervention\Image\Laravel\ServiceProvider::class,
+
 ];

@@ -38,7 +38,7 @@ export default function UploadProductImagesForm({ productId }) {
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div>
                 <Label>Seleccionar imágenes</Label>
-                <Input type="file" multiple onChange={handleFileChange} />
+                <Input type="file" name="images[]" enctype="multipart/form-data" multiple onChange={handleFileChange} />
             </div>
 
             <ButtonCustom type="submit" disabled={processing} variant="primary" size="md">
