@@ -1,7 +1,7 @@
-import RoleForm from '@/components/RoleForm';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
+import RoleForm from './components/RoleForm';
 
 const breadcrumbs = [
     {
