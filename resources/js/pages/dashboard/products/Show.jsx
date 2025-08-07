@@ -18,9 +18,11 @@ import UploadProductImagesForm from '@/components/UploadProductImagesForm';
 import { useInertiaResponse } from '@/hooks/use-inertia-response'; // ajustá la ruta si cambia
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Edit, FileText, Hash, Package, ShoppingCart, Star, StarOff, Tag, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 const breadcrumbs = [
     { title: 'Productos', href: '/dashboard/products' },
@@ -29,6 +31,10 @@ const breadcrumbs = [
 
 export default function Show({ product }) {
     const [imageToDelete, setImageToDelete] = useState(null); // estado para almacenar la imagen a eliminar
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [preview, setPreview] = useState(null); // maneja el preview de la imagen antes de cargarse
+    const [file, setFile] = useState(null); // maneja el archivo de la imagen antes de cargarse
+
     const formatDate = (date) =>
         new Date(date).toLocaleDateString('es-ES', {
             year: 'numeric',
@@ -38,7 +44,34 @@ export default function Show({ product }) {
             minute: '2-digit',
         });
 
+    const { data, setData, post, processing, errors, reset } = useForm({
+        image: '',
+        product: product?.toString() || '',
+    });
+
     const { handleResponse } = useInertiaResponse();
+
+    const handleImageChange = (file) => {
+        if (file) {
+            setPreview(URL.createObjectURL(file));
+            setFile(file);
+        } else {
+            setPreview(null);
+            setFile(null);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        post(route('dashboard.products.images.store', product), {
+            ...handleResponse(() => {
+                reset();
+                setPreview(null); // limpiar preview
+                setFile(null); // limpiar archivo
+            }),
+            forceFormData: true,
+        });
+    };
 
     const handleDeleteImage = (productId, imageId) => {
         router.delete(
@@ -223,7 +256,8 @@ export default function Show({ product }) {
                                                                 width={300}
                                                                 height={300}
                                                                 alt={`Imagen del producto ${product.name}`}
-                                                                className="h-auto w-full rounded-md object-cover"
+                                                                className="h-auto w-full cursor-pointer rounded-md object-cover transition hover:scale-105 hover:shadow-lg"
+                                                                onClick={() => setSelectedImage(img.full_url)}
                                                             />
 
                                                             {/* Botón Eliminar con AlertDialog */}
@@ -266,7 +300,6 @@ export default function Show({ product }) {
                                                                 variant="ghost"
                                                                 size="icon"
                                                                 className={`absolute top-2 left-2 cursor-pointer bg-white/80 transition hover:bg-green-600 hover:text-white ${isFeatured && 'cursor-default bg-green-600 text-white'}`}
-                                                                // onClick={() => handleSetFeaturedImage(product.id, img.id)}
                                                                 onClick={!isFeatured ? () => handleSetFeaturedImage(product.id, img.id) : undefined}
                                                             >
                                                                 {isFeatured ? <Star className="h-4 w-4" /> : <StarOff className="h-4 w-4" />}
@@ -277,13 +310,31 @@ export default function Show({ product }) {
                                             </div>
                                         </div>
                                     )}
-                                    <UploadProductImagesForm productId={product.id} />
+                                    <UploadProductImagesForm
+                                        data={data}
+                                        setData={setData}
+                                        handleSubmit={handleSubmit}
+                                        processing={processing}
+                                        errors={errors}
+                                        preview={preview}
+                                        setPreview={setPreview}
+                                        handleImageChange={handleImageChange}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {selectedImage && (
+                <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+                    <DialogContent className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <DialogTitle>Vista previa de la imágen</DialogTitle>
+                        <img src={selectedImage} alt="Vista previa" className="mx-auto max-h-[80vh] w-full rounded-md object-contain" />
+                    </DialogContent>
+                </Dialog>
+            )}
         </AppLayout>
     );
 }
