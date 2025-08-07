@@ -92,13 +92,27 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         try {
-            // Opcional: Soft delete en lugar de eliminación completa
+            // Verificar si el rol tiene usuarios asociados
+            if ($role->users()->exists()) {
+                return redirect()->back()->with(
+                    'error',
+                    "No se puede eliminar el rol '{$role->name}' porque esta asociado a uno o mas usuarios. Antes Debe cambiarle este rol a cualquier usuario que lo tenga asociado."
+                );
+            }
+
+            // Eliminar el rol
             $role->delete();
 
-            return redirect()->back()->with('success', "Rol '{$role->name}' eliminado correctamente.");
+            return redirect()->back()->with(
+                'success',
+                "Rol '{$role->name}' eliminado correctamente."
+            );
         } catch (\Exception $e) {
             Log::error('Error al eliminar el rol: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ocurrió un error al eliminar el rol. Inténtalo de nuevo.');
+            return redirect()->back()->with(
+                'error',
+                'Ocurrió un error al eliminar el rol. Inténtalo de nuevo.'
+            );
         }
     }
 }
