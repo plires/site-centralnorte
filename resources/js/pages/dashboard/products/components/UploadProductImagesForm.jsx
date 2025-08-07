@@ -3,23 +3,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Edit } from 'lucide-react';
 
-export default function UploadProductImagesForm({
-    productId,
-    data,
-    setData,
-    handleSubmit,
-    processing,
-    errors,
-    isEditing = false,
-    preview,
-    setPreview,
-    handleImageChange,
-}) {
+export default function UploadProductImagesForm({ setData, handleSubmit, processing, errors, preview, handleImageChange, fileInputRef }) {
     return (
         <form method="POST" encType="multipart/form-data" onSubmit={handleSubmit} className="mt-4 space-y-4">
             <div>
                 <Label>Seleccionar imágenes</Label>
                 <Input
+                    ref={fileInputRef}
                     onChange={(e) => {
                         setData('image', e.target.files[0]);
                         handleImageChange(e.target.files[0]);
