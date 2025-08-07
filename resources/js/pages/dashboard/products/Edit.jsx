@@ -1,8 +1,7 @@
-// dashboard/products/Edit.jsx
-import ProductForm from '@/components/ProductForm';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
+import ProductForm from './components/ProductForm';
 
 const breadcrumbs = [
     { title: 'Productos', href: '/dashboard/products' },
