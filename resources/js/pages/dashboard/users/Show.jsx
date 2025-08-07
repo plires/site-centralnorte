@@ -1,10 +1,11 @@
 import ButtonCustom from '@/components/ButtonCustom';
+import PageHeader from '@/components/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { ArrowLeft, Calendar, CheckCircle, Clock, Edit, Mail, Shield, User, XCircle } from 'lucide-react';
+import { Calendar, CheckCircle, Clock, Edit, Mail, Shield, User, XCircle } from 'lucide-react';
 
 const breadcrumbs = [
     {
@@ -56,12 +57,8 @@ export default function Show({ user }) {
             <div className="py-12">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="text-end">
-                            <ButtonCustom className="mt-6 mr-6" route={route('dashboard.users.index')} variant="secondary" size="md">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Volver
-                            </ButtonCustom>
-                        </div>
+                        {/* Header con botón volver */}
+                        <PageHeader backRoute={route('dashboard.users.index')} backText="Volver" />
                         <div className="p-6">
                             <div className="grid gap-6 md:grid-cols-2">
                                 {/* Información Personal */}
