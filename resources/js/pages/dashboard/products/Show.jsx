@@ -1,8 +1,7 @@
-import ButtonCustom from '@/components/ButtonCustom';
+import PageHeader from '@/components/PageHeader';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 // Componentes extraídos
@@ -85,12 +84,7 @@ export default function Show({ product }) {
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         {/* Header con botón volver */}
-                        <div className="text-end">
-                            <ButtonCustom className="mt-6 mr-6" route={route('dashboard.products.index')} variant="secondary" size="md">
-                                <ArrowLeft className="mr-2 h-4 w-4" />
-                                Volver
-                            </ButtonCustom>
-                        </div>
+                        <PageHeader backRoute={route('dashboard.products.index')} backText="Volver" />
 
                         <div className="p-6">
                             {/* Grid principal con información del producto */}
