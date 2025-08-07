@@ -1,7 +1,7 @@
-import UserForm from '@/components/UserForm';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
+import UserForm from './components/UserForm';
 
 const breadcrumbs = [
     {
