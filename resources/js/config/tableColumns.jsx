@@ -152,9 +152,10 @@ export const categoryColumns = (actions, isDeleting = false) => [
     },
     {
         key: 'products_count',
-        label: 'Productos',
-        sortable: true,
-        render: (value) => value || 0,
+        label: 'Productos Asociados',
+        sortable: false,
+        hideOnMobile: true,
+        truncate: true,
     },
     {
         key: 'actions',
