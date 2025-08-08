@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
@@ -36,6 +37,17 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_usuarios'])->prefix
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+
+// Clientes
+Route::middleware(['auth', 'verified', 'permission:gestionar_clientes'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+    Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
+    Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
+    Route::get('/clients/{user}', [ClientController::class, 'show'])->name('clients.show');
+    Route::get('/clients/{user}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+    Route::put('/clients/{user}', [ClientController::class, 'update'])->name('clients.update');
+    Route::delete('/clients/{user}', [ClientController::class, 'destroy'])->name('clients.destroy');
 });
 
 // Roles
