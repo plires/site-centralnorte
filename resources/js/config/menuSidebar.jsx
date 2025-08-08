@@ -4,6 +4,7 @@ import {
     CalendarDays,
     ChartBarStacked,
     ChartColumnStacked,
+    Contact,
     Folder,
     LayoutGrid,
     NotebookText,
@@ -42,6 +43,12 @@ export const mainNavItems = () => [
         url: '/dashboard/categories',
         icon: ChartBarStacked,
         permission: 'gestionar_categorias',
+    },
+    {
+        title: 'Gestionar Clientes',
+        url: '/dashboard/clientes',
+        icon: Contact,
+        permission: 'gestionar_clientes',
     },
     {
         title: 'Presupuestos de Merch',
