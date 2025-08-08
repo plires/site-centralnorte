@@ -1,5 +1,4 @@
 import {
-    BookImage,
     BookOpen,
     BookText,
     CalendarDays,
@@ -45,19 +44,13 @@ export const mainNavItems = () => [
         permission: 'gestionar_categorias',
     },
     {
-        title: 'Gestionar Imágenes de Productos',
-        url: '/dashboard/products/images',
-        icon: BookImage,
-        permission: 'gestionar_imagenes_de_productos',
-    },
-    {
-        title: 'Gestionar Presupuestos de Merch',
+        title: 'Presupuestos de Merch',
         url: '/dashboard/presupuestos/merch',
         icon: NotebookText,
         permission: 'gestionar_presupuestos_merch',
     },
     {
-        title: 'Gestionar Presupuestos de Picking',
+        title: 'Presupuestos de Picking',
         url: '/dashboard/presupuestos/picking',
         icon: BookText,
         permission: 'gestionar_presupuestos_pick',
