@@ -1,7 +1,7 @@
 import ButtonCustom from '@/components/ButtonCustom';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit } from 'lucide-react';
+import { Edit, Info } from 'lucide-react';
 
 export default function UploadProductImagesForm({ setData, handleSubmit, processing, errors, preview, handleImageChange, fileInputRef }) {
     return (
@@ -16,8 +16,17 @@ export default function UploadProductImagesForm({ setData, handleSubmit, process
                     }}
                     type="file"
                     name="image"
+                    accept="image/*"
                 />
-                {errors.image && <span className="text-xs text-red-500">{errors.image}</span>}
+
+                {/* Texto informativo con ícono */}
+                <div className="text-muted-foreground mt-1 flex items-center text-xs">
+                    <Info className="mr-1 h-3.5 w-3.5 text-blue-500" />
+                    <span>Solo imágenes (JPG, PNG, GIF) y menores a 5MB.</span>
+                </div>
+
+                {/* Error de validación */}
+                {errors.image && <span className="mt-1 block text-xs text-red-500">{errors.image}</span>}
             </div>
 
             {/* 🖼️ Preview */}
