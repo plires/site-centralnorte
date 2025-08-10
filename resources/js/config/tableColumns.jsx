@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { timeAgo } from '@/utils/date';
 import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 
 // Componente reutilizable para acciones
@@ -92,6 +93,32 @@ export const userColumns = (actions, isDeleting = false) => [
     },
 ];
 
+export const clientsColumns = (actions, isDeleting = false) => [
+    {
+        key: 'name',
+        label: 'Nombre',
+        sortable: true,
+    },
+    {
+        key: 'company',
+        label: 'Empresa',
+        sortable: true,
+    },
+    {
+        key: 'created_at',
+        label: 'Fecha de Creación',
+        sortable: true,
+        hideOnMobile: true,
+        truncate: true,
+        render: (value) => timeAgo(value),
+    },
+    {
+        key: 'actions',
+        label: '',
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+    },
+];
+
 export const rolesColumns = (actions, isDeleting = false) => [
     {
         key: 'name',
@@ -104,6 +131,7 @@ export const rolesColumns = (actions, isDeleting = false) => [
         sortable: true,
         hideOnMobile: true,
         truncate: true,
+        render: (value) => timeAgo(value),
     },
     {
         key: 'actions',
