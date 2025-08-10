@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClientController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Public\NosotrosController;
+use App\Http\Controllers\Dashboard\ClientController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
@@ -44,10 +44,10 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_clientes'])->prefix
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
     Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
     Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
-    Route::get('/clients/{user}', [ClientController::class, 'show'])->name('clients.show');
-    Route::get('/clients/{user}/edit', [ClientController::class, 'edit'])->name('clients.edit');
-    Route::put('/clients/{user}', [ClientController::class, 'update'])->name('clients.update');
-    Route::delete('/clients/{user}', [ClientController::class, 'destroy'])->name('clients.destroy');
+    Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
+    Route::get('/clients/{client}/edit', [ClientController::class, 'edit'])->name('clients.edit');
+    Route::put('/clients/{client}', [ClientController::class, 'update'])->name('clients.update');
+    Route::delete('/clients/{client}', [ClientController::class, 'destroy'])->name('clients.destroy');
 });
 
 // Roles
