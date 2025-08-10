@@ -46,7 +46,7 @@ export const mainNavItems = () => [
     },
     {
         title: 'Gestionar Clientes',
-        url: '/dashboard/clientes',
+        url: '/dashboard/clients',
         icon: Contact,
         permission: 'gestionar_clientes',
     },
