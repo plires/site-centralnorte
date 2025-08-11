@@ -16,4 +16,20 @@ class Client extends Model
         'phone',
         'address',
     ];
+
+    public function budgets()
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    // Método para obtener solo datos básicos (seguridad para vendedores)
+    public function getBasicInfo()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'company' => $this->company,
+            'email' => $this->email, // Solo para envío de presupuestos
+        ];
+    }
 }

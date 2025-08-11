@@ -60,4 +60,16 @@ class User extends Authenticatable
     {
         return $this->role?->permissions->pluck('name')->contains($permission);
     }
+
+    public function budgets()
+    {
+        return $this->hasMany(Budget::class);
+    }
+
+    public function scopeVendedores($query)
+    {
+        return $query->whereHas('role', function ($q) {
+            $q->where('name', 'vendedor');
+        });
+    }
 }

@@ -129,4 +129,12 @@ return [
     // en 'providers':
     Intervention\Image\Laravel\ServiceProvider::class,
 
+    'aliases' => [
+        'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
+    ],
+
+    // 'providers' => [
+    //     Barryvdh\DomPDF\ServiceProvider::class,
+    // ],
+
 ];

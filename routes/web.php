@@ -1,20 +1,33 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\ApiController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Public\NosotrosController;
+use App\Http\Controllers\Dashboard\BudgetController;
 use App\Http\Controllers\Dashboard\ClientController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
+use App\Http\Controllers\Public\PublicBudgetController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 
 Route::get('/', [HomeController::class, 'index'])
     ->name('public.home');
 Route::get('/nosotros', [NosotrosController::class, 'index'])
     ->name('public.nosotros');
+// Vista pública del presupuesto (sin auth)
+Route::get('presupuesto/{token}', [PublicBudgetController::class, 'show'])
+    ->name('public.budget.show');
+Route::get('presupuesto/{token}/pdf', [PublicBudgetController::class, 'downloadPdf'])
+    ->name('public.budget.pdf');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard.home');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -81,6 +94,35 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_categorias'])->pref
     Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+});
+
+// Presupuestos de Merchandising
+Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_merch'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+    Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
+    Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
+    Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
+    Route::get('/budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.edit');
+    Route::put('/budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.update');
+    Route::delete('/budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.destroy');
+
+    // Acciones especiales
+    Route::get('/budgets/{budget}/duplicate', [BudgetController::class, 'duplicate'])->name('budgets.duplicate');
+    Route::post('/budgets/{budget}/send-email', [BudgetController::class, 'sendEmail'])->name('budgets.send-email');
+});
+
+// API para selects dinámicos (requiere autenticación)
+Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(function () {
+    // Búsqueda de clientes
+    Route::get('/clients/search', [ApiController::class, 'searchClients'])->name('clients.search');
+    Route::get('/clients/{id}', [ApiController::class, 'getClient'])->name('clients.show');
+
+    // Búsqueda de productos
+    Route::get('/products/search', [ApiController::class, 'searchProducts'])->name('products.search');
+    Route::get('/products/{id}', [ApiController::class, 'getProduct'])->name('products.show');
+
+    // Vendedores (solo para admins)
+    Route::get('/vendedores/search', [ApiController::class, 'getVendedores'])->name('vendedores.search');
 });
 
 require __DIR__ . '/settings.php';

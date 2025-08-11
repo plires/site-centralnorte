@@ -58,6 +58,39 @@ const StatusBadge = ({ value, type = 'default' }) => {
 };
 
 // Definiciones de columnas por entidad
+export const budgetsColumns = (actions, isDeleting = false) => [
+    {
+        key: 'title',
+        label: 'Titulo',
+        sortable: true,
+    },
+    // {
+    //     key: 'client',
+    //     label: 'Cliente',
+    //     sortable: true,
+    // },
+    // {
+    //     key: 'user_id',
+    //     label: 'vendedor',
+    //     sortable: true,
+    // },
+    {
+        key: 'total',
+        label: 'Total',
+        sortable: true,
+    },
+    {
+        key: 'is_active',
+        label: 'Estado',
+        sortable: true,
+    },
+    {
+        key: 'actions',
+        label: '',
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+    },
+];
+
 export const userColumns = (actions, isDeleting = false) => [
     {
         key: 'name',

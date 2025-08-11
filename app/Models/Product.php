@@ -36,4 +36,24 @@ class Product extends Model
     {
         return $this->hasOne(ProductImage::class)->where('is_featured', true);
     }
+
+    public function budgetItems()
+    {
+        return $this->hasMany(BudgetItem::class);
+    }
+
+    // Para el select con búsqueda
+    public function scopeForSelect($query, $search = null)
+    {
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('sku', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->with('category')
+            ->select('id', 'name', 'sku', 'last_price', 'category_id')
+            ->orderBy('name');
+    }
 }

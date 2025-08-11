@@ -52,7 +52,7 @@ export const mainNavItems = () => [
     },
     {
         title: 'Presupuestos de Merch',
-        url: '/dashboard/presupuestos/merch',
+        url: '/dashboard/budgets',
         icon: NotebookText,
         permission: 'gestionar_presupuestos_merch',
     },
