@@ -7,13 +7,13 @@ use App\Models\Budget;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\BudgetItem;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use App\Mail\BudgetCreatedMail;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\BudgetCreatedMail;
-use Illuminate\Support\Str;
 
 class BudgetController extends Controller
 {
@@ -80,270 +80,307 @@ class BudgetController extends Controller
 
     public function show(Budget $budget)
     {
-        // Verificar permisos (vendedores solo ven los suyos)
-        $this->authorizeUserAccess($budget);
-
+        // Cargar todas las relaciones necesarias
         $budget->load([
-            'client',
             'user',
-            'items.product.featuredImage',
-            'items.product.category'
+            'client',
+            'items' => function ($query) {
+                $query->with('product')->orderBy('sort_order');
+            }
         ]);
+
+        // Obtener grupos de variantes si existen
+        $variantGroups = $budget->hasVariants() ? $budget->getVariantGroups() : [];
+
+        // Organizar items por grupos de variantes
+        $organizedItems = [];
+        $regularItems = [];
+
+        foreach ($budget->items as $item) {
+            if ($item->variant_group) {
+                if (!isset($organizedItems[$item->variant_group])) {
+                    $organizedItems[$item->variant_group] = [];
+                }
+                $organizedItems[$item->variant_group][] = $item;
+            } else {
+                $regularItems[] = $item;
+            }
+        }
 
         return Inertia::render('dashboard/budgets/Show', [
-            'budget' => $budget
+            'budget' => $budget,
+            'regularItems' => $regularItems,
+            'variantGroups' => $organizedItems,
+            'hasVariants' => $budget->hasVariants(),
         ]);
     }
 
-    public function create()
-    {
-        return Inertia::render('dashboard/budgets/Create');
-    }
+    // public function show(Budget $budget)
+    // {
+    //     // Verificar permisos (vendedores solo ven los suyos)
+    //     $this->authorizeUserAccess($budget);
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'client_id' => 'required|exists:clients,id',
-            'issue_date' => 'required|date',
-            'expiry_date' => 'required|date|after:issue_date',
-            'footer_comments' => 'nullable|string',
-            'send_email_to_client' => 'boolean',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.production_time_days' => 'nullable|integer|min:0',
-            'items.*.logo_printing' => 'nullable|string|max:255',
-            'items.*.is_variant' => 'boolean',
-            'items.*.variant_group' => 'nullable|string|max:50',
-        ]);
+    //     $budget->load([
+    //         'client',
+    //         'user',
+    //         'items.product.featuredImage',
+    //         'items.product.category'
+    //     ]);
 
-        try {
-            \DB::beginTransaction();
+    //     return Inertia::render('dashboard/budgets/Show', [
+    //         'budget' => $budget
+    //     ]);
+    // }
 
-            // Crear presupuesto
-            $budget = Budget::create([
-                'title' => $validated['title'],
-                'user_id' => Auth::id(),
-                'client_id' => $validated['client_id'],
-                'issue_date' => $validated['issue_date'],
-                'expiry_date' => $validated['expiry_date'],
-                'footer_comments' => $validated['footer_comments'] ?? null,
-                'send_email_to_client' => $validated['send_email_to_client'] ?? false,
-                'token' => Str::random(32),
-            ]);
+    // public function create()
+    // {
+    //     return Inertia::render('dashboard/budgets/Create');
+    // }
 
-            // Crear líneas de presupuesto
-            foreach ($validated['items'] as $index => $itemData) {
-                BudgetItem::create([
-                    'budget_id' => $budget->id,
-                    'product_id' => $itemData['product_id'],
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
-                    'production_time_days' => $itemData['production_time_days'],
-                    'logo_printing' => $itemData['logo_printing'],
-                    'is_variant' => $itemData['is_variant'] ?? false,
-                    'variant_group' => $itemData['variant_group'],
-                    'sort_order' => $index,
-                ]);
-            }
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'title' => 'required|string|max:255',
+    //         'client_id' => 'required|exists:clients,id',
+    //         'issue_date' => 'required|date',
+    //         'expiry_date' => 'required|date|after:issue_date',
+    //         'footer_comments' => 'nullable|string',
+    //         'send_email_to_client' => 'boolean',
+    //         'items' => 'required|array|min:1',
+    //         'items.*.product_id' => 'required|exists:products,id',
+    //         'items.*.quantity' => 'required|integer|min:1',
+    //         'items.*.unit_price' => 'required|numeric|min:0',
+    //         'items.*.production_time_days' => 'nullable|integer|min:0',
+    //         'items.*.logo_printing' => 'nullable|string|max:255',
+    //         'items.*.is_variant' => 'boolean',
+    //         'items.*.variant_group' => 'nullable|string|max:50',
+    //     ]);
 
-            // Calcular totales
-            $budget->calculateTotals();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Programar notificaciones
-            $this->scheduleNotifications($budget);
+    //         // Crear presupuesto
+    //         $budget = Budget::create([
+    //             'title' => $validated['title'],
+    //             'user_id' => Auth::id(),
+    //             'client_id' => $validated['client_id'],
+    //             'issue_date' => $validated['issue_date'],
+    //             'expiry_date' => $validated['expiry_date'],
+    //             'footer_comments' => $validated['footer_comments'] ?? null,
+    //             'send_email_to_client' => $validated['send_email_to_client'] ?? false,
+    //             'token' => Str::random(32),
+    //         ]);
 
-            // Enviar email si está marcado
-            if ($validated['send_email_to_client']) {
-                $this->sendBudgetEmail($budget);
-            }
+    //         // Crear líneas de presupuesto
+    //         foreach ($validated['items'] as $index => $itemData) {
+    //             BudgetItem::create([
+    //                 'budget_id' => $budget->id,
+    //                 'product_id' => $itemData['product_id'],
+    //                 'quantity' => $itemData['quantity'],
+    //                 'unit_price' => $itemData['unit_price'],
+    //                 'production_time_days' => $itemData['production_time_days'],
+    //                 'logo_printing' => $itemData['logo_printing'],
+    //                 'is_variant' => $itemData['is_variant'] ?? false,
+    //                 'variant_group' => $itemData['variant_group'],
+    //                 'sort_order' => $index,
+    //             ]);
+    //         }
 
-            \DB::commit();
+    //         // Calcular totales
+    //         $budget->calculateTotals();
 
-            return redirect()->route('dashboard.budgets.show', $budget)
-                ->with('success', "Presupuesto '{$budget->title}' creado correctamente.");
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            Log::error('Error al crear presupuesto: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocurrió un error al crear el presupuesto. Inténtalo de nuevo.')
-                ->withInput();
-        }
-    }
+    //         // Programar notificaciones
+    //         $this->scheduleNotifications($budget);
 
-    public function edit(Budget $budget)
-    {
-        $this->authorizeUserAccess($budget);
+    //         // Enviar email si está marcado
+    //         if ($validated['send_email_to_client']) {
+    //             $this->sendBudgetEmail($budget);
+    //         }
 
-        $budget->load([
-            'items.product.featuredImage',
-            'items.product.category'
-        ]);
+    //         \DB::commit();
 
-        return Inertia::render('dashboard/budgets/Edit', [
-            'budget' => $budget
-        ]);
-    }
+    //         return redirect()->route('dashboard.budgets.show', $budget)
+    //             ->with('success', "Presupuesto '{$budget->title}' creado correctamente.");
+    //     } catch (\Exception $e) {
+    //         \DB::rollBack();
+    //         Log::error('Error al crear presupuesto: ' . $e->getMessage());
+    //         return redirect()->back()
+    //             ->with('error', 'Ocurrió un error al crear el presupuesto. Inténtalo de nuevo.')
+    //             ->withInput();
+    //     }
+    // }
 
-    public function update(Request $request, Budget $budget)
-    {
-        $this->authorizeUserAccess($budget);
+    // public function edit(Budget $budget)
+    // {
+    //     $this->authorizeUserAccess($budget);
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'client_id' => 'required|exists:clients,id',
-            'issue_date' => 'required|date',
-            'expiry_date' => 'required|date|after:issue_date',
-            'footer_comments' => 'nullable|string',
-            'is_active' => 'boolean',
-            'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.unit_price' => 'required|numeric|min:0',
-            'items.*.production_time_days' => 'nullable|integer|min:0',
-            'items.*.logo_printing' => 'nullable|string|max:255',
-            'items.*.is_variant' => 'boolean',
-            'items.*.variant_group' => 'nullable|string|max:50',
-        ]);
+    //     $budget->load([
+    //         'items.product.featuredImage',
+    //         'items.product.category'
+    //     ]);
 
-        try {
-            \DB::beginTransaction();
+    //     return Inertia::render('dashboard/budgets/Edit', [
+    //         'budget' => $budget
+    //     ]);
+    // }
 
-            // Actualizar presupuesto
-            $budget->update([
-                'title' => $validated['title'],
-                'client_id' => $validated['client_id'],
-                'issue_date' => $validated['issue_date'],
-                'expiry_date' => $validated['expiry_date'],
-                'footer_comments' => $validated['footer_comments'] ?? null,
-                'is_active' => $validated['is_active'] ?? true,
-            ]);
+    // public function update(Request $request, Budget $budget)
+    // {
+    //     $this->authorizeUserAccess($budget);
 
-            // Eliminar líneas existentes y crear nuevas
-            $budget->items()->delete();
+    //     $validated = $request->validate([
+    //         'title' => 'required|string|max:255',
+    //         'client_id' => 'required|exists:clients,id',
+    //         'issue_date' => 'required|date',
+    //         'expiry_date' => 'required|date|after:issue_date',
+    //         'footer_comments' => 'nullable|string',
+    //         'is_active' => 'boolean',
+    //         'items' => 'required|array|min:1',
+    //         'items.*.product_id' => 'required|exists:products,id',
+    //         'items.*.quantity' => 'required|integer|min:1',
+    //         'items.*.unit_price' => 'required|numeric|min:0',
+    //         'items.*.production_time_days' => 'nullable|integer|min:0',
+    //         'items.*.logo_printing' => 'nullable|string|max:255',
+    //         'items.*.is_variant' => 'boolean',
+    //         'items.*.variant_group' => 'nullable|string|max:50',
+    //     ]);
 
-            foreach ($validated['items'] as $index => $itemData) {
-                BudgetItem::create([
-                    'budget_id' => $budget->id,
-                    'product_id' => $itemData['product_id'],
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
-                    'production_time_days' => $itemData['production_time_days'],
-                    'logo_printing' => $itemData['logo_printing'],
-                    'is_variant' => $itemData['is_variant'] ?? false,
-                    'variant_group' => $itemData['variant_group'],
-                    'sort_order' => $index,
-                ]);
-            }
+    //     try {
+    //         \DB::beginTransaction();
 
-            // Recalcular totales
-            $budget->calculateTotals();
+    //         // Actualizar presupuesto
+    //         $budget->update([
+    //             'title' => $validated['title'],
+    //             'client_id' => $validated['client_id'],
+    //             'issue_date' => $validated['issue_date'],
+    //             'expiry_date' => $validated['expiry_date'],
+    //             'footer_comments' => $validated['footer_comments'] ?? null,
+    //             'is_active' => $validated['is_active'] ?? true,
+    //         ]);
 
-            // Actualizar notificaciones si cambió la fecha de vencimiento
-            if ($budget->wasChanged('expiry_date')) {
-                $budget->notifications()->delete();
-                $this->scheduleNotifications($budget);
-            }
+    //         // Eliminar líneas existentes y crear nuevas
+    //         $budget->items()->delete();
 
-            \DB::commit();
+    //         foreach ($validated['items'] as $index => $itemData) {
+    //             BudgetItem::create([
+    //                 'budget_id' => $budget->id,
+    //                 'product_id' => $itemData['product_id'],
+    //                 'quantity' => $itemData['quantity'],
+    //                 'unit_price' => $itemData['unit_price'],
+    //                 'production_time_days' => $itemData['production_time_days'],
+    //                 'logo_printing' => $itemData['logo_printing'],
+    //                 'is_variant' => $itemData['is_variant'] ?? false,
+    //                 'variant_group' => $itemData['variant_group'],
+    //                 'sort_order' => $index,
+    //             ]);
+    //         }
 
-            return redirect()->back()
-                ->with('success', "Presupuesto '{$budget->title}' actualizado correctamente.");
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocurrió un error al actualizar el presupuesto.')
-                ->withInput();
-        }
-    }
+    //         // Recalcular totales
+    //         $budget->calculateTotals();
 
-    public function destroy(Budget $budget)
-    {
-        $this->authorizeUserAccess($budget);
+    //         // Actualizar notificaciones si cambió la fecha de vencimiento
+    //         if ($budget->wasChanged('expiry_date')) {
+    //             $budget->notifications()->delete();
+    //             $this->scheduleNotifications($budget);
+    //         }
 
-        try {
-            $budgetTitle = $budget->title;
-            $budget->delete();
+    //         \DB::commit();
 
-            return redirect()->route('dashboard.budgets.index')
-                ->with('success', "Presupuesto '{$budgetTitle}' eliminado correctamente.");
-        } catch (\Exception $e) {
-            Log::error('Error al eliminar presupuesto: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocurrió un error al eliminar el presupuesto.');
-        }
-    }
+    //         return redirect()->back()
+    //             ->with('success', "Presupuesto '{$budget->title}' actualizado correctamente.");
+    //     } catch (\Exception $e) {
+    //         \DB::rollBack();
+    //         Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
+    //         return redirect()->back()
+    //             ->with('error', 'Ocurrió un error al actualizar el presupuesto.')
+    //             ->withInput();
+    //     }
+    // }
 
-    public function duplicate(Budget $budget)
-    {
-        $this->authorizeUserAccess($budget);
+    // public function destroy(Budget $budget)
+    // {
+    //     $this->authorizeUserAccess($budget);
 
-        try {
-            \DB::beginTransaction();
+    //     try {
+    //         $budgetTitle = $budget->title;
+    //         $budget->delete();
 
-            // Crear nuevo presupuesto
-            $newBudget = Budget::create([
-                'title' => $budget->title . ' (Copia)',
-                'user_id' => Auth::id(),
-                'client_id' => $budget->client_id,
-                'issue_date' => now()->format('Y-m-d'),
-                'expiry_date' => now()->addDays(30)->format('Y-m-d'),
-                'footer_comments' => $budget->footer_comments,
-                'send_email_to_client' => false,
-                'token' => Str::random(32),
-            ]);
+    //         return redirect()->route('dashboard.budgets.index')
+    //             ->with('success', "Presupuesto '{$budgetTitle}' eliminado correctamente.");
+    //     } catch (\Exception $e) {
+    //         Log::error('Error al eliminar presupuesto: ' . $e->getMessage());
+    //         return redirect()->back()
+    //             ->with('error', 'Ocurrió un error al eliminar el presupuesto.');
+    //     }
+    // }
 
-            // Duplicar líneas
-            foreach ($budget->items as $item) {
-                BudgetItem::create([
-                    'budget_id' => $newBudget->id,
-                    'product_id' => $item->product_id,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'production_time_days' => $item->production_time_days,
-                    'logo_printing' => $item->logo_printing,
-                    'is_variant' => $item->is_variant,
-                    'variant_group' => $item->variant_group,
-                    'sort_order' => $item->sort_order,
-                ]);
-            }
+    // public function duplicate(Budget $budget)
+    // {
+    //     $this->authorizeUserAccess($budget);
 
-            // Calcular totales
-            $newBudget->calculateTotals();
+    //     try {
+    //         \DB::beginTransaction();
 
-            // Programar notificaciones
-            $this->scheduleNotifications($newBudget);
+    //         // Crear nuevo presupuesto
+    //         $newBudget = Budget::create([
+    //             'title' => $budget->title . ' (Copia)',
+    //             'user_id' => Auth::id(),
+    //             'client_id' => $budget->client_id,
+    //             'issue_date' => now()->format('Y-m-d'),
+    //             'expiry_date' => now()->addDays(30)->format('Y-m-d'),
+    //             'footer_comments' => $budget->footer_comments,
+    //             'send_email_to_client' => false,
+    //             'token' => Str::random(32),
+    //         ]);
 
-            \DB::commit();
+    //         // Duplicar líneas
+    //         foreach ($budget->items as $item) {
+    //             BudgetItem::create([
+    //                 'budget_id' => $newBudget->id,
+    //                 'product_id' => $item->product_id,
+    //                 'quantity' => $item->quantity,
+    //                 'unit_price' => $item->unit_price,
+    //                 'production_time_days' => $item->production_time_days,
+    //                 'logo_printing' => $item->logo_printing,
+    //                 'is_variant' => $item->is_variant,
+    //                 'variant_group' => $item->variant_group,
+    //                 'sort_order' => $item->sort_order,
+    //             ]);
+    //         }
 
-            return redirect()->route('dashboard.budgets.edit', $newBudget)
-                ->with('success', 'Presupuesto duplicado correctamente. Puedes modificarlo antes de enviarlo.');
-        } catch (\Exception $e) {
-            \DB::rollBack();
-            Log::error('Error al duplicar presupuesto: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocurrió un error al duplicar el presupuesto.');
-        }
-    }
+    //         // Calcular totales
+    //         $newBudget->calculateTotals();
 
-    public function sendEmail(Budget $budget)
-    {
-        $this->authorizeUserAccess($budget);
+    //         // Programar notificaciones
+    //         $this->scheduleNotifications($newBudget);
 
-        try {
-            $this->sendBudgetEmail($budget);
+    //         \DB::commit();
 
-            return redirect()->back()
-                ->with('success', 'Email enviado correctamente al cliente.');
-        } catch (\Exception $e) {
-            Log::error('Error al enviar email: ' . $e->getMessage());
-            return redirect()->back()
-                ->with('error', 'Ocurrió un error al enviar el email.');
-        }
-    }
+    //         return redirect()->route('dashboard.budgets.edit', $newBudget)
+    //             ->with('success', 'Presupuesto duplicado correctamente. Puedes modificarlo antes de enviarlo.');
+    //     } catch (\Exception $e) {
+    //         \DB::rollBack();
+    //         Log::error('Error al duplicar presupuesto: ' . $e->getMessage());
+    //         return redirect()->back()
+    //             ->with('error', 'Ocurrió un error al duplicar el presupuesto.');
+    //     }
+    // }
+
+    // public function sendEmail(Budget $budget)
+    // {
+    //     $this->authorizeUserAccess($budget);
+
+    //     try {
+    //         $this->sendBudgetEmail($budget);
+
+    //         return redirect()->back()
+    //             ->with('success', 'Email enviado correctamente al cliente.');
+    //     } catch (\Exception $e) {
+    //         Log::error('Error al enviar email: ' . $e->getMessage());
+    //         return redirect()->back()
+    //             ->with('error', 'Ocurrió un error al enviar el email.');
+    //     }
+    // }
 
     // Métodos privados auxiliares
     private function authorizeUserAccess(Budget $budget)
