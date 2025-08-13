@@ -119,7 +119,7 @@ class Budget extends Model
 
     public function getVariantGroups()
     {
-        return $this->items()
+        return BudgetItem::where('budget_id', $this->id)
             ->whereNotNull('variant_group')
             ->distinct()
             ->pluck('variant_group')
