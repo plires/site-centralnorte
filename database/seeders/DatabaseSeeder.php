@@ -5,8 +5,10 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\BudgetSeeder;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\AdminUserSeeder;
+use Database\Seeders\BudgetItemSeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\ProductImageSeeder;
 use Database\Seeders\VendedoresUserSeeder;
@@ -28,6 +30,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             ProductImageSeeder::class,
             ClientSeeder::class,
+            BudgetSeeder::class,
+            BudgetItemSeeder::class,
         ]);
     }
 }
