@@ -21,12 +21,19 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
         return organized;
     }, [data.items]);
 
-    const checkForDuplicateVariants = (newItems) => {
+    const checkForDuplicateVariants = (newItems, excludeItem = null) => {
         const duplicates = [];
 
         newItems.forEach((newItem, newIndex) => {
-            // Verificar contra items existentes
+            // Verificar contra items existentes (excluyendo el item que se está editando)
             data.items.forEach((existingItem) => {
+                if (
+                    excludeItem &&
+                    (existingItem.id === excludeItem.id || (excludeItem.isVariantGroup && existingItem.variant_group === excludeItem.group))
+                ) {
+                    return; // Saltar el item que se está editando
+                }
+
                 if (
                     existingItem.product_id === newItem.product_id &&
                     existingItem.quantity === newItem.quantity &&
@@ -99,6 +106,24 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
         setTimeout(() => onItemsChange(), 0);
     };
 
+    const handleEditItem = (editingItem, newItems) => {
+        let updatedItems = [...data.items];
+
+        if (editingItem.isVariantGroup) {
+            // Editar grupo de variantes: remover grupo completo y agregar nuevos items
+            updatedItems = updatedItems.filter((item) => item.variant_group !== editingItem.group);
+        } else {
+            // Editar item individual: remover item específico
+            updatedItems = updatedItems.filter((item) => item.id !== editingItem.id);
+        }
+
+        // Agregar los nuevos items
+        updatedItems = [...updatedItems, ...newItems];
+
+        setData('items', updatedItems);
+        setTimeout(() => onItemsChange(), 0);
+    };
+
     const handleRemoveItem = (index) => {
         const item = data.items[index];
         let newItems = [...data.items];
@@ -116,6 +141,7 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
     return {
         organizedItems,
         handleAddItems,
+        handleEditItem,
         handleRemoveItem,
         checkForDuplicateVariants,
     };

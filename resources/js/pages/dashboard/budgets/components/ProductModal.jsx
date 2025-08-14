@@ -8,7 +8,7 @@ import { Package, Plus, X } from 'lucide-react';
 import { useProductModal } from '../hooks/useProductModal';
 import VariantForm from './VariantForm';
 
-export default function ProductModal({ products, existingItems = [], onClose, onSubmit, checkForDuplicates = null }) {
+export default function ProductModal({ products, existingItems = [], editingItem = null, onClose, onSubmit, checkForDuplicates = null }) {
     const {
         selectedProduct,
         selectedProductName,
@@ -22,7 +22,7 @@ export default function ProductModal({ products, existingItems = [], onClose, on
         updateVariant,
         handleSubmit,
         isValid,
-    } = useProductModal(products, existingItems, checkForDuplicates);
+    } = useProductModal(products, existingItems, checkForDuplicates, editingItem);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('es-AR', {
@@ -42,7 +42,7 @@ export default function ProductModal({ products, existingItems = [], onClose, on
         <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
             <Card className="max-h-[90vh] w-full max-w-2xl overflow-y-auto">
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle>Agregar Producto</CardTitle>
+                    <CardTitle>{editingItem ? 'Editar Producto' : 'Agregar Producto'}</CardTitle>
                     <Button type="button" variant="ghost" size="sm" onClick={onClose}>
                         <X className="h-4 w-4" />
                     </Button>
@@ -143,7 +143,13 @@ export default function ProductModal({ products, existingItems = [], onClose, on
                             Cancelar
                         </Button>
                         <Button type="button" onClick={onModalSubmit} disabled={!isValid}>
-                            {isVariantMode ? 'Agregar Variantes' : 'Agregar Item'}
+                            {editingItem
+                                ? isVariantMode
+                                    ? 'Actualizar Variantes'
+                                    : 'Actualizar Item'
+                                : isVariantMode
+                                  ? 'Agregar Variantes'
+                                  : 'Agregar Item'}
                         </Button>
                     </div>
                 </CardContent>

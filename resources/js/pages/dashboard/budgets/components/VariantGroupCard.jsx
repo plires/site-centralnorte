@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { Package, Trash2 } from 'lucide-react';
+import { Edit, Package, Trash2 } from 'lucide-react';
 
-export default function VariantGroupCard({ group, items, selectedVariants, onVariantChange, onRemove }) {
+export default function VariantGroupCard({ group, items, selectedVariants, onVariantChange, onEdit, onRemove }) {
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -27,9 +27,26 @@ export default function VariantGroupCard({ group, items, selectedVariants, onVar
                         <h4 className="font-semibold">{items[0].product.name} - Opciones de cantidad</h4>
                         <p className="text-sm text-blue-600">Grupo de variantes ({items.length} opciones)</p>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-red-600 hover:bg-red-50 hover:text-red-700">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={onEdit}
+                            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                        >
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={onRemove}
+                            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export function useProductModal(products, existingItems = [], checkForDuplicates = null) {
+export function useProductModal(products, existingItems = [], checkForDuplicates = null, editingItem = null) {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [selectedProductName, setSelectedProductName] = useState('');
     const [variants, setVariants] = useState([
@@ -14,6 +14,66 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
     ]);
     const [isVariantMode, setIsVariantMode] = useState(false);
     const [validationErrors, setValidationErrors] = useState([]);
+
+    // Inicializar datos cuando se está editando
+    useEffect(() => {
+        if (editingItem) {
+            if (editingItem.isVariantGroup) {
+                // Editar grupo de variantes
+                const firstItem = editingItem.items[0];
+                const product = products.find((p) => p.id == firstItem.product_id);
+
+                if (product) {
+                    setSelectedProduct(product);
+                    setSelectedProductName(product.name);
+                    setIsVariantMode(true);
+
+                    const editVariants = editingItem.items.map((item) => ({
+                        id: item.id,
+                        quantity: item.quantity,
+                        unit_price: item.unit_price,
+                        production_time_days: item.production_time_days || '',
+                        logo_printing: item.logo_printing || '',
+                    }));
+
+                    setVariants(editVariants);
+                }
+            } else {
+                // Editar item individual
+                const product = products.find((p) => p.id == editingItem.product_id);
+
+                if (product) {
+                    setSelectedProduct(product);
+                    setSelectedProductName(product.name);
+                    setIsVariantMode(false);
+
+                    setVariants([
+                        {
+                            id: editingItem.id,
+                            quantity: editingItem.quantity,
+                            unit_price: editingItem.unit_price,
+                            production_time_days: editingItem.production_time_days || '',
+                            logo_printing: editingItem.logo_printing || '',
+                        },
+                    ]);
+                }
+            }
+        } else {
+            // Resetear para nuevo item
+            setSelectedProduct(null);
+            setSelectedProductName('');
+            setIsVariantMode(false);
+            setVariants([
+                {
+                    id: Date.now(),
+                    quantity: 1,
+                    unit_price: 0,
+                    production_time_days: '',
+                    logo_printing: '',
+                },
+            ]);
+        }
+    }, [editingItem, products]);
 
     const generateVariantGroup = (productName) => {
         const timestamp = Date.now();
@@ -61,7 +121,7 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
                       },
                   ];
 
-        const duplicates = checkForDuplicates(newItems);
+        const duplicates = checkForDuplicates(newItems, editingItem);
         setValidationErrors(duplicates);
         return duplicates.length === 0;
     };
@@ -121,10 +181,10 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
         if (!selectedProduct || !validateVariants()) return [];
 
         if (isVariantMode && variants.length > 0) {
-            const variantGroup = generateVariantGroup(selectedProduct.name);
+            const variantGroup = editingItem?.isVariantGroup ? editingItem.group : generateVariantGroup(selectedProduct.name);
 
             return variants.map((variant, index) => ({
-                id: `${Date.now()}_${index}`,
+                id: editingItem?.isVariantGroup ? variant.id : `${Date.now()}_${index}`,
                 product_id: selectedProduct.id,
                 product: selectedProduct,
                 quantity: variant.quantity,
@@ -138,7 +198,7 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
         } else {
             return [
                 {
-                    id: Date.now(),
+                    id: editingItem && !editingItem.isVariantGroup ? editingItem.id : Date.now(),
                     product_id: selectedProduct.id,
                     product: selectedProduct,
                     quantity: variants[0].quantity,

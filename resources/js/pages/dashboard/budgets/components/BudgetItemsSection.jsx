@@ -10,8 +10,9 @@ import VariantGroupCard from './VariantGroupCard';
 
 export default function BudgetItemsSection({ data, setData, products, selectedVariants, onVariantChange, onItemsChange }) {
     const [showProductModal, setShowProductModal] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
 
-    const { organizedItems, handleAddItems, handleRemoveItem, checkForDuplicateVariants } = useBudgetItems(
+    const { organizedItems, handleAddItems, handleRemoveItem, handleEditItem, checkForDuplicateVariants } = useBudgetItems(
         data,
         setData,
         selectedVariants,
@@ -19,8 +20,30 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
     );
 
     const handleProductsAdded = (newItems) => {
-        handleAddItems(newItems);
+        if (editingItem) {
+            // Modo edición: reemplazar item existente
+            handleEditItem(editingItem, newItems);
+            setEditingItem(null);
+        } else {
+            // Modo creación: agregar nuevos items
+            handleAddItems(newItems);
+        }
         setShowProductModal(false);
+    };
+
+    const handleEditProduct = (item) => {
+        setEditingItem(item);
+        setShowProductModal(true);
+    };
+
+    const handleEditVariantGroup = (group, items) => {
+        setEditingItem({ group, items, isVariantGroup: true });
+        setShowProductModal(true);
+    };
+
+    const closeModal = () => {
+        setShowProductModal(false);
+        setEditingItem(null);
     };
 
     return (
@@ -45,7 +68,12 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
                         <div className="space-y-6">
                             {/* Items regulares */}
                             {organizedItems.regular.map((item, index) => (
-                                <RegularItemCard key={item.id} item={item} onRemove={() => handleRemoveItem(data.items.indexOf(item))} />
+                                <RegularItemCard
+                                    key={item.id}
+                                    item={item}
+                                    onEdit={() => handleEditProduct(item)}
+                                    onRemove={() => handleRemoveItem(data.items.indexOf(item))}
+                                />
                             ))}
 
                             {/* Grupos de variantes */}
@@ -56,6 +84,7 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
                                     items={items}
                                     selectedVariants={selectedVariants}
                                     onVariantChange={onVariantChange}
+                                    onEdit={() => handleEditVariantGroup(group, items)}
                                     onRemove={() => handleRemoveItem(data.items.indexOf(items[0]))}
                                 />
                             ))}
@@ -68,7 +97,8 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
                 <ProductModal
                     products={products}
                     existingItems={data.items}
-                    onClose={() => setShowProductModal(false)}
+                    editingItem={editingItem}
+                    onClose={closeModal}
                     onSubmit={handleProductsAdded}
                     checkForDuplicates={checkForDuplicateVariants}
                 />
