@@ -85,7 +85,13 @@ class BudgetController extends Controller
             'user',
             'client',
             'items' => function ($query) {
-                $query->with('product')->orderBy('sort_order');
+                $query->with([
+                    'product' => function ($query) {
+                        $query->with(['images' => function ($query) {
+                            $query->where('is_featured', true)->limit(1);
+                        }]);
+                    }
+                ])->orderBy('sort_order');
             }
         ]);
 
@@ -112,6 +118,98 @@ class BudgetController extends Controller
             'regularItems' => $regularItems,
             'variantGroups' => $organizedItems,
             'hasVariants' => $budget->hasVariants(),
+        ]);
+    }
+
+    public function create()
+    {
+
+        $userAuth = Auth::user();
+
+        // Obtener clientes para el select
+        $clients = Client::select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        // Obtener productos con sus imágenes para el selector
+        $products = Product::with(['images' => function ($query) {
+            $query->where('is_featured', true)->limit(1);
+        }])
+            ->select('id', 'name', 'description', 'last_price')
+            ->orderBy('name')
+            ->get();
+
+        // Si algún producto no tiene imagen featured, cargar la primera disponible
+        foreach ($products as $product) {
+            if ($product->images->isEmpty()) {
+                $product->load(['images' => function ($query) {
+                    $query->limit(1);
+                }]);
+            }
+        }
+
+        return Inertia::render('dashboard/budgets/Create', [
+            'clients' => $clients,
+            'products' => $products,
+            'user' => $userAuth,
+        ]);
+    }
+
+    public function edit(Budget $budget)
+    {
+
+        $userAuth = Auth::user();
+
+        // Cargar relaciones necesarias para edición
+        $budget->load([
+            'client',
+            'items' => function ($query) {
+                $query->with([
+                    'product' => function ($query) {
+                        $query->with(['images' => function ($query) {
+                            $query->where('is_featured', true)->limit(1);
+                        }]);
+                    }
+                ])->orderBy('sort_order');
+            }
+        ]);
+
+        // Si algún producto no tiene imagen featured, cargar la primera disponible
+        foreach ($budget->items as $item) {
+            if ($item->product->images->isEmpty()) {
+                $item->product->load(['images' => function ($query) {
+                    $query->limit(1);
+                }]);
+            }
+        }
+
+        // Obtener clientes para el select
+        $clients = Client::select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
+
+        // Obtener productos con sus imágenes para el selector
+        $products = Product::with(['images' => function ($query) {
+            $query->where('is_featured', true)->limit(1);
+        }])
+            ->select('id', 'name', 'description', 'last_price')
+            ->orderBy('name')
+            ->get();
+
+        // Si algún producto no tiene imagen featured, cargar la primera disponible
+        foreach ($products as $product) {
+            if ($product->images->isEmpty()) {
+                $product->load(['images' => function ($query) {
+                    $query->limit(1);
+                }]);
+            }
+        }
+
+        return Inertia::render('dashboard/budgets/Create', [
+            'clients' => $clients,
+            'products' => $products,
+            'user' => $userAuth,
+            'budget' => $budget,
         ]);
     }
 
