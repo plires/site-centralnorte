@@ -155,61 +155,18 @@ class BudgetController extends Controller
         ]);
     }
 
+    // En tu controlador
     public function edit(Budget $budget)
     {
-
         $userAuth = Auth::user();
 
-        // Cargar relaciones necesarias para edición
-        $budget->load([
-            'client',
-            'items' => function ($query) {
-                $query->with([
-                    'product' => function ($query) {
-                        $query->with(['images' => function ($query) {
-                            $query->where('is_featured', true)->limit(1);
-                        }]);
-                    }
-                ])->orderBy('sort_order');
-            }
-        ]);
+        $budget->load(['client', 'items.product.images']);
 
-        // Si algún producto no tiene imagen featured, cargar la primera disponible
-        foreach ($budget->items as $item) {
-            if ($item->product->images->isEmpty()) {
-                $item->product->load(['images' => function ($query) {
-                    $query->limit(1);
-                }]);
-            }
-        }
-
-        // Obtener clientes para el select
-        $clients = Client::select('id', 'name', 'email')
-            ->orderBy('name')
-            ->get();
-
-        // Obtener productos con sus imágenes para el selector
-        $products = Product::with(['images' => function ($query) {
-            $query->where('is_featured', true)->limit(1);
-        }])
-            ->select('id', 'name', 'description', 'last_price')
-            ->orderBy('name')
-            ->get();
-
-        // Si algún producto no tiene imagen featured, cargar la primera disponible
-        foreach ($products as $product) {
-            if ($product->images->isEmpty()) {
-                $product->load(['images' => function ($query) {
-                    $query->limit(1);
-                }]);
-            }
-        }
-
-        return Inertia::render('dashboard/budgets/Create', [
-            'clients' => $clients,
-            'products' => $products,
-            'user' => $userAuth,
+        return Inertia::render('dashboard/budgets/Edit', [
             'budget' => $budget,
+            'clients' => Client::all(),
+            'products' => Product::with('images')->get(),
+            'user' => $userAuth,
         ]);
     }
 

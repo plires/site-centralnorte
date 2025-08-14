@@ -57,7 +57,7 @@ export default function VariantForm({ variant, index, isVariantMode, canRemove, 
     };
 
     return (
-        <div className={`rounded-lg border p-4 ${isVariantMode ? 'bg-white' : ''} ${hasError ? 'border-red-300 bg-red-50' : ''}`}>
+        <div className={`rounded-lg border p-4 ${isVariantMode ? 'bg-white' : ''}`}>
             {isVariantMode && (
                 <div className="mb-3 flex items-center justify-between">
                     <h5 className="text-sm font-medium">Variante {index + 1}</h5>

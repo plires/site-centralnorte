@@ -34,29 +34,21 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
                     return; // Saltar el item que se está editando
                 }
 
-                if (
-                    existingItem.product_id === newItem.product_id &&
-                    existingItem.quantity === newItem.quantity &&
-                    existingItem.unit_price === newItem.unit_price
-                ) {
+                // Validar duplicados por producto (solo si es un producto diferente al que se está editando)
+                if (existingItem.product_id === newItem.product_id) {
                     duplicates.push({
                         newIndex,
-                        message: `Ya existe un item de "${newItem.product.name}" con cantidad ${newItem.quantity} y precio ${formatCurrency(newItem.unit_price)}`,
+                        message: `El producto "${newItem.product.name}" ya existe en el presupuesto y será reemplazado`,
                     });
                 }
             });
 
             // Verificar contra otros items nuevos (dentro del mismo modal)
             newItems.forEach((otherNewItem, otherIndex) => {
-                if (
-                    newIndex !== otherIndex &&
-                    newItem.product_id === otherNewItem.product_id &&
-                    newItem.quantity === otherNewItem.quantity &&
-                    newItem.unit_price === otherNewItem.unit_price
-                ) {
+                if (newIndex !== otherIndex && newItem.product_id === otherNewItem.product_id) {
                     duplicates.push({
                         newIndex,
-                        message: `Variante ${newIndex + 1} duplicada con variante ${otherIndex + 1}`,
+                        message: `Producto duplicado en variantes ${newIndex + 1} y ${otherIndex + 1}`,
                     });
                 }
             });
@@ -73,52 +65,61 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
     };
 
     const handleAddItems = (newItems) => {
-        if (newItems.length === 1 && !newItems[0].variant_group) {
-            // Lógica para productos individuales: sumar cantidades si ya existe
-            const newItem = newItems[0];
-            const existingItemIndex = data.items.findIndex((item) => item.product_id === newItem.product_id && !item.variant_group);
+        let updatedItems = [...data.items];
 
-            if (existingItemIndex !== -1) {
-                // El producto ya existe, sumar cantidades y actualizar precio
-                const updatedItems = [...data.items];
-                const existingItem = updatedItems[existingItemIndex];
+        // Verificar si los nuevos items son variantes o individuales
+        const isVariantGroup = newItems.length > 1 || (newItems.length === 1 && newItems[0].variant_group);
 
-                updatedItems[existingItemIndex] = {
-                    ...existingItem,
-                    quantity: existingItem.quantity + newItem.quantity,
-                    unit_price: newItem.unit_price, // Tomar el último precio
-                    line_total: (existingItem.quantity + newItem.quantity) * newItem.unit_price,
-                    // Actualizar otros campos si están presentes
-                    production_time_days: newItem.production_time_days || existingItem.production_time_days,
-                    logo_printing: newItem.logo_printing || existingItem.logo_printing,
-                };
+        if (isVariantGroup) {
+            // Para grupos de variantes: remover cualquier línea del mismo producto
+            const productId = newItems[0].product_id;
+            updatedItems = updatedItems.filter((item) => item.product_id !== productId);
 
-                setData('items', updatedItems);
-            } else {
-                // Producto nuevo, agregarlo normalmente
-                setData('items', [...data.items, newItem]);
-            }
+            // Agregar todas las nuevas variantes
+            updatedItems = [...updatedItems, ...newItems];
         } else {
-            // Para variantes, agreggar normalmente (ya se validaron duplicados en el modal)
-            setData('items', [...data.items, ...newItems]);
+            // Para producto individual: remover cualquier línea del mismo producto
+            const newItem = newItems[0];
+            updatedItems = updatedItems.filter((item) => item.product_id !== newItem.product_id);
+
+            // Agregar el nuevo item
+            updatedItems.push(newItem);
         }
 
+        setData('items', updatedItems);
         setTimeout(() => onItemsChange(), 0);
     };
 
     const handleEditItem = (editingItem, newItems) => {
         let updatedItems = [...data.items];
 
+        // Primero, remover el item/grupo que se está editando
         if (editingItem.isVariantGroup) {
-            // Editar grupo de variantes: remover grupo completo y agregar nuevos items
+            // Remover todo el grupo de variantes que se está editando
             updatedItems = updatedItems.filter((item) => item.variant_group !== editingItem.group);
         } else {
-            // Editar item individual: remover item específico
+            // Remover el item individual que se está editando
             updatedItems = updatedItems.filter((item) => item.id !== editingItem.id);
         }
 
-        // Agregar los nuevos items
-        updatedItems = [...updatedItems, ...newItems];
+        // Verificar si los nuevos items son variantes o individuales
+        const isVariantGroup = newItems.length > 1 || (newItems.length === 1 && newItems[0].variant_group);
+
+        if (isVariantGroup) {
+            // Para grupos de variantes: remover cualquier línea existente del mismo producto
+            const productId = newItems[0].product_id;
+            updatedItems = updatedItems.filter((item) => item.product_id !== productId);
+
+            // Agregar todas las nuevas variantes
+            updatedItems = [...updatedItems, ...newItems];
+        } else {
+            // Para producto individual: remover cualquier línea existente del mismo producto
+            const newItem = newItems[0];
+            updatedItems = updatedItems.filter((item) => item.product_id !== newItem.product_id);
+
+            // Agregar el nuevo item
+            updatedItems.push(newItem);
+        }
 
         setData('items', updatedItems);
         setTimeout(() => onItemsChange(), 0);

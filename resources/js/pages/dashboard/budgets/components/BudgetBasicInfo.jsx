@@ -3,10 +3,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function BudgetBasicInfo({ data, setData, errors, clients }) {
+export default function BudgetBasicInfo({ data, setData, errors, clients, isEditing = false }) {
     const [selectedClientName, setSelectedClientName] = useState('');
+
+    // Inicializar cliente seleccionado cuando se está editando
+    useEffect(() => {
+        if (isEditing && data.client_id) {
+            const client = clients.find((c) => c.id.toString() === data.client_id);
+            if (client) {
+                setSelectedClientName(client.name);
+            }
+        }
+    }, [isEditing, data.client_id, clients]);
 
     const handleClientSelect = (clientId) => {
         const client = clients.find((c) => c.id == clientId);

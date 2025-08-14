@@ -74,6 +74,7 @@ export default function Create({ clients, products, user, budget = null }) {
                 products={products}
                 user={user}
                 isEditing={isEditing}
+                originalBudget={budget}
             />
         </AppLayout>
     );

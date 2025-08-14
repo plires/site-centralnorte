@@ -21,7 +21,18 @@ import BudgetDateSection from './BudgetDateSection';
 import BudgetItemsSection from './BudgetItemsSection';
 import BudgetTotalsSection from './BudgetTotalsSection';
 
-export default function BudgetForm({ data, setData, handleSubmit, processing, errors, clients, products, user, isEditing = false }) {
+export default function BudgetForm({
+    data,
+    setData,
+    handleSubmit,
+    processing,
+    errors,
+    clients,
+    products,
+    user,
+    isEditing = false,
+    originalBudget = null,
+}) {
     const [showExitDialog, setShowExitDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState(null);
 
@@ -51,9 +62,9 @@ export default function BudgetForm({ data, setData, handleSubmit, processing, er
                 <form onSubmit={handleSubmit} className="space-y-6 p-6">
                     {/* Información básica del presupuesto */}
                     <div className="grid gap-6 md:grid-cols-2">
-                        <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} />
+                        <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} isEditing={isEditing} />
 
-                        <BudgetDateSection data={data} setData={setData} errors={errors} user={user} />
+                        <BudgetDateSection data={data} setData={setData} errors={errors} user={user} isEditing={isEditing} />
                     </div>
 
                     {/* Items del presupuesto */}

@@ -3,15 +3,21 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CalendarDays } from 'lucide-react';
 
-export default function BudgetDateSection({ data, setData, errors, user }) {
+export default function BudgetDateSection({ data, setData, errors, user, isEditing = false }) {
     const getMinIssueDate = () => {
         return new Date().toISOString().split('T')[0];
     };
 
     const getMinExpiryDate = () => {
+        // Para vencimiento, mínimo debe ser mañana o un día después de la fecha de emisión
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+
+        const issueDate = new Date(data.issue_date);
+        issueDate.setDate(issueDate.getDate() + 1);
+
+        // Tomar la fecha mayor entre mañana y un día después de la emisión
+        return issueDate > tomorrow ? issueDate.toISOString().split('T')[0] : tomorrow.toISOString().split('T')[0];
     };
 
     return (
@@ -34,6 +40,7 @@ export default function BudgetDateSection({ data, setData, errors, user }) {
                         className={errors.issue_date ? 'border-red-500' : ''}
                     />
                     {errors.issue_date && <p className="mt-1 text-sm text-red-600">{errors.issue_date}</p>}
+                    {isEditing && <p className="mt-1 text-xs text-gray-500">La fecha de emisión no puede ser anterior a hoy</p>}
                 </div>
 
                 <div>
@@ -47,6 +54,7 @@ export default function BudgetDateSection({ data, setData, errors, user }) {
                         className={errors.expiry_date ? 'border-red-500' : ''}
                     />
                     {errors.expiry_date && <p className="mt-1 text-sm text-red-600">{errors.expiry_date}</p>}
+                    {isEditing && <p className="mt-1 text-xs text-gray-500">Debe ser al menos un día posterior a la fecha de emisión</p>}
                 </div>
 
                 <div>

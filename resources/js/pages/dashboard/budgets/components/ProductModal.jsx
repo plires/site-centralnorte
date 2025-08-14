@@ -79,21 +79,24 @@ export default function ProductModal({ products, existingItems = [], editingItem
                         </Select>
                     </div>
 
-                    {/* Mostrar errores de validación */}
+                    {/* Mostrar avisos informativos */}
                     {validationErrors.length > 0 && (
-                        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                            <h4 className="mb-2 flex items-center gap-2 font-medium text-red-800">
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+                            <h4 className="mb-2 flex items-center gap-2 font-medium text-amber-800">
                                 <X className="h-4 w-4" />
-                                Productos duplicados detectados
+                                Productos existentes serán reemplazados
                             </h4>
-                            <ul className="space-y-1 text-sm text-red-700">
+                            <ul className="space-y-1 text-sm text-amber-700">
                                 {validationErrors.map((error, index) => (
                                     <li key={index} className="flex items-start gap-2">
-                                        <span className="text-red-500">•</span>
+                                        <span className="text-amber-500">•</span>
                                         {error.message}
                                     </li>
                                 ))}
                             </ul>
+                            <p className="mt-2 text-xs text-amber-600">
+                                Al confirmar, las líneas existentes de estos productos serán eliminadas y reemplazadas por las nuevas.
+                            </p>
                         </div>
                     )}
 
@@ -134,6 +137,11 @@ export default function ProductModal({ products, existingItems = [], editingItem
                                     Agregar variante
                                 </Button>
                             </div>
+                            {variants.length < 2 && (
+                                <p className="mb-3 text-sm text-blue-600">
+                                    <strong>Nota:</strong> Los productos con variantes deben tener al menos 2 opciones diferentes.
+                                </p>
+                            )}
                         </div>
                     )}
 
@@ -142,7 +150,13 @@ export default function ProductModal({ products, existingItems = [], editingItem
                         <Button type="button" variant="outline" onClick={onClose}>
                             Cancelar
                         </Button>
-                        <Button type="button" onClick={onModalSubmit} disabled={!isValid}>
+                        <Button
+                            type="button"
+                            onClick={onModalSubmit}
+                            disabled={!isValid}
+                            className={`${!isValid && isVariantMode && variants.length < 2 ? 'opacity-50' : ''}`}
+                            title={!isValid && isVariantMode && variants.length < 2 ? 'Agregue al menos 2 variantes' : ''}
+                        >
                             {editingItem
                                 ? isVariantMode
                                     ? 'Actualizar Variantes'

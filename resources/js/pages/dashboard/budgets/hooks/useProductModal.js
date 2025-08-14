@@ -122,8 +122,30 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
                   ];
 
         const duplicates = checkForDuplicates(newItems, editingItem);
-        setValidationErrors(duplicates);
-        return duplicates.length === 0;
+
+        // Filtrar solo duplicados reales (no incluir avisos informativos cuando es el mismo producto en edición)
+        const realDuplicates = duplicates.filter((duplicate) => {
+            // Si estamos editando y es el mismo producto, no mostrar aviso
+            if (editingItem && !editingItem.isVariantGroup && selectedProduct.id === editingItem.product_id) {
+                return false;
+            }
+
+            // Si estamos editando grupo de variantes y es el mismo producto, no mostrar aviso
+            if (
+                editingItem &&
+                editingItem.isVariantGroup &&
+                editingItem.items &&
+                editingItem.items[0] &&
+                selectedProduct.id === editingItem.items[0].product_id
+            ) {
+                return false;
+            }
+
+            return true;
+        });
+
+        setValidationErrors(realDuplicates);
+        return true; // Siempre devolver true porque ahora son solo avisos informativos
     };
 
     // Validar cada vez que cambien las variantes
@@ -136,6 +158,16 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
         if (product) {
             setSelectedProduct(product);
             setSelectedProductName(product.name);
+
+            // Si se está editando y se cambia a un producto diferente,
+            // destildar automáticamente el modo variante
+            if (
+                editingItem &&
+                ((editingItem.isVariantGroup && editingItem.items[0]?.product_id != productId) ||
+                    (!editingItem.isVariantGroup && editingItem.product_id != productId))
+            ) {
+                setIsVariantMode(false);
+            }
 
             const newVariant = {
                 id: Date.now(),
@@ -178,7 +210,10 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
     };
 
     const handleSubmit = () => {
-        if (!selectedProduct || !validateVariants()) return [];
+        if (!selectedProduct) return [];
+
+        // Validar antes de proceder (aunque ya no bloquea, es buena práctica)
+        validateVariants();
 
         if (isVariantMode && variants.length > 0) {
             const variantGroup = editingItem?.isVariantGroup ? editingItem.group : generateVariantGroup(selectedProduct.name);
@@ -213,7 +248,7 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
         }
     };
 
-    const isValid = selectedProduct && variants.every((v) => v.quantity > 0 && v.unit_price >= 0) && validationErrors.length === 0;
+    const isValid = selectedProduct && variants.every((v) => v.quantity > 0 && v.unit_price >= 0) && (!isVariantMode || variants.length >= 2); // Mínimo 2 variantes si está en modo variante
 
     return {
         selectedProduct,
