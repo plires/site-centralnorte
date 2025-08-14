@@ -11,7 +11,12 @@ import VariantGroupCard from './VariantGroupCard';
 export default function BudgetItemsSection({ data, setData, products, selectedVariants, onVariantChange, onItemsChange }) {
     const [showProductModal, setShowProductModal] = useState(false);
 
-    const { organizedItems, handleAddItems, handleRemoveItem } = useBudgetItems(data, setData, selectedVariants, onItemsChange);
+    const { organizedItems, handleAddItems, handleRemoveItem, checkForDuplicateVariants } = useBudgetItems(
+        data,
+        setData,
+        selectedVariants,
+        onItemsChange,
+    );
 
     const handleProductsAdded = (newItems) => {
         handleAddItems(newItems);
@@ -59,7 +64,15 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
                 </CardContent>
             </Card>
 
-            {showProductModal && <ProductModal products={products} onClose={() => setShowProductModal(false)} onSubmit={handleProductsAdded} />}
+            {showProductModal && (
+                <ProductModal
+                    products={products}
+                    existingItems={data.items}
+                    onClose={() => setShowProductModal(false)}
+                    onSubmit={handleProductsAdded}
+                    checkForDuplicates={checkForDuplicateVariants}
+                />
+            )}
         </>
     );
 }

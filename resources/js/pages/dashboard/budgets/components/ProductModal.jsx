@@ -8,12 +8,13 @@ import { Package, Plus, X } from 'lucide-react';
 import { useProductModal } from '../hooks/useProductModal';
 import VariantForm from './VariantForm';
 
-export default function ProductModal({ products, onClose, onSubmit }) {
+export default function ProductModal({ products, existingItems = [], onClose, onSubmit, checkForDuplicates = null }) {
     const {
         selectedProduct,
         selectedProductName,
         variants,
         isVariantMode,
+        validationErrors,
         handleProductSelect,
         handleVariantModeChange,
         addVariant,
@@ -21,7 +22,7 @@ export default function ProductModal({ products, onClose, onSubmit }) {
         updateVariant,
         handleSubmit,
         isValid,
-    } = useProductModal(products);
+    } = useProductModal(products, existingItems, checkForDuplicates);
 
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('es-AR', {
@@ -78,19 +79,41 @@ export default function ProductModal({ products, onClose, onSubmit }) {
                         </Select>
                     </div>
 
+                    {/* Mostrar errores de validación */}
+                    {validationErrors.length > 0 && (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                            <h4 className="mb-2 flex items-center gap-2 font-medium text-red-800">
+                                <X className="h-4 w-4" />
+                                Productos duplicados detectados
+                            </h4>
+                            <ul className="space-y-1 text-sm text-red-700">
+                                {validationErrors.map((error, index) => (
+                                    <li key={index} className="flex items-start gap-2">
+                                        <span className="text-red-500">•</span>
+                                        {error.message}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
                     {/* Formularios de variantes */}
                     <div className="space-y-4">
-                        {variants.map((variant, index) => (
-                            <VariantForm
-                                key={variant.id}
-                                variant={variant}
-                                index={index}
-                                isVariantMode={isVariantMode}
-                                canRemove={variants.length > 1}
-                                onUpdate={updateVariant}
-                                onRemove={() => removeVariant(variant.id)}
-                            />
-                        ))}
+                        {variants.map((variant, index) => {
+                            const hasError = validationErrors.some((error) => error.newIndex === index);
+                            return (
+                                <VariantForm
+                                    key={variant.id}
+                                    variant={variant}
+                                    index={index}
+                                    isVariantMode={isVariantMode}
+                                    canRemove={variants.length > 1}
+                                    onUpdate={updateVariant}
+                                    onRemove={() => removeVariant(variant.id)}
+                                    hasError={hasError}
+                                />
+                            );
+                        })}
                     </div>
 
                     {/* Checkbox de variantes */}

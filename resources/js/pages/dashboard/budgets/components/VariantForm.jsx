@@ -4,7 +4,7 @@ import { Label } from '@/components/ui/label';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-export default function VariantForm({ variant, index, isVariantMode, canRemove, onUpdate, onRemove }) {
+export default function VariantForm({ variant, index, isVariantMode, canRemove, onUpdate, onRemove, hasError = false }) {
     const [inputValues, setInputValues] = useState({});
 
     const formatCurrency = (amount) => {
@@ -57,7 +57,7 @@ export default function VariantForm({ variant, index, isVariantMode, canRemove, 
     };
 
     return (
-        <div className={`rounded-lg border p-4 ${isVariantMode ? 'bg-white' : ''}`}>
+        <div className={`rounded-lg border p-4 ${isVariantMode ? 'bg-white' : ''} ${hasError ? 'border-red-300 bg-red-50' : ''}`}>
             {isVariantMode && (
                 <div className="mb-3 flex items-center justify-between">
                     <h5 className="text-sm font-medium">Variante {index + 1}</h5>
