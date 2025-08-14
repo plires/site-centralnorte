@@ -4,8 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head } from '@inertiajs/react';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Building2, CalendarDays, Clock, Copy, DollarSign, Edit, Eye, Package, Send, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -24,6 +22,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
+        iva: 0,
         total: parseFloat(budget.total),
     });
 
@@ -54,9 +53,14 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
             }
         });
 
+        // Calcular IVA (21%)
+        const ivaAmount = newSubtotal * 0.21;
+        const totalWithIva = newSubtotal + ivaAmount;
+
         setCalculatedTotals({
             subtotal: newSubtotal,
-            total: newSubtotal,
+            iva: ivaAmount,
+            total: totalWithIva,
         });
     }, [selectedVariants, regularItems, variantGroups]);
 
@@ -75,7 +79,11 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
     };
 
     const formatDate = (date) => {
-        return format(new Date(date), 'dd/MM/yyyy', { locale: es });
+        return new Intl.DateTimeFormat('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+        }).format(new Date(date));
     };
 
     const getStatusBadge = () => {
@@ -177,34 +185,51 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                                             <div className="space-y-3">
                                                 {regularItems.map((item) => (
                                                     <div key={item.id} className="rounded-lg border p-4">
-                                                        <div className="flex items-start justify-between">
-                                                            <div className="flex-1 space-y-2">
-                                                                <h4 className="font-semibold">{item.product.name}</h4>
-                                                                <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                                                                    <div>
-                                                                        <span className="text-muted-foreground">Cantidad:</span>
-                                                                        <p className="font-medium">{item.quantity}</p>
+                                                        <div className="flex items-start gap-4">
+                                                            {/* Thumbnail del producto */}
+                                                            <div className="flex-shrink-0">
+                                                                {item.product.images && item.product.images.length > 0 ? (
+                                                                    <img
+                                                                        src={item.product.images[0].url}
+                                                                        alt={item.product.name}
+                                                                        className="h-16 w-16 rounded-lg border object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-gray-100">
+                                                                        <Package className="h-8 w-8 text-gray-400" />
                                                                     </div>
-                                                                    <div>
-                                                                        <span className="text-muted-foreground">Precio unit.:</span>
-                                                                        <p className="font-medium">{formatCurrency(item.unit_price)}</p>
-                                                                    </div>
-                                                                    {item.production_time_days && (
-                                                                        <div>
-                                                                            <span className="text-muted-foreground">Producción:</span>
-                                                                            <p className="font-medium">{item.production_time_days} días</p>
-                                                                        </div>
-                                                                    )}
-                                                                    {item.logo_printing && (
-                                                                        <div>
-                                                                            <span className="text-muted-foreground">Logo:</span>
-                                                                            <p className="font-medium">{item.logo_printing}</p>
-                                                                        </div>
-                                                                    )}
-                                                                </div>
+                                                                )}
                                                             </div>
-                                                            <div className="ml-4 text-right">
-                                                                <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
+
+                                                            <div className="flex flex-1 items-start justify-between">
+                                                                <div className="flex-1 space-y-2">
+                                                                    <h4 className="font-semibold">{item.product.name}</h4>
+                                                                    <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+                                                                        <div>
+                                                                            <span className="text-muted-foreground">Cantidad:</span>
+                                                                            <p className="font-medium">{item.quantity}</p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <span className="text-muted-foreground">Precio unit.:</span>
+                                                                            <p className="font-medium">{formatCurrency(item.unit_price)}</p>
+                                                                        </div>
+                                                                        {item.production_time_days && (
+                                                                            <div>
+                                                                                <span className="text-muted-foreground">Producción:</span>
+                                                                                <p className="font-medium">{item.production_time_days} días</p>
+                                                                            </div>
+                                                                        )}
+                                                                        {item.logo_printing && (
+                                                                            <div>
+                                                                                <span className="text-muted-foreground">Logo:</span>
+                                                                                <p className="font-medium">{item.logo_printing}</p>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="ml-4 text-right">
+                                                                    <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -217,8 +242,28 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                                             <div className="space-y-6">
                                                 {Object.entries(variantGroups).map(([group, items]) => (
                                                     <div key={group} className="rounded-lg border p-4">
-                                                        <h4 className="mb-4 font-semibold">{items[0].product.name} - Opciones de cantidad</h4>
-                                                        <div className="space-y-3">
+                                                        <div className="mb-4 flex items-start gap-4">
+                                                            {/* Thumbnail del producto (usar la primera imagen del grupo) */}
+                                                            <div className="flex-shrink-0">
+                                                                {items[0].product.images && items[0].product.images.length > 0 ? (
+                                                                    <img
+                                                                        src={items[0].product.images[0].url}
+                                                                        alt={items[0].product.name}
+                                                                        className="h-16 w-16 rounded-lg border object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-gray-100">
+                                                                        <Package className="h-8 w-8 text-gray-400" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex-1">
+                                                                <h4 className="font-semibold">{items[0].product.name} - Opciones de cantidad</h4>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="ml-20 space-y-3">
                                                             {items.map((item) => (
                                                                 <label
                                                                     key={item.id}
@@ -274,7 +319,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                             </Card>
 
                             {/* Totales y comentarios */}
-                            <div className="grid gap-6 md:grid-cols-2">
+                            <div className="grid gap-6 md:grid-cols-1">
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
@@ -286,6 +331,10 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                                         <div className="flex justify-between">
                                             <span>Subtotal:</span>
                                             <span className="font-semibold">{formatCurrency(calculatedTotals.subtotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>IVA (21%):</span>
+                                            <span className="font-semibold">{formatCurrency(calculatedTotals.iva)}</span>
                                         </div>
                                         <div className="flex justify-between border-t pt-2 text-lg font-bold">
                                             <span>Total:</span>
