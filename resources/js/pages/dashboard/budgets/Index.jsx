@@ -64,24 +64,6 @@ export default function Index({ auth, budgets, filters = {} }) {
                                 </ButtonCustom>
                             </div>
 
-                            {/* Filtros adicionales */}
-                            {/* <div className="mb-4 flex items-center gap-4">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-sm font-medium">Estado:</label>
-                                    <Select value={filters.status || ''} onValueChange={handleStatusFilter}>
-                                        <SelectTrigger className="w-40">
-                                            <SelectValue placeholder="Todos" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="">Todos</SelectItem>
-                                            <SelectItem value="active">Activos</SelectItem>
-                                            <SelectItem value="expiring_soon">Por vencer</SelectItem>
-                                            <SelectItem value="expired">Vencidos</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div> */}
-
                             <DataTable
                                 data={budgets.data || budgets}
                                 columns={columns}
