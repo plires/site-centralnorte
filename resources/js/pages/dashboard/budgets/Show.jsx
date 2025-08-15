@@ -3,8 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
-import { Building2, CalendarDays, Clock, Copy, DollarSign, Edit, Eye, Package, Send, User } from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { AlertTriangle, Building2, CalendarDays, Clock, Copy, DollarSign, Edit, ExternalLink, Mail, Package, Send, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 const breadcrumbs = [
@@ -18,7 +18,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Show({ budget, regularItems, variantGroups, hasVariants }) {
+export default function Show({ budget, regularItems, variantGroups, hasVariants, ivaRate }) {
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
@@ -53,8 +53,8 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
             }
         });
 
-        // Calcular IVA (21%)
-        const ivaAmount = newSubtotal * 0.21;
+        // Calcular IVA usando la configuración del backend
+        const ivaAmount = newSubtotal * ivaRate;
         const totalWithIva = newSubtotal + ivaAmount;
 
         setCalculatedTotals({
@@ -62,7 +62,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
             iva: ivaAmount,
             total: totalWithIva,
         });
-    }, [selectedVariants, regularItems, variantGroups]);
+    }, [selectedVariants, regularItems, variantGroups, ivaRate]);
 
     const handleVariantChange = (group, itemId) => {
         setSelectedVariants((prev) => ({
@@ -83,17 +83,111 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
             day: '2-digit',
             month: '2-digit',
             year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(new Date(date));
+    };
+
+    const formatDateShort = (date) => {
+        return new Intl.DateTimeFormat('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
         }).format(new Date(date));
     };
 
     const getStatusBadge = () => {
+        const days = Math.abs(budget.days_until_expiry);
+
+        // Caso 1: Vence hoy
+        if (budget.is_expiring_today) {
+            return (
+                <Badge variant="warning" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Vence Hoy
+                </Badge>
+            );
+        }
+
+        // Caso 2: Ya vencido
         if (budget.is_expired) {
-            return <Badge variant="destructive">Vencido</Badge>;
+            if (days === 1) {
+                return (
+                    <Badge variant="destructive" className="flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Vencido hace 1 día
+                    </Badge>
+                );
+            } else {
+                return (
+                    <Badge variant="destructive" className="flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3" />
+                        Vencido
+                    </Badge>
+                );
+            }
         }
-        if (budget.days_until_expiry <= 3) {
-            return <Badge variant="warning">Por vencer</Badge>;
+
+        // Caso 3: Por vencer (próximos 3 días)
+        if (days <= 3 && days > 0) {
+            const dayText = days === 1 ? 'día' : 'días';
+            return (
+                <Badge variant="warning" className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    Vence en {days} {dayText}
+                </Badge>
+            );
         }
-        return <Badge variant="success">Activo</Badge>;
+
+        // Caso 4: Activo con tiempo suficiente
+        const dayText = days === 1 ? 'día' : 'días';
+        return (
+            <Badge variant="success" className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Activo ({days} {dayText} restantes)
+            </Badge>
+        );
+    };
+
+    const handleEdit = () => {
+        router.visit(route('dashboard.budgets.edit', budget.id));
+    };
+
+    const handleDuplicate = () => {
+        router.visit(route('dashboard.budgets.duplicate', budget.id));
+    };
+
+    const handleSendEmail = () => {
+        if (confirm('¿Estás seguro de que quieres enviar este presupuesto por email al cliente?')) {
+            router.post(
+                route('dashboard.budgets.send-email', budget.id),
+                {},
+                {
+                    onSuccess: () => {
+                        alert('Email enviado exitosamente');
+                    },
+                    onError: (errors) => {
+                        alert('Error al enviar el email: ' + (errors.message || 'Error desconocido'));
+                    },
+                },
+            );
+        }
+    };
+
+    const handleDelete = () => {
+        if (confirm('¿Estás seguro de que quieres eliminar este presupuesto? Esta acción no se puede deshacer.')) {
+            router.delete(route('dashboard.budgets.destroy', budget.id), {
+                onSuccess: () => {
+                    router.visit(route('dashboard.budgets.index'));
+                },
+            });
+        }
+    };
+
+    const handleViewPublic = () => {
+        // Usamos el ID en lugar del token para la vista pública
+        const publicUrl = route('public.budget.show', budget.id);
+        window.open(publicUrl, '_blank');
     };
 
     return (
@@ -106,69 +200,99 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                         <PageHeader backRoute={route('dashboard.budgets.index')} backText="Volver" />
 
                         <div className="space-y-6 p-6">
-                            {/* Información general del presupuesto */}
-                            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                            {/* Header del presupuesto */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-3xl font-bold text-gray-900">{budget.title}</h1>
+                                    <p className="mt-1 text-sm text-gray-500">Presupuesto #{budget.id}</p>
+                                </div>
+                                <div className="flex items-center gap-2">{getStatusBadge()}</div>
+                            </div>
+
+                            {/* Información básica del presupuesto */}
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                                 <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                            <Package className="h-4 w-4" />
-                                            Información General
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <User className="h-5 w-5" />
+                                            Información del Cliente
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-3">
                                         <div>
-                                            <p className="font-semibold">{budget.title}</p>
-                                            <p className="text-muted-foreground text-sm">Token: {budget.token}</p>
+                                            <dt className="text-sm font-medium text-gray-500">Nombre</dt>
+                                            <dd className="text-sm text-gray-900">{budget.client.name}</dd>
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span>Estado:</span>
-                                            {getStatusBadge()}
+                                        {budget.client.company && (
+                                            <div>
+                                                <dt className="text-sm font-medium text-gray-500">Empresa</dt>
+                                                <dd className="text-sm text-gray-900">{budget.client.company}</dd>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Email</dt>
+                                            <dd className="text-sm text-gray-900">{budget.client.email || 'No configurado'}</dd>
                                         </div>
                                     </CardContent>
                                 </Card>
 
                                 <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                            <Building2 className="h-4 w-4" />
-                                            Cliente
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        <div>
-                                            <p className="font-semibold">{budget.client.name}</p>
-                                            <p className="text-muted-foreground text-sm">{budget.client.email}</p>
-                                        </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <User className="h-4 w-4" />
-                                            <span>Vendedor: {budget.user.name}</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                <Card>
-                                    <CardHeader className="pb-3">
-                                        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-                                            <CalendarDays className="h-4 w-4" />
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                            <CalendarDays className="h-5 w-5" />
                                             Fechas
                                         </CardTitle>
                                     </CardHeader>
                                     <CardContent className="space-y-3">
                                         <div>
-                                            <span className="text-muted-foreground text-sm">Emisión:</span>
-                                            <p className="font-medium">{formatDate(budget.issue_date)}</p>
+                                            <dt className="text-sm font-medium text-gray-500">Fecha de emisión</dt>
+                                            <dd className="text-sm text-gray-900">{formatDateShort(budget.issue_date)}</dd>
                                         </div>
                                         <div>
-                                            <span className="text-muted-foreground text-sm">Vencimiento:</span>
-                                            <p className="font-medium">{formatDate(budget.expiry_date)}</p>
+                                            <dt className="text-sm font-medium text-gray-500">Fecha de vencimiento</dt>
+                                            <dd className="text-sm text-gray-900">{formatDateShort(budget.expiry_date)}</dd>
                                         </div>
-                                        <div className="flex items-center gap-2 text-sm">
-                                            <Clock className="h-4 w-4" />
-                                            <span>{budget.days_until_expiry} días restantes</span>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Última modificación</dt>
+                                            <dd className="text-sm text-gray-900">{formatDate(budget.updated_at)}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Vencimiento del presupuesto</dt>
+                                            <dd className="text-sm text-gray-900">
+                                                {budget.is_expiring_today ? (
+                                                    <span className="font-medium text-orange-600">Vence Hoy</span>
+                                                ) : budget.is_expired ? (
+                                                    <span className="font-medium text-red-600">
+                                                        {Math.abs(budget.days_until_expiry) === 1 ? 'Vencido hace 1 día' : 'Vencido'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="font-medium text-green-600">
+                                                        {budget.days_until_expiry === 1
+                                                            ? '1 día restante'
+                                                            : `${budget.days_until_expiry} días restantes`}
+                                                    </span>
+                                                )}
+                                            </dd>
                                         </div>
                                     </CardContent>
                                 </Card>
                             </div>
+
+                            {/* Vendedor */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Building2 className="h-5 w-5" />
+                                        Vendedor Asignado
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Nombre</dt>
+                                        <dd className="text-sm text-gray-900">{budget.user.name}</dd>
+                                    </div>
+                                </CardContent>
+                            </Card>
 
                             {/* Items del presupuesto */}
                             <Card>
@@ -179,206 +303,205 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants 
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="space-y-6">
-                                        {/* Items regulares */}
-                                        {regularItems.length > 0 && (
+                                    {/* Items regulares */}
+                                    {regularItems.length > 0 && (
+                                        <div className="space-y-4">
+                                            <h4 className="font-medium text-gray-900">Items Principales</h4>
                                             <div className="space-y-3">
                                                 {regularItems.map((item) => (
-                                                    <div key={item.id} className="rounded-lg border p-4">
-                                                        <div className="flex items-start gap-4">
-                                                            {/* Thumbnail del producto */}
-                                                            <div className="flex-shrink-0">
-                                                                {item.product.images && item.product.images.length > 0 ? (
-                                                                    <img
-                                                                        src={item.product.images[0].url}
-                                                                        alt={item.product.name}
-                                                                        className="h-16 w-16 rounded-lg border object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-gray-100">
-                                                                        <Package className="h-8 w-8 text-gray-400" />
-                                                                    </div>
+                                                    <div key={item.id} className="flex justify-between rounded-lg border p-4">
+                                                        <div className="flex gap-4">
+                                                            {item.product.images?.[0] && (
+                                                                <img
+                                                                    src={item.product.images[0].full_url || item.product.images[0].url}
+                                                                    alt={item.product.name}
+                                                                    className="h-16 w-16 rounded object-cover"
+                                                                />
+                                                            )}
+                                                            <div>
+                                                                <h5 className="font-medium text-gray-900">{item.product.name}</h5>
+                                                                {item.product.description && (
+                                                                    <p className="text-sm text-gray-500">{item.product.description}</p>
                                                                 )}
+                                                                <p className="text-sm text-gray-600">
+                                                                    Cantidad: {item.quantity} | Precio unit: {formatCurrency(item.unit_price)}
+                                                                </p>
                                                             </div>
-
-                                                            <div className="flex flex-1 items-start justify-between">
-                                                                <div className="flex-1 space-y-2">
-                                                                    <h4 className="font-semibold">{item.product.name}</h4>
-                                                                    <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                                                                        <div>
-                                                                            <span className="text-muted-foreground">Cantidad:</span>
-                                                                            <p className="font-medium">{item.quantity}</p>
-                                                                        </div>
-                                                                        <div>
-                                                                            <span className="text-muted-foreground">Precio unit.:</span>
-                                                                            <p className="font-medium">{formatCurrency(item.unit_price)}</p>
-                                                                        </div>
-                                                                        {item.production_time_days && (
-                                                                            <div>
-                                                                                <span className="text-muted-foreground">Producción:</span>
-                                                                                <p className="font-medium">{item.production_time_days} días</p>
-                                                                            </div>
-                                                                        )}
-                                                                        {item.logo_printing && (
-                                                                            <div>
-                                                                                <span className="text-muted-foreground">Logo:</span>
-                                                                                <p className="font-medium">{item.logo_printing}</p>
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                                <div className="ml-4 text-right">
-                                                                    <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
-                                                                </div>
-                                                            </div>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-medium text-gray-900">{formatCurrency(item.line_total)}</p>
                                                         </div>
                                                     </div>
                                                 ))}
                                             </div>
-                                        )}
+                                        </div>
+                                    )}
 
-                                        {/* Grupos de variantes */}
-                                        {Object.keys(variantGroups).length > 0 && (
-                                            <div className="space-y-6">
-                                                {Object.entries(variantGroups).map(([group, items]) => (
-                                                    <div key={group} className="rounded-lg border p-4">
-                                                        <div className="mb-4 flex items-start gap-4">
-                                                            {/* Thumbnail del producto (usar la primera imagen del grupo) */}
-                                                            <div className="flex-shrink-0">
-                                                                {items[0].product.images && items[0].product.images.length > 0 ? (
-                                                                    <img
-                                                                        src={items[0].product.images[0].url}
-                                                                        alt={items[0].product.name}
-                                                                        className="h-16 w-16 rounded-lg border object-cover"
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex h-16 w-16 items-center justify-center rounded-lg border bg-gray-100">
-                                                                        <Package className="h-8 w-8 text-gray-400" />
-                                                                    </div>
-                                                                )}
+                                    {/* Grupos de variantes - Nueva estructura */}
+                                    {Object.keys(variantGroups).map((group) => {
+                                        const variants = variantGroups[group];
+                                        const firstVariant = variants[0];
+                                        const productImage = firstVariant?.product?.images?.[0];
+
+                                        return (
+                                            <div key={group} className="mt-6">
+                                                <Card className="p-4 shadow-none">
+                                                    <CardHeader className="p-0 pb-3">
+                                                        <CardTitle className="flex items-center gap-3 text-lg">
+                                                            {productImage && (
+                                                                <img
+                                                                    src={productImage.full_url || productImage.url}
+                                                                    alt={firstVariant.product.name}
+                                                                    className="h-16 w-16 rounded object-cover"
+                                                                />
+                                                            )}
+                                                            <div>
+                                                                <div className="font-medium text-gray-900">{firstVariant.product.name}</div>
+                                                                <div className="text-sm font-normal text-gray-500">Selecciona una opción</div>
                                                             </div>
-
-                                                            <div className="flex-1">
-                                                                <h4 className="font-semibold">{items[0].product.name} - Opciones de cantidad</h4>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="ml-20 space-y-3">
-                                                            {items.map((item) => (
-                                                                <label
+                                                        </CardTitle>
+                                                    </CardHeader>
+                                                    <CardContent className="p-0">
+                                                        <div className="ml-0 space-y-2">
+                                                            {variants.map((item, index) => (
+                                                                <div
                                                                     key={item.id}
-                                                                    className="flex cursor-pointer items-center space-x-3 rounded border-2 p-3 transition-colors hover:bg-gray-50"
-                                                                    style={{
-                                                                        borderColor: selectedVariants[group] === item.id ? '#3b82f6' : '#e5e7eb',
-                                                                    }}
+                                                                    className={`flex cursor-pointer justify-between rounded-lg border p-3 transition-all duration-200 ${
+                                                                        selectedVariants[group] === item.id
+                                                                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                                    }`}
+                                                                    onClick={() => handleVariantChange(group, item.id)}
                                                                 >
-                                                                    <input
-                                                                        type="radio"
-                                                                        name={`variant_${group}`}
-                                                                        value={item.id}
-                                                                        checked={selectedVariants[group] === item.id}
-                                                                        onChange={() => handleVariantChange(group, item.id)}
-                                                                        className="text-blue-600"
-                                                                    />
-                                                                    <div className="flex flex-1 items-center justify-between">
-                                                                        <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-                                                                            <div>
-                                                                                <span className="text-muted-foreground">Cantidad:</span>
-                                                                                <p className="font-medium">{item.quantity}</p>
-                                                                            </div>
-                                                                            <div>
-                                                                                <span className="text-muted-foreground">Precio unit.:</span>
-                                                                                <p className="font-medium">{formatCurrency(item.unit_price)}</p>
-                                                                            </div>
-                                                                            {item.production_time_days && (
-                                                                                <div>
-                                                                                    <span className="text-muted-foreground">Producción:</span>
-                                                                                    <p className="font-medium">{item.production_time_days} días</p>
-                                                                                </div>
-                                                                            )}
-                                                                            {item.logo_printing && (
-                                                                                <div>
-                                                                                    <span className="text-muted-foreground">Logo:</span>
-                                                                                    <p className="font-medium">{item.logo_printing}</p>
-                                                                                </div>
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div
+                                                                            className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
+                                                                                selectedVariants[group] === item.id
+                                                                                    ? 'border-blue-500 bg-blue-500'
+                                                                                    : 'border-gray-300'
+                                                                            }`}
+                                                                        >
+                                                                            {selectedVariants[group] === item.id && (
+                                                                                <div className="h-2 w-2 rounded-full bg-white"></div>
                                                                             )}
                                                                         </div>
-                                                                        <div className="text-right">
-                                                                            <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
+                                                                        <div>
+                                                                            <p className="text-sm text-gray-600">
+                                                                                <strong>Cantidad:</strong> {item.quantity} |{' '}
+                                                                                <strong>Precio unit:</strong> {formatCurrency(item.unit_price)} |{' '}
+                                                                                <strong>Logo:</strong> {item.logo_printing ? item.logo_printing : '-'}{' '}
+                                                                                | <strong>Días Prod:</strong>{' '}
+                                                                                {item.production_time_days ? item.production_time_days : '-'}
+                                                                            </p>
                                                                         </div>
                                                                     </div>
-                                                                </label>
+                                                                    <div className="text-right">
+                                                                        <p className="font-medium text-gray-900">{formatCurrency(item.line_total)}</p>
+                                                                    </div>
+                                                                </div>
                                                             ))}
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    </CardContent>
+                                                </Card>
                                             </div>
-                                        )}
+                                        );
+                                    })}
+                                </CardContent>
+                            </Card>
+
+                            {/* Comentarios del footer */}
+                            {budget.footer_comments && (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Comentarios Adicionales</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="whitespace-pre-line text-gray-700">{budget.footer_comments}</p>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Totales */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <DollarSign className="h-5 w-5" />
+                                        Totales
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Subtotal</span>
+                                            <span className="font-medium">{formatCurrency(calculatedTotals.subtotal)}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">IVA ({Math.round(ivaRate * 100)}%)</span>
+                                            <span className="font-medium">{formatCurrency(calculatedTotals.iva)}</span>
+                                        </div>
+                                        <div className="border-t pt-2">
+                                            <div className="flex justify-between">
+                                                <span className="text-lg font-semibold">Total</span>
+                                                <span className="text-lg font-semibold text-green-600">{formatCurrency(calculatedTotals.total)}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            {/* Totales y comentarios */}
-                            <div className="grid gap-6 md:grid-cols-1">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle className="flex items-center gap-2">
-                                            <DollarSign className="h-5 w-5" />
-                                            Totales
-                                        </CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="space-y-3">
-                                        <div className="flex justify-between">
-                                            <span>Subtotal:</span>
-                                            <span className="font-semibold">{formatCurrency(calculatedTotals.subtotal)}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>IVA (21%):</span>
-                                            <span className="font-semibold">{formatCurrency(calculatedTotals.iva)}</span>
-                                        </div>
-                                        <div className="flex justify-between border-t pt-2 text-lg font-bold">
-                                            <span>Total:</span>
-                                            <span>{formatCurrency(calculatedTotals.total)}</span>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-
-                                {budget.footer_comments && (
-                                    <Card>
-                                        <CardHeader>
-                                            <CardTitle>Comentarios</CardTitle>
-                                        </CardHeader>
-                                        <CardContent>
-                                            <p className="text-sm whitespace-pre-wrap">{budget.footer_comments}</p>
-                                        </CardContent>
-                                    </Card>
-                                )}
-                            </div>
-
-                            {/* Acciones */}
+                            {/* Sección de acciones */}
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Acciones</CardTitle>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Package className="h-5 w-5" />
+                                        Acciones
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex flex-wrap gap-3">
-                                        <Button variant="outline" className="flex items-center gap-2">
-                                            <Edit className="h-4 w-4" />
+                                        <Button onClick={handleEdit} variant="outline" size="sm">
+                                            <Edit className="mr-2 h-4 w-4" />
                                             Editar
                                         </Button>
-                                        <Button variant="outline" className="flex items-center gap-2">
-                                            <Copy className="h-4 w-4" />
+
+                                        <Button onClick={handleDuplicate} variant="outline" size="sm">
+                                            <Copy className="mr-2 h-4 w-4" />
                                             Duplicar
                                         </Button>
-                                        <Button variant="outline" className="flex items-center gap-2">
-                                            <Eye className="h-4 w-4" />
-                                            Vista Pública
+
+                                        <Button onClick={handleSendEmail} variant="outline" size="sm" disabled={!budget.client?.email}>
+                                            <Send className="mr-2 h-4 w-4" />
+                                            {budget.email_sent ? 'Reenviar Email' : 'Enviar Email'}
                                         </Button>
-                                        <Button variant="outline" className="flex items-center gap-2">
-                                            <Send className="h-4 w-4" />
-                                            Enviar por Email
+
+                                        <Button onClick={handleViewPublic} variant="outline" size="sm">
+                                            <ExternalLink className="mr-2 h-4 w-4" />
+                                            Ver Vista Pública
+                                        </Button>
+
+                                        <Button onClick={handleDelete} variant="destructive" size="sm">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            Eliminar
                                         </Button>
                                     </div>
+
+                                    {budget.email_sent && (
+                                        <div className="mt-3 rounded-md border border-green-200 bg-green-50 p-3">
+                                            <p className="text-sm text-green-800">
+                                                <Mail className="mr-1 inline h-4 w-4" />
+                                                Email enviado el {formatDate(budget.email_sent_at)}
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {!budget.client?.email && (
+                                        <div className="mt-3 rounded-md border border-yellow-200 bg-yellow-50 p-3">
+                                            <p className="text-sm text-yellow-800">
+                                                <AlertTriangle className="mr-1 inline h-4 w-4" />
+                                                El cliente no tiene email configurado
+                                            </p>
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>

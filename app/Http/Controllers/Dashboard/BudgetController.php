@@ -97,6 +97,24 @@ class BudgetController extends Controller
             }
         ]);
 
+        // Calcular días hasta vencimiento correctamente
+        $now = now()->startOfDay(); // Comparar solo fechas sin horas
+        $expiryDate = $budget->expiry_date->startOfDay();
+
+        $diffInDays = $now->diffInDays($expiryDate, false); // false = signed difference
+
+        $isExpired = $expiryDate < $now;
+        $isExpiringToday = $expiryDate->isSameDay($now);
+
+        // Determinar días hasta vencimiento
+        if ($isExpiringToday) {
+            $daysUntilExpiry = 0; // Vence hoy
+        } elseif ($isExpired) {
+            $daysUntilExpiry = -abs($diffInDays); // Número negativo para vencidos
+        } else {
+            $daysUntilExpiry = $diffInDays; // Número positivo para futuros
+        }
+
         // Obtener grupos de variantes si existen
         $variantGroups = $budget->hasVariants() ? $budget->getVariantGroups() : [];
 
@@ -116,10 +134,31 @@ class BudgetController extends Controller
         }
 
         return Inertia::render('dashboard/budgets/Show', [
-            'budget' => $budget,
+            'budget' => [
+                'id' => $budget->id,
+                'title' => $budget->title,
+                'user_id' => $budget->user_id,
+                'client_id' => $budget->client_id,
+                'issue_date' => $budget->issue_date,
+                'expiry_date' => $budget->expiry_date,
+                'updated_at' => $budget->updated_at,
+                'is_active' => $budget->is_active,
+                'send_email_to_client' => $budget->send_email_to_client,
+                'email_sent' => $budget->email_sent,
+                'email_sent_at' => $budget->email_sent_at,
+                'footer_comments' => $budget->footer_comments,
+                'subtotal' => $budget->subtotal,
+                'total' => $budget->total,
+                'is_expired' => $isExpired,
+                'is_expiring_today' => $isExpiringToday,
+                'days_until_expiry' => $daysUntilExpiry,
+                'user' => $budget->user,
+                'client' => $budget->client,
+            ],
             'regularItems' => $regularItems,
             'variantGroups' => $organizedItems,
             'hasVariants' => $budget->hasVariants(),
+            'ivaRate' => config('business.tax.iva_rate'),
         ]);
     }
 
@@ -223,7 +262,6 @@ class BudgetController extends Controller
 
     public function update(BudgetRequest $request, Budget $budget)
     {
-
         DB::beginTransaction();
 
         try {

@@ -90,30 +90,21 @@ class Budget extends Model
         return $query->where('expiry_date', '<', now());
     }
 
-    // Accessors
-    public function getIsExpiredAttribute()
-    {
-        return $this->expiry_date < now();
-    }
-
-    public function getPublicUrlAttribute()
-    {
-        return route('public.budget.show', $this->token);
-    }
-
-    public function getDaysUntilExpiryAttribute()
-    {
-        return now()->diffInDays($this->expiry_date, false);
-    }
-
-    // Métodos de negocio
+    // Métodos de negocio actualizados en el modelo Budget
     public function calculateTotals()
     {
         $subtotal = $this->items->sum('line_total');
+        $ivaRate = config('business.tax.iva_rate');
+        $applyIva = config('business.tax.apply_iva');
+
+        $total = $subtotal;
+        if ($applyIva) {
+            $total = $subtotal * (1 + $ivaRate);
+        }
 
         $this->update([
             'subtotal' => $subtotal,
-            'total' => $subtotal, // Aquí puedes agregar lógica para impuestos si es necesario
+            'total' => $total,
         ]);
     }
 
@@ -129,5 +120,31 @@ class Budget extends Model
     public function hasVariants()
     {
         return $this->items()->where('is_variant', true)->exists();
+    }
+
+    public function getIsExpiredAttribute()
+    {
+        return $this->expiry_date->startOfDay() < now()->startOfDay();
+    }
+
+    public function getIsExpiringTodayAttribute()
+    {
+        return $this->expiry_date->startOfDay()->isSameDay(now()->startOfDay());
+    }
+
+    public function getDaysUntilExpiryAttribute()
+    {
+        $now = now()->startOfDay();
+        $expiryDate = $this->expiry_date->startOfDay();
+
+        $diffInDays = $now->diffInDays($expiryDate, false); // false = signed difference
+
+        if ($this->is_expiring_today) {
+            return 0;
+        } elseif ($this->is_expired) {
+            return -abs($diffInDays);
+        } else {
+            return $diffInDays;
+        }
     }
 }
