@@ -1,3 +1,4 @@
+import BudgetStatusBadge from '@/components/BudgetStatusBadge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { timeAgo } from '@/utils/date';
@@ -61,28 +62,59 @@ const StatusBadge = ({ value, type = 'default' }) => {
 export const budgetsColumns = (actions, isDeleting = false) => [
     {
         key: 'title',
-        label: 'Titulo',
+        label: 'Título',
         sortable: true,
     },
-    // {
-    //     key: 'client',
-    //     label: 'Cliente',
-    //     sortable: true,
-    // },
-    // {
-    //     key: 'user_id',
-    //     label: 'vendedor',
-    //     sortable: true,
-    // },
+    {
+        key: 'client.name',
+        label: 'Cliente',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value, row) => row.client?.name || 'Sin cliente',
+    },
+    {
+        key: 'user.name',
+        label: 'Vendedor',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value, row) => row.user?.name || 'Sin vendedor',
+    },
     {
         key: 'total',
         label: 'Total',
         sortable: true,
+        render: (value) => {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+            }).format(value);
+        },
     },
     {
-        key: 'is_active',
-        label: 'Estado',
+        key: 'expiry_date',
+        label: 'Vencimiento',
         sortable: true,
+        hideOnMobile: true,
+        render: (value) => {
+            // Si viene como string YYYY-MM-DD, parsearlo correctamente
+            if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const [year, month, day] = value.split('-');
+                return `${day}/${month}/${year}`;
+            }
+
+            return new Date(value).toLocaleDateString('es-AR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                timeZone: 'America/Argentina/Buenos_Aires',
+            });
+        },
+    },
+    {
+        key: 'status',
+        label: 'Estado',
+        sortable: false,
+        render: (value, row) => <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />,
     },
     {
         key: 'actions',
