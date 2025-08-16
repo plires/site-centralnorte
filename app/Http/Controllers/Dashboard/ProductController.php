@@ -12,16 +12,6 @@ use PhpParser\Node\Stmt\TryCatch;
 
 class ProductController extends Controller
 {
-    public function show(Product $product)
-    {
-
-        $product->load('category', 'images', 'featuredImage'); // featuredImage en las vistas se recibe como featured_image (Laravel, por defecto, convierte los nombres de atributos de los modelos y relaciones a snake_case cuando los transforma a JSON (que es lo que Inertia pasa a React).)
-
-        return inertia('dashboard/products/Show', [
-            'product' => $product
-        ]);
-    }
-
     public function index(Request $request)
     {
         $query = Product::with('category')->withoutTrashed();
@@ -30,18 +20,35 @@ class ProductController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%")
-                    ->orWhere('proveedor', 'like', "%{$search}%");
+                $q->where('products.name', 'like', "%{$search}%")
+                    ->orWhere('products.sku', 'like', "%{$search}%")
+                    ->orWhere('products.proveedor', 'like', "%{$search}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                        $categoryQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
-        // Ordenamiento
+        // Ordenamiento con soporte para relaciones
         if ($request->filled('sort')) {
             $direction = $request->get('direction', 'asc');
-            $query->orderBy($request->sort, $direction);
+            $sortField = $request->sort;
+
+            switch ($sortField) {
+                case 'category.name':
+                    // JOIN con tabla categories para ordenar por nombre de la categoría
+                    $query->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                        ->select('products.*')
+                        ->orderBy('categories.name', $direction);
+                    break;
+
+                default:
+                    // Para campos directos de la tabla products
+                    $query->orderBy("products.{$sortField}", $direction);
+                    break;
+            }
         } else {
-            $query->orderBy('created_at', 'desc'); // Orden por defecto
+            $query->orderBy('products.created_at', 'desc'); // Orden por defecto
         }
 
         $products = $query->paginate(5)->withQueryString();
@@ -53,6 +60,16 @@ class ProductController extends Controller
                 'sort' => $request->sort,
                 'direction' => $request->direction,
             ]
+        ]);
+    }
+
+    public function show(Product $product)
+    {
+
+        $product->load('category', 'images', 'featuredImage'); // featuredImage en las vistas se recibe como featured_image (Laravel, por defecto, convierte los nombres de atributos de los modelos y relaciones a snake_case cuando los transforma a JSON (que es lo que Inertia pasa a React).)
+
+        return inertia('dashboard/products/Show', [
+            'product' => $product
         ]);
     }
 
