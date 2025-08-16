@@ -29,14 +29,14 @@ class BudgetController extends Controller
 
         // Si es vendedor, solo sus presupuestos
         if ($user->role->name === 'vendedor') {
-            $query->where('user_id', $user->id);
+            $query->where('budgets.user_id', $user->id);
         }
 
         // Búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('title', 'like', "%{$search}%")
+                $q->where('budgets.title', 'like', "%{$search}%")
                     ->orWhereHas('client', function ($clientQuery) use ($search) {
                         $clientQuery->where('name', 'like', "%{$search}%")
                             ->orWhere('company', 'like', "%{$search}%");
@@ -59,12 +59,33 @@ class BudgetController extends Controller
             }
         }
 
-        // Ordenamiento
+        // Ordenamiento con soporte para relaciones
         if ($request->filled('sort')) {
             $direction = $request->get('direction', 'asc');
-            $query->orderBy($request->sort, $direction);
+            $sortField = $request->sort;
+
+            switch ($sortField) {
+                case 'client.name':
+                    // JOIN con tabla clients para ordenar por nombre del cliente
+                    $query->leftJoin('clients', 'budgets.client_id', '=', 'clients.id')
+                        ->select('budgets.*')
+                        ->orderBy('clients.name', $direction);
+                    break;
+
+                case 'user.name':
+                    // JOIN con tabla users para ordenar por nombre del vendedor
+                    $query->leftJoin('users', 'budgets.user_id', '=', 'users.id')
+                        ->select('budgets.*')
+                        ->orderBy('users.name', $direction);
+                    break;
+
+                default:
+                    // Para campos directos de la tabla budgets
+                    $query->orderBy("budgets.{$sortField}", $direction);
+                    break;
+            }
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('budgets.created_at', 'desc');
         }
 
         $budgets = $query->paginate(10)->withQueryString();
@@ -437,6 +458,64 @@ class BudgetController extends Controller
     }
 
     /**
+     * Procesar items del presupuesto y actualizar precios de productos
+     */
+    private function processBudgetItems(Budget $budget, array $items)
+    {
+        $productPriceUpdates = [];
+        $sortOrder = 0;
+
+        Log::info('Processing budget items', ['count' => count($items)]);
+
+        foreach ($items as $index => $itemData) {
+            try {
+                // Validar que los datos requeridos estén presentes
+                if (!isset($itemData['product_id']) || !isset($itemData['quantity']) || !isset($itemData['unit_price'])) {
+                    Log::error('Missing required item data', ['index' => $index, 'item' => $itemData]);
+                    throw new \Exception("Datos incompletos en el item {$index}");
+                }
+
+                // Crear el item del presupuesto
+                $budgetItem = $budget->items()->create([
+                    'product_id' => $itemData['product_id'],
+                    'quantity' => (int) $itemData['quantity'],
+                    'unit_price' => (float) $itemData['unit_price'],
+                    'production_time_days' => !empty($itemData['production_time_days']) ? (int) $itemData['production_time_days'] : null,
+                    'logo_printing' => $itemData['logo_printing'] ?? null,
+                    'line_total' => (int) $itemData['quantity'] * (float) $itemData['unit_price'],
+                    'sort_order' => $sortOrder++,
+                    'variant_group' => $itemData['variant_group'] ?? null,
+                    'is_variant' => (bool) ($itemData['is_variant'] ?? false),
+                ]);
+
+                // Preparar actualización de precio del producto si es diferente
+                $currentPrice = Product::find($itemData['product_id'])->last_price ?? 0;
+                $newPrice = (float) $itemData['unit_price'];
+
+                if ($currentPrice != $newPrice) {
+                    $productPriceUpdates[] = [
+                        'id' => $itemData['product_id'],
+                        'last_price' => $newPrice // CORREGIDO: usar last_price en lugar de price
+                    ];
+                }
+
+                Log::info('Budget item created', ['item_id' => $budgetItem->id, 'product_id' => $itemData['product_id']]);
+            } catch (\Exception $e) {
+                Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
+                throw $e;
+            }
+        }
+
+        // Actualizar precios de productos en lote
+        if (!empty($productPriceUpdates)) {
+            foreach ($productPriceUpdates as $update) {
+                Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
+            }
+            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
+        }
+    }
+
+    /**
      * Calcular datos de estado y vencimiento para un presupuesto
      */
     private function calculateBudgetStatus(Budget $budget)
@@ -494,64 +573,6 @@ class BudgetController extends Controller
         }
 
         return $budget;
-    }
-
-    /**
-     * Procesar items del presupuesto y actualizar precios de productos
-     */
-    private function processBudgetItems(Budget $budget, array $items)
-    {
-        $productPriceUpdates = [];
-        $sortOrder = 0;
-
-        Log::info('Processing budget items', ['count' => count($items)]);
-
-        foreach ($items as $index => $itemData) {
-            try {
-                // Validar que los datos requeridos estén presentes
-                if (!isset($itemData['product_id']) || !isset($itemData['quantity']) || !isset($itemData['unit_price'])) {
-                    Log::error('Missing required item data', ['index' => $index, 'item' => $itemData]);
-                    throw new \Exception("Datos incompletos en el item {$index}");
-                }
-
-                // Crear el item del presupuesto
-                $budgetItem = $budget->items()->create([
-                    'product_id' => $itemData['product_id'],
-                    'quantity' => (int) $itemData['quantity'],
-                    'unit_price' => (float) $itemData['unit_price'],
-                    'production_time_days' => !empty($itemData['production_time_days']) ? (int) $itemData['production_time_days'] : null,
-                    'logo_printing' => $itemData['logo_printing'] ?? null,
-                    'line_total' => (int) $itemData['quantity'] * (float) $itemData['unit_price'],
-                    'sort_order' => $sortOrder++,
-                    'variant_group' => $itemData['variant_group'] ?? null,
-                    'is_variant' => (bool) ($itemData['is_variant'] ?? false),
-                ]);
-
-                // Preparar actualización de precio del producto si es diferente
-                $currentPrice = Product::find($itemData['product_id'])->last_price ?? 0;
-                $newPrice = (float) $itemData['unit_price'];
-
-                if ($currentPrice != $newPrice) {
-                    $productPriceUpdates[] = [
-                        'id' => $itemData['product_id'],
-                        'last_price' => $newPrice // CORREGIDO: usar last_price en lugar de price
-                    ];
-                }
-
-                Log::info('Budget item created', ['item_id' => $budgetItem->id, 'product_id' => $itemData['product_id']]);
-            } catch (\Exception $e) {
-                Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
-                throw $e;
-            }
-        }
-
-        // Actualizar precios de productos en lote
-        if (!empty($productPriceUpdates)) {
-            foreach ($productPriceUpdates as $update) {
-                Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
-            }
-            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
-        }
     }
 
     // Métodos privados auxiliares
