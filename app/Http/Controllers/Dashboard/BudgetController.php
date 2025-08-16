@@ -365,6 +365,8 @@ class BudgetController extends Controller
     public function destroy(Budget $budget)
     {
         try {
+            DB::beginTransaction();
+
             $user = Auth::user();
 
             // Verificar permisos
@@ -372,12 +374,20 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para eliminar este presupuesto.');
             }
 
+            // Eliminar explícitamente los BudgetItems primero
+            // Aunque la migración tiene cascade, es mejor tener control explícito
+            $budget->items()->delete();
+
+            // Luego eliminar el presupuesto
             $budget->delete();
+
+            DB::commit();
 
             return redirect()
                 ->route('dashboard.budgets.index')
                 ->with('success', 'Presupuesto eliminado exitosamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error al eliminar presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al eliminar el presupuesto.');
         }
