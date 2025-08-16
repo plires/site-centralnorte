@@ -1,7 +1,8 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Head } from '@inertiajs/react';
 import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -9,63 +10,61 @@ import { useEffect, useState } from 'react';
 export default function Budget({ budget }) {
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
-        subtotal: budget.subtotal,
-        total: budget.total,
+        subtotal: parseFloat(budget.subtotal),
+        total: parseFloat(budget.total),
     });
-    const [imageGalleries, setImageGalleries] = useState({});
     const [currentImageIndexes, setCurrentImageIndexes] = useState({});
+    const [imageGalleries, setImageGalleries] = useState({});
 
-    // Inicializar galerías de imágenes para cada producto
     useEffect(() => {
+        // Configurar galerías de imágenes para cada producto
         const galleries = {};
-        const indexes = {};
+        const initialIndexes = {};
 
         // Procesar items regulares
-        budget.grouped_items.regular.forEach((item) => {
-            if (item.product.images && item.product.images.length > 0) {
-                galleries[`regular_${item.id}`] = item.product.images;
-                indexes[`regular_${item.id}`] = item.product.images.findIndex((img) => img.is_featured) || 0;
-            }
+        budget.grouped_items?.regular?.forEach((item) => {
+            const key = `regular-${item.id}`;
+            galleries[key] = item.product?.images || [];
+            initialIndexes[key] = 0;
         });
 
-        // Procesar items con variantes
-        Object.entries(budget.grouped_items.variants).forEach(([group, items]) => {
+        // Procesar grupos de variantes
+        Object.entries(budget.grouped_items?.variants || {}).forEach(([group, items]) => {
             items.forEach((item) => {
-                if (item.product.images && item.product.images.length > 0) {
-                    galleries[`variant_${item.id}`] = item.product.images;
-                    indexes[`variant_${item.id}`] = item.product.images.findIndex((img) => img.is_featured) || 0;
-                }
+                const key = `variant-${group}-${item.id}`;
+                galleries[key] = item.product?.images || [];
+                initialIndexes[key] = 0;
             });
         });
 
         setImageGalleries(galleries);
-        setCurrentImageIndexes(indexes);
+        setCurrentImageIndexes(initialIndexes);
+
+        // Configurar variantes por defecto (primera opción de cada grupo)
+        const defaultVariants = {};
+        Object.entries(budget.grouped_items?.variants || {}).forEach(([group, items]) => {
+            if (items.length > 0) {
+                defaultVariants[group] = items[0].id;
+            }
+        });
+        setSelectedVariants(defaultVariants);
     }, [budget]);
 
-    // Recalcular totales cuando cambien las selecciones de variantes
+    // Recalcular totales cuando cambian las variantes
     useEffect(() => {
-        calculateTotals();
-    }, [selectedVariants]);
-
-    const calculateTotals = () => {
         let subtotal = 0;
 
         // Sumar items regulares
-        budget.grouped_items.regular.forEach((item) => {
-            subtotal += item.line_total;
+        budget.grouped_items?.regular?.forEach((item) => {
+            subtotal += parseFloat(item.line_total);
         });
 
-        // Sumar items de variantes seleccionadas
-        Object.entries(budget.grouped_items.variants).forEach(([group, items]) => {
+        // Sumar variantes seleccionadas
+        Object.entries(budget.grouped_items?.variants || {}).forEach(([group, items]) => {
             const selectedItemId = selectedVariants[group];
-            if (selectedItemId) {
-                const selectedItem = items.find((item) => item.id == selectedItemId);
-                if (selectedItem) {
-                    subtotal += selectedItem.line_total;
-                }
-            } else {
-                // Si no hay selección, usar el primer item por defecto
-                subtotal += items[0]?.line_total || 0;
+            const selectedItem = items.find((item) => item.id === selectedItemId);
+            if (selectedItem) {
+                subtotal += parseFloat(selectedItem.line_total);
             }
         });
 
@@ -73,7 +72,7 @@ export default function Budget({ budget }) {
             subtotal: subtotal,
             total: subtotal, // Aquí puedes agregar lógica para impuestos
         });
-    };
+    }, [selectedVariants, budget]);
 
     const handleVariantSelection = (group, itemId) => {
         setSelectedVariants((prev) => ({
@@ -91,13 +90,6 @@ export default function Budget({ budget }) {
         const url = `${route('public.budget.pdf', budget.token)}?${params.toString()}`;
         window.open(url, '_blank');
     };
-
-    const formatDate = (date) =>
-        new Date(date).toLocaleDateString('es-ES', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
 
     const formatCurrency = (amount) => `$${Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
@@ -162,284 +154,249 @@ export default function Budget({ budget }) {
 
             <div className="mx-auto max-w-4xl px-4 py-8">
                 {/* Estado del presupuesto */}
-                <Alert className={`mb-6 ${budget.is_expired ? 'border-red-200 bg-red-50' : ''}`}>
+                <Alert
+                    className={`mb-6 ${budget.is_expired ? 'border-red-200 bg-red-50' : budget.days_until_expiry <= 3 ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}
+                >
                     <statusInfo.icon className="h-4 w-4" />
                     <AlertDescription className="flex items-center justify-between">
-                        <span>{statusInfo.text}</span>
-                        <span className="text-sm">Válido hasta: {formatDate(budget.expiry_date)}</span>
+                        <span className="font-medium">{statusInfo.text}</span>
+                        <Badge variant={statusInfo.variant}>Válido hasta: {budget.expiry_date_short}</Badge>
                     </AlertDescription>
                 </Alert>
 
-                {/* Productos regulares */}
-                {budget.grouped_items.regular.length > 0 && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Productos incluidos</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-6">
-                                {budget.grouped_items.regular.map((item) => (
-                                    <ProductCard
-                                        key={item.id}
-                                        item={item}
-                                        gallery={imageGalleries[`regular_${item.id}`]}
-                                        currentIndex={currentImageIndexes[`regular_${item.id}`] || 0}
-                                        onNextImage={() => nextImage(`regular_${item.id}`)}
-                                        onPrevImage={() => prevImage(`regular_${item.id}`)}
-                                    />
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Productos con variantes */}
-                {Object.keys(budget.grouped_items.variants).length > 0 && (
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Productos con opciones</CardTitle>
-                            <CardDescription>Selecciona la opción que prefieras para cada producto</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-8">
-                                {Object.entries(budget.grouped_items.variants).map(([group, items]) => (
-                                    <VariantGroup
-                                        key={group}
-                                        group={group}
-                                        items={items}
-                                        selectedItemId={selectedVariants[group] || items[0]?.id}
-                                        onSelect={handleVariantSelection}
-                                        imageGalleries={imageGalleries}
-                                        currentImageIndexes={currentImageIndexes}
-                                        onNextImage={nextImage}
-                                        onPrevImage={prevImage}
-                                    />
-                                ))}
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Totales */}
+                {/* Información del presupuesto */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Resumen del presupuesto</CardTitle>
+                        <CardTitle>Información del Presupuesto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-lg">
-                                <span>Subtotal:</span>
-                                <span>{formatCurrency(calculatedTotals.subtotal)}</span>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Fecha de emisión</p>
+                                <p className="text-sm text-gray-900">{budget.issue_date_short}</p>
                             </div>
-                            <Separator />
-                            <div className="flex justify-between text-xl font-bold text-green-600">
-                                <span>Total:</span>
-                                <span>{formatCurrency(calculatedTotals.total)}</span>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Fecha de vencimiento</p>
+                                <p className="text-sm text-gray-900">{budget.expiry_date_short}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Cliente</p>
+                                <p className="text-sm text-gray-900">
+                                    {budget.client.name}
+                                    {budget.client.company && ` - ${budget.client.company}`}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium text-gray-500">Vendedor</p>
+                                <p className="text-sm text-gray-900">{budget.user.name}</p>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
-                {/* Comentarios adicionales */}
-                {budget.footer_comments && (
+                {/* Items regulares */}
+                {budget.grouped_items?.regular?.length > 0 && (
                     <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle>Condiciones y comentarios</CardTitle>
+                            <CardTitle>Productos Incluidos</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <pre className="font-sans text-sm whitespace-pre-wrap text-gray-700">{budget.footer_comments}</pre>
+                            <div className="space-y-4">
+                                {budget.grouped_items.regular.map((item) => {
+                                    const imageKey = `regular-${item.id}`;
+                                    const images = imageGalleries[imageKey] || [];
+                                    const currentIndex = currentImageIndexes[imageKey] || 0;
+
+                                    return (
+                                        <div key={item.id} className="flex gap-4 rounded-lg border p-4">
+                                            {/* Imagen del producto */}
+                                            <div className="relative h-24 w-24 flex-shrink-0">
+                                                {images.length > 0 ? (
+                                                    <>
+                                                        <img
+                                                            src={images[currentIndex]?.url}
+                                                            alt={item.product?.name}
+                                                            className="h-full w-full rounded-md object-cover"
+                                                        />
+                                                        {images.length > 1 && (
+                                                            <div className="absolute inset-0 flex items-center justify-between">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                                    onClick={() => prevImage(imageKey)}
+                                                                >
+                                                                    <ChevronLeft className="h-3 w-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                                    onClick={() => nextImage(imageKey)}
+                                                                >
+                                                                    <ChevronRight className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-400">
+                                                        Sin imagen
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Detalles del producto */}
+                                            <div className="flex-1">
+                                                <h3 className="font-medium text-gray-900">{item.product?.name}</h3>
+                                                <p className="text-sm text-gray-500">{item.product?.category?.name}</p>
+
+                                                <div className="mt-2 flex items-center gap-4 text-sm">
+                                                    <span>Cantidad: {item.quantity}</span>
+                                                    <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
+                                                    <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
+                                                </div>
+
+                                                {item.production_time_days && (
+                                                    <p className="mt-1 text-sm text-blue-600">
+                                                        Tiempo de producción: {item.production_time_days} días
+                                                    </p>
+                                                )}
+
+                                                {item.logo_printing && (
+                                                    <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
                         </CardContent>
                     </Card>
                 )}
 
+                {/* Grupos de variantes */}
+                {Object.entries(budget.grouped_items?.variants || {}).map(([group, items]) => (
+                    <Card key={group} className="mb-6">
+                        <CardHeader>
+                            <CardTitle>Selecciona una opción para: {group}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <RadioGroup
+                                value={selectedVariants[group]?.toString()}
+                                onValueChange={(value) => handleVariantSelection(group, parseInt(value))}
+                            >
+                                <div className="space-y-4">
+                                    {items.map((item) => {
+                                        const imageKey = `variant-${group}-${item.id}`;
+                                        const images = imageGalleries[imageKey] || [];
+                                        const currentIndex = currentImageIndexes[imageKey] || 0;
+
+                                        return (
+                                            <div key={item.id} className="flex gap-4 rounded-lg border p-4">
+                                                <RadioGroupItem value={item.id.toString()} id={`variant-${item.id}`} className="mt-2" />
+
+                                                {/* Imagen del producto */}
+                                                <div className="relative h-24 w-24 flex-shrink-0">
+                                                    {images.length > 0 ? (
+                                                        <>
+                                                            <img
+                                                                src={images[currentIndex]?.url}
+                                                                alt={item.product?.name}
+                                                                className="h-full w-full rounded-md object-cover"
+                                                            />
+                                                            {images.length > 1 && (
+                                                                <div className="absolute inset-0 flex items-center justify-between">
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                                        onClick={() => prevImage(imageKey)}
+                                                                    >
+                                                                        <ChevronLeft className="h-3 w-3" />
+                                                                    </Button>
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                                        onClick={() => nextImage(imageKey)}
+                                                                    >
+                                                                        <ChevronRight className="h-3 w-3" />
+                                                                    </Button>
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-400">
+                                                            Sin imagen
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Detalles del producto */}
+                                                <label htmlFor={`variant-${item.id}`} className="flex-1 cursor-pointer">
+                                                    <h3 className="font-medium text-gray-900">{item.product?.name}</h3>
+                                                    <p className="text-sm text-gray-500">{item.product?.category?.name}</p>
+
+                                                    <div className="mt-2 flex items-center gap-4 text-sm">
+                                                        <span>Cantidad: {item.quantity}</span>
+                                                        <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
+                                                        <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
+                                                    </div>
+
+                                                    {item.production_time_days && (
+                                                        <p className="mt-1 text-sm text-blue-600">
+                                                            Tiempo de producción: {item.production_time_days} días
+                                                        </p>
+                                                    )}
+
+                                                    {item.logo_printing && (
+                                                        <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
+                                                    )}
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </RadioGroup>
+                        </CardContent>
+                    </Card>
+                ))}
+
+                {/* Totales */}
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle>Resumen del Presupuesto</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-2">
+                            <div className="flex justify-between">
+                                <span>Subtotal:</span>
+                                <span>{formatCurrency(calculatedTotals.subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between text-lg font-bold">
+                                <span>Total:</span>
+                                <span>{formatCurrency(calculatedTotals.total)}</span>
+                            </div>
+                        </div>
+
+                        {budget.footer_comments && (
+                            <div className="mt-4 rounded-md bg-gray-50 p-3">
+                                <p className="text-sm font-medium text-gray-700">Comentarios adicionales:</p>
+                                <p className="mt-1 text-sm text-gray-600">{budget.footer_comments}</p>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
                 {/* Botón de descarga */}
                 <div className="text-center">
-                    <Button onClick={handleDownloadPDF} disabled={budget.is_expired || !allVariantsSelected} size="lg" className="px-8">
-                        <Download className="mr-2 h-5 w-5" />
+                    <Button onClick={handleDownloadPDF} className="w-full md:w-auto" disabled={!allVariantsSelected}>
+                        <Download className="mr-2 h-4 w-4" />
                         Descargar PDF
                     </Button>
-
-                    {!allVariantsSelected && !budget.is_expired && (
-                        <p className="mt-2 text-sm text-gray-500">Selecciona todas las opciones antes de descargar</p>
-                    )}
-
-                    {budget.is_expired && <p className="mt-2 text-sm text-red-500">Este presupuesto ha vencido</p>}
+                    {!allVariantsSelected && <p className="mt-2 text-sm text-gray-500">Selecciona todas las opciones para descargar el PDF</p>}
                 </div>
-            </div>
-        </div>
-    );
-}
-
-// Componente para mostrar cada producto
-function ProductCard({ item, gallery, currentIndex, onNextImage, onPrevImage }) {
-    const formatCurrency = (amount) => `$${Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
-
-    return (
-        <div className="rounded-lg border bg-gray-50 p-4">
-            <div className="grid gap-4 md:grid-cols-3">
-                {/* Imagen del producto */}
-                <div className="relative">
-                    {gallery && gallery.length > 0 ? (
-                        <div className="relative">
-                            <img src={gallery[currentIndex]?.url} alt={gallery[currentIndex]?.alt} className="h-48 w-full rounded-md object-cover" />
-
-                            {gallery.length > 1 && (
-                                <>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="absolute top-1/2 left-2 -translate-y-1/2 transform bg-white/80 hover:bg-white"
-                                        onClick={onPrevImage}
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="absolute top-1/2 right-2 -translate-y-1/2 transform bg-white/80 hover:bg-white"
-                                        onClick={onNextImage}
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-
-                                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 transform rounded bg-black/50 px-2 py-1 text-xs text-white">
-                                        {currentIndex + 1} / {gallery.length}
-                                    </div>
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="flex h-48 w-full items-center justify-center rounded-md bg-gray-200">
-                            <span className="text-gray-500">Sin imagen</span>
-                        </div>
-                    )}
-                </div>
-
-                {/* Información del producto */}
-                <div className="md:col-span-2">
-                    <div className="mb-2 flex items-start justify-between">
-                        <div>
-                            <h3 className="font-medium text-gray-900">{item.product.name}</h3>
-                            <p className="text-sm text-gray-500">SKU: {item.product.sku}</p>
-                            <p className="text-sm text-gray-500">{item.product.category}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-lg font-medium text-gray-900">{formatCurrency(item.line_total)}</p>
-                            <p className="text-sm text-gray-500">
-                                {item.quantity} × {formatCurrency(item.unit_price)}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        {item.production_time_days && (
-                            <div>
-                                <span className="text-gray-600">Tiempo de producción:</span>
-                                <span className="ml-1 text-gray-900">{item.production_time_days} días</span>
-                            </div>
-                        )}
-                        {item.logo_printing && (
-                            <div>
-                                <span className="text-gray-600">Logo:</span>
-                                <span className="ml-1 text-gray-900">{item.logo_printing}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Componente para grupos de variantes
-function VariantGroup({ group, items, selectedItemId, onSelect, imageGalleries, currentImageIndexes, onNextImage, onPrevImage }) {
-    const formatCurrency = (amount) => `$${Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
-
-    return (
-        <div className="border-l-4 border-blue-500 pl-4">
-            <h4 className="mb-4 font-medium text-gray-900">{items[0]?.product.name} - Opciones disponibles</h4>
-
-            <div className="space-y-3">
-                {items.map((item) => {
-                    const isSelected = selectedItemId == item.id;
-                    const galleryKey = `variant_${item.id}`;
-                    const gallery = imageGalleries[galleryKey];
-                    const currentIndex = currentImageIndexes[galleryKey] || 0;
-
-                    return (
-                        <div
-                            key={item.id}
-                            className={`cursor-pointer rounded-lg border p-4 transition-all ${
-                                isSelected ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => onSelect(group, item.id)}
-                        >
-                            <div className="flex items-center gap-3">
-                                <input
-                                    type="radio"
-                                    name={`variant_${group}`}
-                                    checked={isSelected}
-                                    onChange={() => onSelect(group, item.id)}
-                                    className="text-blue-600"
-                                />
-
-                                {/* Imagen pequeña */}
-                                {gallery && gallery.length > 0 && (
-                                    <div className="relative">
-                                        <img
-                                            src={gallery[currentIndex]?.url}
-                                            alt={gallery[currentIndex]?.alt}
-                                            className="h-16 w-16 rounded object-cover"
-                                        />
-                                        {gallery.length > 1 && isSelected && (
-                                            <div className="absolute -top-1 -right-1">
-                                                <div className="flex gap-1">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 w-6 bg-white p-0 shadow-sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onPrevImage(galleryKey);
-                                                        }}
-                                                    >
-                                                        <ChevronLeft className="h-3 w-3" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-6 w-6 bg-white p-0 shadow-sm"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onNextImage(galleryKey);
-                                                        }}
-                                                    >
-                                                        <ChevronRight className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="flex-grow">
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <p className="font-medium">Cantidad: {item.quantity} unidades</p>
-                                            <p className="text-sm text-gray-600">Precio unitario: {formatCurrency(item.unit_price)}</p>
-                                            {item.production_time_days && (
-                                                <p className="text-sm text-gray-600">Tiempo: {item.production_time_days} días</p>
-                                            )}
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
             </div>
         </div>
     );

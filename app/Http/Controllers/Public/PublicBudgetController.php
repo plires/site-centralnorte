@@ -24,18 +24,21 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
+            // Obtener datos de estado usando el método del modelo
+            $statusData = $budget->getStatusData();
+
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
 
             return Inertia::render('public/Budget', [
-                'budget' => [
+                'budget' => array_merge([
                     'id' => $budget->id,
                     'title' => $budget->title,
                     'token' => $budget->token,
-                    'issue_date' => $budget->issue_date->format('d/m/Y'),
-                    'expiry_date' => $budget->expiry_date->format('d/m/Y'),
-                    'is_expired' => $budget->is_expired,
-                    'days_until_expiry' => $budget->days_until_expiry,
+                    'issue_date_formatted' => $budget->issue_date_formatted,
+                    'expiry_date_formatted' => $budget->expiry_date_formatted,
+                    'issue_date_short' => $budget->issue_date_short,
+                    'expiry_date_short' => $budget->expiry_date_short,
                     'footer_comments' => $budget->footer_comments,
                     'subtotal' => $budget->subtotal,
                     'total' => $budget->total,
@@ -49,7 +52,7 @@ class PublicBudgetController extends Controller
                     'grouped_items' => $groupedItems,
                     'variant_groups' => $budget->getVariantGroups(),
                     'has_variants' => $budget->hasVariants(),
-                ]
+                ], $statusData)
             ]);
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto público: ' . $e->getMessage());
@@ -67,150 +70,80 @@ class PublicBudgetController extends Controller
                 ->with([
                     'client',
                     'user',
+                    'items.product.images',
                     'items.product.featuredImage',
                     'items.product.category'
                 ])
                 ->firstOrFail();
 
-            // Obtener selecciones de variantes del frontend
+            // Obtener variantes seleccionadas del request
             $selectedVariants = $request->get('selected_variants', []);
 
-            // Calcular items y totales basados en las selecciones
-            $itemsForPdf = $this->calculateItemsForPdf($budget->items, $selectedVariants);
-            $totalsForPdf = $this->calculateTotalsForPdf($itemsForPdf);
+            // Filtrar items según las variantes seleccionadas
+            $filteredItems = $this->filterItemsByVariants($budget->items, $selectedVariants);
 
-            // Datos para el PDF
-            $pdfData = [
-                'budget' => $budget,
-                'items' => $itemsForPdf,
-                'subtotal' => $totalsForPdf['subtotal'],
-                'total' => $totalsForPdf['total'],
-                'company_logo' => public_path('images/company-logo.png'), // Ruta al logo
-                'selected_variants' => $selectedVariants,
-            ];
+            // Recalcular totales basado en items filtrados
+            $subtotal = $filteredItems->sum('line_total');
+            $total = $subtotal; // Aquí puedes agregar lógica de IVA si es necesario
 
-            // Generar PDF
-            $pdf = Pdf::loadView('pdf.budget', $pdfData);
-            $pdf->setPaper('A4', 'portrait');
+            // Obtener datos de estado
+            $statusData = $budget->getStatusData();
 
-            // Nombre del archivo
-            $filename = 'Presupuesto_' . $budget->id . '_' . now()->format('Y-m-d') . '.pdf';
+            //TODO: ver porque no detecta esta clase
+            $pdf = Pdf::loadView('pdf.budget', [
+                'budget' => array_merge([
+                    'title' => $budget->title,
+                    'issue_date_formatted' => $budget->issue_date_formatted,
+                    'expiry_date_formatted' => $budget->expiry_date_formatted,
+                    'footer_comments' => $budget->footer_comments,
+                    'subtotal' => $subtotal,
+                    'total' => $total,
+                    'client' => $budget->client,
+                    'user' => $budget->user,
+                ], $statusData),
+                'items' => $filteredItems,
+            ])->setPaper('a4');
 
-            return $pdf->download($filename);
+            return $pdf->download("presupuesto-{$budget->id}.pdf");
         } catch (\Exception $e) {
             Log::error('Error al generar PDF: ' . $e->getMessage());
-
-            return redirect()->back()
-                ->with('error', 'Error al generar el PDF. Inténtalo nuevamente.');
+            return redirect()->back()->with('error', 'Error al generar el PDF');
         }
     }
 
-    /**
-     * Agrupa los items por variantes para facilitar el manejo en el frontend
-     */
     private function groupItemsByVariants($items)
     {
         $grouped = [];
-        $regularItems = [];
-        $variantItems = [];
+        $regular = [];
 
         foreach ($items as $item) {
-            if ($item->is_variant && $item->variant_group) {
-                $variantItems[$item->variant_group][] = [
-                    'id' => $item->id,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'line_total' => $item->line_total,
-                    'production_time_days' => $item->production_time_days,
-                    'logo_printing' => $item->logo_printing,
-                    'product' => [
-                        'id' => $item->product->id,
-                        'name' => $item->product->name,
-                        'sku' => $item->product->sku,
-                        'category' => $item->product->category->name ?? 'Sin categoría',
-                        'featured_image' => $item->product->featuredImage ? [
-                            'url' => $item->product->featuredImage->full_url,
-                            'alt' => 'Imagen de ' . $item->product->name
-                        ] : null,
-                        'images' => $item->product->images->map(function ($img) {
-                            return [
-                                'url' => $img->full_url,
-                                'alt' => 'Imagen de ' . $img->product->name,
-                                'is_featured' => $img->is_featured
-                            ];
-                        })->toArray()
-                    ]
-                ];
-            } else {
-                $regularItems[] = [
-                    'id' => $item->id,
-                    'quantity' => $item->quantity,
-                    'unit_price' => $item->unit_price,
-                    'line_total' => $item->line_total,
-                    'production_time_days' => $item->production_time_days,
-                    'logo_printing' => $item->logo_printing,
-                    'product' => [
-                        'id' => $item->product->id,
-                        'name' => $item->product->name,
-                        'sku' => $item->product->sku,
-                        'category' => $item->product->category->name ?? 'Sin categoría',
-                        'featured_image' => $item->product->featuredImage ? [
-                            'url' => $item->product->featuredImage->full_url,
-                            'alt' => 'Imagen de ' . $item->product->name
-                        ] : null,
-                        'images' => $item->product->images->map(function ($img) {
-                            return [
-                                'url' => $img->full_url,
-                                'alt' => 'Imagen de ' . $img->product->name,
-                                'is_featured' => $img->is_featured
-                            ];
-                        })->toArray()
-                    ]
-                ];
-            }
-        }
-
-        return [
-            'regular' => $regularItems,
-            'variants' => $variantItems
-        ];
-    }
-
-    /**
-     * Calcula qué items incluir en el PDF basado en las selecciones de variantes
-     */
-    private function calculateItemsForPdf($allItems, $selectedVariants)
-    {
-        $itemsForPdf = [];
-
-        foreach ($allItems as $item) {
-            if ($item->is_variant && $item->variant_group) {
-                // Solo incluir si esta variante fue seleccionada
-                if (
-                    isset($selectedVariants[$item->variant_group]) &&
-                    $selectedVariants[$item->variant_group] == $item->id
-                ) {
-                    $itemsForPdf[] = $item;
+            if ($item->variant_group) {
+                if (!isset($grouped[$item->variant_group])) {
+                    $grouped[$item->variant_group] = [];
                 }
+                $grouped[$item->variant_group][] = $item;
             } else {
-                // Incluir todos los items regulares
-                $itemsForPdf[] = $item;
+                $regular[] = $item;
             }
         }
 
-        return $itemsForPdf;
+        return [
+            'variants' => $grouped,
+            'regular' => $regular
+        ];
     }
 
-    /**
-     * Calcula los totales basados en los items seleccionados
-     */
-    private function calculateTotalsForPdf($items)
+    private function filterItemsByVariants($items, $selectedVariants)
     {
-        $subtotal = collect($items)->sum('line_total');
+        return $items->filter(function ($item) use ($selectedVariants) {
+            // Si no tiene grupo de variante, incluirlo siempre
+            if (!$item->variant_group) {
+                return true;
+            }
 
-        return [
-            'subtotal' => $subtotal,
-            'total' => $subtotal, // Aquí puedes agregar lógica para impuestos
-        ];
+            // Si tiene grupo de variante, incluirlo solo si está seleccionado
+            return isset($selectedVariants[$item->variant_group]) &&
+                $selectedVariants[$item->variant_group] == $item->id;
+        });
     }
 }

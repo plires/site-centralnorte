@@ -4,16 +4,6 @@ import { router } from '@inertiajs/react';
 import { AlertTriangle, Copy, Edit, ExternalLink, Mail, Package, Send, Trash2 } from 'lucide-react';
 
 export default function BudgetActionsSection({ budget }) {
-    const formatDate = (date) => {
-        return new Intl.DateTimeFormat('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(new Date(date));
-    };
-
     const handleEdit = () => {
         router.visit(route('dashboard.budgets.edit', budget.id));
     };
@@ -50,7 +40,7 @@ export default function BudgetActionsSection({ budget }) {
     };
 
     const handleViewPublic = () => {
-        const publicUrl = route('public.budget.show', budget.id);
+        const publicUrl = route('public.budget.show', budget.token);
         window.open(publicUrl, '_blank');
     };
 
@@ -90,11 +80,11 @@ export default function BudgetActionsSection({ budget }) {
                     </Button>
                 </div>
 
-                {budget.email_sent && (
+                {budget.email_sent && budget.email_sent_at_formatted && (
                     <div className="mt-3 rounded-md border border-green-200 bg-green-50 p-3">
                         <p className="text-sm text-green-800">
                             <Mail className="mr-1 inline h-4 w-4" />
-                            Email enviado el {formatDate(budget.email_sent_at)}
+                            Email enviado el {budget.email_sent_at_formatted}
                         </p>
                     </div>
                 )}

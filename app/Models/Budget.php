@@ -3,6 +3,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,6 +40,15 @@ class Budget extends Model
         'total' => 'decimal:2',
     ];
 
+    // Agregar accessors para fechas formateadas que se incluirán en JSON
+    protected $appends = [
+        'issue_date_formatted',
+        'expiry_date_formatted',
+        'issue_date_short',
+        'expiry_date_short',
+        'email_sent_at_formatted'
+    ];
+
     protected static function boot()
     {
         parent::boot();
@@ -49,6 +59,43 @@ class Budget extends Model
                 $budget->token = Str::random(32);
             }
         });
+    }
+
+    // Accessors para fechas formateadas
+    public function getIssueDateFormattedAttribute()
+    {
+        return $this->issue_date ? $this->issue_date->locale('es')->isoFormat('D [de] MMMM [de] YYYY') : null;
+    }
+
+    public function getExpiryDateFormattedAttribute()
+    {
+        return $this->expiry_date ? $this->expiry_date->locale('es')->isoFormat('D [de] MMMM [de] YYYY') : null;
+    }
+
+    public function getIssueDateShortAttribute()
+    {
+        return $this->issue_date ? $this->issue_date->format('d/m/Y') : null;
+    }
+
+    public function getExpiryDateShortAttribute()
+    {
+        return $this->expiry_date ? $this->expiry_date->format('d/m/Y') : null;
+    }
+
+    public function getEmailSentAtFormattedAttribute()
+    {
+        return $this->email_sent_at ? $this->email_sent_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY [a las] HH:mm') : null;
+    }
+
+    // Accessor para obtener fecha ISO para inputs HTML
+    public function getIssueDateIsoAttribute()
+    {
+        return $this->issue_date ? $this->issue_date->format('Y-m-d') : null;
+    }
+
+    public function getExpiryDateIsoAttribute()
+    {
+        return $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null;
     }
 
     // Relaciones
@@ -90,7 +137,7 @@ class Budget extends Model
         return $query->where('expiry_date', '<', now());
     }
 
-    // Métodos de negocio actualizados en el modelo Budget
+    // Métodos de negocio
     public function calculateTotals()
     {
         $subtotal = $this->items->sum('line_total');
@@ -106,45 +153,67 @@ class Budget extends Model
             'subtotal' => $subtotal,
             'total' => $total,
         ]);
-    }
 
-    public function getVariantGroups()
-    {
-        return BudgetItem::where('budget_id', $this->id)
-            ->whereNotNull('variant_group')
-            ->distinct()
-            ->pluck('variant_group')
-            ->toArray();
+        return $this;
     }
 
     public function hasVariants()
     {
-        return $this->items()->where('is_variant', true)->exists();
+        return $this->items->whereNotNull('variant_group')->count() > 0;
     }
 
-    public function getIsExpiredAttribute()
+    public function getVariantGroups()
     {
-        return $this->expiry_date->startOfDay() < now()->startOfDay();
+        return $this->items
+            ->whereNotNull('variant_group')
+            ->pluck('variant_group')
+            ->unique()
+            ->values()
+            ->toArray();
     }
 
-    public function getIsExpiringTodayAttribute()
-    {
-        return $this->expiry_date->startOfDay()->isSameDay(now()->startOfDay());
-    }
-
-    public function getDaysUntilExpiryAttribute()
+    // Método para obtener el estado del presupuesto (usado en el controlador)
+    public function getStatusData()
     {
         $now = now()->startOfDay();
         $expiryDate = $this->expiry_date->startOfDay();
 
-        $diffInDays = $now->diffInDays($expiryDate, false); // false = signed difference
+        $isExpired = $expiryDate < $now;
+        $isExpiringToday = $expiryDate->isSameDay($now);
 
-        if ($this->is_expiring_today) {
-            return 0;
-        } elseif ($this->is_expired) {
-            return -abs($diffInDays);
+        // Calcular días correctamente
+        if ($isExpiringToday) {
+            $daysUntilExpiry = 0;
+        } elseif ($isExpired) {
+            // Para vencidos: calcular días transcurridos desde el vencimiento (positivo)
+            $daysUntilExpiry = -$expiryDate->diffInDays($now);
         } else {
-            return $diffInDays;
+            // Para futuros: calcular días restantes hasta el vencimiento (positivo)
+            $daysUntilExpiry = $now->diffInDays($expiryDate);
         }
+
+        // Determinar el estado
+        if ($isExpired) {
+            $status = 'expired';
+            $statusText = 'Vencido';
+        } elseif ($isExpiringToday) {
+            $status = 'expiring_soon';
+            $statusText = 'Vence Hoy';
+        } elseif ($daysUntilExpiry <= 3) {
+            $status = 'expiring_soon';
+            $statusText = $daysUntilExpiry === 1 ?
+                'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
+        } else {
+            $status = 'active';
+            $statusText = 'Activo';
+        }
+
+        return [
+            'status' => $status,
+            'status_text' => $statusText,
+            'days_until_expiry' => $daysUntilExpiry,
+            'is_expired' => $isExpired,
+            'is_expiring_today' => $isExpiringToday,
+        ];
     }
 }

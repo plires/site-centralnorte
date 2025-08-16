@@ -1,25 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatDateTime } from '@/utils/dateUtils';
 import { Building2, CalendarDays, User } from 'lucide-react';
 
 export default function BudgetInfoSection({ budget }) {
-    const formatDate = (date) => {
-        return new Intl.DateTimeFormat('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        }).format(new Date(date));
-    };
-
-    const formatDateShort = (date) => {
-        return new Intl.DateTimeFormat('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-        }).format(new Date(date));
-    };
-
     const getExpiryStatus = () => {
         if (budget.is_expiring_today) {
             return <span className="font-medium text-orange-600">Vence Hoy</span>;
@@ -75,15 +58,15 @@ export default function BudgetInfoSection({ budget }) {
                     <CardContent className="space-y-3">
                         <div>
                             <dt className="text-sm font-medium text-gray-500">Fecha de emisión</dt>
-                            <dd className="text-sm text-gray-900">{formatDateShort(budget.issue_date)}</dd>
+                            <dd className="text-sm text-gray-900">{budget.issue_date_short}</dd>
                         </div>
                         <div>
                             <dt className="text-sm font-medium text-gray-500">Fecha de vencimiento</dt>
-                            <dd className="text-sm text-gray-900">{formatDateShort(budget.expiry_date)}</dd>
+                            <dd className="text-sm text-gray-900">{budget.expiry_date_short}</dd>
                         </div>
                         <div>
                             <dt className="text-sm font-medium text-gray-500">Última modificación</dt>
-                            <dd className="text-sm text-gray-900">{formatDate(budget.updated_at)}</dd>
+                            <dd className="text-sm text-gray-900">{formatDateTime(budget.updated_at)}</dd>
                         </div>
                         <div>
                             <dt className="text-sm font-medium text-gray-500">Vencimiento del presupuesto</dt>

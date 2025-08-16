@@ -15,18 +15,12 @@ export default function Edit({ budget, clients, products, user, businessConfig }
         },
     ];
 
-    // Formatear fechas para inputs de tipo date (YYYY-MM-DD)
-    const formatDateForInput = (dateString) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toISOString().split('T')[0];
-    };
-
+    // Usar directamente los accessors del modelo para fechas ISO
     const { data, setData, put, processing, errors } = useForm({
         title: budget.title,
         client_id: budget.client_id.toString(),
-        issue_date: formatDateForInput(budget.issue_date),
-        expiry_date: formatDateForInput(budget.expiry_date),
+        issue_date: budget.issue_date, // Ya viene en formato ISO desde el controlador
+        expiry_date: budget.expiry_date, // Ya viene en formato ISO desde el controlador
         send_email_to_client: budget.send_email_to_client,
         footer_comments: budget.footer_comments || '',
         items: budget.items || [],

@@ -69,9 +69,13 @@ class BudgetController extends Controller
 
         $budgets = $query->paginate(10)->withQueryString();
 
-        // Aplicar estados a cada presupuesto
+        // Aplicar estados a cada presupuesto usando el método del modelo
         $budgets->getCollection()->transform(function ($budget) {
-            return $this->applyBudgetStatus($budget);
+            $statusData = $budget->getStatusData();
+            foreach ($statusData as $key => $value) {
+                $budget->$key = $value;
+            }
+            return $budget;
         });
 
         return Inertia::render('dashboard/budgets/Index', [
@@ -102,8 +106,8 @@ class BudgetController extends Controller
             }
         ]);
 
-        // Aplicar datos de estado al presupuesto
-        $statusData = $this->calculateBudgetStatus($budget);
+        // Aplicar datos de estado al presupuesto usando el método del modelo
+        $statusData = $budget->getStatusData();
 
         // Obtener grupos de variantes si existen
         $variantGroups = $budget->hasVariants() ? $budget->getVariantGroups() : [];
@@ -129,13 +133,18 @@ class BudgetController extends Controller
                 'title' => $budget->title,
                 'user_id' => $budget->user_id,
                 'client_id' => $budget->client_id,
-                'issue_date' => $budget->issue_date->format('Y-m-d'), // Formato ISO sin tiempo
-                'expiry_date' => $budget->expiry_date->format('Y-m-d'), // Formato ISO sin tiempo
+                'issue_date_iso' => $budget->issue_date_iso, // Para inputs HTML
+                'expiry_date_iso' => $budget->expiry_date_iso, // Para inputs HTML
+                'issue_date_short' => $budget->issue_date_short, // Para mostrar
+                'expiry_date_short' => $budget->expiry_date_short, // Para mostrar
+                'issue_date_formatted' => $budget->issue_date_formatted, // Formato largo
+                'expiry_date_formatted' => $budget->expiry_date_formatted, // Formato largo
                 'updated_at' => $budget->updated_at,
                 'is_active' => $budget->is_active,
                 'send_email_to_client' => $budget->send_email_to_client,
                 'email_sent' => $budget->email_sent,
                 'email_sent_at' => $budget->email_sent_at,
+                'email_sent_at_formatted' => $budget->email_sent_at_formatted,
                 'footer_comments' => $budget->footer_comments,
                 'subtotal' => $budget->subtotal,
                 'total' => $budget->total,
@@ -144,115 +153,166 @@ class BudgetController extends Controller
             ], $statusData),
             'regularItems' => $regularItems,
             'variantGroups' => $organizedItems,
-            'hasVariants' => $budget->hasVariants(),
-            'businessConfig' => $this->getBusinessConfig(),
+            'hasVariants' => $variantGroups,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ]
         ]);
     }
 
     public function create()
     {
-        $userAuth = Auth::user();
+        $user = Auth::user();
 
-        // Obtener clientes para el select
-        $clients = Client::select('id', 'name', 'email')
+        // Obtener clientes y productos para los selects
+        $clients = Client::select('id', 'name', 'company')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'display_name' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+                ];
+            });
+
+        // CORREGIDO: Solo usar soft deletes, no is_active
+        $products = Product::with(['category', 'featuredImage'])
             ->orderBy('name')
             ->get();
-
-        // Obtener productos con sus imágenes para el selector
-        $products = Product::with(['images' => function ($query) {
-            $query->where('is_featured', true)->limit(1);
-        }])
-            ->select('id', 'name', 'description', 'last_price')
-            ->orderBy('name')
-            ->get();
-
-        // Si algún producto no tiene imagen featured, cargar la primera disponible
-        foreach ($products as $product) {
-            if ($product->images->isEmpty()) {
-                $product->load(['images' => function ($query) {
-                    $query->limit(1);
-                }]);
-            }
-        }
 
         return Inertia::render('dashboard/budgets/Create', [
             'clients' => $clients,
             'products' => $products,
-            'user' => $userAuth,
-            'businessConfig' => $this->getBusinessConfig(),
-        ]);
-    }
-
-    public function edit(Budget $budget)
-    {
-        $userAuth = Auth::user();
-
-        $budget->load(['client', 'items.product.images']);
-
-        return Inertia::render('dashboard/budgets/Edit', [
-            'budget' => $budget,
-            'clients' => Client::all(),
-            'products' => Product::with('images')->get(),
-            'user' => $userAuth,
-            'businessConfig' => $this->getBusinessConfig(),
+            'user' => $user,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ]
         ]);
     }
 
     public function store(BudgetRequest $request)
     {
-
-        $userAuth = Auth::user();
-
-        DB::beginTransaction();
-
         try {
-            // Crear el presupuesto (el token se genera automáticamente en el modelo)
+            DB::beginTransaction();
+
+            $user = Auth::user();
+
+            // Crear el presupuesto
             $budget = Budget::create([
                 'title' => $request->title,
-                'user_id' => $userAuth->id,
+                'user_id' => $user->id,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
                 'expiry_date' => $request->expiry_date,
-                'is_active' => true,
                 'send_email_to_client' => $request->boolean('send_email_to_client'),
                 'footer_comments' => $request->footer_comments,
-                'subtotal' => 0, // Se calculará después
-                'total' => 0, // Se calculará después
             ]);
 
-            // Procesar items y actualizar precios de productos
-            $this->processBudgetItems($budget, $request->input('items', []));
+            // Procesar items del presupuesto
+            $this->processBudgetItems($budget, $request->items);
 
             // Calcular totales
             $budget->calculateTotals();
 
             // Enviar email si está configurado
-            if ($request->boolean('send_email_to_client')) {
-                // Aquí puedes agregar la lógica de envío de email
-                // dispatch(new SendBudgetEmailJob($budget));
+            if ($request->boolean('send_email_to_client') && $budget->client->email) {
+                try {
+                    $publicUrl = route('public.budget.show', $budget->token);
+                    Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget, $user, $publicUrl));
 
-                $budget->update([
-                    'email_sent' => true,
-                    'email_sent_at' => now(),
-                ]);
+                    $budget->update([
+                        'email_sent' => true,
+                        'email_sent_at' => now(),
+                    ]);
+
+                    Log::info('Email de presupuesto enviado', ['budget_id' => $budget->id, 'client_email' => $budget->client->email]);
+                } catch (\Exception $e) {
+                    Log::error('Error al enviar email de presupuesto: ' . $e->getMessage(), ['budget_id' => $budget->id]);
+                    // No fallar la creación del presupuesto por error de email
+                }
             }
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Presupuesto creado exitosamente');
+            return redirect()
+                ->route('dashboard.budgets.show', $budget)
+                ->with('success', 'Presupuesto creado exitosamente.');
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error al crear el presupuesto: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Error al crear presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al crear el presupuesto. Inténtalo de nuevo.');
         }
     }
 
+    public function edit(Budget $budget)
+    {
+        $user = Auth::user();
+
+        // Verificar permisos: admins pueden editar todos, vendedores solo los suyos
+        if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+            abort(403, 'No tienes permisos para editar este presupuesto.');
+        }
+
+        // Cargar relaciones necesarias
+        $budget->load([
+            'client',
+            'items.product.featuredImage'
+        ]);
+
+        // Obtener clientes y productos para los selects
+        $clients = Client::select('id', 'name', 'company')
+            ->orderBy('name')
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'id' => $client->id,
+                    'name' => $client->name,
+                    'display_name' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+                ];
+            });
+
+        // CORREGIDO: Solo usar soft deletes, no is_active
+        $products = Product::with(['category', 'featuredImage'])
+            ->orderBy('name')
+            ->get();
+
+        return Inertia::render('dashboard/budgets/Edit', [
+            'budget' => [
+                'id' => $budget->id,
+                'title' => $budget->title,
+                'client_id' => $budget->client_id,
+                'issue_date' => $budget->issue_date_iso, // Usar accessor para input HTML
+                'expiry_date' => $budget->expiry_date_iso, // Usar accessor para input HTML
+                'send_email_to_client' => $budget->send_email_to_client,
+                'footer_comments' => $budget->footer_comments,
+                'items' => $budget->items,
+            ],
+            'clients' => $clients,
+            'products' => $products,
+            'user' => $user,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ]
+        ]);
+    }
+
     public function update(BudgetRequest $request, Budget $budget)
     {
-        DB::beginTransaction();
-
         try {
-            // Actualizar el presupuesto
+            DB::beginTransaction();
+
+            $user = Auth::user();
+
+            // Verificar permisos
+            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+                abort(403, 'No tienes permisos para editar este presupuesto.');
+            }
+
+            // Actualizar los datos básicos del presupuesto
             $budget->update([
                 'title' => $request->title,
                 'client_id' => $request->client_id,
@@ -262,39 +322,117 @@ class BudgetController extends Controller
                 'footer_comments' => $request->footer_comments,
             ]);
 
-            // Eliminar items existentes
+            // Eliminar items existentes y crear los nuevos
             $budget->items()->delete();
+            $this->processBudgetItems($budget, $request->items);
 
-            // Procesar nuevos items y actualizar precios de productos
-            $this->processBudgetItems($budget, $request->input('items', []));
-
-            // Calcular totales
+            // Recalcular totales
             $budget->calculateTotals();
-
-            // Manejar envío de email
-            if ($request->boolean('send_email_to_client') && !$budget->email_sent) {
-                // Aquí puedes agregar la lógica de envío de email
-                // dispatch(new SendBudgetEmailJob($budget));
-
-                $budget->update([
-                    'email_sent' => true,
-                    'email_sent_at' => now(),
-                ]);
-            } elseif (!$request->boolean('send_email_to_client')) {
-                // Si se destilda el checkbox, resetear el estado de envío
-                $budget->update([
-                    'email_sent' => false,
-                    'email_sent_at' => null,
-                ]);
-            }
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Presupuesto actualizado exitosamente');
+            return redirect()
+                ->route('dashboard.budgets.show', $budget)
+                ->with('success', 'Presupuesto actualizado exitosamente.');
         } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Error al actualizar el presupuesto: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
+        }
+    }
+
+    public function destroy(Budget $budget)
+    {
+        try {
+            $user = Auth::user();
+
+            // Verificar permisos
+            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+                abort(403, 'No tienes permisos para eliminar este presupuesto.');
+            }
+
+            $budget->delete();
+
+            return redirect()
+                ->route('dashboard.budgets.index')
+                ->with('success', 'Presupuesto eliminado exitosamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar presupuesto: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al eliminar el presupuesto.');
+        }
+    }
+
+    public function duplicate(Budget $budget)
+    {
+        try {
+            DB::beginTransaction();
+
+            $user = Auth::user();
+
+            // Verificar permisos
+            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+                abort(403, 'No tienes permisos para duplicar este presupuesto.');
+            }
+
+            // Duplicar el presupuesto
+            $newBudget = $budget->replicate();
+            $newBudget->title = $budget->title . ' (Copia)';
+            $newBudget->token = Str::random(32);
+            $newBudget->email_sent = false;
+            $newBudget->email_sent_at = null;
+            $newBudget->issue_date = now()->format('Y-m-d');
+            $newBudget->expiry_date = now()->addDays(30)->format('Y-m-d');
+            $newBudget->save();
+
+            // Duplicar los items
+            foreach ($budget->items as $item) {
+                $newItem = $item->replicate();
+                $newItem->budget_id = $newBudget->id;
+                $newItem->save();
+            }
+
+            // Calcular totales
+            $newBudget->calculateTotals();
+
+            DB::commit();
+
+            return redirect()
+                ->route('dashboard.budgets.edit', $newBudget)
+                ->with('success', 'Presupuesto duplicado exitosamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error al duplicar presupuesto: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al duplicar el presupuesto.');
+        }
+    }
+
+    public function sendEmail(Budget $budget)
+    {
+        try {
+            $user = Auth::user();
+
+            // Verificar permisos
+            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+                abort(403, 'No tienes permisos para enviar este presupuesto.');
+            }
+
+            // Verificar que el cliente tenga email
+            if (!$budget->client->email) {
+                return redirect()->back()->with('error', 'El cliente no tiene email configurado.');
+            }
+
+            $publicUrl = route('public.budget.show', $budget->token);
+            Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget, $user, $publicUrl));
+
+            $budget->update([
+                'email_sent' => true,
+                'email_sent_at' => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Email enviado exitosamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al enviar email: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Ocurrió un error al enviar el email.');
         }
     }
 
@@ -389,48 +527,30 @@ class BudgetController extends Controller
                     'is_variant' => (bool) ($itemData['is_variant'] ?? false),
                 ]);
 
-                Log::info('Created budget item', ['id' => $budgetItem->id, 'product_id' => $itemData['product_id']]);
+                // Preparar actualización de precio del producto si es diferente
+                $currentPrice = Product::find($itemData['product_id'])->last_price ?? 0;
+                $newPrice = (float) $itemData['unit_price'];
 
-                // Preparar actualización de precio del producto
-                $productId = $itemData['product_id'];
-                $unitPrice = (float) $itemData['unit_price'];
-
-                // Para productos con variantes, solo tomar el precio de la primera variante de cada grupo
-                if (!empty($itemData['variant_group'])) {
-                    $variantGroup = $itemData['variant_group'];
-
-                    // Si es la primera vez que vemos este grupo de variantes, guardar el precio
-                    if (!isset($productPriceUpdates[$productId]['variant_groups'][$variantGroup])) {
-                        $productPriceUpdates[$productId] = [
-                            'price' => $unitPrice,
-                            'variant_groups' => [$variantGroup => true]
-                        ];
-                    }
-                } else {
-                    // Para productos individuales, siempre actualizar el precio
-                    $productPriceUpdates[$productId] = [
-                        'price' => $unitPrice,
-                        'variant_groups' => []
+                if ($currentPrice != $newPrice) {
+                    $productPriceUpdates[] = [
+                        'id' => $itemData['product_id'],
+                        'last_price' => $newPrice // CORREGIDO: usar last_price en lugar de price
                     ];
                 }
+
+                Log::info('Budget item created', ['item_id' => $budgetItem->id, 'product_id' => $itemData['product_id']]);
             } catch (\Exception $e) {
-                Log::error('Error processing item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
+                Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
                 throw $e;
             }
         }
 
-        // Actualizar precios en la tabla products
-        foreach ($productPriceUpdates as $productId => $priceData) {
-            try {
-                Product::where('id', $productId)->update([
-                    'last_price' => $priceData['price']
-                ]);
-
-                Log::info('Updated product price', ['product_id' => $productId, 'price' => $priceData['price']]);
-            } catch (\Exception $e) {
-                Log::error('Error updating product price', ['product_id' => $productId, 'error' => $e->getMessage()]);
-                throw $e;
+        // Actualizar precios de productos en lote
+        if (!empty($productPriceUpdates)) {
+            foreach ($productPriceUpdates as $update) {
+                Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
             }
+            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
         }
     }
 

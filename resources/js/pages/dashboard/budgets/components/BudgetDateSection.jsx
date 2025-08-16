@@ -1,23 +1,24 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getTodayISO, getTomorrowISO } from '@/utils/dateUtils';
 import { CalendarDays } from 'lucide-react';
 
 export default function BudgetDateSection({ data, setData, errors, user, isEditing = false }) {
-    const getMinIssueDate = () => {
-        return new Date().toISOString().split('T')[0];
-    };
-
     const getMinExpiryDate = () => {
         // Para vencimiento, mínimo debe ser mañana o un día después de la fecha de emisión
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrow = getTomorrowISO();
 
-        const issueDate = new Date(data.issue_date);
-        issueDate.setDate(issueDate.getDate() + 1);
+        if (data.issue_date) {
+            const issueDate = new Date(data.issue_date);
+            issueDate.setDate(issueDate.getDate() + 1);
+            const issueDatePlusOne = issueDate.toISOString().split('T')[0];
 
-        // Tomar la fecha mayor entre mañana y un día después de la emisión
-        return issueDate > tomorrow ? issueDate.toISOString().split('T')[0] : tomorrow.toISOString().split('T')[0];
+            // Tomar la fecha mayor entre mañana y un día después de la emisión
+            return issueDatePlusOne > tomorrow ? issueDatePlusOne : tomorrow;
+        }
+
+        return tomorrow;
     };
 
     return (
@@ -34,7 +35,7 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                     <Input
                         id="issue_date"
                         type="date"
-                        min={getMinIssueDate()}
+                        min={getTodayISO()}
                         value={data.issue_date}
                         onChange={(e) => setData('issue_date', e.target.value)}
                         className={errors.issue_date ? 'border-red-500' : ''}
