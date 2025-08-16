@@ -130,6 +130,7 @@ return [
     Intervention\Image\Laravel\ServiceProvider::class,
 
     'aliases' => [
+        //TODO: ver como se aplica esto
         'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
     ],
 
