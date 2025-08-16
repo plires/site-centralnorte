@@ -35,6 +35,7 @@ return new class extends Migration
             $table->boolean('is_variant')->default(false); // Indica si es una línea de variante
 
             $table->timestamps();
+            $table->softDeletes();
 
             // Índices
             $table->index(['budget_id', 'sort_order']);
