@@ -80,8 +80,8 @@ export default function BudgetForm({
 
                     {/* Totales y comentarios */}
                     <div className="grid gap-6 md:grid-cols-2">
-                        <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
                         <BudgetCommentsSection data={data} setData={setData} />
+                        <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
                     </div>
 
                     {/* Botones de acción */}
