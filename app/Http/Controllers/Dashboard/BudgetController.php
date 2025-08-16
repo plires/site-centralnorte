@@ -69,6 +69,11 @@ class BudgetController extends Controller
 
         $budgets = $query->paginate(10)->withQueryString();
 
+        // Aplicar estados a cada presupuesto
+        $budgets->getCollection()->transform(function ($budget) {
+            return $this->applyBudgetStatus($budget);
+        });
+
         return Inertia::render('dashboard/budgets/Index', [
             'budgets' => $budgets,
             'filters' => [
@@ -97,22 +102,8 @@ class BudgetController extends Controller
             }
         ]);
 
-        // Calcular días hasta vencimiento correctamente
-        $now = now()->startOfDay();
-        $expiryDate = $budget->expiry_date->startOfDay();
-
-        $diffInDays = $now->diffInDays($expiryDate, false);
-
-        $isExpired = $expiryDate < $now;
-        $isExpiringToday = $expiryDate->isSameDay($now);
-
-        if ($isExpiringToday) {
-            $daysUntilExpiry = 0;
-        } elseif ($isExpired) {
-            $daysUntilExpiry = -abs($diffInDays);
-        } else {
-            $daysUntilExpiry = $diffInDays;
-        }
+        // Aplicar datos de estado al presupuesto
+        $statusData = $this->calculateBudgetStatus($budget);
 
         // Obtener grupos de variantes si existen
         $variantGroups = $budget->hasVariants() ? $budget->getVariantGroups() : [];
@@ -133,13 +124,13 @@ class BudgetController extends Controller
         }
 
         return Inertia::render('dashboard/budgets/Show', [
-            'budget' => [
+            'budget' => array_merge([
                 'id' => $budget->id,
                 'title' => $budget->title,
                 'user_id' => $budget->user_id,
                 'client_id' => $budget->client_id,
-                'issue_date' => $budget->issue_date,
-                'expiry_date' => $budget->expiry_date,
+                'issue_date' => $budget->issue_date->format('Y-m-d'), // Formato ISO sin tiempo
+                'expiry_date' => $budget->expiry_date->format('Y-m-d'), // Formato ISO sin tiempo
                 'updated_at' => $budget->updated_at,
                 'is_active' => $budget->is_active,
                 'send_email_to_client' => $budget->send_email_to_client,
@@ -148,12 +139,9 @@ class BudgetController extends Controller
                 'footer_comments' => $budget->footer_comments,
                 'subtotal' => $budget->subtotal,
                 'total' => $budget->total,
-                'is_expired' => $isExpired,
-                'is_expiring_today' => $isExpiringToday,
-                'days_until_expiry' => $daysUntilExpiry,
                 'user' => $budget->user,
                 'client' => $budget->client,
-            ],
+            ], $statusData),
             'regularItems' => $regularItems,
             'variantGroups' => $organizedItems,
             'hasVariants' => $budget->hasVariants(),
@@ -308,6 +296,66 @@ class BudgetController extends Controller
             Log::error('Error al actualizar el presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
         }
+    }
+
+    /**
+     * Calcular datos de estado y vencimiento para un presupuesto
+     */
+    private function calculateBudgetStatus(Budget $budget)
+    {
+        $now = now()->startOfDay();
+        $expiryDate = $budget->expiry_date->startOfDay();
+
+        $isExpired = $expiryDate < $now;
+        $isExpiringToday = $expiryDate->isSameDay($now);
+
+        // Calcular días correctamente
+        if ($isExpiringToday) {
+            $daysUntilExpiry = 0;
+        } elseif ($isExpired) {
+            // Para vencidos: calcular días transcurridos desde el vencimiento (positivo)
+            $daysUntilExpiry = -$expiryDate->diffInDays($now);
+        } else {
+            // Para futuros: calcular días restantes hasta el vencimiento (positivo)
+            $daysUntilExpiry = $now->diffInDays($expiryDate);
+        }
+
+        // Determinar el estado
+        if ($isExpired) {
+            $status = 'expired';
+            $statusText = 'Vencido';
+        } elseif ($isExpiringToday) {
+            $status = 'expiring_soon';
+            $statusText = 'Vence Hoy';
+        } elseif ($daysUntilExpiry <= 3) {
+            $status = 'expiring_soon';
+            $statusText = $daysUntilExpiry === 1 ? 'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
+        } else {
+            $status = 'active';
+            $statusText = 'Activo';
+        }
+
+        return [
+            'status' => $status,
+            'status_text' => $statusText,
+            'days_until_expiry' => $daysUntilExpiry,
+            'is_expired' => $isExpired,
+            'is_expiring_today' => $isExpiringToday,
+        ];
+    }
+
+    /**
+     * Aplicar datos de estado a un presupuesto
+     */
+    private function applyBudgetStatus(Budget $budget)
+    {
+        $statusData = $this->calculateBudgetStatus($budget);
+
+        foreach ($statusData as $key => $value) {
+            $budget->$key = $value;
+        }
+
+        return $budget;
     }
 
     /**
