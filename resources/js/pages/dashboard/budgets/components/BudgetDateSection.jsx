@@ -5,20 +5,54 @@ import { getTodayISO, getTomorrowISO } from '@/utils/dateUtils';
 import { CalendarDays } from 'lucide-react';
 
 export default function BudgetDateSection({ data, setData, errors, user, isEditing = false }) {
+    const getMinIssueDate = () => {
+        // Si está editando, no aplicar restricción mínima
+        if (isEditing) {
+            return undefined;
+        }
+        return getTodayISO();
+    };
+
+    const getMaxIssueDate = () => {
+        // Siempre limitar a no ser mayor a hoy
+        return getTodayISO();
+    };
+
     const getMinExpiryDate = () => {
-        // Para vencimiento, mínimo debe ser mañana o un día después de la fecha de emisión
-        const tomorrow = getTomorrowISO();
-
-        if (data.issue_date) {
-            const issueDate = new Date(data.issue_date);
-            issueDate.setDate(issueDate.getDate() + 1);
-            const issueDatePlusOne = issueDate.toISOString().split('T')[0];
-
-            // Tomar la fecha mayor entre mañana y un día después de la emisión
-            return issueDatePlusOne > tomorrow ? issueDatePlusOne : tomorrow;
+        if (!data.issue_date) {
+            // Si no hay fecha de emisión, usar mañana como mínimo
+            return getTomorrowISO();
         }
 
-        return tomorrow;
+        const issueDate = new Date(data.issue_date);
+        const issueDatePlusOne = new Date(issueDate);
+        issueDatePlusOne.setDate(issueDate.getDate() + 1);
+        const issueDatePlusOneISO = issueDatePlusOne.toISOString().split('T')[0];
+
+        if (isEditing) {
+            // Al editar: permitir fechas desde un día después de la emisión
+            // sin restricción de "mínimo mañana"
+            return issueDatePlusOneISO;
+        } else {
+            // Al crear: debe ser mínimo mañana Y al menos un día después de la emisión
+            const tomorrow = getTomorrowISO();
+            return issueDatePlusOneISO > tomorrow ? issueDatePlusOneISO : tomorrow;
+        }
+    };
+
+    const getMaxExpiryDate = () => {
+        // Opción: limitar a máximo 1 año desde la fecha de emisión
+        if (data.issue_date) {
+            const issueDate = new Date(data.issue_date);
+            const maxDate = new Date(issueDate);
+            maxDate.setFullYear(issueDate.getFullYear() + 1);
+            return maxDate.toISOString().split('T')[0];
+        }
+
+        // Si no hay fecha de emisión, limitar a 1 año desde hoy
+        const maxDate = new Date();
+        maxDate.setFullYear(maxDate.getFullYear() + 1);
+        return maxDate.toISOString().split('T')[0];
     };
 
     return (
@@ -35,13 +69,18 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                     <Input
                         id="issue_date"
                         type="date"
-                        min={getTodayISO()}
+                        min={getMinIssueDate()}
+                        max={getMaxIssueDate()}
                         value={data.issue_date}
                         onChange={(e) => setData('issue_date', e.target.value)}
                         className={errors.issue_date ? 'border-red-500' : ''}
                     />
                     {errors.issue_date && <p className="mt-1 text-sm text-red-600">{errors.issue_date}</p>}
-                    {isEditing && <p className="mt-1 text-xs text-gray-500">La fecha de emisión no puede ser anterior a hoy</p>}
+                    {isEditing ? (
+                        <p className="mt-1 text-xs text-gray-500">La fecha de emisión no puede ser mayor a hoy</p>
+                    ) : (
+                        <p className="mt-1 text-xs text-gray-500">La fecha de emisión no puede ser anterior a hoy</p>
+                    )}
                 </div>
 
                 <div>
@@ -50,12 +89,17 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                         id="expiry_date"
                         type="date"
                         min={getMinExpiryDate()}
+                        max={getMaxExpiryDate()}
                         value={data.expiry_date}
                         onChange={(e) => setData('expiry_date', e.target.value)}
                         className={errors.expiry_date ? 'border-red-500' : ''}
                     />
                     {errors.expiry_date && <p className="mt-1 text-sm text-red-600">{errors.expiry_date}</p>}
-                    {isEditing && <p className="mt-1 text-xs text-gray-500">Debe ser al menos un día posterior a la fecha de emisión</p>}
+                    {isEditing ? (
+                        <p className="mt-1 text-xs text-gray-500">Debe ser al menos un día posterior a la fecha de emisión (máximo 1 año)</p>
+                    ) : (
+                        <p className="mt-1 text-xs text-gray-500">Debe ser al menos un día posterior a la fecha de emisión y no anterior a mañana</p>
+                    )}
                 </div>
 
                 <div>
