@@ -3,7 +3,7 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, useForm } from '@inertiajs/react';
 import BudgetForm from './components/BudgetForm';
 
-export default function Edit({ budget, clients, products, user }) {
+export default function Edit({ budget, clients, products, user, businessConfig }) {
     const breadcrumbs = [
         {
             title: 'Presupuestos',
@@ -58,6 +58,7 @@ export default function Edit({ budget, clients, products, user }) {
                 clients={clients}
                 products={products}
                 user={user}
+                businessConfig={businessConfig}
                 isEditing={true}
                 originalBudget={budget}
             />

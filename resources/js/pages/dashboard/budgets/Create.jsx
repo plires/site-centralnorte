@@ -14,7 +14,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Create({ clients, products, user, budget = null }) {
+export default function Create({ clients, products, user, businessConfig, budget = null }) {
     const isEditing = !!budget;
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
@@ -73,6 +73,7 @@ export default function Create({ clients, products, user, budget = null }) {
                 clients={clients}
                 products={products}
                 user={user}
+                businessConfig={businessConfig}
                 isEditing={isEditing}
                 originalBudget={budget}
             />

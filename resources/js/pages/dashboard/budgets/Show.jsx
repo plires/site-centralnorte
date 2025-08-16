@@ -24,13 +24,17 @@ const breadcrumbs = [
     },
 ];
 
-export default function Show({ budget, regularItems, variantGroups, hasVariants, ivaRate }) {
+export default function Show({ budget, regularItems, variantGroups, hasVariants, businessConfig }) {
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
         iva: 0,
         total: parseFloat(budget.total),
     });
+
+    // Obtener configuración de IVA
+    const ivaRate = businessConfig?.iva_rate ?? 0.21;
+    const applyIva = businessConfig?.apply_iva ?? true;
 
     // Inicializar variantes seleccionadas
     useEffect(() => {
@@ -67,7 +71,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             iva: ivaAmount,
             total: totalWithIva,
         });
-    }, [selectedVariants, regularItems, variantGroups, ivaRate]);
+    }, [selectedVariants, regularItems, variantGroups, ivaRate, applyIva]);
 
     const handleVariantChange = (group, itemId) => {
         setSelectedVariants((prev) => ({
@@ -99,7 +103,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
 
                             <BudgetCommentsDisplay budget={budget} />
 
-                            <BudgetTotalsSection totals={calculatedTotals} ivaRate={ivaRate} />
+                            <BudgetTotalsSection totals={calculatedTotals} ivaRate={ivaRate} showIva={applyIva} />
 
                             <BudgetActionsSection budget={budget} />
                         </div>

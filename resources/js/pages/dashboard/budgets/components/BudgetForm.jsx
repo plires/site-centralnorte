@@ -30,13 +30,14 @@ export default function BudgetForm({
     clients,
     products,
     user,
+    businessConfig = null,
     isEditing = false,
     originalBudget = null,
 }) {
     const [showExitDialog, setShowExitDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState(null);
 
-    const { totals, selectedVariants, handleVariantChange, calculateTotals } = useBudgetLogic(data.items);
+    const { totals, selectedVariants, handleVariantChange, calculateTotals } = useBudgetLogic(data.items, businessConfig);
 
     const handleExit = () => {
         if (data.items.length > 0) {
@@ -79,7 +80,7 @@ export default function BudgetForm({
 
                     {/* Totales y comentarios */}
                     <div className="grid gap-6 md:grid-cols-2">
-                        <BudgetTotalsSection totals={totals} />
+                        <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
                         <BudgetCommentsSection data={data} setData={setData} />
                     </div>
 

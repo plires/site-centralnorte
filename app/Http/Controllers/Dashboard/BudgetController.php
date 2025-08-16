@@ -98,21 +98,20 @@ class BudgetController extends Controller
         ]);
 
         // Calcular días hasta vencimiento correctamente
-        $now = now()->startOfDay(); // Comparar solo fechas sin horas
+        $now = now()->startOfDay();
         $expiryDate = $budget->expiry_date->startOfDay();
 
-        $diffInDays = $now->diffInDays($expiryDate, false); // false = signed difference
+        $diffInDays = $now->diffInDays($expiryDate, false);
 
         $isExpired = $expiryDate < $now;
         $isExpiringToday = $expiryDate->isSameDay($now);
 
-        // Determinar días hasta vencimiento
         if ($isExpiringToday) {
-            $daysUntilExpiry = 0; // Vence hoy
+            $daysUntilExpiry = 0;
         } elseif ($isExpired) {
-            $daysUntilExpiry = -abs($diffInDays); // Número negativo para vencidos
+            $daysUntilExpiry = -abs($diffInDays);
         } else {
-            $daysUntilExpiry = $diffInDays; // Número positivo para futuros
+            $daysUntilExpiry = $diffInDays;
         }
 
         // Obtener grupos de variantes si existen
@@ -158,13 +157,12 @@ class BudgetController extends Controller
             'regularItems' => $regularItems,
             'variantGroups' => $organizedItems,
             'hasVariants' => $budget->hasVariants(),
-            'ivaRate' => config('business.tax.iva_rate'),
+            'businessConfig' => $this->getBusinessConfig(),
         ]);
     }
 
     public function create()
     {
-
         $userAuth = Auth::user();
 
         // Obtener clientes para el select
@@ -193,10 +191,10 @@ class BudgetController extends Controller
             'clients' => $clients,
             'products' => $products,
             'user' => $userAuth,
+            'businessConfig' => $this->getBusinessConfig(),
         ]);
     }
 
-    // En tu controlador
     public function edit(Budget $budget)
     {
         $userAuth = Auth::user();
@@ -208,6 +206,7 @@ class BudgetController extends Controller
             'clients' => Client::all(),
             'products' => Product::with('images')->get(),
             'user' => $userAuth,
+            'businessConfig' => $this->getBusinessConfig(),
         ]);
     }
 
@@ -435,5 +434,16 @@ class BudgetController extends Controller
             'email_sent' => true,
             'email_sent_at' => now(),
         ]);
+    }
+
+    // Método helper para obtener configuración de negocio
+    private function getBusinessConfig()
+    {
+        return [
+            'iva_rate' => config('business.tax.iva_rate'),
+            'apply_iva' => config('business.tax.apply_iva'),
+            'default_validity_days' => config('business.budget.default_validity_days'),
+            'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry'),
+        ];
     }
 }
