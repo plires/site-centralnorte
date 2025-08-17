@@ -198,8 +198,8 @@ class BudgetController extends Controller
                 ];
             });
 
-        // CORREGIDO: Solo usar soft deletes, no is_active
-        $products = Product::with(['category', 'featuredImage'])
+        // Cargar relaciones necesarias
+        $products = Product::with(['category', 'featuredImage', 'images'])
             ->orderBy('name')
             ->get();
 
@@ -280,7 +280,17 @@ class BudgetController extends Controller
         // Cargar relaciones necesarias
         $budget->load([
             'client',
-            'items.product.featuredImage'
+            'items' => function ($query) {
+                $query->with([
+                    'product' => function ($query) {
+                        $query->with([
+                            'images', // Cargar TODAS las imágenes
+                            'featuredImage', // Y también la imagen destacada por separado
+                            'category' // Y la categoría
+                        ]);
+                    }
+                ])->orderBy('sort_order');
+            }
         ]);
 
         // Obtener clientes y productos para los selects
@@ -295,8 +305,8 @@ class BudgetController extends Controller
                 ];
             });
 
-        // CORREGIDO: Solo usar soft deletes, no is_active
-        $products = Product::with(['category', 'featuredImage'])
+        // Cargar relaciones necesarias
+        $products = Product::with(['category', 'featuredImage', 'images'])
             ->orderBy('name')
             ->get();
 
@@ -352,9 +362,7 @@ class BudgetController extends Controller
 
             DB::commit();
 
-            return redirect()
-                ->route('dashboard.budgets.show', $budget)
-                ->with('success', 'Presupuesto actualizado exitosamente.');
+            return redirect()->back()->with('success', "Presupuesto '{$budget->title}' actualizado correctamente.");
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
