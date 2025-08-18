@@ -1,16 +1,9 @@
-import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import { router } from '@inertiajs/react';
-import { AlertTriangle, Copy, Edit, ExternalLink, Mail, Package, Send, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { AlertTriangle, Copy, Edit, ExternalLink, Mail, Package, Send } from 'lucide-react';
 
 export default function BudgetActionsSection({ budget }) {
-    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
-    const [isDeleting, setIsDeleting] = useState(false);
-    const { handleCrudResponse } = useInertiaResponse();
-
     const handleEdit = () => {
         router.visit(route('dashboard.budgets.edit', budget.id));
     };
@@ -33,26 +26,6 @@ export default function BudgetActionsSection({ budget }) {
                     },
                 },
             );
-        }
-    };
-
-    const handleDelete = async () => {
-        const confirmed = await confirmDelete({
-            title: 'Eliminar presupuesto',
-            description:
-                'Esta acción no se puede deshacer. El presupuesto será eliminado permanentemente del sistema, junto con todos sus items asociados.',
-            itemName: budget.title,
-        });
-
-        if (confirmed) {
-            setIsDeleting(true);
-
-            router.delete(route('dashboard.budgets.destroy', budget.id), {
-                ...handleCrudResponse(setIsDeleting),
-                onSuccess: () => {
-                    router.visit(route('dashboard.budgets.index'));
-                },
-            });
         }
     };
 
@@ -91,11 +64,6 @@ export default function BudgetActionsSection({ budget }) {
                             <ExternalLink className="mr-2 h-4 w-4" />
                             Ver Vista Pública
                         </Button>
-
-                        <Button onClick={handleDelete} variant="destructive" size="sm" disabled={isDeleting}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
-                        </Button>
                     </div>
 
                     {budget.email_sent && budget.email_sent_at_formatted && (
@@ -117,9 +85,6 @@ export default function BudgetActionsSection({ budget }) {
                     )}
                 </CardContent>
             </Card>
-
-            {/* Modal de confirmación de eliminación */}
-            <DeleteConfirmationDialog />
         </>
     );
 }
