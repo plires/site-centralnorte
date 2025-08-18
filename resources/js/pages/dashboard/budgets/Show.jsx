@@ -1,7 +1,8 @@
 import PageHeader from '@/components/PageHeader';
 import AppLayout from '@/layouts/app-layout';
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 // Componentes reutilizados y adaptados
 import BudgetCommentsDisplay from './components/BudgetCommentsDisplay';
@@ -35,6 +36,26 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
     // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
     const applyIva = businessConfig?.apply_iva ?? true;
+
+    const { props } = usePage();
+
+    // Interceptar flash messages en el destino de la navegación
+    useEffect(() => {
+        const flashSuccess = props.flash?.success;
+        const flashError = props.flash?.error;
+        const flashWarning = props.flash?.warning;
+        const flashInfo = props.flash?.info;
+
+        if (flashSuccess) {
+            toast.success(flashSuccess);
+        } else if (flashError) {
+            toast.error(flashError);
+        } else if (flashWarning) {
+            toast.warning(flashWarning);
+        } else if (flashInfo) {
+            toast.info(flashInfo);
+        }
+    }, [props.flash]);
 
     // Inicializar variantes seleccionadas
     useEffect(() => {
