@@ -8,8 +8,8 @@ import { toast } from 'sonner';
 import BudgetCommentsDisplay from './components/BudgetCommentsDisplay';
 import BudgetHeaderWithStatus from './components/BudgetHeaderWithStatus';
 import BudgetInfoSection from './components/BudgetInfoSection';
-import BudgetItemsDisplaySection from './components/BudgetItemsDisplaySection';
 import BudgetTotalsSection from './components/BudgetTotalsSection';
+import UnifiedBudgetItemsSection from './components/UnifiedBudgetItemsSection';
 
 // Componente específico para acciones
 import BudgetActionsSection from './components/BudgetActionsSection';
@@ -115,11 +115,12 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
 
                             <BudgetInfoSection budget={budget} />
 
-                            <BudgetItemsDisplaySection
+                            <UnifiedBudgetItemsSection
                                 regularItems={regularItems}
                                 variantGroups={variantGroups}
                                 selectedVariants={selectedVariants}
                                 onVariantChange={handleVariantChange}
+                                showActions={false}
                             />
 
                             <BudgetCommentsDisplay budget={budget} />
