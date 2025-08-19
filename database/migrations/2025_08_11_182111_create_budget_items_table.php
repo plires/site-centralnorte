@@ -34,12 +34,18 @@ return new class extends Migration
             $table->string('variant_group')->nullable(); // ej: "gorras_001", "camisetas_002"
             $table->boolean('is_variant')->default(false); // Indica si es una línea de variante
 
+            // NUEVO CAMPO: Indica si esta variante está seleccionada
+            // Para items regulares (is_variant = false), siempre será true
+            // Para variantes (is_variant = true), solo una por grupo debe ser true
+            $table->boolean('is_selected')->default(true);
+
             $table->timestamps();
             $table->softDeletes();
 
             // Índices
             $table->index(['budget_id', 'sort_order']);
             $table->index(['budget_id', 'variant_group']);
+            $table->index(['budget_id', 'is_selected']); // Nuevo índice para consultas de items seleccionados
         });
     }
 

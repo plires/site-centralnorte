@@ -60,6 +60,9 @@ class BudgetItemSeeder extends Seeder
                 $sortOrder++;
             }
         }
+
+        // Recalcular totales del presupuesto con las variantes correctamente seleccionadas
+        $budget->calculateTotals();
     }
 
     /**
@@ -97,6 +100,9 @@ class BudgetItemSeeder extends Seeder
         for ($i = 0; $i < $variantsCount; $i++) {
             $config = $variantConfigs[$i] ?? $variantConfigs[0];
 
+            // Solo la PRIMERA variante del grupo está seleccionada
+            $isSelected = ($i === 0);
+
             BudgetItem::factory()->create([
                 'budget_id' => $budget->id,
                 'product_id' => $product->id,
@@ -107,6 +113,7 @@ class BudgetItemSeeder extends Seeder
                 'sort_order' => $sortOrder,
                 'variant_group' => $variantGroup,
                 'is_variant' => true,
+                'is_selected' => $isSelected, // IMPORTANTE: Solo la primera está seleccionada
             ]);
 
             $sortOrder++;
@@ -126,6 +133,7 @@ class BudgetItemSeeder extends Seeder
             'budget_id' => $budget->id,
             'product_id' => $product->id,
             'sort_order' => $sortOrder,
+            'is_selected' => true, // Items regulares SIEMPRE están seleccionados
         ];
 
         switch ($itemType) {

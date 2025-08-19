@@ -43,6 +43,7 @@ class BudgetItemFactory extends Factory
             'sort_order' => $this->faker->numberBetween(1, 10),
             'variant_group' => null, // Se asigna en casos específicos
             'is_variant' => false, // Por defecto no es variante
+            'is_selected' => true, // NUEVO: Por defecto está seleccionado
         ];
     }
 
@@ -65,6 +66,19 @@ class BudgetItemFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'is_variant' => true,
             'variant_group' => $variantGroup ?? 'variant_' . $this->faker->unique()->numberBetween(1000, 9999),
+            'is_selected' => false, // Las variantes por defecto NO están seleccionadas
+        ]);
+    }
+
+    /**
+     * Create a selected variant item (primera del grupo).
+     */
+    public function selectedVariant(string $variantGroup = null): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'is_variant' => true,
+            'variant_group' => $variantGroup ?? 'variant_' . $this->faker->unique()->numberBetween(1000, 9999),
+            'is_selected' => true, // Esta variante SÍ está seleccionada
         ]);
     }
 
@@ -98,62 +112,46 @@ class BudgetItemFactory extends Factory
     }
 
     /**
-     * Create item with high quantity (bulk order).
-     */
-    public function bulk(): static
-    {
-        return $this->state(fn(array $attributes) => [
-            'quantity' => $this->faker->numberBetween(1000, 5000),
-            'unit_price' => $this->faker->randomFloat(2, 300, 8000), // Precio más bajo por volumen
-            'production_time_days' => $this->faker->numberBetween(15, 45), // Más tiempo por volumen
-        ]);
-    }
-
-    /**
-     * Create item with small quantity.
+     * Create small quantity item.
      */
     public function small(): static
     {
         return $this->state(fn(array $attributes) => [
-            'quantity' => $this->faker->numberBetween(10, 100),
-            'unit_price' => $this->faker->randomFloat(2, 1000, 20000), // Precio más alto por unidad
-            'production_time_days' => $this->faker->numberBetween(3, 15),
+            'quantity' => $this->faker->numberBetween(25, 100),
+            'unit_price' => $this->faker->randomFloat(2, 1500, 5000),
         ]);
     }
 
     /**
-     * Create item without production time.
+     * Create bulk quantity item.
+     */
+    public function bulk(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'quantity' => $this->faker->numberBetween(500, 2000),
+            'unit_price' => $this->faker->randomFloat(2, 200, 1500),
+        ]);
+    }
+
+    /**
+     * Create in-stock item (no production time).
      */
     public function inStock(): static
     {
         return $this->state(fn(array $attributes) => [
             'production_time_days' => null,
+            'unit_price' => $this->faker->randomFloat(2, 800, 3000),
         ]);
     }
 
     /**
-     * Create item with long production time.
+     * Create custom production item.
      */
     public function customProduction(): static
     {
         return $this->state(fn(array $attributes) => [
-            'production_time_days' => $this->faker->numberBetween(20, 60),
-            'logo_printing' => $this->faker->randomElement([
-                'Bordado personalizado',
-                'Serigrafía multicolor',
-                'Grabado láser detallado',
-                'Impresión digital full color'
-            ]),
-        ]);
-    }
-
-    /**
-     * Create item with specific sort order.
-     */
-    public function withOrder(int $order): static
-    {
-        return $this->state(fn(array $attributes) => [
-            'sort_order' => $order,
+            'production_time_days' => $this->faker->numberBetween(15, 45),
+            'unit_price' => $this->faker->randomFloat(2, 2000, 8000),
         ]);
     }
 }
