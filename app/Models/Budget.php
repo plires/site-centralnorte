@@ -137,12 +137,32 @@ class Budget extends Model
         return $query->where('expiry_date', '<', now());
     }
 
-    // Métodos de negocio
+    // Método de negocio corregido para variantes
     public function calculateTotals()
     {
-        $subtotal = $this->items->sum('line_total');
-        $ivaRate = config('business.tax.iva_rate');
-        $applyIva = config('business.tax.apply_iva');
+        $subtotal = 0;
+
+        // Obtener items regulares (sin variant_group)
+        $regularItems = $this->items()->whereNull('variant_group')->get();
+        $subtotal += $regularItems->sum('line_total');
+
+        // Para grupos de variantes, solo sumar la PRIMERA de cada grupo
+        $variantGroups = $this->getVariantGroups();
+
+        foreach ($variantGroups as $group) {
+            // Obtener la primera variante del grupo (por sort_order)
+            $firstVariant = $this->items()
+                ->where('variant_group', $group)
+                ->orderBy('sort_order')
+                ->first();
+
+            if ($firstVariant) {
+                $subtotal += $firstVariant->line_total;
+            }
+        }
+
+        $ivaRate = config('business.tax.iva_rate', 0.21);
+        $applyIva = config('business.tax.apply_iva', true);
 
         $total = $subtotal;
         if ($applyIva) {
@@ -155,6 +175,35 @@ class Budget extends Model
         ]);
 
         return $this;
+    }
+
+    /**
+     * Obtener items que deben incluirse en el total
+     * (items regulares + primera variante de cada grupo)
+     */
+    public function getItemsForTotal()
+    {
+        $items = collect();
+
+        // Agregar items regulares
+        $regularItems = $this->items()->whereNull('variant_group')->get();
+        $items = $items->concat($regularItems);
+
+        // Agregar primera variante de cada grupo
+        $variantGroups = $this->getVariantGroups();
+
+        foreach ($variantGroups as $group) {
+            $firstVariant = $this->items()
+                ->where('variant_group', $group)
+                ->orderBy('sort_order')
+                ->first();
+
+            if ($firstVariant) {
+                $items->push($firstVariant);
+            }
+        }
+
+        return $items->sortBy('sort_order');
     }
 
     public function hasVariants()
