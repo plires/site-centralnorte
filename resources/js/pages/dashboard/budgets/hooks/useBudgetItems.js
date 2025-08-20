@@ -36,9 +36,12 @@ export function useBudgetItems(data, setData, selectedVariants, onItemsChange) {
 
                 // Validar duplicados por producto (solo si es un producto diferente al que se está editando)
                 if (existingItem.product_id === newItem.product_id) {
+                    // Obtener el nombre del producto de manera segura
+                    const productName = newItem.product?.name || existingItem.product?.name || `Producto ID ${newItem.product_id}`;
+
                     duplicates.push({
                         newIndex,
-                        message: `El producto "${newItem.product.name}" ya existe en el presupuesto y será reemplazado`,
+                        message: `El producto "${productName}" ya existe en el presupuesto y será reemplazado`,
                     });
                 }
             });

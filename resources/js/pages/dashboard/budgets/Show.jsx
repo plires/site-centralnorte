@@ -57,14 +57,36 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
         }
     }, [props.flash]);
 
-    // Inicializar variantes seleccionadas
+    // Inicializar variantes seleccionadas basado en is_selected de la base de datos
     useEffect(() => {
-        const initialVariants = {};
-        Object.keys(variantGroups).forEach((group) => {
-            initialVariants[group] = variantGroups[group][0]?.id;
-        });
-        setSelectedVariants(initialVariants);
-    }, [variantGroups]);
+        if (Object.keys(variantGroups).length > 0) {
+            const initialVariants = {};
+            let hasChanges = false;
+
+            Object.keys(variantGroups).forEach((group) => {
+                const groupItems = variantGroups[group];
+                // Buscar el item que tiene is_selected = true
+                const selectedItem = groupItems.find((item) => item.is_selected === true);
+                if (selectedItem) {
+                    initialVariants[group] = selectedItem.id;
+                } else {
+                    // Fallback: si ninguno está marcado, seleccionar el primero
+                    initialVariants[group] = groupItems[0]?.id;
+                }
+
+                // Verificar si hay cambios
+                if (initialVariants[group] !== selectedVariants[group]) {
+                    hasChanges = true;
+                }
+            });
+
+            // Solo actualizar si hay cambios reales
+            if (hasChanges) {
+                console.log('Show: Actualizando variantes seleccionadas:', initialVariants);
+                setSelectedVariants(initialVariants);
+            }
+        }
+    }, [Object.keys(variantGroups).join(',')]); // Depender solo de las keys, no del objeto completo
 
     // Recalcular totales
     useEffect(() => {
@@ -84,7 +106,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             }
         });
 
-        const ivaAmount = newSubtotal * ivaRate;
+        const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
         const totalWithIva = newSubtotal + ivaAmount;
 
         setCalculatedTotals({
@@ -92,7 +114,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             iva: ivaAmount,
             total: totalWithIva,
         });
-    }, [selectedVariants, regularItems, variantGroups, ivaRate, applyIva]);
+    }, [selectedVariants, regularItems, Object.keys(variantGroups).join(','), ivaRate, applyIva]);
 
     const handleVariantChange = (group, itemId) => {
         setSelectedVariants((prev) => ({

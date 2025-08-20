@@ -137,29 +137,22 @@ class Budget extends Model
         return $query->where('expiry_date', '<', now());
     }
 
-    // Método de negocio corregido para variantes
+    // Método de negocio actualizado para usar is_selected
     public function calculateTotals()
     {
         $subtotal = 0;
 
-        // Obtener items regulares (sin variant_group)
+        // Obtener items regulares (sin variant_group) - siempre incluidos
         $regularItems = $this->items()->whereNull('variant_group')->get();
         $subtotal += $regularItems->sum('line_total');
 
-        // Para grupos de variantes, solo sumar la PRIMERA de cada grupo
-        $variantGroups = $this->getVariantGroups();
+        // Para variantes, solo sumar las que están marcadas como seleccionadas
+        $selectedVariants = $this->items()
+            ->whereNotNull('variant_group')
+            ->where('is_selected', true)
+            ->get();
 
-        foreach ($variantGroups as $group) {
-            // Obtener la primera variante del grupo (por sort_order)
-            $firstVariant = $this->items()
-                ->where('variant_group', $group)
-                ->orderBy('sort_order')
-                ->first();
-
-            if ($firstVariant) {
-                $subtotal += $firstVariant->line_total;
-            }
-        }
+        $subtotal += $selectedVariants->sum('line_total');
 
         $ivaRate = config('business.tax.iva_rate', 0.21);
         $applyIva = config('business.tax.apply_iva', true);
@@ -179,7 +172,7 @@ class Budget extends Model
 
     /**
      * Obtener items que deben incluirse en el total
-     * (items regulares + primera variante de cada grupo)
+     * (items regulares + variantes seleccionadas)
      */
     public function getItemsForTotal()
     {
@@ -189,19 +182,13 @@ class Budget extends Model
         $regularItems = $this->items()->whereNull('variant_group')->get();
         $items = $items->concat($regularItems);
 
-        // Agregar primera variante de cada grupo
-        $variantGroups = $this->getVariantGroups();
+        // Agregar variantes seleccionadas
+        $selectedVariants = $this->items()
+            ->whereNotNull('variant_group')
+            ->where('is_selected', true)
+            ->get();
 
-        foreach ($variantGroups as $group) {
-            $firstVariant = $this->items()
-                ->where('variant_group', $group)
-                ->orderBy('sort_order')
-                ->first();
-
-            if ($firstVariant) {
-                $items->push($firstVariant);
-            }
-        }
+        $items = $items->concat($selectedVariants);
 
         return $items->sortBy('sort_order');
     }

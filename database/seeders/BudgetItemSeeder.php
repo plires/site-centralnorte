@@ -68,55 +68,39 @@ class BudgetItemSeeder extends Seeder
     /**
      * Crear un grupo de variantes para un producto.
      */
-    private function createVariantGroup(Budget $budget, Product $product, int &$sortOrder, int $groupNumber): void
+    private function createVariantGroup(Budget $budget, Product $product, int &$sortOrder, int $variantGroupNumber): void
     {
-        $variantGroup = "variant_group_{$budget->id}_{$groupNumber}";
-        $variantsCount = fake()->numberBetween(2, 4);
+        $variantGroup = "variant_{$product->name}_{$variantGroupNumber}";
+        $variantCount = fake()->numberBetween(2, 4);
 
-        // Diferentes configuraciones para las variantes
-        $variantConfigs = [
-            [
-                'quantity' => fake()->numberBetween(100, 300),
-                'logo_printing' => 'Serigrafía 1 color',
-                'production_time_days' => fake()->numberBetween(10, 15)
-            ],
-            [
-                'quantity' => fake()->numberBetween(200, 500),
-                'logo_printing' => 'Bordado',
-                'production_time_days' => fake()->numberBetween(15, 20)
-            ],
-            [
-                'quantity' => fake()->numberBetween(50, 150),
-                'logo_printing' => 'Transfer térmico',
-                'production_time_days' => fake()->numberBetween(7, 12)
-            ],
-            [
-                'quantity' => fake()->numberBetween(300, 800),
-                'logo_printing' => 'Serigrafía 2 colores',
-                'production_time_days' => fake()->numberBetween(12, 18)
-            ],
-        ];
+        // Cantidades base para las variantes (diferentes volúmenes)
+        $baseQuantities = [50, 100, 250, 500, 1000];
+        $selectedQuantities = fake()->randomElements($baseQuantities, $variantCount);
 
-        for ($i = 0; $i < $variantsCount; $i++) {
-            $config = $variantConfigs[$i] ?? $variantConfigs[0];
-
-            // Solo la PRIMERA variante del grupo está seleccionada
-            $isSelected = ($i === 0);
+        for ($i = 0; $i < $variantCount; $i++) {
+            $quantity = $selectedQuantities[$i];
+            $unitPrice = $this->calculateVariantPrice($product, $quantity);
 
             BudgetItem::factory()->create([
                 'budget_id' => $budget->id,
                 'product_id' => $product->id,
-                'quantity' => $config['quantity'],
-                'unit_price' => $this->calculateVariantPrice($product, $config['quantity']),
-                'production_time_days' => $config['production_time_days'],
-                'logo_printing' => $config['logo_printing'],
-                'sort_order' => $sortOrder,
+                'quantity' => $quantity,
+                'unit_price' => $unitPrice,
+                'production_time_days' => fake()->optional(0.8)->numberBetween(7, 21),
+                'logo_printing' => fake()->optional(0.7)->randomElement([
+                    'Serigrafía 1 color',
+                    'Serigrafía 2 colores',
+                    'Bordado',
+                    'Tampografía',
+                    'Transfer térmico',
+                    'Grabado láser',
+                    'Sin impresión'
+                ]),
+                'sort_order' => $sortOrder++,
                 'variant_group' => $variantGroup,
                 'is_variant' => true,
-                'is_selected' => $isSelected, // IMPORTANTE: Solo la primera está seleccionada
+                'is_selected' => $i === 0, // NUEVO: Solo la primera variante está seleccionada
             ]);
-
-            $sortOrder++;
         }
     }
 

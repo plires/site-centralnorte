@@ -4,12 +4,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BudgetItem extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
     protected $fillable = [
         'budget_id',
@@ -22,6 +21,7 @@ class BudgetItem extends Model
         'sort_order',
         'variant_group',
         'is_variant',
+        'is_selected', // NUEVO: Campo agregado
     ];
 
     protected $casts = [
@@ -31,6 +31,7 @@ class BudgetItem extends Model
         'line_total' => 'decimal:2',
         'sort_order' => 'integer',
         'is_variant' => 'boolean',
+        'is_selected' => 'boolean', // NUEVO: Cast agregado
     ];
 
     protected static function boot()
@@ -79,6 +80,11 @@ class BudgetItem extends Model
         return $query->where('variant_group', $group);
     }
 
+    public function scopeSelected($query)
+    {
+        return $query->where('is_selected', true);
+    }
+
     // Métodos de negocio
     public function getVariantSiblings()
     {
@@ -90,5 +96,23 @@ class BudgetItem extends Model
             ->where('variant_group', $this->variant_group)
             ->where('id', '!=', $this->id)
             ->get();
+    }
+
+    /**
+     * Marcar esta variante como seleccionada y desmarcar las demás del grupo
+     */
+    public function selectVariant()
+    {
+        if (!$this->is_variant || !$this->variant_group) {
+            return;
+        }
+
+        // Desmarcar todas las variantes del grupo
+        $this->budget->items()
+            ->where('variant_group', $this->variant_group)
+            ->update(['is_selected' => false]);
+
+        // Marcar esta como seleccionada
+        $this->update(['is_selected' => true]);
     }
 }

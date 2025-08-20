@@ -37,7 +37,10 @@ export default function BudgetForm({
     const [showExitDialog, setShowExitDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState(null);
 
-    const { totals, selectedVariants, handleVariantChange, calculateTotals } = useBudgetLogic(data.items, businessConfig);
+    const { totals, selectedVariants, handleVariantChange, calculateTotals, getItemsWithUpdatedSelection } = useBudgetLogic(
+        data.items,
+        businessConfig,
+    );
 
     const handleExit = () => {
         if (data.items.length > 0) {
@@ -55,18 +58,41 @@ export default function BudgetForm({
         }
     };
 
+    // Función para manejar cambios en variantes
+    const handleVariantChangeAndUpdate = (group, itemId) => {
+        handleVariantChange(group, itemId);
+    };
+
+    // Función para manejar cambios en los items
+    const handleItemsChange = () => {
+        calculateTotals();
+    };
+
+    // Envolver handleSubmit - versión simplificada
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+
+        // Obtener items con la selección actualizada
+        const itemsWithSelection = getItemsWithUpdatedSelection();
+
+        // Actualizar los items en el formulario de forma síncrona
+        data.items = itemsWithSelection;
+
+        // Llamar al handleSubmit original
+        handleSubmit(e);
+    };
+
     return (
         <>
             <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <PageHeader backRoute={route('dashboard.budgets.index')} backText="Volver" onBack={handleExit} />
 
-                <form onSubmit={handleSubmit} className="space-y-6 p-6">
+                <form onSubmit={handleFormSubmit} className="space-y-6 p-6">
                     {/* Información básica del presupuesto */}
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} isEditing={isEditing} />
+                    <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} user={user} isEditing={isEditing} />
 
-                        <BudgetDateSection data={data} setData={setData} errors={errors} user={user} isEditing={isEditing} />
-                    </div>
+                    {/* Fechas del presupuesto */}
+                    <BudgetDateSection data={data} setData={setData} errors={errors} user={user} isEditing={isEditing} />
 
                     {/* Items del presupuesto */}
                     <BudgetItemsSection
@@ -74,19 +100,19 @@ export default function BudgetForm({
                         setData={setData}
                         products={products}
                         selectedVariants={selectedVariants}
-                        onVariantChange={handleVariantChange}
-                        onItemsChange={calculateTotals}
+                        onVariantChange={handleVariantChangeAndUpdate}
+                        onItemsChange={handleItemsChange}
                     />
 
-                    {/* Totales y comentarios */}
-                    <div className="grid gap-6 md:grid-cols-2">
-                        <BudgetCommentsSection data={data} setData={setData} />
-                        <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
-                    </div>
+                    {/* Totales */}
+                    <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
+
+                    {/* Comentarios */}
+                    <BudgetCommentsSection data={data} setData={setData} errors={errors} />
 
                     {/* Botones de acción */}
-                    <div className="flex justify-end gap-3 border-t pt-6">
-                        <Button type="button" variant="outline" onClick={handleExit}>
+                    <div className="flex items-center justify-end space-x-4 border-t pt-6">
+                        <Button type="button" variant="outline" onClick={handleExit} disabled={processing}>
                             Cancelar
                         </Button>
                         <Button type="submit" disabled={processing || data.items.length === 0} className="flex items-center gap-2">
@@ -97,23 +123,21 @@ export default function BudgetForm({
                 </form>
             </div>
 
-            {/* AlertDialog para confirmar salida */}
+            {/* Diálogo de confirmación de salida */}
             <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
-                            ¿Descartar cambios?
+                            ¿Salir sin guardar?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Tienes productos agregados al presupuesto. Si sales ahora, perderás todos los cambios no guardados.
+                            Tienes productos agregados que se perderán si sales sin guardar. ¿Estás seguro de que quieres continuar?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Continuar editando</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmExit} className="bg-red-600 hover:bg-red-700">
-                            Descartar y salir
-                        </AlertDialogAction>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmExit}>Salir sin guardar</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

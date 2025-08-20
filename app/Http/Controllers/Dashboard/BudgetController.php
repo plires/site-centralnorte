@@ -130,56 +130,33 @@ class BudgetController extends Controller
         // Aplicar datos de estado al presupuesto usando el método del modelo
         $statusData = $budget->getStatusData();
 
-        // Obtener grupos de variantes si existen
-        $variantGroups = $budget->hasVariants() ? $budget->getVariantGroups() : [];
+        // Separar items regulares y grupos de variantes
+        $regularItems = $budget->items->whereNull('variant_group')->values();
+        $variantGroups = [];
 
-        // Organizar items por grupos de variantes
-        $organizedItems = [];
-        $regularItems = [];
+        if ($budget->hasVariants()) {
+            $groupedVariants = $budget->items
+                ->whereNotNull('variant_group')
+                ->groupBy('variant_group');
 
-        foreach ($budget->items as $item) {
-            if ($item->variant_group) {
-                if (!isset($organizedItems[$item->variant_group])) {
-                    $organizedItems[$item->variant_group] = [];
-                }
-                $organizedItems[$item->variant_group][] = $item;
-            } else {
-                $regularItems[] = $item;
+            foreach ($groupedVariants as $group => $items) {
+                $variantGroups[$group] = $items->values();
             }
         }
 
-        return Inertia::render('dashboard/budgets/Show', [
-            'budget' => array_merge([
-                'id' => $budget->id,
-                'title' => $budget->title,
-                'user_id' => $budget->user_id,
-                'client_id' => $budget->client_id,
-                'issue_date_iso' => $budget->issue_date_iso, // Para inputs HTML
-                'expiry_date_iso' => $budget->expiry_date_iso, // Para inputs HTML
-                'issue_date_short' => $budget->issue_date_short, // Para mostrar
-                'expiry_date_short' => $budget->expiry_date_short, // Para mostrar
-                'issue_date_formatted' => $budget->issue_date_formatted, // Formato largo
-                'expiry_date_formatted' => $budget->expiry_date_formatted, // Formato largo
-                'updated_at' => $budget->updated_at,
-                'is_active' => $budget->is_active,
-                'send_email_to_client' => $budget->send_email_to_client,
-                'email_sent' => $budget->email_sent,
-                'email_sent_at' => $budget->email_sent_at,
-                'email_sent_at_formatted' => $budget->email_sent_at_formatted,
-                'footer_comments' => $budget->footer_comments,
-                'subtotal' => $budget->subtotal,
-                'total' => $budget->total,
-                'user' => $budget->user,
-                'client' => $budget->client,
-            ], $statusData),
+        // Obtener configuración de IVA
+        $businessConfig = [
+            'iva_rate' => config('business.tax.iva_rate', 0.21),
+            'apply_iva' => config('business.tax.apply_iva', true),
+        ];
+
+        return Inertia::render('dashboard/budgets/Show', array_merge([
+            'budget' => $budget,
             'regularItems' => $regularItems,
-            'variantGroups' => $organizedItems,
-            'hasVariants' => $variantGroups,
-            'businessConfig' => [
-                'iva_rate' => config('business.tax.iva_rate', 0.21),
-                'apply_iva' => config('business.tax.apply_iva', true),
-            ]
-        ]);
+            'variantGroups' => $variantGroups,
+            'hasVariants' => $budget->hasVariants(),
+            'businessConfig' => $businessConfig,
+        ], $statusData));
     }
 
     public function create()
@@ -331,7 +308,7 @@ class BudgetController extends Controller
         ]);
     }
 
-    public function update(BudgetRequest $request, Budget $budget)
+    public function update(Request $request, Budget $budget)
     {
         try {
             DB::beginTransaction();
@@ -343,33 +320,53 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para editar este presupuesto.');
             }
 
-            // Actualizar los datos básicos del presupuesto
-            $budget->update([
-                'title' => $request->title,
-                'client_id' => $request->client_id,
-                'issue_date' => $request->issue_date,
-                'expiry_date' => $request->expiry_date,
-                'send_email_to_client' => $request->boolean('send_email_to_client'),
-                'footer_comments' => $request->footer_comments,
+            // Validación
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'client_id' => 'required|exists:clients,id',
+                'issue_date' => 'required|date',
+                'expiry_date' => 'required|date|after_or_equal:issue_date',
+                'send_email_to_client' => 'boolean',
+                'footer_comments' => 'nullable|string',
+                'items' => 'required|array|min:1',
+                'items.*.product_id' => 'required|exists:products,id',
+                'items.*.quantity' => 'required|integer|min:1',
+                'items.*.unit_price' => 'required|numeric|min:0',
+                'items.*.production_time_days' => 'nullable|integer|min:1',
+                'items.*.logo_printing' => 'nullable|string|max:255',
+                'items.*.variant_group' => 'nullable|string',
+                'items.*.is_variant' => 'boolean',
+                'items.*.is_selected' => 'boolean', // NUEVO: Validar is_selected
             ]);
 
-            // Eliminar items existentes y crear los nuevos
-            $budget->items()->delete();
-            $this->processBudgetItems($budget, $request->items);
+            // Actualizar datos básicos del presupuesto
+            $budget->update([
+                'title' => $validated['title'],
+                'client_id' => $validated['client_id'],
+                'issue_date' => $validated['issue_date'],
+                'expiry_date' => $validated['expiry_date'],
+                'send_email_to_client' => $validated['send_email_to_client'] ?? false,
+                'footer_comments' => $validated['footer_comments'],
+            ]);
 
-            // Recalcular totales
+            // Eliminar items existentes y recrear
+            $budget->items()->delete();
+            $this->createBudgetItems($budget, $validated['items']);
+
+            // Calcular totales
             $budget->calculateTotals();
 
             DB::commit();
 
-            return redirect()->back()->with('success', "Presupuesto '{$budget->title}' actualizado correctamente.");
+            return redirect()
+                ->route('dashboard.budgets.show', $budget)
+                ->with('success', 'Presupuesto actualizado exitosamente.');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
         }
     }
-
     public function destroy(Budget $budget)
     {
         try {
@@ -398,6 +395,71 @@ class BudgetController extends Controller
             DB::rollBack();
             Log::error('Error al eliminar presupuesto: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Ocurrió un error al eliminar el presupuesto.');
+        }
+    }
+
+    /**
+     * Método actualizado para crear items con is_selected
+     */
+    private function createBudgetItems(Budget $budget, array $items)
+    {
+        $sortOrder = 1;
+        $productPriceUpdates = [];
+
+        foreach ($items as $index => $itemData) {
+            try {
+                // Log para debug
+                Log::info('Creating budget item', [
+                    'index' => $index,
+                    'product_id' => $itemData['product_id'],
+                    'is_variant' => $itemData['is_variant'] ?? false,
+                    'is_selected' => $itemData['is_selected'] ?? true,
+                    'variant_group' => $itemData['variant_group'] ?? null
+                ]);
+
+                $budgetItem = BudgetItem::create([
+                    'budget_id' => $budget->id,
+                    'product_id' => $itemData['product_id'],
+                    'quantity' => (int) $itemData['quantity'],
+                    'unit_price' => (float) $itemData['unit_price'],
+                    'production_time_days' => isset($itemData['production_time_days']) && $itemData['production_time_days'] !== ''
+                        ? (int) $itemData['production_time_days'] : null,
+                    'logo_printing' => $itemData['logo_printing'] ?? null,
+                    'line_total' => (int) $itemData['quantity'] * (float) $itemData['unit_price'],
+                    'sort_order' => $sortOrder++,
+                    'variant_group' => $itemData['variant_group'] ?? null,
+                    'is_variant' => (bool) ($itemData['is_variant'] ?? false),
+                    'is_selected' => isset($itemData['is_selected']) ? (bool) $itemData['is_selected'] : true, // MEJORADO: Manejar is_selected con valor por defecto
+                ]);
+
+                // Preparar actualización de precio del producto si es diferente
+                $currentPrice = Product::find($itemData['product_id'])->last_price ?? 0;
+                $newPrice = (float) $itemData['unit_price'];
+
+                if ($currentPrice != $newPrice) {
+                    $productPriceUpdates[] = [
+                        'id' => $itemData['product_id'],
+                        'last_price' => $newPrice
+                    ];
+                }
+
+                Log::info('Budget item created successfully', [
+                    'item_id' => $budgetItem->id,
+                    'product_id' => $itemData['product_id'],
+                    'is_selected' => $budgetItem->is_selected
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
+                throw $e;
+            }
+        }
+
+        // Actualizar precios de productos en lote
+        if (!empty($productPriceUpdates)) {
+            foreach ($productPriceUpdates as $update) {
+                Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
+            }
+            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
         }
     }
 
