@@ -29,11 +29,11 @@ export default function Index({ auth, budgets, filters = {} }) {
         router.get(route('dashboard.budgets.edit', budgetId));
     };
 
-    const handleDelete = async (budgetId, productName) => {
+    const handleDelete = async (budgetId, budgetName) => {
         const confirmed = await confirmDelete({
-            title: 'Eliminar producto',
-            description: 'Esta acción no se puede deshacer. El producto será eliminado permanentemente del sistema.',
-            itemName: productName,
+            title: 'Eliminar presupuesto',
+            description: 'Esta acción no se puede deshacer. El presupuesto será eliminado permanentemente del sistema.',
+            itemName: budgetName,
         });
 
         if (confirmed) {
