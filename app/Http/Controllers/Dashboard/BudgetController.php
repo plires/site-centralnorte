@@ -112,6 +112,11 @@ class BudgetController extends Controller
 
     public function show(Budget $budget)
     {
+        $user = Auth::user();
+
+        // Verificar permisos
+        $this->authorizeUserAccess($budget);
+
         // Cargar todas las relaciones necesarias
         $budget->load([
             'user',
@@ -119,15 +124,19 @@ class BudgetController extends Controller
             'items' => function ($query) {
                 $query->with([
                     'product' => function ($query) {
-                        $query->with(['images' => function ($query) {
-                            $query->where('is_featured', true)->limit(1);
-                        }]);
+                        $query->with([
+                            'images' => function ($query) {
+                                $query->where('is_featured', true)->limit(1);
+                            },
+                            'featuredImage', // Agregar imagen destacada por separado
+                            'category' // Agregar categoría
+                        ]);
                     }
                 ])->orderBy('sort_order');
             }
         ]);
 
-        // Aplicar datos de estado al presupuesto usando el método del modelo
+        // CORREGIDO: Usar método del modelo que está funcionando correctamente
         $statusData = $budget->getStatusData();
 
         // Separar items regulares y grupos de variantes
@@ -150,13 +159,14 @@ class BudgetController extends Controller
             'apply_iva' => config('business.tax.apply_iva', true),
         ];
 
-        return Inertia::render('dashboard/budgets/Show', array_merge([
-            'budget' => $budget,
+        // CORREGIDO: Pasar budget como array combinado con statusData (igual que PublicBudgetController)
+        return Inertia::render('dashboard/budgets/Show', [
+            'budget' => array_merge($budget->toArray(), $statusData), // Combinar datos del presupuesto con estado
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
             'hasVariants' => $budget->hasVariants(),
             'businessConfig' => $businessConfig,
-        ], $statusData));
+        ]);
     }
 
     public function create()
@@ -171,7 +181,8 @@ class BudgetController extends Controller
                 return [
                     'id' => $client->id,
                     'name' => $client->name,
-                    'display_name' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+                    'display_name' => $client->company ?
+                        "{$client->name} ({$client->company})" : $client->name,
                 ];
             });
 
@@ -187,6 +198,8 @@ class BudgetController extends Controller
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
+                'default_validity_days' => config('business.budget.default_validity_days', 30), // NUEVO
+                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3), // NUEVO
             ]
         ]);
     }
@@ -198,13 +211,13 @@ class BudgetController extends Controller
 
             $user = Auth::user();
 
-            // Crear el presupuesto
+            // Crear el presupuesto usando los datos validados
             $budget = Budget::create([
                 'title' => $request->title,
                 'user_id' => $user->id,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
-                'expiry_date' => $request->expiry_date,
+                'expiry_date' => $request->expiry_date, // Ya calculada automáticamente en BudgetRequest
                 'send_email_to_client' => $request->boolean('send_email_to_client'),
                 'footer_comments' => $request->footer_comments,
             ]);
@@ -226,9 +239,14 @@ class BudgetController extends Controller
                         'email_sent_at' => now(),
                     ]);
 
-                    Log::info('Email de presupuesto enviado', ['budget_id' => $budget->id, 'client_email' => $budget->client->email]);
+                    Log::info('Email de presupuesto enviado', [
+                        'budget_id' => $budget->id,
+                        'client_email' => $budget->client->email
+                    ]);
                 } catch (\Exception $e) {
-                    Log::error('Error al enviar email de presupuesto: ' . $e->getMessage(), ['budget_id' => $budget->id]);
+                    Log::error('Error al enviar email de presupuesto: ' . $e->getMessage(), [
+                        'budget_id' => $budget->id
+                    ]);
                     // No fallar la creación del presupuesto por error de email
                 }
             }
@@ -241,7 +259,9 @@ class BudgetController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al crear presupuesto: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ocurrió un error al crear el presupuesto. Inténtalo de nuevo.');
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ocurrió un error al crear el presupuesto. Inténtalo de nuevo.');
         }
     }
 
@@ -249,12 +269,12 @@ class BudgetController extends Controller
     {
         $user = Auth::user();
 
-        // Verificar permisos: admins pueden editar todos, vendedores solo los suyos
+        // Verificar permisos
         if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
-        // Cargar relaciones necesarias
+        // Cargar relaciones necesarias (CORREGIDO: mantener la estructura original)
         $budget->load([
             'client',
             'items' => function ($query) {
@@ -270,7 +290,7 @@ class BudgetController extends Controller
             }
         ]);
 
-        // Obtener clientes y productos para los selects
+        // Obtener clientes para el select
         $clients = Client::select('id', 'name', 'company')
             ->orderBy('name')
             ->get()
@@ -278,7 +298,8 @@ class BudgetController extends Controller
                 return [
                     'id' => $client->id,
                     'name' => $client->name,
-                    'display_name' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+                    'display_name' => $client->company ?
+                        "{$client->name} ({$client->company})" : $client->name,
                 ];
             });
 
@@ -296,7 +317,7 @@ class BudgetController extends Controller
                 'expiry_date' => $budget->expiry_date_iso, // Usar accessor para input HTML
                 'send_email_to_client' => $budget->send_email_to_client,
                 'footer_comments' => $budget->footer_comments,
-                'items' => $budget->items,
+                'items' => $budget->items, // Las relaciones ya están cargadas correctamente
             ],
             'clients' => $clients,
             'products' => $products,
@@ -304,11 +325,13 @@ class BudgetController extends Controller
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
+                'default_validity_days' => config('business.budget.default_validity_days', 30), // NUEVO
+                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3), // NUEVO
             ]
         ]);
     }
 
-    public function update(Request $request, Budget $budget)
+    public function update(BudgetRequest $request, Budget $budget)
     {
         try {
             DB::beginTransaction();
@@ -320,38 +343,20 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para editar este presupuesto.');
             }
 
-            // Validación
-            $validated = $request->validate([
-                'title' => 'required|string|max:255',
-                'client_id' => 'required|exists:clients,id',
-                'issue_date' => 'required|date',
-                'expiry_date' => 'required|date|after_or_equal:issue_date',
-                'send_email_to_client' => 'boolean',
-                'footer_comments' => 'nullable|string',
-                'items' => 'required|array|min:1',
-                'items.*.product_id' => 'required|exists:products,id',
-                'items.*.quantity' => 'required|integer|min:1',
-                'items.*.unit_price' => 'required|numeric|min:0',
-                'items.*.production_time_days' => 'nullable|integer|min:1',
-                'items.*.logo_printing' => 'nullable|string|max:255',
-                'items.*.variant_group' => 'nullable|string',
-                'items.*.is_variant' => 'boolean',
-                'items.*.is_selected' => 'boolean', // NUEVO: Validar is_selected
-            ]);
-
+            // Los datos ya están validados por BudgetRequest
             // Actualizar datos básicos del presupuesto
             $budget->update([
-                'title' => $validated['title'],
-                'client_id' => $validated['client_id'],
-                'issue_date' => $validated['issue_date'],
-                'expiry_date' => $validated['expiry_date'],
-                'send_email_to_client' => $validated['send_email_to_client'] ?? false,
-                'footer_comments' => $validated['footer_comments'],
+                'title' => $request->title,
+                'client_id' => $request->client_id,
+                'issue_date' => $request->issue_date, // En edición no debería cambiar, pero si llega se valida
+                'expiry_date' => $request->expiry_date,
+                'send_email_to_client' => $request->boolean('send_email_to_client'),
+                'footer_comments' => $request->footer_comments,
             ]);
 
             // Eliminar items existentes y recrear
             $budget->items()->delete();
-            $this->createBudgetItems($budget, $validated['items']);
+            $this->createBudgetItems($budget, $request->items);
 
             // Calcular totales
             $budget->calculateTotals();
@@ -364,9 +369,12 @@ class BudgetController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
         }
     }
+
     public function destroy(Budget $budget)
     {
         try {
