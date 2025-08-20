@@ -1,10 +1,9 @@
 /**
  * Utilidades centralizadas para manejo de fechas
  *
- * IMPORTANTE: Ya no es necesario parsear fechas manualmente desde el frontend
- * porque ahora el backend envía las fechas ya formateadas usando accessors del modelo.
- *
- * Este archivo se puede usar para formateos adicionales si es necesario.
+ * IMPORTANTE: Todas las funciones que generan fechas para formularios
+ * deben usar la zona horaria local de Argentina para evitar problemas
+ * cuando es tarde en el día (22:00+ hora local = siguiente día en UTC)
  */
 
 /**
@@ -83,18 +82,56 @@ export const formatForDateInput = (dateString) => {
 };
 
 /**
- * Función para obtener la fecha actual en formato YYYY-MM-DD
- * Útil para atributos min/max de inputs date
+ * Función CORREGIDA para obtener la fecha actual en formato YYYY-MM-DD
+ * Usa la zona horaria local de Argentina (NO UTC) para evitar problemas
+ * cuando es tarde en el día local
  */
 export const getTodayISO = () => {
-    return new Date().toISOString().split('T')[0];
+    const now = new Date();
+
+    // Obtener año, mes y día EN LA ZONA HORARIA LOCAL
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // +1 porque getMonth() es 0-indexed
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 };
 
 /**
- * Función para obtener mañana en formato YYYY-MM-DD
+ * Función CORREGIDA para obtener mañana en formato YYYY-MM-DD
+ * Usa la zona horaria local de Argentina (NO UTC)
  */
 export const getTomorrowISO = () => {
     const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    tomorrow.setDate(tomorrow.getDate() + 1); // Esto suma 1 día EN LA ZONA HORARIA LOCAL
+
+    // Obtener año, mes y día EN LA ZONA HORARIA LOCAL
+    const year = tomorrow.getFullYear();
+    const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+    const day = String(tomorrow.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
+};
+
+/**
+ * Nueva función: obtener fecha local formateada para inputs HTML
+ * Útil para inicializar formularios con la fecha actual local
+ */
+export const getTodayForInput = () => {
+    return getTodayISO();
+};
+
+/**
+ * Nueva función: obtener fecha + N días en formato YYYY-MM-DD
+ * Usa zona horaria local
+ */
+export const getDatePlusDaysISO = (days = 0) => {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + days);
+
+    const year = targetDate.getFullYear();
+    const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+    const day = String(targetDate.getDate()).padStart(2, '0');
+
+    return `${year}-${month}-${day}`;
 };

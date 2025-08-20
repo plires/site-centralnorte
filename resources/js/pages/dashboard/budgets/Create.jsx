@@ -1,5 +1,6 @@
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
+import { getDatePlusDaysISO, getTodayISO } from '@/utils/dateUtils';
 import { Head, useForm } from '@inertiajs/react';
 import BudgetForm from './components/BudgetForm';
 
@@ -17,11 +18,16 @@ const breadcrumbs = [
 export default function Create({ clients, products, user, businessConfig, budget = null }) {
     const isEditing = !!budget;
 
+    // Obtener días de validez desde la configuración del backend
+    const validityDays = businessConfig?.default_validity_days || 30;
+
     const { data, setData, post, put, processing, errors, reset } = useForm({
         title: budget?.title || '',
         client_id: budget?.client_id?.toString() || '',
-        issue_date: budget?.issue_date || new Date().toISOString().split('T')[0],
-        expiry_date: budget?.expiry_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        // CORREGIDO: Usar la función que respeta la zona horaria local
+        issue_date: budget?.issue_date || getTodayISO(),
+        // CORREGIDO: Usar configuración de días de validez desde el backend
+        expiry_date: budget?.expiry_date || getDatePlusDaysISO(validityDays),
         send_email_to_client: budget?.send_email_to_client || false,
         footer_comments: budget?.footer_comments || '',
         items: budget?.items || [],
