@@ -1,12 +1,9 @@
 <?php
 
-// app/Http/Requests/BudgetRequest.php
-
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 use Carbon\Carbon;
+use Illuminate\Foundation\Http\FormRequest;
 
 class BudgetRequest extends FormRequest
 {
@@ -40,6 +37,7 @@ class BudgetRequest extends FormRequest
             'items.*.logo_printing' => 'nullable|string|max:255',
             'items.*.variant_group' => 'nullable|string|max:100',
             'items.*.is_variant' => 'nullable|boolean',
+            'items.*.is_selected' => 'nullable|boolean',
             // Permitir campos adicionales que vienen del frontend pero no los usamos
             'items.*.id' => 'nullable',
             'items.*.line_total' => 'nullable|numeric',
@@ -49,18 +47,32 @@ class BudgetRequest extends FormRequest
 
     /**
      * Get validation rules for issue_date based on operation type
+     * ACTUALIZADO: Para creación debe ser hoy, para edición el campo no se debe editar
      */
     private function getIssueDateRules(bool $isEditing): array
     {
         $rules = ['required', 'date'];
 
         if ($isEditing) {
-            // Al editar: no puede ser mayor a hoy
-            $rules[] = 'before_or_equal:today';
+            // Al editar: El frontend no debería permitir cambiar esta fecha
+            // Pero si llega, no debe ser mayor a hoy por seguridad
+            $todayArgentina = now()->timezone('America/Argentina/Buenos_Aires')->format('Y-m-d');
+            $rules[] = function ($attribute, $value, $fail) use ($todayArgentina) {
+                $inputDate = Carbon::parse($value)->format('Y-m-d');
+                if ($inputDate > $todayArgentina) {
+                    $fail('La fecha de emisión no puede ser mayor a hoy.');
+                }
+            };
         } else {
-            // Al crear: debe ser exactamente hoy (no anterior ni posterior)
-            $rules[] = 'after_or_equal:today';
-            $rules[] = 'before_or_equal:today';
+            // Al crear: DEBE ser exactamente hoy en Argentina
+            $todayArgentina = now()->timezone('America/Argentina/Buenos_Aires')->format('Y-m-d');
+            $rules[] = function ($attribute, $value, $fail) use ($todayArgentina) {
+                $inputDate = Carbon::parse($value)->format('Y-m-d');
+                if ($inputDate !== $todayArgentina) {
+                    $todayFormatted = Carbon::parse($todayArgentina)->format('d/m/Y');
+                    $fail("La fecha de emisión debe ser la fecha de hoy ({$todayFormatted}).");
+                }
+            };
         }
 
         return $rules;
@@ -68,6 +80,7 @@ class BudgetRequest extends FormRequest
 
     /**
      * Get validation rules for expiry_date based on operation type
+     * ACTUALIZADO: Flexible, sin validación rígida de días específicos
      */
     private function getExpiryDateRules(bool $isEditing): array
     {
@@ -78,8 +91,12 @@ class BudgetRequest extends FormRequest
         ];
 
         if (!$isEditing) {
-            // Al crear: debe ser mínimo mañana
-            $rules[] = 'after_or_equal:tomorrow';
+            // Al crear: Solo debe ser posterior a la fecha de emisión
+            // (el frontend inicializa con BUDGET_VALIDITY_DAYS pero el usuario puede cambiarla)
+            // No hay restricción adicional más allá de ser posterior a issue_date
+        } else {
+            // Al editar: Puede ser cualquier fecha posterior a la fecha de emisión
+            // (sin restricción de que sea "mínimo mañana", más flexible para el usuario)
         }
 
         // Máximo 1 año desde la fecha de emisión (tanto crear como editar)
@@ -98,35 +115,12 @@ class BudgetRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
+     * CORREGIDO: No auto-calcular fecha de vencimiento, debe venir del frontend
      */
     protected function prepareForValidation()
     {
-        // Agregar regla personalizada para "tomorrow"
-        $this->getValidatorInstance()->addExtension('after_or_equal_tomorrow', function ($attribute, $value, $parameters, $validator) {
-            $tomorrow = Carbon::tomorrow()->startOfDay();
-            $inputDate = Carbon::parse($value)->startOfDay();
-            return $inputDate->gte($tomorrow);
-        });
-
-        $this->getValidatorInstance()->addReplacer('after_or_equal_tomorrow', function ($message, $attribute, $rule, $parameters) {
-            return str_replace(':attribute', $attribute, 'El campo :attribute debe ser como mínimo mañana.');
-        });
-    }
-
-    /**
-     * Configure the validator instance.
-     */
-    public function withValidator($validator)
-    {
-        $validator->addExtension('after_or_equal_tomorrow', function ($attribute, $value, $parameters, $validator) {
-            $tomorrow = Carbon::tomorrow()->startOfDay();
-            $inputDate = Carbon::parse($value)->startOfDay();
-            return $inputDate->gte($tomorrow);
-        });
-
-        $validator->addReplacer('after_or_equal_tomorrow', function ($message, $attribute, $rule, $parameters) {
-            return 'La fecha de vencimiento debe ser como mínimo mañana.';
-        });
+        // El frontend ya debe enviar tanto issue_date como expiry_date
+        // No necesitamos auto-calcular nada aquí
     }
 
     /**
@@ -135,30 +129,78 @@ class BudgetRequest extends FormRequest
     public function messages(): array
     {
         $isEditing = $this->isMethod('PUT') || $this->isMethod('PATCH');
+        $todayArgentina = now()->timezone('America/Argentina/Buenos_Aires')->format('d/m/Y');
 
         return [
             'title.required' => 'El título del presupuesto es obligatorio.',
+            'title.string' => 'El título debe ser un texto válido.',
+            'title.max' => 'El título no puede tener más de 255 caracteres.',
+
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',
+
             'issue_date.required' => 'La fecha de emisión es obligatoria.',
-            'issue_date.after_or_equal' => $isEditing
-                ? 'La fecha de emisión no puede ser mayor a hoy.'
-                : 'La fecha de emisión no puede ser anterior a hoy.',
-            'issue_date.before_or_equal' => $isEditing
-                ? 'La fecha de emisión no puede ser mayor a hoy.'
-                : 'La fecha de emisión no puede ser posterior a hoy.',
+            'issue_date.date' => 'La fecha de emisión debe ser una fecha válida.',
+
             'expiry_date.required' => 'La fecha de vencimiento es obligatoria.',
+            'expiry_date.date' => 'La fecha de vencimiento debe ser una fecha válida.',
             'expiry_date.after' => 'La fecha de vencimiento debe ser posterior a la fecha de emisión.',
-            'expiry_date.after_or_equal' => 'La fecha de vencimiento debe ser como mínimo mañana.',
+
+            'send_email_to_client.boolean' => 'El campo de envío automático debe ser verdadero o falso.',
+
+            'footer_comments.string' => 'Los comentarios del pie deben ser texto válido.',
+
             'items.required' => 'Debe agregar al menos un producto al presupuesto.',
             'items.min' => 'Debe agregar al menos un producto al presupuesto.',
+            'items.array' => 'Los productos deben estar en formato válido.',
+
+            // Validaciones de items
             'items.*.product_id.required' => 'Debe seleccionar un producto.',
             'items.*.product_id.exists' => 'El producto seleccionado no existe.',
+
             'items.*.quantity.required' => 'La cantidad es obligatoria.',
+            'items.*.quantity.integer' => 'La cantidad debe ser un número entero.',
             'items.*.quantity.min' => 'La cantidad debe ser mayor a 0.',
+
             'items.*.unit_price.required' => 'El precio unitario es obligatorio.',
+            'items.*.unit_price.numeric' => 'El precio unitario debe ser un número.',
             'items.*.unit_price.min' => 'El precio unitario debe ser mayor o igual a 0.',
+
+            'items.*.production_time_days.integer' => 'El tiempo de producción debe ser un número entero.',
             'items.*.production_time_days.min' => 'El tiempo de producción debe ser mayor a 0.',
+
+            'items.*.logo_printing.string' => 'La descripción de impresión de logo debe ser texto válido.',
+            'items.*.logo_printing.max' => 'La descripción de impresión de logo no puede tener más de 255 caracteres.',
+
+            'items.*.variant_group.string' => 'El grupo de variantes debe ser texto válido.',
+            'items.*.variant_group.max' => 'El grupo de variantes no puede tener más de 100 caracteres.',
+
+            'items.*.is_variant.boolean' => 'El campo de variante debe ser verdadero o falso.',
+            'items.*.is_selected.boolean' => 'El campo de selección debe ser verdadero o falso.',
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'title' => 'título',
+            'client_id' => 'cliente',
+            'issue_date' => 'fecha de emisión',
+            'expiry_date' => 'fecha de vencimiento',
+            'send_email_to_client' => 'envío automático al cliente',
+            'footer_comments' => 'comentarios del pie',
+            'items' => 'productos',
+            'items.*.product_id' => 'producto',
+            'items.*.quantity' => 'cantidad',
+            'items.*.unit_price' => 'precio unitario',
+            'items.*.production_time_days' => 'tiempo de producción',
+            'items.*.logo_printing' => 'impresión de logo',
+            'items.*.variant_group' => 'grupo de variantes',
+            'items.*.is_variant' => 'es variante',
+            'items.*.is_selected' => 'está seleccionado',
         ];
     }
 }
