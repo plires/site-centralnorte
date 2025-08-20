@@ -2,11 +2,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, CheckCircle, Package, Plus, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Package, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import VariantForm from './VariantForm';
 
 export default function ProductModal({ products, existingItems = [], editingItem = null, onClose, onSubmit, checkForDuplicates = null }) {
     // Estados principales
@@ -15,6 +15,12 @@ export default function ProductModal({ products, existingItems = [], editingItem
     const [variants, setVariants] = useState([]);
     const [errors, setErrors] = useState([]);
     const [warnings, setWarnings] = useState([]);
+
+    useEffect(() => {
+        if (selectedProduct || variants.length > 0) {
+            validateForm();
+        }
+    }, [selectedProduct, variants, isVariantMode]);
 
     // Inicialización
     useEffect(() => {
@@ -76,12 +82,13 @@ export default function ProductModal({ products, existingItems = [], editingItem
 
     const createEmptyVariant = () => ({
         id: `variant_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        quantity: '',
+        quantity: '1',
         unit_price: '',
         production_time_days: '',
         logo_printing: '',
     });
 
+    // Función mejorada para manejar selección de producto
     const handleProductSelect = (productId) => {
         const product = products.find((p) => p.id == productId);
         if (!product) return;
@@ -97,8 +104,11 @@ export default function ProductModal({ products, existingItems = [], editingItem
         setVariants([newVariant]);
         setIsVariantMode(false);
 
-        // Verificar duplicados
-        checkDuplicates(product);
+        // Limpiar errores previos al cambiar producto
+        setErrors([]);
+        setWarnings([]);
+
+        // La validación se ejecutará automáticamente por el useEffect
     };
 
     const checkDuplicates = (product) => {
@@ -123,13 +133,20 @@ export default function ProductModal({ products, existingItems = [], editingItem
         }
     };
 
+    // Función mejorada para toggle del modo variante
     const handleVariantModeToggle = (checked) => {
         setIsVariantMode(checked);
 
         if (checked) {
             // Al activar modo variante, asegurar al menos 2 variantes
             if (variants.length < 2) {
-                const newVariants = [{ ...variants[0] }, { ...createEmptyVariant() }];
+                const newVariants = [
+                    { ...variants[0] },
+                    {
+                        ...createEmptyVariant(),
+                        unit_price: selectedProduct?.last_price?.toString() || '',
+                    },
+                ];
                 setVariants(newVariants);
             }
         } else {
@@ -137,78 +154,165 @@ export default function ProductModal({ products, existingItems = [], editingItem
             setVariants([{ ...variants[0] }]);
         }
 
-        validateForm();
+        // La validación se ejecutará automáticamente por el useEffect
     };
 
+    // Función mejorada para agregar variante
     const addVariant = () => {
         const newVariant = {
             ...createEmptyVariant(),
             unit_price: selectedProduct?.last_price?.toString() || '',
         };
         setVariants([...variants, newVariant]);
+
+        // La validación se ejecutará automáticamente por el useEffect
     };
 
+    // Función mejorada para remover variante
     const removeVariant = (variantId) => {
         if (variants.length <= 1) return;
 
         const newVariants = variants.filter((v) => v.id !== variantId);
         setVariants(newVariants);
-        validateForm();
+
+        // La validación se ejecutará automáticamente por el useEffect
     };
 
+    // Función helper para verificar si hay errores en una variante específica
+    const hasVariantError = (index, field) => {
+        return errors.some((e) => e.field === `variant_${index}_${field}`);
+    };
+
+    // Función helper para obtener mensaje de error de una variante específica
+    const getVariantError = (index, field) => {
+        const error = errors.find((e) => e.field === `variant_${index}_${field}`);
+        return error ? error.message : null;
+    };
+
+    // Función mejorada para actualizar variantes con validación inmediata
     const updateVariant = (variantId, field, value) => {
         setVariants((prev) => prev.map((variant) => (variant.id === variantId ? { ...variant, [field]: value } : variant)));
 
-        validateForm();
+        // La validación se ejecutará automáticamente por el useEffect
     };
 
+    // Función de validación
     const validateForm = () => {
         const newErrors = [];
+        const newWarnings = [];
 
-        // Validar producto seleccionado
+        // 1. Validar producto seleccionado
         if (!selectedProduct) {
             newErrors.push({ field: 'product', message: 'Debe seleccionar un producto' });
+            setErrors(newErrors);
+            setWarnings(newWarnings);
+            return false;
         }
 
-        // Validar variantes
-        variants.forEach((variant, index) => {
-            if (!variant.quantity || parseInt(variant.quantity) <= 0) {
-                newErrors.push({
-                    field: `variant_${index}_quantity`,
-                    message: `Cantidad en variante ${index + 1} debe ser mayor a 0`,
+        // 2. Verificar duplicados en el presupuesto (solo si no estamos editando)
+        if (!editingItem && checkForDuplicates) {
+            const tempItem = {
+                product_id: selectedProduct.id,
+                product: selectedProduct,
+            };
+
+            const duplicateCheck = checkForDuplicates([tempItem], editingItem);
+            if (duplicateCheck.length > 0) {
+                newWarnings.push({
+                    type: 'duplicate',
+                    message: 'Este producto ya existe en el presupuesto. Al confirmar, se reemplazará la línea existente.',
                 });
             }
+        }
 
-            if (!variant.unit_price || parseFloat(variant.unit_price) < 0) {
+        // 3. Validar cada variante/línea
+        variants.forEach((variant, index) => {
+            const quantity = variant.quantity?.toString().trim();
+            const unitPrice = variant.unit_price?.toString().trim();
+
+            // 3a. Validar cantidad
+            if (!quantity || quantity === '') {
+                newErrors.push({
+                    field: `variant_${index}_quantity`,
+                    message: isVariantMode ? `Cantidad en variante ${index + 1} es obligatoria` : 'La cantidad es obligatoria',
+                });
+            } else {
+                const parsedQuantity = parseInt(quantity);
+                if (isNaN(parsedQuantity) || parsedQuantity <= 0) {
+                    newErrors.push({
+                        field: `variant_${index}_quantity`,
+                        message: isVariantMode ? `Cantidad en variante ${index + 1} debe ser mayor a 0` : 'La cantidad debe ser mayor a 0',
+                    });
+                }
+            }
+
+            // 3b. Validar precio unitario
+            if (!unitPrice || unitPrice === '') {
                 newErrors.push({
                     field: `variant_${index}_price`,
-                    message: `Precio en variante ${index + 1} debe ser mayor o igual a 0`,
+                    message: isVariantMode ? `Precio en variante ${index + 1} es obligatorio` : 'El precio unitario es obligatorio',
                 });
+            } else {
+                const parsedPrice = parseFloat(unitPrice);
+                if (isNaN(parsedPrice) || parsedPrice <= 0) {
+                    newErrors.push({
+                        field: `variant_${index}_price`,
+                        message: isVariantMode ? `Precio en variante ${index + 1} debe ser mayor a 0` : 'El precio unitario debe ser mayor a 0',
+                    });
+                }
             }
         });
 
-        // Validar modo variante
-        if (isVariantMode && variants.length < 2) {
-            newErrors.push({ field: 'variants', message: 'Productos con variantes deben tener al menos 2 opciones' });
-        }
-
-        // Validar que las variantes sean distintas
-        if (isVariantMode && variants.length >= 2) {
-            const duplicateVariants = [];
-            variants.forEach((variant, i) => {
-                variants.forEach((otherVariant, j) => {
-                    if (i !== j && variant.quantity === otherVariant.quantity && variant.unit_price === otherVariant.unit_price) {
-                        duplicateVariants.push(`Variantes ${i + 1} y ${j + 1} son idénticas`);
-                    }
+        // 4. Validaciones específicas para modo variante
+        if (isVariantMode) {
+            // 4a. Verificar mínimo 2 variantes
+            if (variants.length < 2) {
+                newErrors.push({
+                    field: 'variants',
+                    message: 'Los productos con variantes deben tener al menos 2 opciones',
                 });
-            });
+            }
 
-            if (duplicateVariants.length > 0) {
-                newErrors.push({ field: 'variants', message: duplicateVariants[0] });
+            // 4b. Verificar que no haya variantes idénticas (solo si no hay errores de validación básica)
+            if (variants.length >= 2 && !newErrors.some((e) => e.field.includes('quantity') || e.field.includes('price'))) {
+                const duplicateVariants = [];
+                const processedPairs = new Set();
+
+                variants.forEach((variant, i) => {
+                    variants.forEach((otherVariant, j) => {
+                        if (i !== j) {
+                            const pairKey = `${Math.min(i, j)}-${Math.max(i, j)}`;
+                            if (processedPairs.has(pairKey)) return;
+
+                            const quantity1 = parseInt(variant.quantity?.toString().trim() || '0');
+                            const price1 = parseFloat(variant.unit_price?.toString().trim() || '0');
+                            const quantity2 = parseInt(otherVariant.quantity?.toString().trim() || '0');
+                            const price2 = parseFloat(otherVariant.unit_price?.toString().trim() || '0');
+
+                            if (!isNaN(quantity1) && !isNaN(price1) && !isNaN(quantity2) && !isNaN(price2)) {
+                                if (quantity1 === quantity2 && price1 === price2) {
+                                    duplicateVariants.push(`Variantes ${i + 1} y ${j + 1} son idénticas`);
+                                    processedPairs.add(pairKey);
+                                }
+                            }
+                        }
+                    });
+                });
+
+                if (duplicateVariants.length > 0) {
+                    newErrors.push({
+                        field: 'variants',
+                        message: duplicateVariants[0],
+                    });
+                }
             }
         }
 
+        // 5. Actualizar estados
         setErrors(newErrors);
+        setWarnings(newWarnings);
+
+        // 6. Retornar resultado
         return newErrors.length === 0;
     };
 
@@ -286,13 +390,13 @@ export default function ProductModal({ products, existingItems = [], editingItem
                     {/* Selector de producto */}
                     <div>
                         <Label className="text-base font-medium">Producto *</Label>
-                        <Select value={selectedProduct?.id?.toString() || ''} onValueChange={handleProductSelect}>
-                            <SelectTrigger className="mt-2">
+                        <Select className="py-5" value={selectedProduct?.id?.toString() || ''} onValueChange={handleProductSelect}>
+                            <SelectTrigger className="mt-2 min-h-[50px]">
                                 <SelectValue placeholder="Seleccionar producto..." />
                             </SelectTrigger>
                             <SelectContent>
                                 {products.map((product) => (
-                                    <SelectItem key={product.id} value={product.id.toString()}>
+                                    <SelectItem className="py-2" key={product.id} value={product.id.toString()}>
                                         <div className="flex items-center gap-3">
                                             {product.images && product.images.length > 0 ? (
                                                 <img src={product.images[0].url} alt={product.name} className="h-10 w-10 rounded object-cover" />
@@ -339,17 +443,19 @@ export default function ProductModal({ products, existingItems = [], editingItem
                             {/* Formularios de variantes */}
                             <div className="space-y-4">
                                 {variants.map((variant, index) => (
-                                    <VariantFormSimple
+                                    <VariantForm
                                         key={variant.id}
                                         variant={variant}
                                         index={index}
                                         isVariantMode={isVariantMode}
                                         canRemove={variants.length > 1}
                                         onUpdate={updateVariant}
-                                        onRemove={() => removeVariant(variant.id)}
+                                        onRemove={removeVariant}
                                         errors={errors}
                                         formatCurrency={formatCurrency}
                                         calculateLineTotal={calculateLineTotal}
+                                        hasVariantError={hasVariantError} // Nueva prop
+                                        getVariantError={getVariantError} // Nueva prop
                                     />
                                 ))}
                             </div>
@@ -397,110 +503,6 @@ export default function ProductModal({ products, existingItems = [], editingItem
                     </div>
                 </CardContent>
             </Card>
-        </div>
-    );
-}
-
-// Componente de formulario de variante simplificado (sin radio buttons)
-function VariantFormSimple({ variant, index, isVariantMode, canRemove, onUpdate, onRemove, errors, formatCurrency, calculateLineTotal }) {
-    const hasError = errors.some((e) => e.field.includes(`variant_${index}`));
-    const lineTotal = calculateLineTotal(variant.quantity, variant.unit_price);
-
-    return (
-        <div className={`rounded-lg border p-4 ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-            <div className="mb-4 flex items-center justify-between">
-                <h5 className="font-medium text-gray-900">{isVariantMode ? `Variante ${index + 1}` : 'Producto'}</h5>
-                {canRemove && (
-                    <Button type="button" variant="ghost" size="sm" onClick={onRemove} className="text-red-600 hover:bg-red-100 hover:text-red-700">
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                )}
-            </div>
-
-            <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                    <Label htmlFor={`quantity_${variant.id}`} className="text-sm font-medium">
-                        Cantidad *
-                    </Label>
-                    <Input
-                        id={`quantity_${variant.id}`}
-                        type="number"
-                        min="1"
-                        value={variant.quantity}
-                        onChange={(e) => onUpdate(variant.id, 'quantity', e.target.value)}
-                        placeholder="Ej: 100"
-                        className={`mt-1 ${hasError ? 'border-red-300' : ''}`}
-                    />
-                    {errors.some((e) => e.field === `variant_${index}_quantity`) && (
-                        <p className="mt-1 text-xs text-red-600">{errors.find((e) => e.field === `variant_${index}_quantity`).message}</p>
-                    )}
-                </div>
-
-                <div>
-                    <Label htmlFor={`unit_price_${variant.id}`} className="text-sm font-medium">
-                        Precio Unitario *
-                    </Label>
-                    <Input
-                        id={`unit_price_${variant.id}`}
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={variant.unit_price}
-                        onChange={(e) => onUpdate(variant.id, 'unit_price', e.target.value)}
-                        placeholder="Ej: 1500.00"
-                        className={`mt-1 ${hasError ? 'border-red-300' : ''}`}
-                    />
-                    {errors.some((e) => e.field === `variant_${index}_price`) && (
-                        <p className="mt-1 text-xs text-red-600">{errors.find((e) => e.field === `variant_${index}_price`).message}</p>
-                    )}
-                </div>
-
-                <div>
-                    <Label htmlFor={`production_time_${variant.id}`} className="text-sm font-medium">
-                        Tiempo de Producción (días)
-                    </Label>
-                    <Input
-                        id={`production_time_${variant.id}`}
-                        type="number"
-                        min="1"
-                        value={variant.production_time_days}
-                        onChange={(e) => onUpdate(variant.id, 'production_time_days', e.target.value)}
-                        placeholder="Ej: 15"
-                        className="mt-1"
-                    />
-                </div>
-
-                <div>
-                    <Label htmlFor={`logo_printing_${variant.id}`} className="text-sm font-medium">
-                        Impresión de Logo
-                    </Label>
-                    <Input
-                        id={`logo_printing_${variant.id}`}
-                        value={variant.logo_printing}
-                        onChange={(e) => onUpdate(variant.id, 'logo_printing', e.target.value)}
-                        placeholder="Ej: Serigrafía 1 color"
-                        className="mt-1"
-                    />
-                </div>
-            </div>
-
-            {/* Total de la línea */}
-            {variant.quantity && variant.unit_price && lineTotal > 0 && (
-                <div className="flex items-center justify-between rounded border border-green-200 bg-green-50 p-3">
-                    <span className="text-sm font-medium text-green-800">Total de esta línea:</span>
-                    <span className="text-lg font-bold text-green-900">{formatCurrency(lineTotal)}</span>
-                </div>
-            )}
-
-            {/* Mensaje informativo para variantes */}
-            {isVariantMode && index === 0 && (
-                <div className="mt-3 rounded border border-blue-200 bg-blue-50 p-2">
-                    <p className="text-sm text-blue-700">
-                        <strong>Nota:</strong> La primera variante se incluirá por defecto en el presupuesto. Podrás cambiar la selección después
-                        desde el presupuesto.
-                    </p>
-                </div>
-            )}
         </div>
     );
 }
