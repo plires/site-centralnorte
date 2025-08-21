@@ -7,14 +7,45 @@ import { Head } from '@inertiajs/react';
 import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-export default function Budget({ budget }) {
+export default function Budget({ budget, businessConfig }) {
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
+        iva: 0,
         total: parseFloat(budget.total),
     });
     const [currentImageIndexes, setCurrentImageIndexes] = useState({});
     const [imageGalleries, setImageGalleries] = useState({});
+
+    // Obtener configuración de IVA y placeholder
+    const ivaRate = businessConfig?.iva_rate ?? 0.21;
+    const applyIva = businessConfig?.apply_iva ?? true;
+    const placeholderImage = businessConfig?.placeholder_image ?? '/images/product-placeholder.jpg';
+
+    // Función helper para organizar imágenes con la destacada primero
+    const organizeImages = (productImages) => {
+        if (!productImages || productImages.length === 0) {
+            // Retornar imagen placeholder si no hay imágenes (usando configuración)
+            return [
+                {
+                    id: 'placeholder',
+                    url: placeholderImage,
+                    full_url: placeholderImage,
+                    is_featured: true,
+                    is_placeholder: true,
+                },
+            ];
+        }
+
+        // Ordenar: imagen destacada primero, luego las demás
+        const sortedImages = [...productImages].sort((a, b) => {
+            if (a.is_featured && !b.is_featured) return -1;
+            if (!a.is_featured && b.is_featured) return 1;
+            return 0;
+        });
+
+        return sortedImages;
+    };
 
     useEffect(() => {
         // Configurar galerías de imágenes para cada producto
@@ -24,39 +55,48 @@ export default function Budget({ budget }) {
         // Procesar items regulares
         budget.grouped_items?.regular?.forEach((item) => {
             const key = `regular-${item.id}`;
-            galleries[key] = item.product?.images || [];
-            initialIndexes[key] = 0;
+            galleries[key] = organizeImages(item.product?.images);
+            initialIndexes[key] = 0; // Siempre empezar por la primera (que será la destacada)
         });
 
         // Procesar grupos de variantes
         Object.entries(budget.grouped_items?.variants || {}).forEach(([group, items]) => {
             items.forEach((item) => {
                 const key = `variant-${group}-${item.id}`;
-                galleries[key] = item.product?.images || [];
-                initialIndexes[key] = 0;
+                galleries[key] = organizeImages(item.product?.images);
+                initialIndexes[key] = 0; // Siempre empezar por la primera (que será la destacada)
             });
         });
 
         setImageGalleries(galleries);
         setCurrentImageIndexes(initialIndexes);
 
-        // Configurar variantes por defecto (primera opción de cada grupo)
-        const defaultVariants = {};
+        // Inicializar variantes seleccionadas basado en is_selected de la base de datos (igual que dashboard)
+        const initialVariants = {};
         Object.entries(budget.grouped_items?.variants || {}).forEach(([group, items]) => {
             if (items.length > 0) {
-                defaultVariants[group] = items[0].id;
+                // Buscar el item que tiene is_selected = true
+                const selectedItem = items.find((item) => item.is_selected === true);
+                if (selectedItem) {
+                    initialVariants[group] = selectedItem.id;
+                    console.log(`Public Budget: Grupo ${group} - item seleccionado desde BD: ${selectedItem.id}`);
+                } else {
+                    // Fallback: si ninguno está marcado, seleccionar el primero
+                    initialVariants[group] = items[0].id;
+                    console.log(`Public Budget: Grupo ${group} - usando fallback: ${items[0].id}`);
+                }
             }
         });
-        setSelectedVariants(defaultVariants);
+        setSelectedVariants(initialVariants);
     }, [budget]);
 
-    // Recalcular totales cuando cambian las variantes
+    // Recalcular totales cuando cambian las variantes (REUTILIZADA la lógica del dashboard)
     useEffect(() => {
-        let subtotal = 0;
+        let newSubtotal = 0;
 
         // Sumar items regulares
         budget.grouped_items?.regular?.forEach((item) => {
-            subtotal += parseFloat(item.line_total);
+            newSubtotal += parseFloat(item.line_total);
         });
 
         // Sumar variantes seleccionadas
@@ -64,15 +104,20 @@ export default function Budget({ budget }) {
             const selectedItemId = selectedVariants[group];
             const selectedItem = items.find((item) => item.id === selectedItemId);
             if (selectedItem) {
-                subtotal += parseFloat(selectedItem.line_total);
+                newSubtotal += parseFloat(selectedItem.line_total);
             }
         });
 
+        // Calcular IVA y total (IGUAL que en dashboard/Show.jsx)
+        const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
+        const totalWithIva = newSubtotal + ivaAmount;
+
         setCalculatedTotals({
-            subtotal: subtotal,
-            total: subtotal, // Aquí puedes agregar lógica para impuestos
+            subtotal: newSubtotal,
+            iva: ivaAmount,
+            total: totalWithIva,
         });
-    }, [selectedVariants, budget]);
+    }, [selectedVariants, budget.grouped_items, ivaRate, applyIva]);
 
     const handleVariantSelection = (group, itemId) => {
         setSelectedVariants((prev) => ({
@@ -81,17 +126,9 @@ export default function Budget({ budget }) {
         }));
     };
 
-    const handleDownloadPDF = () => {
-        const params = new URLSearchParams();
-        Object.entries(selectedVariants).forEach(([group, itemId]) => {
-            params.append(`selected_variants[${group}]`, itemId);
-        });
-
-        const url = `${route('public.budget.pdf', budget.token)}?${params.toString()}`;
-        window.open(url, '_blank');
+    const formatCurrency = (amount) => {
+        return `$${parseFloat(amount).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     };
-
-    const formatCurrency = (amount) => `$${Number(amount).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
 
     const getStatusInfo = () => {
         if (budget.is_expired) {
@@ -104,7 +141,7 @@ export default function Budget({ budget }) {
 
         if (budget.days_until_expiry <= 3) {
             return {
-                variant: 'destructive',
+                variant: 'secondary',
                 icon: Clock,
                 text: `Vence en ${budget.days_until_expiry} día${budget.days_until_expiry !== 1 ? 's' : ''}`,
             };
@@ -176,19 +213,8 @@ export default function Budget({ budget }) {
                                 <p className="text-sm text-gray-900">{budget.issue_date_short}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-500">Fecha de vencimiento</p>
+                                <p className="text-sm font-medium text-gray-500">Válido hasta</p>
                                 <p className="text-sm text-gray-900">{budget.expiry_date_short}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500">Cliente</p>
-                                <p className="text-sm text-gray-900">
-                                    {budget.client.name}
-                                    {budget.client.company && ` - ${budget.client.company}`}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500">Vendedor</p>
-                                <p className="text-sm text-gray-900">{budget.user.name}</p>
                             </div>
                         </div>
                     </CardContent>
@@ -198,7 +224,7 @@ export default function Budget({ budget }) {
                 {budget.grouped_items?.regular?.length > 0 && (
                     <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle>Productos Incluidos</CardTitle>
+                            <CardTitle>Productos incluidos</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -214,42 +240,54 @@ export default function Budget({ budget }) {
                                                 {images.length > 0 ? (
                                                     <>
                                                         <img
-                                                            src={images[currentIndex]?.url}
-                                                            alt={item.product?.name}
-                                                            className="h-full w-full rounded-md object-cover"
+                                                            src={images[currentIndex].full_url || images[currentIndex].url}
+                                                            alt={item.product.name}
+                                                            className="h-full w-full rounded-lg object-cover"
+                                                            onError={(e) => {
+                                                                // Fallback si falla la carga de la imagen
+                                                                e.target.src = placeholderImage;
+                                                            }}
                                                         />
-                                                        {images.length > 1 && (
-                                                            <div className="absolute inset-0 flex items-center justify-between">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                        {images.length > 1 && !images[currentIndex].is_placeholder && (
+                                                            <>
+                                                                <button
                                                                     onClick={() => prevImage(imageKey)}
+                                                                    className="absolute top-1/2 left-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
                                                                 >
                                                                     <ChevronLeft className="h-3 w-3" />
-                                                                </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
+                                                                </button>
+                                                                <button
                                                                     onClick={() => nextImage(imageKey)}
+                                                                    className="absolute top-1/2 right-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
                                                                 >
                                                                     <ChevronRight className="h-3 w-3" />
-                                                                </Button>
-                                                            </div>
+                                                                </button>
+                                                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-1 text-xs text-white">
+                                                                    {currentIndex + 1}/{images.length}
+                                                                </div>
+                                                            </>
                                                         )}
                                                     </>
                                                 ) : (
-                                                    <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-400">
-                                                        Sin imagen
+                                                    <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                                                        <img
+                                                            src="/images/product-placeholder.jpg"
+                                                            alt="Sin imagen"
+                                                            className="h-full w-full rounded-lg object-cover opacity-50"
+                                                            onError={(e) => {
+                                                                // Si el placeholder también falla, mostrar texto
+                                                                e.target.style.display = 'none';
+                                                                e.target.nextSibling.style.display = 'block';
+                                                            }}
+                                                        />
+                                                        <span className="absolute hidden text-xs">Sin imagen</span>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* Detalles del producto */}
+                                            {/* Información del producto */}
                                             <div className="flex-1">
-                                                <h3 className="font-medium text-gray-900">{item.product?.name}</h3>
-                                                <p className="text-sm text-gray-500">{item.product?.category?.name}</p>
+                                                <h4 className="font-medium">{item.product.name}</h4>
 
                                                 <div className="mt-2 flex items-center gap-4 text-sm">
                                                     <span>Cantidad: {item.quantity}</span>
@@ -277,90 +315,115 @@ export default function Budget({ budget }) {
 
                 {/* Grupos de variantes */}
                 {Object.entries(budget.grouped_items?.variants || {}).map(([group, items]) => (
-                    <Card key={group} className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Selecciona una opción para: {group}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <RadioGroup
-                                value={selectedVariants[group]?.toString()}
-                                onValueChange={(value) => handleVariantSelection(group, parseInt(value))}
-                            >
-                                <div className="space-y-4">
-                                    {items.map((item) => {
-                                        const imageKey = `variant-${group}-${item.id}`;
-                                        const images = imageGalleries[imageKey] || [];
-                                        const currentIndex = currentImageIndexes[imageKey] || 0;
+                    <div key={group} className="mb-6">
+                        {/* Contenedor principal con borde similar al dashboard */}
+                        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+                            {/* Header del grupo */}
+                            <div className="border-b border-gray-200 px-6 py-4">
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    Selecciona una opción para: {items[0]?.product?.name || group}
+                                </h3>
+                            </div>
 
-                                        return (
-                                            <div key={item.id} className="flex gap-4 rounded-lg border p-4">
-                                                <RadioGroupItem value={item.id.toString()} id={`variant-${item.id}`} className="mt-2" />
+                            {/* Contenido del grupo */}
+                            <div className="p-6">
+                                <RadioGroup
+                                    value={selectedVariants[group]?.toString()}
+                                    onValueChange={(value) => handleVariantSelection(group, parseInt(value))}
+                                >
+                                    <div className="space-y-4">
+                                        {items.map((item) => {
+                                            const imageKey = `variant-${group}-${item.id}`;
+                                            const images = imageGalleries[imageKey] || [];
+                                            const currentIndex = currentImageIndexes[imageKey] || 0;
 
-                                                {/* Imagen del producto */}
-                                                <div className="relative h-24 w-24 flex-shrink-0">
-                                                    {images.length > 0 ? (
-                                                        <>
-                                                            <img
-                                                                src={images[currentIndex]?.url}
-                                                                alt={item.product?.name}
-                                                                className="h-full w-full rounded-md object-cover"
-                                                            />
-                                                            {images.length > 1 && (
-                                                                <div className="absolute inset-0 flex items-center justify-between">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
-                                                                        onClick={() => prevImage(imageKey)}
-                                                                    >
-                                                                        <ChevronLeft className="h-3 w-3" />
-                                                                    </Button>
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        className="h-6 w-6 rounded-full bg-black/50 p-0 text-white hover:bg-black/70"
-                                                                        onClick={() => nextImage(imageKey)}
-                                                                    >
-                                                                        <ChevronRight className="h-3 w-3" />
-                                                                    </Button>
-                                                                </div>
-                                                            )}
-                                                        </>
-                                                    ) : (
-                                                        <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-400">
-                                                            Sin imagen
-                                                        </div>
-                                                    )}
-                                                </div>
+                                            return (
+                                                <div
+                                                    key={item.id}
+                                                    className={`flex gap-4 rounded-lg border p-4 transition-all duration-200 ${
+                                                        selectedVariants[group] === item.id
+                                                            ? 'border-blue-500 bg-blue-50 shadow-sm'
+                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                                    }`}
+                                                >
+                                                    <RadioGroupItem value={item.id.toString()} id={`variant-${item.id}`} className="mt-2" />
 
-                                                {/* Detalles del producto */}
-                                                <label htmlFor={`variant-${item.id}`} className="flex-1 cursor-pointer">
-                                                    <h3 className="font-medium text-gray-900">{item.product?.name}</h3>
-                                                    <p className="text-sm text-gray-500">{item.product?.category?.name}</p>
-
-                                                    <div className="mt-2 flex items-center gap-4 text-sm">
-                                                        <span>Cantidad: {item.quantity}</span>
-                                                        <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
-                                                        <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
+                                                    {/* Imagen del producto */}
+                                                    <div className="relative h-24 w-24 flex-shrink-0">
+                                                        {images.length > 0 ? (
+                                                            <>
+                                                                <img
+                                                                    src={images[currentIndex].full_url || images[currentIndex].url}
+                                                                    alt={item.product.name}
+                                                                    className="h-full w-full rounded-lg object-cover"
+                                                                    onError={(e) => {
+                                                                        // Fallback si falla la carga de la imagen
+                                                                        e.target.src = placeholderImage;
+                                                                    }}
+                                                                />
+                                                                {images.length > 1 && !images[currentIndex].is_placeholder && (
+                                                                    <>
+                                                                        <button
+                                                                            onClick={() => prevImage(imageKey)}
+                                                                            className="absolute top-1/2 left-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                                                                        >
+                                                                            <ChevronLeft className="h-3 w-3" />
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => nextImage(imageKey)}
+                                                                            className="absolute top-1/2 right-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                                                                        >
+                                                                            <ChevronRight className="h-3 w-3" />
+                                                                        </button>
+                                                                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-1 text-xs text-white">
+                                                                            {currentIndex + 1}/{images.length}
+                                                                        </div>
+                                                                    </>
+                                                                )}
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                                                                <img
+                                                                    src={placeholderImage}
+                                                                    alt="Sin imagen"
+                                                                    className="h-full w-full rounded-lg object-cover opacity-50"
+                                                                    onError={(e) => {
+                                                                        // Si el placeholder también falla, mostrar texto
+                                                                        e.target.style.display = 'none';
+                                                                        e.target.nextSibling.style.display = 'block';
+                                                                    }}
+                                                                />
+                                                                <span className="absolute hidden text-xs">Sin imagen</span>
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    {item.production_time_days && (
-                                                        <p className="mt-1 text-sm text-blue-600">
-                                                            Tiempo de producción: {item.production_time_days} días
-                                                        </p>
-                                                    )}
+                                                    {/* Información del producto */}
+                                                    <label htmlFor={`variant-${item.id}`} className="flex-1 cursor-pointer">
+                                                        <div className="mt-2 flex items-center gap-4 text-sm">
+                                                            <span>Cantidad: {item.quantity}</span>
+                                                            <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
+                                                            <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
+                                                        </div>
 
-                                                    {item.logo_printing && (
-                                                        <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
-                                                    )}
-                                                </label>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </RadioGroup>
-                        </CardContent>
-                    </Card>
+                                                        {item.production_time_days && (
+                                                            <p className="mt-1 text-sm text-blue-600">
+                                                                Tiempo de producción: {item.production_time_days} días
+                                                            </p>
+                                                        )}
+
+                                                        {item.logo_printing && (
+                                                            <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
+                                                        )}
+                                                    </label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                        </div>
+                    </div>
                 ))}
 
                 {/* Totales */}
@@ -374,28 +437,43 @@ export default function Budget({ budget }) {
                                 <span>Subtotal:</span>
                                 <span>{formatCurrency(calculatedTotals.subtotal)}</span>
                             </div>
-                            <div className="flex justify-between text-lg font-bold">
-                                <span>Total:</span>
-                                <span>{formatCurrency(calculatedTotals.total)}</span>
+                            {applyIva && (
+                                <div className="flex justify-between">
+                                    <span>IVA ({(ivaRate * 100).toFixed(0)}%):</span>
+                                    <span>{formatCurrency(calculatedTotals.iva)}</span>
+                                </div>
+                            )}
+                            <div className="border-t pt-2">
+                                <div className="flex justify-between text-lg font-bold">
+                                    <span>Total:</span>
+                                    <span>{formatCurrency(calculatedTotals.total)}</span>
+                                </div>
                             </div>
                         </div>
-
-                        {budget.footer_comments && (
-                            <div className="mt-4 rounded-md bg-gray-50 p-3">
-                                <p className="text-sm font-medium text-gray-700">Comentarios adicionales:</p>
-                                <p className="mt-1 text-sm text-gray-600">{budget.footer_comments}</p>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
 
-                {/* Botón de descarga */}
+                {/* Comentarios del pie */}
+                {budget.footer_comments && (
+                    <Card className="mb-6">
+                        <CardHeader>
+                            <CardTitle>Comentarios</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-gray-700">{budget.footer_comments}</p>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Botón de descarga PDF */}
                 <div className="text-center">
-                    <Button onClick={handleDownloadPDF} className="w-full md:w-auto" disabled={!allVariantsSelected}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Descargar PDF
+                    <Button asChild size="lg" disabled={!allVariantsSelected}>
+                        <a href={`/presupuesto/${budget.token}/pdf`} target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2 h-4 w-4" />
+                            Descargar PDF
+                        </a>
                     </Button>
-                    {!allVariantsSelected && <p className="mt-2 text-sm text-gray-500">Selecciona todas las opciones para descargar el PDF</p>}
+                    {!allVariantsSelected && <p className="mt-2 text-sm text-gray-600">Selecciona todas las opciones para descargar el PDF</p>}
                 </div>
             </div>
         </div>

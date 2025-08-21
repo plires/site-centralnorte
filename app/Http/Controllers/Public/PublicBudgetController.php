@@ -30,6 +30,12 @@ class PublicBudgetController extends Controller
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
 
+            // Obtener configuración de IVA (igual que en DashboardBudgetController)
+            $businessConfig = [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ];
+
             return Inertia::render('public/Budget', [
                 'budget' => array_merge([
                     'id' => $budget->id,
@@ -52,7 +58,8 @@ class PublicBudgetController extends Controller
                     'grouped_items' => $groupedItems,
                     'variant_groups' => $budget->getVariantGroups(),
                     'has_variants' => $budget->hasVariants(),
-                ], $statusData)
+                ], $statusData),
+                'businessConfig' => $businessConfig, // AGREGADO: Configuración de IVA
             ]);
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto público: ' . $e->getMessage());
@@ -63,7 +70,7 @@ class PublicBudgetController extends Controller
         }
     }
 
-    public function downloadPdf($token, Request $request)
+    public function downloadPdf($token)
     {
         try {
             $budget = Budget::where('token', $token)
@@ -76,61 +83,40 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
-            // Obtener variantes seleccionadas del request
-            $selectedVariants = $request->get('selected_variants', []);
+            // Obtener items para el total (regulares + variantes seleccionadas)
+            $itemsForTotal = $budget->getItemsForTotal();
 
-            // Filtrar items según las variantes seleccionadas
-            $filteredItems = $this->filterItemsByVariants($budget->items, $selectedVariants);
-
-            // Recalcular totales basado en items filtrados
-            $subtotal = $filteredItems->sum('line_total');
-            $total = $subtotal; // Aquí puedes agregar lógica de IVA si es necesario
-
-            // Obtener datos de estado
-            $statusData = $budget->getStatusData();
-
-            //TODO: ver porque no detecta esta clase
-            $pdf = Pdf::loadView('pdf.budget', [
-                'budget' => array_merge([
-                    'title' => $budget->title,
-                    'issue_date_formatted' => $budget->issue_date_formatted,
-                    'expiry_date_formatted' => $budget->expiry_date_formatted,
-                    'footer_comments' => $budget->footer_comments,
-                    'subtotal' => $subtotal,
-                    'total' => $total,
-                    'client' => $budget->client,
-                    'user' => $budget->user,
-                ], $statusData),
-                'items' => $filteredItems,
-            ])->setPaper('a4');
+            $pdf = PDF::loadView('pdf.budget', [
+                'budget' => $budget,
+                'items' => $itemsForTotal
+            ]);
 
             return $pdf->download("presupuesto-{$budget->id}.pdf");
         } catch (\Exception $e) {
             Log::error('Error al generar PDF: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error al generar el PDF');
+            abort(404, 'Presupuesto no encontrado');
         }
     }
 
     private function groupItemsByVariants($items)
     {
-        $grouped = [];
-        $regular = [];
+        $grouped = [
+            'regular' => [],
+            'variants' => []
+        ];
 
         foreach ($items as $item) {
             if ($item->variant_group) {
-                if (!isset($grouped[$item->variant_group])) {
-                    $grouped[$item->variant_group] = [];
+                if (!isset($grouped['variants'][$item->variant_group])) {
+                    $grouped['variants'][$item->variant_group] = [];
                 }
-                $grouped[$item->variant_group][] = $item;
+                $grouped['variants'][$item->variant_group][] = $item;
             } else {
-                $regular[] = $item;
+                $grouped['regular'][] = $item;
             }
         }
 
-        return [
-            'variants' => $grouped,
-            'regular' => $regular
-        ];
+        return $grouped;
     }
 
     private function filterItemsByVariants($items, $selectedVariants)

@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Budget;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -14,13 +15,17 @@ class BudgetCreatedMail extends Mailable
     use Queueable, SerializesModels;
 
     public Budget $budget;
+    public User $user;
+    public string $publicUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Budget $budget)
+    public function __construct(Budget $budget, User $user, string $publicUrl)
     {
         $this->budget = $budget;
+        $this->user = $user;
+        $this->publicUrl = $publicUrl;
     }
 
     /**
@@ -43,8 +48,8 @@ class BudgetCreatedMail extends Mailable
             with: [
                 'budget' => $this->budget,
                 'client' => $this->budget->client,
-                'vendedor' => $this->budget->user,
-                'publicUrl' => $this->budget->public_url,
+                'vendedor' => $this->user,
+                'publicUrl' => $this->publicUrl,
             ]
         );
     }

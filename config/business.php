@@ -27,4 +27,17 @@ return [
     'default_validity_days' => (int) env('BUDGET_VALIDITY_DAYS', 30),
     'warning_days_before_expiry' => (int) env('BUDGET_WARNING_DAYS', 3),
   ],
+
+  /*
+    |--------------------------------------------------------------------------
+    | Product Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for product management
+    |
+    */
+  'product' => [
+    'placeholder_image' => env('PRODUCT_PLACEHOLDER_IMAGE', '/images/product-placeholder.jpg'),
+  ]
+
 ];
