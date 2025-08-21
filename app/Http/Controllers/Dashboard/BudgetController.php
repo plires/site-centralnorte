@@ -563,7 +563,16 @@ class BudgetController extends Controller
                     throw new \Exception("Datos incompletos en el item {$index}");
                 }
 
-                // Crear el item del presupuesto
+                // Log para debug (igual que createBudgetItems)
+                Log::info('Creating budget item', [
+                    'index' => $index,
+                    'product_id' => $itemData['product_id'],
+                    'is_variant' => $itemData['is_variant'] ?? false,
+                    'is_selected' => $itemData['is_selected'] ?? true,
+                    'variant_group' => $itemData['variant_group'] ?? null
+                ]);
+
+                // Crear el item del presupuesto - CORREGIDO: Incluir is_selected
                 $budgetItem = $budget->items()->create([
                     'product_id' => $itemData['product_id'],
                     'quantity' => (int) $itemData['quantity'],
@@ -574,6 +583,7 @@ class BudgetController extends Controller
                     'sort_order' => $sortOrder++,
                     'variant_group' => $itemData['variant_group'] ?? null,
                     'is_variant' => (bool) ($itemData['is_variant'] ?? false),
+                    'is_selected' => isset($itemData['is_selected']) ? (bool) $itemData['is_selected'] : true, // AGREGADO: Manejo de is_selected
                 ]);
 
                 // Preparar actualización de precio del producto si es diferente
@@ -583,11 +593,15 @@ class BudgetController extends Controller
                 if ($currentPrice != $newPrice) {
                     $productPriceUpdates[] = [
                         'id' => $itemData['product_id'],
-                        'last_price' => $newPrice // CORREGIDO: usar last_price en lugar de price
+                        'last_price' => $newPrice
                     ];
                 }
 
-                Log::info('Budget item created', ['item_id' => $budgetItem->id, 'product_id' => $itemData['product_id']]);
+                Log::info('Budget item created successfully', [
+                    'item_id' => $budgetItem->id,
+                    'product_id' => $itemData['product_id'],
+                    'is_selected' => $budgetItem->is_selected // AGREGADO: Log del is_selected
+                ]);
             } catch (\Exception $e) {
                 Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
                 throw $e;
@@ -705,7 +719,7 @@ class BudgetController extends Controller
             throw new \Exception('El cliente no tiene email configurado.');
         }
 
-        Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget));
+        // Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget));
 
         $budget->update([
             'email_sent' => true,
