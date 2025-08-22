@@ -171,6 +171,9 @@ export default function Budget({ budget, businessConfig }) {
     const statusInfo = getStatusInfo();
     const allVariantsSelected = budget.variant_groups.length === 0 || budget.variant_groups.every((group) => selectedVariants[group]);
 
+    // TODO: refactorizar esta vista para dividir en componentes (no mezclar con dashboard)
+    // TODO: hacer responsiva esta vista.
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Head title={`Presupuesto - ${budget.title}`} />
