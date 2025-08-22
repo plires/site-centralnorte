@@ -112,7 +112,7 @@ export const budgetsColumns = (actions, isDeleting = false) => [
     },
     {
         key: 'status',
-        label: 'Estado',
+        label: 'Vigencia',
         sortable: false,
         render: (value, row) => <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />,
     },

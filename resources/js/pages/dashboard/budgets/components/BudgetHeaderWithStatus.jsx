@@ -46,7 +46,7 @@ export default function BudgetHeaderWithStatus({ budget }) {
         return (
             <Badge variant="success" className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Activo ({days} {dayText} restantes)
+                Vigente ({days} {dayText} restantes)
             </Badge>
         );
     };

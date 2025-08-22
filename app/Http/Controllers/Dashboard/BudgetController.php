@@ -136,7 +136,7 @@ class BudgetController extends Controller
             }
         ]);
 
-        // CORREGIDO: Usar método del modelo que está funcionando correctamente
+        // Usar método del modelo
         $statusData = $budget->getStatusData();
 
         // Separar items regulares y grupos de variantes
@@ -590,7 +590,7 @@ class BudgetController extends Controller
     }
 
     /**
-     * Calcular datos de estado y vencimiento para un presupuesto
+     * Calcular datos de vigencia y vencimiento para un presupuesto
      */
     private function calculateBudgetStatus(Budget $budget)
     {
@@ -622,8 +622,8 @@ class BudgetController extends Controller
             $status = 'expiring_soon';
             $statusText = $daysUntilExpiry === 1 ? 'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
         } else {
-            $status = 'active';
-            $statusText = 'Activo';
+            $status = 'valid';
+            $statusText = 'Vigente';
         }
 
         return [

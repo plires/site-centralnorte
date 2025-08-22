@@ -240,8 +240,8 @@ class Budget extends Model
             $statusText = $daysUntilExpiry === 1 ?
                 'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
         } else {
-            $status = 'active';
-            $statusText = 'Activo';
+            $status = 'valid';
+            $statusText = 'Válido';
         }
 
         return [
