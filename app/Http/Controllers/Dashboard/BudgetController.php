@@ -589,66 +589,6 @@ class BudgetController extends Controller
         }
     }
 
-    /**
-     * Calcular datos de vigencia y vencimiento para un presupuesto
-     */
-    private function calculateBudgetStatus(Budget $budget)
-    {
-        $now = now()->startOfDay();
-        $expiryDate = $budget->expiry_date->startOfDay();
-
-        $isExpired = $expiryDate < $now;
-        $isExpiringToday = $expiryDate->isSameDay($now);
-
-        // Calcular días correctamente
-        if ($isExpiringToday) {
-            $daysUntilExpiry = 0;
-        } elseif ($isExpired) {
-            // Para vencidos: calcular días transcurridos desde el vencimiento (positivo)
-            $daysUntilExpiry = -$expiryDate->diffInDays($now);
-        } else {
-            // Para futuros: calcular días restantes hasta el vencimiento (positivo)
-            $daysUntilExpiry = $now->diffInDays($expiryDate);
-        }
-
-        // Determinar el estado
-        if ($isExpired) {
-            $status = 'expired';
-            $statusText = 'Vencido';
-        } elseif ($isExpiringToday) {
-            $status = 'expiring_soon';
-            $statusText = 'Vence Hoy';
-        } elseif ($daysUntilExpiry <= 3) {
-            $status = 'expiring_soon';
-            $statusText = $daysUntilExpiry === 1 ? 'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
-        } else {
-            $status = 'valid';
-            $statusText = 'Vigente';
-        }
-
-        return [
-            'status' => $status,
-            'status_text' => $statusText,
-            'days_until_expiry' => $daysUntilExpiry,
-            'is_expired' => $isExpired,
-            'is_expiring_today' => $isExpiringToday,
-        ];
-    }
-
-    /**
-     * Aplicar datos de estado a un presupuesto
-     */
-    private function applyBudgetStatus(Budget $budget)
-    {
-        $statusData = $this->calculateBudgetStatus($budget);
-
-        foreach ($statusData as $key => $value) {
-            $budget->$key = $value;
-        }
-
-        return $budget;
-    }
-
     // Métodos privados auxiliares
     private function authorizeUserAccess(Budget $budget)
     {
