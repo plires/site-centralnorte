@@ -24,8 +24,26 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
+            // NUEVO: Verificar si el presupuesto está activo
+            if (!$budget->is_active) {
+                return Inertia::render('public/BudgetNotFound', [
+                    'message' => 'Este presupuesto ha sido desactivado temporalmente y no está disponible para visualización.',
+                    'reason' => 'inactive'
+                ]);
+            }
+
             // Obtener datos de estado usando el método del modelo
             $statusData = $budget->getStatusData();
+
+            // OPCIONAL: También verificar si está vencido (puedes comentar esto si quieres mostrar presupuestos vencidos)
+            /*
+            if ($budget->is_expired) {
+                return Inertia::render('public/BudgetNotFound', [
+                    'message' => 'Este presupuesto ha expirado y ya no está disponible.',
+                    'reason' => 'expired'
+                ]);
+            }
+            */
 
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
@@ -41,6 +59,7 @@ class PublicBudgetController extends Controller
                     'id' => $budget->id,
                     'title' => $budget->title,
                     'token' => $budget->token,
+                    'is_active' => $budget->is_active, // AGREGADO: Para consistencia
                     'issue_date_formatted' => $budget->issue_date_formatted,
                     'expiry_date_formatted' => $budget->expiry_date_formatted,
                     'issue_date_short' => $budget->issue_date_short,
@@ -59,13 +78,14 @@ class PublicBudgetController extends Controller
                     'variant_groups' => $budget->getVariantGroups(),
                     'has_variants' => $budget->hasVariants(),
                 ], $statusData),
-                'businessConfig' => $businessConfig, // AGREGADO: Configuración de IVA
+                'businessConfig' => $businessConfig,
             ]);
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto público: ' . $e->getMessage());
 
             return Inertia::render('public/BudgetNotFound', [
-                'message' => 'El presupuesto solicitado no existe o ha sido eliminado.'
+                'message' => 'El presupuesto solicitado no existe o ha sido eliminado.',
+                'reason' => 'not_found'
             ]);
         }
     }
@@ -83,18 +103,60 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
-            // Obtener items para el total (regulares + variantes seleccionadas)
-            $itemsForTotal = $budget->getItemsForTotal();
+            // NUEVO: Verificar si el presupuesto está activo antes de generar PDF
+            if (!$budget->is_active) {
+                abort(404, 'Presupuesto no disponible');
+            }
 
-            $pdf = PDF::loadView('pdf.budget', [
-                'budget' => $budget,
-                'items' => $itemsForTotal
+            // Agrupar items por variantes
+            $groupedItems = $this->groupItemsByVariants($budget->items);
+
+            // Obtener configuración de IVA
+            $businessConfig = [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ];
+
+            // Obtener datos de estado
+            $statusData = $budget->getStatusData();
+
+            // Preparar datos para el PDF
+            $budgetData = array_merge([
+                'id' => $budget->id,
+                'title' => $budget->title,
+                'token' => $budget->token,
+                'issue_date_formatted' => $budget->issue_date_formatted,
+                'expiry_date_formatted' => $budget->expiry_date_formatted,
+                'issue_date_short' => $budget->issue_date_short,
+                'expiry_date_short' => $budget->expiry_date_short,
+                'footer_comments' => $budget->footer_comments,
+                'subtotal' => $budget->subtotal,
+                'total' => $budget->total,
+                'client' => [
+                    'name' => $budget->client->name,
+                    'company' => $budget->client->company,
+                ],
+                'user' => [
+                    'name' => $budget->user->name,
+                ],
+                'grouped_items' => $groupedItems,
+                'variant_groups' => $budget->getVariantGroups(),
+                'has_variants' => $budget->hasVariants(),
+            ], $statusData);
+
+            // Generar PDF
+            $pdf = Pdf::loadView('pdf.budget', [
+                'budget' => $budgetData,
+                'businessConfig' => $businessConfig,
             ]);
 
-            return $pdf->download("presupuesto-{$budget->id}.pdf");
+            // Nombre del archivo
+            $filename = 'Presupuesto_' . str_replace(' ', '_', $budget->title) . '.pdf';
+
+            return $pdf->download($filename);
         } catch (\Exception $e) {
-            Log::error('Error al generar PDF: ' . $e->getMessage());
-            abort(404, 'Presupuesto no encontrado');
+            Log::error('Error al generar PDF del presupuesto público: ' . $e->getMessage());
+            abort(500, 'Error al generar el PDF');
         }
     }
 

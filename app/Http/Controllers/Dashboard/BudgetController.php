@@ -301,6 +301,7 @@ class BudgetController extends Controller
                 'send_email_to_client' => $budget->send_email_to_client,
                 'footer_comments' => $budget->footer_comments,
                 'items' => $budget->items, // Las relaciones ya están cargadas correctamente
+                'is_active' => $budget->is_active, // Campo faltante para el switch
             ],
             'clients' => $clients,
             'products' => $products,

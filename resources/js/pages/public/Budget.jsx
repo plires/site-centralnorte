@@ -1,11 +1,10 @@
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Head } from '@inertiajs/react';
 import { AlertTriangle, CheckCircle, ChevronLeft, ChevronRight, Clock, Download } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import BudgetNotFound from './BudgetNotFound';
 
 export default function Budget({ budget, businessConfig }) {
     const [selectedVariants, setSelectedVariants] = useState({});
@@ -14,41 +13,34 @@ export default function Budget({ budget, businessConfig }) {
         iva: 0,
         total: parseFloat(budget.total),
     });
-    const [currentImageIndexes, setCurrentImageIndexes] = useState({});
     const [imageGalleries, setImageGalleries] = useState({});
+    const [currentImageIndexes, setCurrentImageIndexes] = useState({});
 
-    // Obtener configuración de IVA y placeholder
+    // Verificación adicional de seguridad en el frontend
+    if (!budget.is_active) {
+        return (
+            <BudgetNotFound message="Este presupuesto ha sido desactivado temporalmente y no está disponible para visualización." reason="inactive" />
+        );
+    }
+
+    // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
     const applyIva = businessConfig?.apply_iva ?? true;
-    const placeholderImage = businessConfig?.placeholder_image ?? '/images/product-placeholder.jpg';
 
-    // Función helper para organizar imágenes con la destacada primero
-    const organizeImages = (productImages) => {
-        if (!productImages || productImages.length === 0) {
-            // Retornar imagen placeholder si no hay imágenes (usando configuración)
-            return [
-                {
-                    id: 'placeholder',
-                    url: placeholderImage,
-                    full_url: placeholderImage,
-                    is_featured: true,
-                    is_placeholder: true,
-                },
-            ];
-        }
+    // Organizar imágenes de productos
+    const organizeImages = (images) => {
+        if (!images || images.length === 0) return [];
 
-        // Ordenar: imagen destacada primero, luego las demás
-        const sortedImages = [...productImages].sort((a, b) => {
-            if (a.is_featured && !b.is_featured) return -1;
-            if (!a.is_featured && b.is_featured) return 1;
-            return 0;
-        });
+        // Separar imagen destacada y otras imágenes
+        const featured = images.find((img) => img.is_featured);
+        const others = images.filter((img) => !img.is_featured);
 
-        return sortedImages;
+        // Retornar con imagen destacada primero (si existe)
+        return featured ? [featured, ...others] : others;
     };
 
+    // Configurar galerías de imágenes e índices iniciales
     useEffect(() => {
-        // Configurar galerías de imágenes para cada producto
         const galleries = {};
         const initialIndexes = {};
 
@@ -195,39 +187,41 @@ export default function Budget({ budget, businessConfig }) {
             <div className="mx-auto max-w-4xl px-4 py-8">
                 {/* Estado del presupuesto */}
                 <Alert
-                    className={`mb-6 ${budget.is_expired ? 'border-red-200 bg-red-50' : budget.days_until_expiry <= 3 ? 'border-yellow-200 bg-yellow-50' : 'border-green-200 bg-green-50'}`}
+                    className={`mb-6 ${budget.is_expired ? 'border-red-200 bg-red-50 text-red-800' : budget.days_until_expiry <= 3 ? 'border-orange-200 bg-orange-50 text-orange-800' : 'border-green-200 bg-green-50 text-green-800'}`}
                 >
-                    <statusInfo.icon className="h-4 w-4" />
-                    <AlertDescription className="flex items-center justify-between">
-                        <span className="font-medium">{statusInfo.text}</span>
-                        <Badge variant={statusInfo.variant}>Válido hasta: {budget.expiry_date_short}</Badge>
-                    </AlertDescription>
+                    <statusInfo.icon className="h-5 w-5" />
+                    <AlertDescription className="ml-2">{statusInfo.text}</AlertDescription>
                 </Alert>
 
-                {/* Información del presupuesto */}
+                {/* Información básica */}
                 <Card className="mb-6">
                     <CardHeader>
                         <CardTitle>Información del Presupuesto</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                                <p className="text-sm font-medium text-gray-500">Fecha de emisión</p>
-                                <p className="text-sm text-gray-900">{budget.issue_date_short}</p>
+                                <strong>Fecha de emisión:</strong> {budget.issue_date_formatted}
                             </div>
                             <div>
-                                <p className="text-sm font-medium text-gray-500">Válido hasta</p>
-                                <p className="text-sm text-gray-900">{budget.expiry_date_short}</p>
+                                <strong>Fecha de vencimiento:</strong> {budget.expiry_date_formatted}
+                            </div>
+                            <div>
+                                <strong>Cliente:</strong> {budget.client.name}
+                                {budget.client.company && ` (${budget.client.company})`}
+                            </div>
+                            <div>
+                                <strong>Vendedor:</strong> {budget.user.name}
                             </div>
                         </div>
                     </CardContent>
                 </Card>
 
                 {/* Items regulares */}
-                {budget.grouped_items?.regular?.length > 0 && (
+                {budget.grouped_items?.regular && budget.grouped_items.regular.length > 0 && (
                     <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle>Productos incluidos</CardTitle>
+                            <CardTitle>Productos</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -243,15 +237,11 @@ export default function Budget({ budget, businessConfig }) {
                                                 {images.length > 0 ? (
                                                     <>
                                                         <img
-                                                            src={images[currentIndex].full_url || images[currentIndex].url}
+                                                            src={images[currentIndex].full_url}
                                                             alt={item.product.name}
-                                                            className="h-full w-full rounded-lg object-cover"
-                                                            onError={(e) => {
-                                                                // Fallback si falla la carga de la imagen
-                                                                e.target.src = placeholderImage;
-                                                            }}
+                                                            className="h-full w-full rounded-md object-cover"
                                                         />
-                                                        {images.length > 1 && !images[currentIndex].is_placeholder && (
+                                                        {images.length > 1 && (
                                                             <>
                                                                 <button
                                                                     onClick={() => prevImage(imageKey)}
@@ -265,48 +255,31 @@ export default function Budget({ budget, businessConfig }) {
                                                                 >
                                                                     <ChevronRight className="h-3 w-3" />
                                                                 </button>
-                                                                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-1 text-xs text-white">
-                                                                    {currentIndex + 1}/{images.length}
-                                                                </div>
                                                             </>
                                                         )}
                                                     </>
                                                 ) : (
-                                                    <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                                                        <img
-                                                            src="/images/product-placeholder.jpg"
-                                                            alt="Sin imagen"
-                                                            className="h-full w-full rounded-lg object-cover opacity-50"
-                                                            onError={(e) => {
-                                                                // Si el placeholder también falla, mostrar texto
-                                                                e.target.style.display = 'none';
-                                                                e.target.nextSibling.style.display = 'block';
-                                                            }}
-                                                        />
-                                                        <span className="absolute hidden text-xs">Sin imagen</span>
+                                                    <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-500">
+                                                        Sin imagen
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Información del producto */}
                                             <div className="flex-1">
-                                                <h4 className="font-medium">{item.product.name}</h4>
-
-                                                <div className="mt-2 flex items-center gap-4 text-sm">
-                                                    <span>Cantidad: {item.quantity}</span>
-                                                    <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
-                                                    <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
+                                                <h3 className="font-semibold">{item.product.name}</h3>
+                                                <p className="text-sm text-gray-600">Categoría: {item.product.category?.name}</p>
+                                                <div className="mt-2 text-sm">
+                                                    <p>Cantidad: {item.quantity}</p>
+                                                    <p>Precio unitario: {formatCurrency(item.unit_price)}</p>
+                                                    {item.production_time_days && <p>Tiempo de producción: {item.production_time_days} días</p>}
+                                                    {item.logo_printing && <p>Impresión: {item.logo_printing}</p>}
                                                 </div>
+                                            </div>
 
-                                                {item.production_time_days && (
-                                                    <p className="mt-1 text-sm text-blue-600">
-                                                        Tiempo de producción: {item.production_time_days} días
-                                                    </p>
-                                                )}
-
-                                                {item.logo_printing && (
-                                                    <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
-                                                )}
+                                            {/* Total de la línea */}
+                                            <div className="text-right">
+                                                <p className="text-lg font-bold">{formatCurrency(item.line_total)}</p>
                                             </div>
                                         </div>
                                     );
@@ -318,121 +291,102 @@ export default function Budget({ budget, businessConfig }) {
 
                 {/* Grupos de variantes */}
                 {Object.entries(budget.grouped_items?.variants || {}).map(([group, items]) => (
-                    <div key={group} className="mb-6">
-                        {/* Contenedor principal con borde similar al dashboard */}
-                        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-                            {/* Header del grupo */}
-                            <div className="border-b border-gray-200 px-6 py-4">
-                                <h3 className="text-lg font-semibold text-gray-900">
-                                    Selecciona una opción para: {items[0]?.product?.name || group}
-                                </h3>
-                            </div>
+                    <Card key={group} className="mb-6">
+                        <CardHeader>
+                            <CardTitle>Selecciona una opción - {group}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {items.map((item) => {
+                                    const imageKey = `variant-${group}-${item.id}`;
+                                    const images = imageGalleries[imageKey] || [];
+                                    const currentIndex = currentImageIndexes[imageKey] || 0;
+                                    const isSelected = selectedVariants[group] === item.id;
 
-                            {/* Contenido del grupo */}
-                            <div className="p-6">
-                                <RadioGroup
-                                    value={selectedVariants[group]?.toString()}
-                                    onValueChange={(value) => handleVariantSelection(group, parseInt(value))}
-                                >
-                                    <div className="space-y-4">
-                                        {items.map((item) => {
-                                            const imageKey = `variant-${group}-${item.id}`;
-                                            const images = imageGalleries[imageKey] || [];
-                                            const currentIndex = currentImageIndexes[imageKey] || 0;
-
-                                            return (
-                                                <div
-                                                    key={item.id}
-                                                    className={`flex gap-4 rounded-lg border p-4 transition-all duration-200 ${
-                                                        selectedVariants[group] === item.id
-                                                            ? 'border-blue-500 bg-blue-50 shadow-sm'
-                                                            : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                                                    }`}
-                                                >
-                                                    <RadioGroupItem value={item.id.toString()} id={`variant-${item.id}`} className="mt-2" />
-
-                                                    {/* Imagen del producto */}
-                                                    <div className="relative h-24 w-24 flex-shrink-0">
-                                                        {images.length > 0 ? (
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className={`flex cursor-pointer gap-4 rounded-lg border p-4 transition-all ${
+                                                isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                            onClick={() => handleVariantSelection(group, item.id)}
+                                        >
+                                            {/* Imagen del producto */}
+                                            <div className="relative h-24 w-24 flex-shrink-0">
+                                                {images.length > 0 ? (
+                                                    <>
+                                                        <img
+                                                            src={images[currentIndex].full_url}
+                                                            alt={item.product.name}
+                                                            className="h-full w-full rounded-md object-cover"
+                                                        />
+                                                        {images.length > 1 && (
                                                             <>
-                                                                <img
-                                                                    src={images[currentIndex].full_url || images[currentIndex].url}
-                                                                    alt={item.product.name}
-                                                                    className="h-full w-full rounded-lg object-cover"
-                                                                    onError={(e) => {
-                                                                        // Fallback si falla la carga de la imagen
-                                                                        e.target.src = placeholderImage;
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        prevImage(imageKey);
                                                                     }}
-                                                                />
-                                                                {images.length > 1 && !images[currentIndex].is_placeholder && (
-                                                                    <>
-                                                                        <button
-                                                                            onClick={() => prevImage(imageKey)}
-                                                                            className="absolute top-1/2 left-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
-                                                                        >
-                                                                            <ChevronLeft className="h-3 w-3" />
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => nextImage(imageKey)}
-                                                                            className="absolute top-1/2 right-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
-                                                                        >
-                                                                            <ChevronRight className="h-3 w-3" />
-                                                                        </button>
-                                                                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-black/50 px-2 py-1 text-xs text-white">
-                                                                            {currentIndex + 1}/{images.length}
-                                                                        </div>
-                                                                    </>
-                                                                )}
+                                                                    className="absolute top-1/2 left-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                                                                >
+                                                                    <ChevronLeft className="h-3 w-3" />
+                                                                </button>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        nextImage(imageKey);
+                                                                    }}
+                                                                    className="absolute top-1/2 right-1 -translate-y-1/2 rounded-full bg-black/50 p-1 text-white hover:bg-black/70"
+                                                                >
+                                                                    <ChevronRight className="h-3 w-3" />
+                                                                </button>
                                                             </>
-                                                        ) : (
-                                                            <div className="flex h-full w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                                                                <img
-                                                                    src={placeholderImage}
-                                                                    alt="Sin imagen"
-                                                                    className="h-full w-full rounded-lg object-cover opacity-50"
-                                                                    onError={(e) => {
-                                                                        // Si el placeholder también falla, mostrar texto
-                                                                        e.target.style.display = 'none';
-                                                                        e.target.nextSibling.style.display = 'block';
-                                                                    }}
-                                                                />
-                                                                <span className="absolute hidden text-xs">Sin imagen</span>
-                                                            </div>
                                                         )}
+                                                    </>
+                                                ) : (
+                                                    <div className="flex h-full w-full items-center justify-center rounded-md bg-gray-200 text-gray-500">
+                                                        Sin imagen
                                                     </div>
+                                                )}
+                                            </div>
 
-                                                    {/* Información del producto */}
-                                                    <label htmlFor={`variant-${item.id}`} className="flex-1 cursor-pointer">
-                                                        <div className="mt-2 flex items-center gap-4 text-sm">
-                                                            <span>Cantidad: {item.quantity}</span>
-                                                            <span>Precio unitario: {formatCurrency(item.unit_price)}</span>
-                                                            <span className="font-medium">Total: {formatCurrency(item.line_total)}</span>
-                                                        </div>
-
-                                                        {item.production_time_days && (
-                                                            <p className="mt-1 text-sm text-blue-600">
-                                                                Tiempo de producción: {item.production_time_days} días
-                                                            </p>
-                                                        )}
-
-                                                        {item.logo_printing && (
-                                                            <p className="mt-1 text-sm text-green-600">Impresión de logo: {item.logo_printing}</p>
-                                                        )}
-                                                    </label>
+                                            {/* Información del producto */}
+                                            <div className="flex-1">
+                                                <h3 className="font-semibold">{item.product.name}</h3>
+                                                <p className="text-sm text-gray-600">Categoría: {item.product.category?.name}</p>
+                                                <div className="mt-2 text-sm">
+                                                    <p>Cantidad: {item.quantity}</p>
+                                                    <p>Precio unitario: {formatCurrency(item.unit_price)}</p>
+                                                    {item.production_time_days && <p>Tiempo de producción: {item.production_time_days} días</p>}
+                                                    {item.logo_printing && <p>Impresión: {item.logo_printing}</p>}
                                                 </div>
-                                            );
-                                        })}
-                                    </div>
-                                </RadioGroup>
+                                            </div>
+
+                                            {/* Indicador de selección y total */}
+                                            <div className="text-right">
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className={`h-4 w-4 rounded-full border-2 ${
+                                                            isSelected ? 'border-blue-500 bg-blue-500' : 'border-gray-300'
+                                                        }`}
+                                                    >
+                                                        {isSelected && <CheckCircle className="h-4 w-4 text-white" />}
+                                                    </div>
+                                                </div>
+                                                <p className="mt-2 text-lg font-bold">{formatCurrency(item.line_total)}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        </div>
-                    </div>
+                        </CardContent>
+                    </Card>
                 ))}
 
                 {/* Totales */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Resumen del Presupuesto</CardTitle>
+                        <CardTitle>Resumen</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">
