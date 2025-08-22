@@ -61,17 +61,18 @@ export default function BudgetBasicInfo({ data, setData, errors, clients, isEdit
                     </Select>
                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
                 </div>
-
-                <div className="flex items-center space-x-2">
-                    <Checkbox
-                        id="send_email"
-                        checked={data.send_email_to_client}
-                        onCheckedChange={(checked) => setData('send_email_to_client', checked)}
-                    />
-                    <Label htmlFor="send_email" className="text-sm">
-                        Enviar automáticamente por email al cliente
-                    </Label>
-                </div>
+                {!isEditing && (
+                    <div className="flex items-center space-x-2">
+                        <Checkbox
+                            id="send_email"
+                            checked={data.send_email_to_client}
+                            onCheckedChange={(checked) => setData('send_email_to_client', checked)}
+                        />
+                        <Label htmlFor="send_email" className="text-sm">
+                            Enviar automáticamente por email al cliente
+                        </Label>
+                    </div>
+                )}
             </CardContent>
         </Card>
     );
