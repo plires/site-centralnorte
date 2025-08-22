@@ -159,7 +159,7 @@ class BudgetController extends Controller
             'apply_iva' => config('business.tax.apply_iva', true),
         ];
 
-        // CORREGIDO: Pasar budget como array combinado con statusData (igual que PublicBudgetController)
+        // Pasar budget como array combinado con statusData (igual que PublicBudgetController)
         return Inertia::render('dashboard/budgets/Show', [
             'budget' => array_merge($budget->toArray(), $statusData), // Combinar datos del presupuesto con estado
             'regularItems' => $regularItems,
@@ -228,27 +228,9 @@ class BudgetController extends Controller
             // Calcular totales
             $budget->calculateTotals();
 
-            // Enviar email si está configurado
-            if ($request->boolean('send_email_to_client') && $budget->client->email) {
-                try {
-                    $publicUrl = route('public.budget.show', $budget->token);
-                    Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget, $user, $publicUrl));
-
-                    $budget->update([
-                        'email_sent' => true,
-                        'email_sent_at' => now(),
-                    ]);
-
-                    Log::info('Email de presupuesto enviado', [
-                        'budget_id' => $budget->id,
-                        'client_email' => $budget->client->email
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Error al enviar email de presupuesto: ' . $e->getMessage(), [
-                        'budget_id' => $budget->id
-                    ]);
-                    // No fallar la creación del presupuesto por error de email
-                }
+            // Enviar email si está configurado (sin fallar la creación) (NUEVO PRESUPUESTO, no es reenvío)
+            if ($request->boolean('send_email_to_client')) {
+                $this->sendBudgetEmail($budget, false, false); // false = nuevo, false = no lanzar excepción
             }
 
             DB::commit();
@@ -525,23 +507,13 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para enviar este presupuesto.');
             }
 
-            // Verificar que el cliente tenga email
-            if (!$budget->client->email) {
-                return redirect()->back()->with('error', 'El cliente no tiene email configurado.');
-            }
+            // Usar el método refactorizado (con excepción en caso de error). se indica que ES UN REENVÍO
+            $this->sendBudgetEmail($budget, true, true); // true = es reenvío, true = lanzar excepción
 
-            $publicUrl = route('public.budget.show', $budget->token);
-            Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget, $user, $publicUrl));
-
-            $budget->update([
-                'email_sent' => true,
-                'email_sent_at' => now(),
-            ]);
-
-            return redirect()->back()->with('success', 'Email enviado exitosamente.');
+            // Mensaje diferenciado para reenvío
+            return redirect()->back()->with('success', 'Reenvío de email exitoso.');
         } catch (\Exception $e) {
-            Log::error('Error al enviar email: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Ocurrió un error al enviar el email.');
+            return redirect()->back()->with('error', 'Ocurrió un error al enviar el email: ' . $e->getMessage());
         }
     }
 
@@ -713,18 +685,56 @@ class BudgetController extends Controller
         ]);
     }
 
-    private function sendBudgetEmail(Budget $budget)
+    /**
+     * Enviar email del presupuesto al cliente
+     * 
+     * @param Budget $budget
+     * @param bool $throwOnError Si debe lanzar excepción en caso de error
+     * @return bool true si se envió exitosamente, false si falló
+     * @throws \Exception si $throwOnError es true y hay error
+     */
+    private function sendBudgetEmail(Budget $budget, bool $isResend = false, bool $throwOnError = true): bool
     {
-        if (!$budget->client->email) {
-            throw new \Exception('El cliente no tiene email configurado.');
+        try {
+            $user = Auth::user();
+
+            // Verificar que el cliente tenga email
+            if (!$budget->client->email) {
+                $message = 'El cliente no tiene email configurado.';
+                if ($throwOnError) {
+                    throw new \Exception($message);
+                }
+                Log::warning($message, ['budget_id' => $budget->id]);
+                return false;
+            }
+
+            $publicUrl = route('public.budget.show', $budget->token);
+            Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget, $user, $publicUrl, $isResend));
+
+            $budget->update([
+                'email_sent' => true,
+                'email_sent_at' => now(),
+            ]);
+
+            Log::info('Email de presupuesto enviado', [
+                'budget_id' => $budget->id,
+                'client_email' => $budget->client->email
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            $action = $isResend ? 'reenviar' : 'enviar';
+            Log::error("Error al {$action} email de presupuesto: " . $e->getMessage(), [
+                'budget_id' => $budget->id,
+                'is_resend' => $isResend
+            ]);
+
+            if ($throwOnError) {
+                throw $e;
+            }
+
+            return false;
         }
-
-        // Mail::to($budget->client->email)->send(new BudgetCreatedMail($budget));
-
-        $budget->update([
-            'email_sent' => true,
-            'email_sent_at' => now(),
-        ]);
     }
 
     // Método helper para obtener configuración de negocio

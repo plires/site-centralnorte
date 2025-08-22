@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuevo Presupuesto</title>
+    <title>{{ $isResend ? 'Reenvío de Presupuesto' : 'Nuevo Presupuesto' }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,11 +17,12 @@
         }
 
         .header {
-            background-color: #f8f9fa;
+            background-color: {{ $isResend ? '#fff3cd' : '#f8f9fa' }};
             padding: 20px;
             text-align: center;
             border-radius: 8px;
             margin-bottom: 20px;
+            {{ $isResend ? 'border: 1px solid #ffeaa7;' : '' }}
         }
 
         .content {
@@ -55,18 +56,28 @@
             font-size: 14px;
             color: #666;
         }
+
+        .resend-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h1>¡Tienes un nuevo presupuesto!</h1>
+        <h1>{{ $isResend ? '📤 Te reenviamos tu presupuesto' : '🎉 ¡Tienes un nuevo presupuesto!' }}</h1>
     </div>
 
     <div class="content">
         <h2>Estimado/a {{ $client->name }},</h2>
 
-        <p>Te enviamos el presupuesto que solicitaste. A continuación encontrarás los detalles:</p>
+        <p>{{ $isResend ? 'Te reenviamos el presupuesto solicitado.' : 'Te enviamos el presupuesto que solicitaste.' }}
+            A continuación encontrarás los detalles:</p>
 
         <div class="budget-details">
             <h3>{{ $budget->title }}</h3>

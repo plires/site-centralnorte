@@ -17,15 +17,17 @@ class BudgetCreatedMail extends Mailable
     public Budget $budget;
     public User $user;
     public string $publicUrl;
+    public bool $isResend; // AGREGADO: para detectar si es reenvío
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Budget $budget, User $user, string $publicUrl)
+    public function __construct(Budget $budget, User $user, string $publicUrl, bool $isResend = false)
     {
         $this->budget = $budget;
         $this->user = $user;
         $this->publicUrl = $publicUrl;
+        $this->isResend = $isResend; // AGREGADO
     }
 
     /**
@@ -33,9 +35,12 @@ class BudgetCreatedMail extends Mailable
      */
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Nuevo Presupuesto: ' . $this->budget->title,
-        );
+        // Subject diferenciado para reenvío
+        $subject = $this->isResend
+            ? 'Reenvío de Presupuesto: ' . $this->budget->title
+            : 'Nuevo Presupuesto: ' . $this->budget->title;
+
+        return new Envelope(subject: $subject);
     }
 
     /**
@@ -50,6 +55,7 @@ class BudgetCreatedMail extends Mailable
                 'client' => $this->budget->client,
                 'vendedor' => $this->user,
                 'publicUrl' => $this->publicUrl,
+                'isResend' => $this->isResend, // pasar a la vista para saber si es reenvio de presupuesto o no
             ]
         );
     }

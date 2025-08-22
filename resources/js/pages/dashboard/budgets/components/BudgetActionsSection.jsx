@@ -1,9 +1,23 @@
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { router } from '@inertiajs/react';
 import { AlertTriangle, Copy, Edit, ExternalLink, Mail, Package, Send } from 'lucide-react';
+import { useState } from 'react';
 
 export default function BudgetActionsSection({ budget }) {
+    const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+
     const handleEdit = () => {
         router.visit(route('dashboard.budgets.edit', budget.id));
     };
@@ -12,21 +26,21 @@ export default function BudgetActionsSection({ budget }) {
         router.visit(route('dashboard.budgets.duplicate', budget.id));
     };
 
-    const handleSendEmail = () => {
-        if (confirm('¿Estás seguro de que quieres enviar este presupuesto por email al cliente?')) {
-            router.post(
-                route('dashboard.budgets.send-email', budget.id),
-                {},
-                {
-                    onSuccess: () => {
-                        alert('Email enviado exitosamente');
-                    },
-                    onError: (errors) => {
-                        alert('Error al enviar el email: ' + (errors.message || 'Error desconocido'));
-                    },
+    const handleSendEmailConfirm = () => {
+        setIsEmailDialogOpen(false);
+
+        router.post(
+            route('dashboard.budgets.send-email', budget.id),
+            {},
+            {
+                onSuccess: () => {
+                    // El toast se maneja desde Show.jsx con los flash messages
                 },
-            );
-        }
+                onError: (errors) => {
+                    // El toast se maneja desde Show.jsx con los flash messages
+                },
+            },
+        );
     };
 
     const handleViewPublic = () => {
@@ -55,10 +69,37 @@ export default function BudgetActionsSection({ budget }) {
                             Duplicar
                         </Button>
 
-                        <Button onClick={handleSendEmail} variant="outline" size="sm" disabled={!budget.client?.email}>
-                            <Send className="mr-2 h-4 w-4" />
-                            {budget.email_sent ? 'Reenviar Email' : 'Enviar Email'}
-                        </Button>
+                        {/* AlertDialog para envío de email */}
+                        <AlertDialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" disabled={!budget.client?.email}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {budget.email_sent ? 'Reenviar Email' : 'Enviar Email'}
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2">
+                                        <Mail className="h-5 w-5 text-blue-600" />
+                                        {budget.email_sent ? 'Reenviar Email' : 'Enviar Email'}
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        {budget.email_sent
+                                            ? `¿Estás seguro de que quieres reenviar este presupuesto por email a ${budget.client?.name}?`
+                                            : `¿Estás seguro de que quieres enviar este presupuesto por email a ${budget.client?.name}?`}
+                                        <br />
+                                        <span className="text-sm text-gray-600">Email: {budget.client?.email}</span>
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleSendEmailConfirm} className="bg-blue-600 hover:bg-blue-700">
+                                        <Send className="mr-2 h-4 w-4" />
+                                        {budget.email_sent ? 'Reenviar' : 'Enviar'}
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
 
                         <Button onClick={handleViewPublic} variant="outline" size="sm">
                             <ExternalLink className="mr-2 h-4 w-4" />
