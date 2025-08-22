@@ -218,6 +218,7 @@ class BudgetController extends Controller
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
                 'expiry_date' => $request->expiry_date, // Ya calculada automáticamente en BudgetRequest
+                'is_active' => $request->boolean('is_active', true), // Activo por defecto
                 'send_email_to_client' => $request->boolean('send_email_to_client'),
                 'footer_comments' => $request->footer_comments,
             ]);
@@ -686,5 +687,36 @@ class BudgetController extends Controller
             'default_validity_days' => config('business.budget.default_validity_days'),
             'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry'),
         ];
+    }
+
+    /**
+     * Activar/desactivar presupuesto
+     */
+    public function toggleStatus(Request $request, Budget $budget)
+    {
+        $request->validate([
+            'is_active' => 'required|boolean'
+        ]);
+
+        try {
+            $budget->update([
+                'is_active' => $request->is_active
+            ]);
+
+            return back()->with(
+                'success',
+                $request->is_active
+                    ? 'Presupuesto activado correctamente'
+                    : 'Presupuesto desactivado correctamente'
+            );
+        } catch (\Exception $e) {
+            Log::error('Error al cambiar estado del presupuesto', [
+                'budget_id' => $budget->id,
+                'new_status' => $request->is_active,
+                'error' => $e->getMessage()
+            ]);
+
+            return back()->with('error', 'Error al actualizar el estado del presupuesto');
+        }
     }
 }

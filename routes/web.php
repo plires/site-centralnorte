@@ -109,6 +109,7 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_merch'
     // Acciones especiales
     Route::get('/budgets/{budget}/duplicate', [BudgetController::class, 'duplicate'])->name('budgets.duplicate');
     Route::post('/budgets/{budget}/send-email', [BudgetController::class, 'sendEmail'])->name('budgets.send-email');
+    Route::patch('/budgets/{budget}/toggle-status', [BudgetController::class, 'toggleStatus'])->name('budgets.toggle-status');
 });
 
 // API para selects dinámicos (requiere autenticación)
