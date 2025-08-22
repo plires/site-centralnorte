@@ -117,6 +117,15 @@ export const budgetsColumns = (actions, isDeleting = false) => [
         render: (value, row) => <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />,
     },
     {
+        key: 'is_active',
+        label: 'Estado',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value, row) => {
+            return <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />;
+        },
+    },
+    {
         key: 'actions',
         label: '',
         render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
