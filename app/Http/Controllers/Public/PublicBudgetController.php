@@ -24,7 +24,7 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
-            // NUEVO: Verificar si el presupuesto está activo
+            // Verificar si el presupuesto está activo
             if (!$budget->is_active) {
                 return Inertia::render('public/BudgetNotFound', [
                     'message' => 'Este presupuesto ha sido desactivado temporalmente y no está disponible para visualización.',
@@ -34,16 +34,6 @@ class PublicBudgetController extends Controller
 
             // Obtener datos de estado usando el método del modelo
             $statusData = $budget->getStatusData();
-
-            // OPCIONAL: También verificar si está vencido (puedes comentar esto si quieres mostrar presupuestos vencidos)
-            /*
-            if ($budget->is_expired) {
-                return Inertia::render('public/BudgetNotFound', [
-                    'message' => 'Este presupuesto ha expirado y ya no está disponible.',
-                    'reason' => 'expired'
-                ]);
-            }
-            */
 
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
@@ -93,34 +83,37 @@ class PublicBudgetController extends Controller
     public function downloadPdf($token)
     {
         try {
+            // ULTRA SIMPLE: Una sola query con mínimas relaciones
             $budget = Budget::where('token', $token)
                 ->with([
-                    'client',
-                    'user',
-                    'items.product.images',
-                    'items.product.featuredImage',
-                    'items.product.category'
+                    'client:id,name,company,email,phone',
+                    'user:id,name,email',
+                    'items' => function ($query) {
+                        $query->where(function ($q) {
+                            $q->whereNull('variant_group')->orWhere('is_selected', true);
+                        })->with([
+                            'product:id,name',
+                            'product.category:id,name'
+                        ]);
+                    }
                 ])
                 ->firstOrFail();
 
-            // NUEVO: Verificar si el presupuesto está activo antes de generar PDF
             if (!$budget->is_active) {
                 abort(404, 'Presupuesto no disponible');
             }
 
-            // Agrupar items por variantes
-            $groupedItems = $this->groupItemsByVariants($budget->items);
+            // ULTRA SIMPLE: Sin bucles complejos
+            $groupedItems = $this->groupItemsSimple($budget->items);
 
-            // Obtener configuración de IVA
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
             ];
 
-            // Obtener datos de estado
             $statusData = $budget->getStatusData();
+            $calculatedTotals = $this->calculateFilteredTotals($budget->items, $businessConfig);
 
-            // Preparar datos para el PDF
             $budgetData = array_merge([
                 'id' => $budget->id,
                 'title' => $budget->title,
@@ -130,36 +123,40 @@ class PublicBudgetController extends Controller
                 'issue_date_short' => $budget->issue_date_short,
                 'expiry_date_short' => $budget->expiry_date_short,
                 'footer_comments' => $budget->footer_comments,
-                'subtotal' => $budget->subtotal,
-                'total' => $budget->total,
+                'subtotal' => $calculatedTotals['subtotal'],
+                'total' => $calculatedTotals['total'],
                 'client' => [
                     'name' => $budget->client->name,
-                    'company' => $budget->client->company,
+                    'company' => $budget->client->company ?? '',
+                    'email' => $budget->client->email ?? '',
+                    'phone' => $budget->client->phone ?? '',
                 ],
                 'user' => [
                     'name' => $budget->user->name,
+                    'email' => $budget->user->email ?? '',
                 ],
                 'grouped_items' => $groupedItems,
-                'variant_groups' => $budget->getVariantGroups(),
-                'has_variants' => $budget->hasVariants(),
             ], $statusData);
 
-            // Generar PDF
+            // CONFIGURACIÓN MÍNIMA DEL PDF
             $pdf = Pdf::loadView('pdf.budget', [
                 'budget' => $budgetData,
                 'businessConfig' => $businessConfig,
             ]);
 
-            // Nombre del archivo
-            $filename = 'Presupuesto_' . str_replace(' ', '_', $budget->title) . '.pdf';
+            $pdf->setPaper('A4', 'portrait');
 
+            $filename = 'Presupuesto_' . str_replace(' ', '_', $budget->title) . '.pdf';
             return $pdf->download($filename);
         } catch (\Exception $e) {
-            Log::error('Error al generar PDF del presupuesto público: ' . $e->getMessage());
+            Log::error('Error al generar PDF: ' . $e->getMessage());
             abort(500, 'Error al generar el PDF');
         }
     }
 
+    /**
+     * MÉTODO ORIGINAL - sin cambios de imágenes
+     */
     private function groupItemsByVariants($items)
     {
         $grouped = [
@@ -179,6 +176,56 @@ class PublicBudgetController extends Controller
         }
 
         return $grouped;
+    }
+
+    /**
+     * ULTRA SIMPLE: Sin queries de imágenes en bucle
+     */
+    private function groupItemsSimple($items)
+    {
+        $grouped = ['regular' => [], 'variants' => []];
+
+        foreach ($items as $item) {
+            $itemData = [
+                'id' => $item->id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'line_total' => $item->line_total,
+                'production_time_days' => $item->production_time_days,
+                'logo_printing' => $item->logo_printing,
+                'description' => $item->description,
+                'variant_group' => $item->variant_group,
+                'product' => [
+                    'name' => $item->product->name ?? 'Producto',
+                    'category' => ['name' => $item->product->category->name ?? '']
+                ],
+                'featured_image' => null // Sin imágenes por ahora para velocidad
+            ];
+
+            if ($item->variant_group) {
+                $grouped['variants'][$item->variant_group][] = $itemData;
+            } else {
+                $grouped['regular'][] = $itemData;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Calcular totales basados en items filtrados
+     */
+    private function calculateFilteredTotals($filteredItems, $businessConfig)
+    {
+        $subtotal = $filteredItems->sum('line_total');
+        $ivaAmount = $businessConfig['apply_iva'] ? $subtotal * $businessConfig['iva_rate'] : 0;
+        $total = $subtotal + $ivaAmount;
+
+        return [
+            'subtotal' => $subtotal,
+            'iva' => $ivaAmount,
+            'total' => $total,
+        ];
     }
 
     private function filterItemsByVariants($items, $selectedVariants)

@@ -23,6 +23,42 @@ export default function Budget({ budget, businessConfig }) {
         );
     }
 
+    // Función para generar URL del PDF con variantes seleccionadas
+    const generatePdfUrl = () => {
+        const baseUrl = `/presupuesto/${budget.token}/pdf`;
+
+        // Si hay variantes, agregar como parámetros de consulta
+        if (Object.keys(selectedVariants).length > 0) {
+            const params = new URLSearchParams();
+            Object.entries(selectedVariants).forEach(([group, itemId]) => {
+                params.append('variants[]', `${group}:${itemId}`);
+            });
+            return `${baseUrl}?${params.toString()}`;
+        }
+
+        return baseUrl;
+    };
+
+    // Función para actualizar variantes seleccionadas en el servidor
+    const updateSelectedVariants = async () => {
+        if (Object.keys(selectedVariants).length === 0) return;
+
+        try {
+            await fetch(`/presupuesto/${budget.token}/update-variants`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
+                },
+                body: JSON.stringify({
+                    selectedVariants,
+                }),
+            });
+        } catch (error) {
+            console.error('Error al actualizar variantes:', error);
+        }
+    };
+
     // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
     const applyIva = businessConfig?.apply_iva ?? true;
@@ -192,7 +228,6 @@ export default function Budget({ budget, businessConfig }) {
                     <statusInfo.icon className="h-5 w-5" />
                     <AlertDescription className="ml-2">{statusInfo.text}</AlertDescription>
                 </Alert>
-
                 {/* Información básica */}
                 <Card className="mb-6">
                     <CardHeader>
@@ -216,7 +251,6 @@ export default function Budget({ budget, businessConfig }) {
                         </div>
                     </CardContent>
                 </Card>
-
                 {/* Items regulares */}
                 {budget.grouped_items?.regular && budget.grouped_items.regular.length > 0 && (
                     <Card className="mb-6">
@@ -288,7 +322,6 @@ export default function Budget({ budget, businessConfig }) {
                         </CardContent>
                     </Card>
                 )}
-
                 {/* Grupos de variantes */}
                 {Object.entries(budget.grouped_items?.variants || {}).map(([group, items]) => (
                     <Card key={group} className="mb-6">
@@ -382,7 +415,6 @@ export default function Budget({ budget, businessConfig }) {
                         </CardContent>
                     </Card>
                 ))}
-
                 {/* Totales */}
                 <Card className="mb-6">
                     <CardHeader>
@@ -409,7 +441,6 @@ export default function Budget({ budget, businessConfig }) {
                         </div>
                     </CardContent>
                 </Card>
-
                 {/* Comentarios del pie */}
                 {budget.footer_comments && (
                     <Card className="mb-6">
@@ -421,11 +452,15 @@ export default function Budget({ budget, businessConfig }) {
                         </CardContent>
                     </Card>
                 )}
-
                 {/* Botón de descarga PDF */}
                 <div className="text-center">
-                    <Button asChild size="lg" disabled={!allVariantsSelected}>
-                        <a href={`/presupuesto/${budget.token}/pdf`} target="_blank" rel="noopener noreferrer">
+                    <Button asChild size="lg" disabled={!allVariantsSelected} onClick={() => updateSelectedVariants()}>
+                        <a
+                            href={generatePdfUrl()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={!allVariantsSelected ? 'pointer-events-none opacity-50' : ''}
+                        >
                             <Download className="mr-2 h-4 w-4" />
                             Descargar PDF
                         </a>

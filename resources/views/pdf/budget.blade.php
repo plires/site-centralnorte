@@ -3,100 +3,95 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Presupuesto {{ $budget['title'] }}</title>
     <style>
-        * {
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'DejaVu Sans', Arial, sans-serif;
-            font-size: 12px;
-            line-height: 1.4;
             color: #333;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #007bff;
+            width: 100%;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            padding: 15px;
         }
 
-        .header h1 {
-            font-size: 24px;
-            color: #007bff;
+        .header-row {
+            display: table;
+            width: 100%;
             margin-bottom: 10px;
         }
 
-        .header .subtitle {
-            font-size: 14px;
+        .header-col {
+            display: table-cell;
+            width: 33.33%;
+            vertical-align: top;
+            padding: 5px;
+        }
+
+        .header-title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2563eb;
+        }
+
+        .label {
+            font-weight: bold;
             color: #666;
         }
 
-        .info-section {
-            display: table;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-
-        .info-left,
-        .info-right {
-            display: table-cell;
-            width: 50%;
-            vertical-align: top;
-            padding: 0 10px;
-        }
-
-        .info-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-
-        .info-box h3 {
-            font-size: 14px;
-            color: #007bff;
-            margin-bottom: 8px;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 5px;
-        }
-
-        .info-box p {
-            margin-bottom: 4px;
-        }
-
-        .info-box strong {
-            color: #495057;
-        }
-
-        .items-table {
+        .products-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
 
-        .items-table th {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 8px;
+        .products-table th {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            padding: 8px;
             text-align: left;
-            font-size: 11px;
             font-weight: bold;
         }
 
-        .items-table td {
+        .products-table td {
+            border: 1px solid #ddd;
             padding: 8px;
-            border-bottom: 1px solid #dee2e6;
-            font-size: 11px;
+            vertical-align: top;
         }
 
-        .items-table tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
+        .products-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .product-image {
+            width: 60px;
+            text-align: center;
+        }
+
+        .product-image img {
+            max-width: 50px;
+            max-height: 50px;
+            border: 1px solid #ddd;
+        }
+
+        .product-image-placeholder {
+            width: 50px;
+            height: 50px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: #999;
+            text-align: center;
         }
 
         .text-right {
@@ -107,27 +102,31 @@
             text-align: center;
         }
 
-        .variant-group {
-            margin-bottom: 25px;
-        }
-
         .variant-header {
-            background-color: #e9ecef;
-            padding: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid #007bff;
+            background-color: #e3f2fd;
+            padding: 8px;
+            font-weight: bold;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+            margin-top: 15px;
         }
 
-        .variant-header h4 {
-            color: #495057;
-            font-size: 13px;
-            margin: 0;
+        .comments {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-left: 4px solid #4caf50;
         }
 
-        .totals-section {
-            margin-top: 30px;
-            float: right;
+        .comments h4 {
+            margin: 0 0 10px 0;
+            color: #388e3c;
+        }
+
+        .totals {
             width: 300px;
+            float: right;
+            margin-top: 20px;
         }
 
         .totals-table {
@@ -136,234 +135,210 @@
         }
 
         .totals-table td {
-            padding: 8px 12px;
-            border: 1px solid #dee2e6;
-            font-size: 12px;
+            padding: 5px 10px;
+            border: 1px solid #ddd;
         }
 
-        .totals-table .label {
-            background-color: #f8f9fa;
+        .totals-table .total-row {
+            background-color: #2563eb;
+            color: white;
             font-weight: bold;
-            text-align: right;
-            width: 60%;
         }
 
-        .totals-table .amount {
-            text-align: right;
-            width: 40%;
-        }
-
-        .total-final {
-            background-color: #007bff !important;
-            color: white !important;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .footer-comments {
+        .clear {
             clear: both;
-            margin-top: 40px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-left: 4px solid #28a745;
         }
 
-        .footer-comments h4 {
-            color: #28a745;
-            margin-bottom: 10px;
-            font-size: 13px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status-active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-expired {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
-        .page-break {
-            page-break-before: always;
-        }
-
-        @media print {
-            .page-break {
-                page-break-before: always;
-            }
-        }
-
-        /* Responsive adjustments for PDF */
         @page {
-            margin: 2cm;
+            margin: 1cm;
         }
     </style>
 </head>
 
 <body>
+    <!-- HEADER -->
     <div class="header">
-        <h1>PRESUPUESTO</h1>
-        <div class="subtitle">{{ $budget['title'] }}</div>
-        <div style="margin-top: 10px;">
-            <span class="status-badge status-{{ $budget['status_class'] ?? 'pending' }}">
-                {{ $budget['status_text'] ?? 'Pendiente' }}
-            </span>
-        </div>
-    </div>
+        <div class="header-title">PRESUPUESTO - {{ $budget['title'] }}</div>
 
-    <div class="info-section">
-        <div class="info-left">
-            <div class="info-box">
-                <h3>Información del Cliente</h3>
-                <p><strong>Nombre:</strong> {{ $budget['client']['name'] }}</p>
+        <div class="header-row">
+            <div class="header-col">
+                <div><span class="label">Cliente:</span> {{ $budget['client']['name'] }}</div>
                 @if (!empty($budget['client']['company']))
-                    <p><strong>Empresa:</strong> {{ $budget['client']['company'] }}</p>
+                    <div><span class="label">Empresa:</span> {{ $budget['client']['company'] }}</div>
+                @endif
+                @if (!empty($budget['client']['email']))
+                    <div><span class="label">Email:</span> {{ $budget['client']['email'] }}</div>
                 @endif
             </div>
 
-            <div class="info-box">
-                <h3>Información del Vendedor</h3>
-                <p><strong>Responsable:</strong> {{ $budget['user']['name'] }}</p>
+            <div class="header-col">
+                <div><span class="label">Presupuesto:</span> #{{ $budget['id'] }}</div>
+                <div><span class="label">Fecha:</span>
+                    {{ $budget['issue_date_short'] ?? $budget['issue_date_formatted'] }}</div>
+                <div><span class="label">Vencimiento:</span>
+                    {{ $budget['expiry_date_short'] ?? $budget['expiry_date_formatted'] }}</div>
             </div>
-        </div>
 
-        <div class="info-right">
-            <div class="info-box">
-                <h3>Detalles del Presupuesto</h3>
-                <p><strong>Número:</strong> #{{ $budget['id'] }}</p>
-                <p><strong>Fecha de Emisión:</strong>
-                    {{ $budget['issue_date_short'] ?? $budget['issue_date_formatted'] }}</p>
-                <p><strong>Válido hasta:</strong> {{ $budget['expiry_date_short'] ?? $budget['expiry_date_formatted'] }}
-                </p>
+            <div class="header-col">
+                <div><span class="label">Vendedor:</span> {{ $budget['user']['name'] }}</div>
+                @if (!empty($budget['user']['email']))
+                    <div><span class="label">Email:</span> {{ $budget['user']['email'] }}</div>
+                @endif
+                <div><span class="label">Estado:</span> {{ $budget['status_text'] ?? 'Pendiente' }}</div>
             </div>
         </div>
     </div>
 
-    <!-- Items regulares (sin variantes) -->
+    <!-- PRODUCTOS REGULARES -->
     @if (!empty($budget['grouped_items']['regular']))
-        <div class="variant-group">
-            <div class="variant-header">
-                <h4>Productos</h4>
-            </div>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th style="width: 60px;">Imagen</th>
+                    <th style="width: 40px;">Cant.</th>
+                    <th>Producto</th>
+                    <th style="width: 80px;">Precio Unit.</th>
+                    <th style="width: 60px;">Tiempo</th>
+                    <th style="width: 60px;">Logo</th>
+                    <th style="width: 80px;">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($budget['grouped_items']['regular'] as $item)
+                    <tr>
+                        <td class="product-image">
+                            @if (!empty($item['featured_image']))
+                                <img src="{{ $item['featured_image']['file_path'] }}" alt="Producto" />
+                            @else
+                                <div class="product-image-placeholder">Sin imagen</div>
+                            @endif
+                        </td>
+                        <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
+                        <td>
+                            <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
+                            @if (!empty($item['product']['category']['name']))
+                                <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
+                            @endif
+                            @if (!empty($item['description']))
+                                <br><small>{{ $item['description'] }}</small>
+                            @endif
+                        </td>
+                        <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
+                        <td class="text-center">
+                            @if (!empty($item['production_time_days']))
+                                {{ $item['production_time_days'] }} días
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="text-center">
+                            @if (!empty($item['logo_printing']))
+                                {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
-            <table class="items-table">
+    <!-- VARIANTES (SOLO SELECCIONADAS) -->
+    @if (!empty($budget['grouped_items']['variants']))
+        @foreach ($budget['grouped_items']['variants'] as $variantGroup => $items)
+            <div class="variant-header">Opción Seleccionada: {{ $variantGroup }}</div>
+
+            <table class="products-table">
                 <thead>
                     <tr>
-                        <th style="width: 50%;">Descripción</th>
-                        <th style="width: 15%;" class="text-center">Cantidad</th>
-                        <th style="width: 17%;" class="text-right">Precio Unit.</th>
-                        <th style="width: 18%;" class="text-right">Subtotal</th>
+                        <th style="width: 60px;">Imagen</th>
+                        <th style="width: 40px;">Cant.</th>
+                        <th>Producto</th>
+                        <th style="width: 80px;">Precio Unit.</th>
+                        <th style="width: 60px;">Tiempo</th>
+                        <th style="width: 60px;">Logo</th>
+                        <th style="width: 80px;">Total</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($budget['grouped_items']['regular'] as $item)
+                    @foreach ($items as $item)
                         <tr>
+                            <td class="product-image">
+                                @if (!empty($item['featured_image']))
+                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="Producto" />
+                                @else
+                                    <div class="product-image-placeholder">Sin imagen</div>
+                                @endif
+                            </td>
+                            <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                             <td>
                                 <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
                                 @if (!empty($item['product']['category']['name']))
                                     <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
                                 @endif
                                 @if (!empty($item['description']))
-                                    <br><small style="color: #666;">{{ $item['description'] }}</small>
+                                    <br><small>{{ $item['description'] }}</small>
                                 @endif
                             </td>
-                            <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                             <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
-                            <td class="text-right">${{ number_format($item['subtotal'] ?? 0, 2, ',', '.') }}</td>
+                            <td class="text-center">
+                                @if (!empty($item['production_time_days']))
+                                    {{ $item['production_time_days'] }} días
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if (!empty($item['logo_printing']))
+                                    {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-        </div>
-    @endif
-
-    <!-- Items con variantes -->
-    @if (!empty($budget['grouped_items']['variants']))
-        @foreach ($budget['grouped_items']['variants'] as $variantGroup => $items)
-            <div class="variant-group">
-                <div class="variant-header">
-                    <h4>Opción {{ $variantGroup }}</h4>
-                </div>
-
-                <table class="items-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 50%;">Descripción</th>
-                            <th style="width: 15%;" class="text-center">Cantidad</th>
-                            <th style="width: 17%;" class="text-right">Precio Unit.</th>
-                            <th style="width: 18%;" class="text-right">Subtotal</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($items as $item)
-                            <tr>
-                                <td>
-                                    <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                                    @if (!empty($item['product']['category']['name']))
-                                        <br><small
-                                            style="color: #666;">{{ $item['product']['category']['name'] }}</small>
-                                    @endif
-                                    @if (!empty($item['description']))
-                                        <br><small style="color: #666;">{{ $item['description'] }}</small>
-                                    @endif
-                                </td>
-                                <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
-                                <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
-                                <td class="text-right">${{ number_format($item['subtotal'] ?? 0, 2, ',', '.') }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
         @endforeach
     @endif
 
-    <!-- Totales -->
-    <div class="totals-section">
-        <table class="totals-table">
-            <tr>
-                <td class="label">Subtotal:</td>
-                <td class="amount">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
-            </tr>
-            @if ($businessConfig['apply_iva'] && $businessConfig['iva_rate'] > 0)
-                <tr>
-                    <td class="label">IVA ({{ number_format($businessConfig['iva_rate'] * 100, 1) }}%):</td>
-                    <td class="amount">
-                        ${{ number_format(($budget['subtotal'] ?? 0) * $businessConfig['iva_rate'], 2, ',', '.') }}
-                    </td>
-                </tr>
-            @endif
-            <tr class="total-final">
-                <td class="label">TOTAL:</td>
-                <td class="amount">${{ number_format($budget['total'] ?? 0, 2, ',', '.') }}</td>
-            </tr>
-        </table>
-    </div>
-
+    <!-- COMENTARIOS -->
     @if (!empty($budget['footer_comments']))
-        <div class="footer-comments">
-            <h4>Comentarios adicionales</h4>
+        <div class="comments">
+            <h4>Comentarios</h4>
             <p>{{ $budget['footer_comments'] }}</p>
         </div>
     @endif
 
-    <div style="clear: both; margin-top: 50px; text-align: center; font-size: 10px; color: #666;">
-        <p>Presupuesto generado el {{ date('d/m/Y H:i') }} - Token: {{ $budget['token'] }}</p>
+    <!-- TOTALES -->
+    <div class="totals">
+        <table class="totals-table">
+            <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td class="text-right">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
+            </tr>
+            @if ($businessConfig['apply_iva'] && $businessConfig['iva_rate'] > 0)
+                <tr>
+                    <td><strong>IVA ({{ number_format($businessConfig['iva_rate'] * 100, 1) }}%):</strong></td>
+                    <td class="text-right">
+                        ${{ number_format(($budget['subtotal'] ?? 0) * $businessConfig['iva_rate'], 2, ',', '.') }}
+                    </td>
+                </tr>
+            @endif
+            <tr class="total-row">
+                <td><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>${{ number_format($budget['total'] ?? 0, 2, ',', '.') }}</strong></td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="clear"></div>
+
+    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
+        Presupuesto generado el {{ date('d/m/Y H:i') }} - Token: {{ $budget['token'] }}
     </div>
 </body>
 
