@@ -123,19 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
-    // en 'aliases':
-    'Image' => Intervention\Image\Laravel\Facades\Image::class,
-
-    // en 'providers':
-    Intervention\Image\Laravel\ServiceProvider::class,
+    /*
+    |--------------------------------------------------------------------------
+    | Class Aliases
+    |--------------------------------------------------------------------------
+    |
+    | This array of class aliases will be registered when this application
+    | is started. However, feel free to register as many as you wish as
+    | the aliases are "lazy" loaded so they don't hinder performance.
+    |
+    */
 
     'aliases' => [
-        //TODO: ver como se aplica esto
+        // DomPDF Alias
         'PDF' => Barryvdh\DomPDF\Facade\Pdf::class,
+        // Intervention Image Alias
+        'Image' => Intervention\Image\Laravel\Facades\Image::class,
     ],
-
-    // 'providers' => [
-    //     Barryvdh\DomPDF\ServiceProvider::class,
-    // ],
 
 ];
