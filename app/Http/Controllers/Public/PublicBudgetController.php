@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Str;
 
 class PublicBudgetController extends Controller
 {
@@ -83,7 +84,7 @@ class PublicBudgetController extends Controller
     public function downloadPdf($token)
     {
         try {
-            // ULTRA SIMPLE: Una sola query con mínimas relaciones
+            // OPTIMIZADO: Una sola query con las relaciones necesarias para imágenes
             $budget = Budget::where('token', $token)
                 ->with([
                     'client:id,name,company,email,phone',
@@ -93,7 +94,8 @@ class PublicBudgetController extends Controller
                             $q->whereNull('variant_group')->orWhere('is_selected', true);
                         })->with([
                             'product:id,name',
-                            'product.category:id,name'
+                            'product.category:id,name',
+                            'product.featuredImage:id,product_id,url,is_featured' // AGREGADO: Solo imagen destacada
                         ]);
                     }
                 ])
@@ -103,8 +105,8 @@ class PublicBudgetController extends Controller
                 abort(404, 'Presupuesto no disponible');
             }
 
-            // ULTRA SIMPLE: Sin bucles complejos
-            $groupedItems = $this->groupItemsSimple($budget->items);
+            // OPTIMIZADO: Ahora incluye imágenes sin bucles adicionales
+            $groupedItems = $this->groupItemsWithImages($budget->items);
 
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
@@ -152,6 +154,78 @@ class PublicBudgetController extends Controller
             Log::error('Error al generar PDF: ' . $e->getMessage());
             abort(500, 'Error al generar el PDF');
         }
+    }
+
+    /**
+     * NUEVO: Agrupa items incluyendo imágenes destacadas para el PDF
+     */
+    private function groupItemsWithImages($items)
+    {
+        $grouped = ['regular' => [], 'variants' => []];
+
+        foreach ($items as $item) {
+            // Procesar imagen destacada
+            $featuredImage = null;
+            if ($item->product && $item->product->featuredImage) {
+                $featuredImage = $this->processImage($item->product->featuredImage);
+            }
+
+            $itemData = [
+                'id' => $item->id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'line_total' => $item->line_total,
+                'production_time_days' => $item->production_time_days,
+                'logo_printing' => $item->logo_printing,
+                'description' => $item->description,
+                'variant_group' => $item->variant_group,
+                'product' => [
+                    'name' => $item->product->name ?? 'Producto',
+                    'category' => ['name' => $item->product->category->name ?? '']
+                ],
+                'featured_image' => $featuredImage
+            ];
+
+            if ($item->variant_group) {
+                $grouped['variants'][$item->variant_group][] = $itemData;
+            } else {
+                $grouped['regular'][] = $itemData;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * NUEVO: Procesa la imagen para el PDF (maneja URLs absolutas y relativas)
+     */
+    private function processImage($imageModel)
+    {
+        if (!$imageModel || !$imageModel->url) {
+            return null;
+        }
+
+        $rawUrl = $imageModel->url;
+
+        // Si es una URL externa (absoluta), la devolvemos tal como está
+        if (Str::startsWith($rawUrl, ['http://', 'https://'])) {
+            return [
+                'url' => $rawUrl,
+                'file_path' => $rawUrl, // Para el PDF usamos la misma URL
+                'is_external' => true
+            ];
+        }
+
+        // Si es una ruta local/relativa
+        $publicPath = storage_path('app/public/' . $rawUrl);
+        $webUrl = asset('storage/' . $rawUrl);
+
+        return [
+            'url' => $rawUrl,
+            'file_path' => file_exists($publicPath) ? $publicPath : $webUrl, // Para PDF: ruta local si existe, sino web
+            'web_url' => $webUrl, // Para uso en web
+            'is_external' => false
+        ];
     }
 
     /**

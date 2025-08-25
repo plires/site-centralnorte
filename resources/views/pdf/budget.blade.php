@@ -79,6 +79,7 @@
             max-width: 50px;
             max-height: 50px;
             border: 1px solid #ddd;
+            object-fit: cover;
         }
 
         .product-image-placeholder {
@@ -92,6 +93,7 @@
             font-size: 9px;
             color: #999;
             text-align: center;
+            margin: 0 auto;
         }
 
         .text-right {
@@ -207,8 +209,8 @@
                 @foreach ($budget['grouped_items']['regular'] as $item)
                     <tr>
                         <td class="product-image">
-                            @if (!empty($item['featured_image']))
-                                <img src="{{ $item['featured_image']['file_path'] }}" alt="Producto" />
+                            @if (isset($item['featured_image']['file_path']))
+                                <img src="{{ $item['featured_image']['file_path'] }}" alt="" />
                             @else
                                 <div class="product-image-placeholder">Sin imagen</div>
                             @endif
@@ -216,23 +218,23 @@
                         <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                         <td>
                             <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                            @if (!empty($item['product']['category']['name']))
+                            @if (isset($item['product']['category']['name']))
                                 <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
                             @endif
-                            @if (!empty($item['description']))
+                            @if (isset($item['description']))
                                 <br><small>{{ $item['description'] }}</small>
                             @endif
                         </td>
                         <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
                         <td class="text-center">
-                            @if (!empty($item['production_time_days']))
+                            @if (isset($item['production_time_days']))
                                 {{ $item['production_time_days'] }} días
                             @else
                                 -
                             @endif
                         </td>
                         <td class="text-center">
-                            @if (!empty($item['logo_printing']))
+                            @if (isset($item['logo_printing']))
                                 {{ $item['logo_printing'] ? 'Sí' : 'No' }}
                             @else
                                 -
@@ -266,8 +268,8 @@
                     @foreach ($items as $item)
                         <tr>
                             <td class="product-image">
-                                @if (!empty($item['featured_image']))
-                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="Producto" />
+                                @if (isset($item['featured_image']['file_path']))
+                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="" />
                                 @else
                                     <div class="product-image-placeholder">Sin imagen</div>
                                 @endif
@@ -275,23 +277,23 @@
                             <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                             <td>
                                 <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                                @if (!empty($item['product']['category']['name']))
+                                @if (isset($item['product']['category']['name']))
                                     <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
                                 @endif
-                                @if (!empty($item['description']))
+                                @if (isset($item['description']))
                                     <br><small>{{ $item['description'] }}</small>
                                 @endif
                             </td>
                             <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
                             <td class="text-center">
-                                @if (!empty($item['production_time_days']))
+                                @if (isset($item['production_time_days']))
                                     {{ $item['production_time_days'] }} días
                                 @else
                                     -
                                 @endif
                             </td>
                             <td class="text-center">
-                                @if (!empty($item['logo_printing']))
+                                @if (isset($item['logo_printing']))
                                     {{ $item['logo_printing'] ? 'Sí' : 'No' }}
                                 @else
                                     -
@@ -308,7 +310,7 @@
     <!-- COMENTARIOS -->
     @if (!empty($budget['footer_comments']))
         <div class="comments">
-            <h4>Comentarios</h4>
+            <h4>Comentarios:</h4>
             <p>{{ $budget['footer_comments'] }}</p>
         </div>
     @endif
@@ -320,9 +322,9 @@
                 <td><strong>Subtotal:</strong></td>
                 <td class="text-right">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
             </tr>
-            @if ($businessConfig['apply_iva'] && $businessConfig['iva_rate'] > 0)
+            @if ($businessConfig['apply_iva'])
                 <tr>
-                    <td><strong>IVA ({{ number_format($businessConfig['iva_rate'] * 100, 1) }}%):</strong></td>
+                    <td>IVA ({{ $businessConfig['iva_rate'] * 100 }}%):</td>
                     <td class="text-right">
                         ${{ number_format(($budget['subtotal'] ?? 0) * $businessConfig['iva_rate'], 2, ',', '.') }}
                     </td>
