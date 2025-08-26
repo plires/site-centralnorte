@@ -253,40 +253,6 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * ULTRA SIMPLE: Sin queries de imágenes en bucle
-     */
-    private function groupItemsSimple($items)
-    {
-        $grouped = ['regular' => [], 'variants' => []];
-
-        foreach ($items as $item) {
-            $itemData = [
-                'id' => $item->id,
-                'quantity' => $item->quantity,
-                'unit_price' => $item->unit_price,
-                'line_total' => $item->line_total,
-                'production_time_days' => $item->production_time_days,
-                'logo_printing' => $item->logo_printing,
-                'description' => $item->description,
-                'variant_group' => $item->variant_group,
-                'product' => [
-                    'name' => $item->product->name ?? 'Producto',
-                    'category' => ['name' => $item->product->category->name ?? '']
-                ],
-                'featured_image' => null // Sin imágenes por ahora para velocidad
-            ];
-
-            if ($item->variant_group) {
-                $grouped['variants'][$item->variant_group][] = $itemData;
-            } else {
-                $grouped['regular'][] = $itemData;
-            }
-        }
-
-        return $grouped;
-    }
-
-    /**
      * Calcular totales basados en items filtrados
      */
     private function calculateFilteredTotals($filteredItems, $businessConfig)
@@ -300,19 +266,5 @@ class PublicBudgetController extends Controller
             'iva' => $ivaAmount,
             'total' => $total,
         ];
-    }
-
-    private function filterItemsByVariants($items, $selectedVariants)
-    {
-        return $items->filter(function ($item) use ($selectedVariants) {
-            // Si no tiene grupo de variante, incluirlo siempre
-            if (!$item->variant_group) {
-                return true;
-            }
-
-            // Si tiene grupo de variante, incluirlo solo si está seleccionado
-            return isset($selectedVariants[$item->variant_group]) &&
-                $selectedVariants[$item->variant_group] == $item->id;
-        });
     }
 }
