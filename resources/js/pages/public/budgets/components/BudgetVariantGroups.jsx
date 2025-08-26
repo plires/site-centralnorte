@@ -96,8 +96,6 @@ export default function BudgetVariantGroups({
                                             {/* Información del producto */}
                                             <div className="flex flex-1 justify-between">
                                                 <div>
-                                                    <h3 className="font-semibold">{item.product.name}</h3>
-                                                    <p className="text-sm text-gray-600">Categoría: {item.product.category?.name}</p>
                                                     <div className="mt-2 text-sm">
                                                         <p>Cantidad: {item.quantity}</p>
                                                         <p>Precio unitario: {formatCurrency(item.unit_price)}</p>
