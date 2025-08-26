@@ -27,36 +27,19 @@ export default function Budget({ budget, businessConfig }) {
     const generatePdfUrl = () => {
         const baseUrl = `/presupuesto/${budget.token}/pdf`;
 
-        // Si hay variantes, agregar como parámetros de consulta
+        // Si hay variantes seleccionadas, agregar como parámetros de consulta
         if (Object.keys(selectedVariants).length > 0) {
             const params = new URLSearchParams();
+
+            // Formato: grupo:itemId
             Object.entries(selectedVariants).forEach(([group, itemId]) => {
                 params.append('variants[]', `${group}:${itemId}`);
             });
+
             return `${baseUrl}?${params.toString()}`;
         }
 
         return baseUrl;
-    };
-
-    // Función para actualizar variantes seleccionadas en el servidor
-    const updateSelectedVariants = async () => {
-        if (Object.keys(selectedVariants).length === 0) return;
-
-        try {
-            await fetch(`/presupuesto/${budget.token}/update-variants`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'),
-                },
-                body: JSON.stringify({
-                    selectedVariants,
-                }),
-            });
-        } catch (error) {
-            console.error('Error al actualizar variantes:', error);
-        }
     };
 
     // Obtener configuración de IVA
@@ -452,20 +435,19 @@ export default function Budget({ budget, businessConfig }) {
                         </CardContent>
                     </Card>
                 )}
-                {/* Botón de descarga PDF */}
+                {/* Botón de descarga para usar la URL generada dinámicamente: */}
                 <div className="text-center">
-                    <Button asChild size="lg" disabled={!allVariantsSelected} onClick={() => updateSelectedVariants()}>
-                        <a
-                            href={generatePdfUrl()}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={!allVariantsSelected ? 'pointer-events-none opacity-50' : ''}
-                        >
-                            <Download className="mr-2 h-4 w-4" />
-                            Descargar PDF
-                        </a>
+                    <Button
+                        onClick={() => {
+                            const pdfUrl = generatePdfUrl();
+                            window.open(pdfUrl, '_blank');
+                        }}
+                        disabled={!allVariantsSelected}
+                        className="inline-flex items-center gap-2"
+                    >
+                        <Download className="h-4 w-4" />
+                        Descargar PDF
                     </Button>
-                    {!allVariantsSelected && <p className="mt-2 text-sm text-gray-600">Selecciona todas las opciones para descargar el PDF</p>}
                 </div>
             </div>
         </div>

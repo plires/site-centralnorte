@@ -81,21 +81,23 @@ class PublicBudgetController extends Controller
         }
     }
 
-    public function downloadPdf($token)
+    /**
+     * Generar PDF con variantes seleccionadas por el usuario
+     */
+    public function downloadPdf($token, Request $request)
     {
         try {
-            // OPTIMIZADO: Una sola query con las relaciones necesarias para imágenes
+            // Una sola query con las relaciones necesarias
             $budget = Budget::where('token', $token)
                 ->with([
                     'client:id,name,company,email,phone',
                     'user:id,name,email',
                     'items' => function ($query) {
-                        $query->where(function ($q) {
-                            $q->whereNull('variant_group')->orWhere('is_selected', true);
-                        })->with([
+                        // Cargar TODOS los items (sin filtrar por is_selected aquí)
+                        $query->with([
                             'product:id,name',
                             'product.category:id,name',
-                            'product.featuredImage:id,product_id,url,is_featured' // AGREGADO: Solo imagen destacada
+                            'product.featuredImage:id,product_id,url,is_featured'
                         ]);
                     }
                 ])
@@ -105,8 +107,14 @@ class PublicBudgetController extends Controller
                 abort(404, 'Presupuesto no disponible');
             }
 
-            // OPTIMIZADO: Ahora incluye imágenes sin bucles adicionales
-            $groupedItems = $this->groupItemsWithImages($budget->items);
+            // Obtener variantes seleccionadas desde la request
+            $selectedVariants = $this->parseSelectedVariants($request);
+
+            // Filtrar items basado en las variantes seleccionadas
+            $filteredItems = $this->filterItemsBySelectedVariants($budget->items, $selectedVariants);
+
+            // Incluye imágenes con los items filtrados
+            $groupedItems = $this->groupItemsWithImages($filteredItems);
 
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
@@ -114,7 +122,7 @@ class PublicBudgetController extends Controller
             ];
 
             $statusData = $budget->getStatusData();
-            $calculatedTotals = $this->calculateFilteredTotals($budget->items, $businessConfig);
+            $calculatedTotals = $this->calculateFilteredTotals($filteredItems, $businessConfig);
 
             $budgetData = array_merge([
                 'id' => $budget->id,
@@ -157,7 +165,59 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * NUEVO: Agrupa items incluyendo imágenes destacadas para el PDF
+     * Parsear variantes seleccionadas desde los parámetros de la request
+     */
+    private function parseSelectedVariants(Request $request)
+    {
+        $selectedVariants = [];
+        $variants = $request->input('variants', []);
+
+        foreach ($variants as $variant) {
+            // Formato esperado: "grupo:itemId"
+            if (strpos($variant, ':') !== false) {
+                [$group, $itemId] = explode(':', $variant, 2);
+                $selectedVariants[$group] = (int) $itemId;
+            }
+        }
+
+        return $selectedVariants;
+    }
+
+    /**
+     * Filtrar items basado en las variantes seleccionadas por el usuario
+     */
+    private function filterItemsBySelectedVariants($allItems, $selectedVariants)
+    {
+        $filtered = collect();
+
+        foreach ($allItems as $item) {
+            if ($item->variant_group) {
+                // Es un item con variante
+                $group = $item->variant_group;
+
+                // Si hay una variante seleccionada para este grupo
+                if (isset($selectedVariants[$group])) {
+                    // Solo incluir si es el item seleccionado
+                    if ($item->id === $selectedVariants[$group]) {
+                        $filtered->push($item);
+                    }
+                } else {
+                    // Si no hay selección específica, usar el que está marcado como selected en BD
+                    if ($item->is_selected) {
+                        $filtered->push($item);
+                    }
+                }
+            } else {
+                // Item regular (sin variantes), siempre incluir
+                $filtered->push($item);
+            }
+        }
+
+        return $filtered;
+    }
+
+    /**
+     * Agrupa items incluyendo imágenes destacadas para el PDF
      */
     private function groupItemsWithImages($items)
     {
@@ -197,7 +257,7 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * NUEVO: Procesa la imagen para el PDF (maneja URLs absolutas y relativas)
+     * Procesa la imagen para el PDF (maneja URLs absolutas y relativas)
      */
     private function processImage($imageModel)
     {
@@ -229,7 +289,7 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * MÉTODO ORIGINAL - sin cambios de imágenes
+     * Agrupa items por regulares y variantes
      */
     private function groupItemsByVariants($items)
     {
