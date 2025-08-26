@@ -45,7 +45,7 @@ class PublicBudgetController extends Controller
                 'apply_iva' => config('business.tax.apply_iva', true),
             ];
 
-            return Inertia::render('public/Budget', [
+            return Inertia::render('public/budgets/Budget', [
                 'budget' => array_merge([
                     'id' => $budget->id,
                     'title' => $budget->title,
@@ -74,7 +74,7 @@ class PublicBudgetController extends Controller
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto público: ' . $e->getMessage());
 
-            return Inertia::render('public/BudgetNotFound', [
+            return Inertia::render('public/budgets/BudgetNotFound', [
                 'message' => 'El presupuesto solicitado no existe o ha sido eliminado.',
                 'reason' => 'not_found'
             ]);
