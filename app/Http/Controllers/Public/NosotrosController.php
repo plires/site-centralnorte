@@ -10,6 +10,6 @@ class NosotrosController extends Controller
 {
     public function index()
     {
-        return Inertia::render('public/Nosotros');
+        return Inertia::render('public/site/nosotros/Nosotros');
     }
 }

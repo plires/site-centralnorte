@@ -10,6 +10,6 @@ class HomeController extends Controller
 {
     public function index()
     {
-        return Inertia::render('public/Home');
+        return Inertia::render('public/site/home/Home');
     }
 }
