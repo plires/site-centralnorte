@@ -210,7 +210,7 @@
                     <tr>
                         <td class="product-image">
                             @if (isset($item['featured_image']['file_path']))
-                                <img src="{{ $item['featured_image']['file_path'] }}" alt="" />
+                                <img src="{{ $item['featured_image']['file_path'] }}" alt="producto" />
                             @else
                                 <div class="product-image-placeholder">Sin imagen</div>
                             @endif
@@ -235,7 +235,7 @@
                         </td>
                         <td class="text-center">
                             @if (isset($item['logo_printing']))
-                                {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                {{ $item['logo_printing'] ? $item['logo_printing'] : 'No' }}
                             @else
                                 -
                             @endif
@@ -269,7 +269,7 @@
                         <tr>
                             <td class="product-image">
                                 @if (isset($item['featured_image']['file_path']))
-                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="" />
+                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="producto" />
                                 @else
                                     <div class="product-image-placeholder">Sin imagen</div>
                                 @endif
@@ -294,7 +294,7 @@
                             </td>
                             <td class="text-center">
                                 @if (isset($item['logo_printing']))
-                                    {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                    {{ $item['logo_printing'] ? $item['logo_printing'] : 'No' }}
                                 @else
                                     -
                                 @endif
