@@ -14,7 +14,6 @@
         }
 
         .header {
-            width: 100%;
             border: 1px solid #ddd;
             margin-bottom: 20px;
             padding: 15px;
