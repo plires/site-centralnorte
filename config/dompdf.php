@@ -25,11 +25,12 @@ return [
         'enable_html5_parser' => true,
 
         // Calidad y rendimiento de imágenes
-        'dpi' => 150,  // Aumentado para mejor calidad
+        'dpi' => 96,
         'default_media_type' => 'screen',
         'default_paper_size' => 'a4',
         'default_paper_orientation' => 'portrait',
         'default_font' => 'sans-serif',
+        'tempDir' => '/tmp/dompdf',
 
         // Backend de renderizado
         'pdf_backend' => 'CPDF',
