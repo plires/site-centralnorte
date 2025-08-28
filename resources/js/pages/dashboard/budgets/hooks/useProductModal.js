@@ -218,22 +218,40 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
         if (isVariantMode && variants.length > 0) {
             const variantGroup = editingItem?.isVariantGroup ? editingItem.group : generateVariantGroup(selectedProduct.name);
 
-            return variants.map((variant, index) => ({
-                id: editingItem?.isVariantGroup ? variant.id : `${Date.now()}_${index}`,
-                product_id: selectedProduct.id,
-                product: selectedProduct,
-                quantity: variant.quantity,
-                unit_price: variant.unit_price,
-                production_time_days: variant.production_time_days || null,
-                logo_printing: variant.logo_printing || null,
-                line_total: variant.quantity * variant.unit_price,
-                variant_group: variantGroup,
-                is_variant: true,
-            }));
+            return variants.map((variant, index) => {
+                // FIX: Generar IDs únicos para evitar duplicación
+                let itemId;
+
+                if (editingItem?.isVariantGroup) {
+                    // Si estamos editando un grupo de variantes, usar los IDs existentes
+                    itemId = variant.id;
+                } else if (editingItem && !editingItem.isVariantGroup) {
+                    // FIX: Si estamos convirtiendo un item regular a variantes, generar nuevos IDs únicos
+                    itemId = `converted_${Date.now()}_${index}`;
+                } else {
+                    // Para nuevos items
+                    itemId = `new_${Date.now()}_${index}`;
+                }
+
+                return {
+                    id: itemId,
+                    product_id: selectedProduct.id,
+                    product: selectedProduct,
+                    quantity: variant.quantity,
+                    unit_price: variant.unit_price,
+                    production_time_days: variant.production_time_days || null,
+                    logo_printing: variant.logo_printing || null,
+                    line_total: variant.quantity * variant.unit_price,
+                    variant_group: variantGroup,
+                    is_variant: true,
+                    // FIX: Solo la primera variante debe estar seleccionada inicialmente
+                    is_selected: index === 0,
+                };
+            });
         } else {
             return [
                 {
-                    id: editingItem && !editingItem.isVariantGroup ? editingItem.id : Date.now(),
+                    id: editingItem && !editingItem.isVariantGroup ? editingItem.id : `single_${Date.now()}`,
                     product_id: selectedProduct.id,
                     product: selectedProduct,
                     quantity: variants[0].quantity,
@@ -243,6 +261,8 @@ export function useProductModal(products, existingItems = [], checkForDuplicates
                     line_total: variants[0].quantity * variants[0].unit_price,
                     variant_group: null,
                     is_variant: false,
+                    // FIX: Productos regulares siempre están seleccionados
+                    is_selected: true,
                 },
             ];
         }

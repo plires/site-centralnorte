@@ -1,3 +1,5 @@
+// resources/js/pages/dashboard/budgets/hooks/useBudgetLogic.js
+
 import { useEffect, useRef, useState } from 'react';
 
 export function useBudgetLogic(items = [], businessConfig = null) {
@@ -63,28 +65,49 @@ export function useBudgetLogic(items = [], businessConfig = null) {
                 const newSelectedVariants = { ...selectedVariants };
 
                 Object.keys(variantGroups).forEach((group) => {
-                    // Solo actualizar si es un grupo nuevo
-                    if (!newSelectedVariants[group]) {
-                        const groupItems = variantGroups[group];
-                        const selectedItem = groupItems.find((item) => item.is_selected === true);
+                    const groupItems = variantGroups[group];
+
+                    // FIX: Mejorar la lógica de selección inicial
+                    let selectedItem = groupItems.find((item) => item.is_selected === true);
+
+                    // Si no hay ninguna marcada como seleccionada, seleccionar la primera
+                    if (!selectedItem && groupItems.length > 0) {
+                        selectedItem = groupItems[0];
+                        console.log(`FIX: Grupo ${group} - No hay item seleccionado, usando el primero: ${selectedItem?.id}`);
+                    } else if (selectedItem) {
+                        console.log(`Grupo ${group} - Item previamente seleccionado: ${selectedItem.id}`);
+                    }
+
+                    // Solo actualizar si es un grupo nuevo o si la selección actual no existe en el grupo
+                    const currentSelectedId = selectedVariants[group];
+                    const currentSelectedExists = groupItems.some((item) => item.id === currentSelectedId);
+
+                    if (!currentSelectedExists || !newSelectedVariants[group]) {
                         if (selectedItem) {
                             newSelectedVariants[group] = selectedItem.id;
-                            console.log(`Inicializando grupo ${group}: item ${selectedItem.id}`);
-                        } else {
-                            newSelectedVariants[group] = groupItems[0]?.id;
-                            console.log(`Inicializando grupo ${group}: item por defecto ${groupItems[0]?.id}`);
+                            console.log(`FIX: Actualizando selección para grupo ${group}: ${selectedItem.id}`);
                         }
                     }
                 });
 
-                // Solo actualizar si realmente hay cambios
-                const hasChanges = Object.keys(newSelectedVariants).some((group) => newSelectedVariants[group] !== selectedVariants[group]);
+                // Remover grupos que ya no existen
+                Object.keys(newSelectedVariants).forEach((group) => {
+                    if (!variantGroups[group]) {
+                        delete newSelectedVariants[group];
+                        console.log(`FIX: Removiendo grupo inexistente: ${group}`);
+                    }
+                });
 
-                if (hasChanges || !isInitialized.current) {
-                    console.log('Actualizando selectedVariants:', newSelectedVariants);
+                // Solo actualizar si hay cambios reales
+                const hasRealChanges =
+                    Object.keys(newSelectedVariants).some((group) => newSelectedVariants[group] !== selectedVariants[group]) ||
+                    Object.keys(variantGroups).length !== Object.keys(selectedVariants).length;
+
+                if (hasRealChanges || !isInitialized.current) {
+                    console.log('FIX: Actualizando selectedVariants:', newSelectedVariants);
                     setSelectedVariants(newSelectedVariants);
 
-                    // IMPORTANTE: Forzar recálculo de totales después de inicializar
+                    // Forzar recálculo de totales después de inicializar
                     setTimeout(() => {
                         calculateTotals();
                     }, 0);
@@ -92,12 +115,18 @@ export function useBudgetLogic(items = [], businessConfig = null) {
 
                 // Actualizar referencias
                 lastVariantGroups.current = { ...variantGroups };
+            } else {
+                // Si no hay grupos de variantes, limpiar selectedVariants
+                if (Object.keys(selectedVariants).length > 0) {
+                    console.log('FIX: Limpiando selectedVariants porque no hay grupos');
+                    setSelectedVariants({});
+                }
             }
 
-            // Marcar como inicializado incluso si no hay variantes (para productos regulares)
+            // Marcar como inicializado
             isInitialized.current = true;
         }
-    }, [items]); // Solo depender de items, no de variantGroups derivado
+    }, [items]); // Solo depender de items
 
     // Función para cambiar variante seleccionada
     const handleVariantChange = (group, itemId) => {

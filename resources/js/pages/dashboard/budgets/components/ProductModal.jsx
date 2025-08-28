@@ -339,18 +339,31 @@ export default function ProductModal({ products, existingItems = [], editingItem
                 : `variant_${selectedProduct.name}_${Date.now()}`
             : null;
 
-        console.log('Variant group generado:', variantGroup);
+        console.log('Modal: Generando items con variant_group:', variantGroup);
 
         const itemsToReturn = variants.map((variant, index) => {
             const quantity = parseInt(variant.quantity);
             const unitPrice = parseFloat(variant.unit_price);
 
+            // FIX: Generar IDs únicos para evitar duplicación
+            let itemId;
+
+            if (editingItem?.isVariantGroup) {
+                // Si estamos editando un grupo de variantes, usar los IDs existentes
+                itemId = editingItem.items[index]?.id || `new_${Date.now()}_${index}`;
+            } else if (editingItem && !editingItem.isVariantGroup && isVariantMode) {
+                // FIX: Si estamos convirtiendo un item regular a variantes, generar nuevos IDs únicos para TODAS las variantes
+                itemId = `converted_${Date.now()}_${index}`;
+            } else if (editingItem && !editingItem.isVariantGroup && !isVariantMode) {
+                // Si estamos editando un item regular y manteniéndolo como regular, usar el ID existente
+                itemId = editingItem.id;
+            } else {
+                // Para nuevos items
+                itemId = `new_${Date.now()}_${index}`;
+            }
+
             const item = {
-                id: editingItem?.isVariantGroup
-                    ? editingItem.items[index]?.id || `new_${Date.now()}_${index}`
-                    : editingItem && !editingItem.isVariantGroup
-                      ? editingItem.id
-                      : `new_${Date.now()}_${index}`,
+                id: itemId,
                 product_id: selectedProduct.id,
                 product: selectedProduct,
                 quantity,
@@ -360,14 +373,23 @@ export default function ProductModal({ products, existingItems = [], editingItem
                 line_total: quantity * unitPrice,
                 variant_group: variantGroup,
                 is_variant: isVariantMode,
-                is_selected: isVariantMode ? index === 0 : true, // Primera variante siempre seleccionada
+                // FIX: Solo la primera variante debe estar seleccionada inicialmente
+                is_selected: isVariantMode ? index === 0 : true,
             };
 
-            console.log(`Modal enviando item ${item.id}: variant_group=${item.variant_group}, is_selected=${item.is_selected}`);
+            console.log(`Modal enviando item ${item.id}: variant_group=${item.variant_group}, is_selected=${item.is_selected}, index=${index}`);
             return item;
         });
 
-        console.log('Modal: Items finales a enviar:', itemsToReturn);
+        console.log(
+            'Modal: Items finales a enviar:',
+            itemsToReturn.map((item) => ({
+                id: item.id,
+                variant_group: item.variant_group,
+                is_selected: item.is_selected,
+            })),
+        );
+
         onSubmit(itemsToReturn);
     };
 
