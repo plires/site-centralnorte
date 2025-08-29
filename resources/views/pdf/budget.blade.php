@@ -13,6 +13,75 @@
             color: #333;
         }
 
+        /* Header Institucional */
+        .institutional-header {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+            border: 2px solid #3d5095;
+        }
+
+        .institutional-header td {
+            padding: 15px;
+            vertical-align: top;
+        }
+
+        .company-logo {
+            width: 80px;
+            text-align: center;
+            border-right: 1px solid #ddd;
+            vertical-align: middle;
+            padding: 10px;
+        }
+
+        .company-logo img {
+            display: block;
+            margin: 0 auto;
+            max-width: 60px;
+            max-height: 60px;
+            object-fit: contain;
+        }
+
+        .company-logo-placeholder {
+            width: 60px;
+            height: 60px;
+            background-color: #e9ecef;
+            border: 2px solid #3d5095;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            color: #3d5095;
+            font-weight: bold;
+            text-align: center;
+            margin: 0 auto;
+        }
+
+        .company-info {
+            font-weight: bold;
+        }
+
+        .company-name {
+            font-size: 18px;
+            color: #3d5095;
+            margin-bottom: 8px;
+        }
+
+        .company-tagline {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+
+        .company-contact {
+            font-size: 10px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        /* Estilos originales mantenidos */
         .header {
             border: 1px solid #ddd;
             margin-bottom: 20px;
@@ -37,7 +106,7 @@
             font-size: 18px;
             font-weight: bold;
             margin-bottom: 15px;
-            color: #2563eb;
+            color: #3d5095;
         }
 
         .label {
@@ -104,12 +173,25 @@
         }
 
         .variant-header {
-            background-color: #e3f2fd;
+            background-color: #ffffff;
             padding: 8px;
             font-weight: bold;
-            color: #1976d2;
+            color: #19ac90;
             border: 1px solid #bbdefb;
             margin-top: 15px;
+        }
+
+        .variant-header-row {
+            background-color: #ffffff;
+        }
+
+        .variant-header-cell {
+            padding: 12px;
+            font-weight: bold;
+            color: #19ac90;
+            border: 1px solid #19ac90;
+            text-align: left;
+            font-size: 10px;
         }
 
         .comments {
@@ -141,13 +223,44 @@
         }
 
         .totals-table .total-row {
-            background-color: #2563eb;
+            background-color: #3d5095;
             color: white;
             font-weight: bold;
         }
 
         .clear {
             clear: both;
+        }
+
+        /* Footer Institucional */
+        .institutional-footer {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background-color: #f8f9fa;
+            border: 2px solid #3d5095;
+        }
+
+        .institutional-footer td {
+            padding: 12px;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+        .footer-company {
+            font-weight: bold;
+            color: #3d5095;
+            margin-bottom: 5px;
+        }
+
+        .footer-details {
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .footer-right {
+            text-align: right;
+            color: #666;
         }
 
         @page {
@@ -157,7 +270,37 @@
 </head>
 
 <body>
-    <!-- HEADER -->
+    <!-- HEADER INSTITUCIONAL -->
+    <table class="institutional-header">
+        <tr>
+            <td class="company-logo">
+                @php
+                    $logoPath = public_path('images/logo-centralnorte.png');
+                    $logoExists = file_exists($logoPath);
+                @endphp
+
+                @if ($logoExists)
+                    <img src="{{ $logoPath }}" alt="Logo {{ env('APP_NAME') }}" />
+                @else
+                    <div class="company-logo-placeholder">
+                        LOGO<br>EMPRESA
+                    </div>
+                @endif
+            </td>
+            <td class="company-info">
+                <div class="company-name">{{ env('APP_NAME', 'Central Norte') }}</div>
+                <div class="company-tagline">Soluciones en Merchandising y Productos Promocionales</div>
+                <div class="company-contact">
+                    <strong>Email:</strong> {{ env('COMPANY_EMAIL', 'info@centralnorte.com') }}<br>
+                    <strong>Teléfono:</strong> {{ env('COMPANY_PHONE', '+54 11 4000-0000') }}<br>
+                    <strong>Web:</strong> {{ env('COMPANY_WEBSITE', 'www.centralnorte.com') }}<br>
+                    <strong>Dirección:</strong> {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- HEADER ORIGINAL DEL PRESUPUESTO -->
     <div class="header">
         <div class="header-title">PRESUPUESTO - {{ $budget['title'] }}</div>
 
@@ -234,7 +377,7 @@
                         </td>
                         <td class="text-center">
                             @if (isset($item['logo_printing']))
-                                {{ $item['logo_printing'] ? $item['logo_printing'] : 'No' }}
+                                {{ $item['logo_printing'] ? 'Sí' : 'No' }}
                             @else
                                 -
                             @endif
@@ -246,12 +389,21 @@
         </table>
     @endif
 
-    <!-- VARIANTES (SOLO SELECCIONADAS) -->
+    <!-- PRODUCTOS CON VARIANTES -->
     @if (!empty($budget['grouped_items']['variants']))
-        @foreach ($budget['grouped_items']['variants'] as $variantGroup => $items)
-            <div class="variant-header">Opción Seleccionada: {{ $variantGroup }}</div>
+        @foreach ($budget['grouped_items']['variants'] as $groupName => $variantItems)
+            @php
+                // Obtener el nombre del producto del primer item del grupo de variantes
+                $productName = $variantItems[0]['product']['name'] ?? 'Producto';
+            @endphp
 
             <table class="products-table">
+                <!-- Header de la variante integrado en la tabla -->
+                <tr class="variant-header-row">
+                    <td colspan="7" class="variant-header-cell">
+                        Opción seleccionada para: {{ $productName }}
+                    </td>
+                </tr>
                 <thead>
                     <tr>
                         <th style="width: 60px;">Imagen</th>
@@ -264,7 +416,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($items as $item)
+                    @foreach ($variantItems as $item)
                         <tr>
                             <td class="product-image">
                                 @if (isset($item['featured_image']['file_path']))
@@ -293,7 +445,7 @@
                             </td>
                             <td class="text-center">
                                 @if (isset($item['logo_printing']))
-                                    {{ $item['logo_printing'] ? $item['logo_printing'] : 'No' }}
+                                    {{ $item['logo_printing'] ? 'Sí' : 'No' }}
                                 @else
                                     -
                                 @endif
@@ -338,9 +490,24 @@
 
     <div class="clear"></div>
 
-    <div style="margin-top: 30px; text-align: center; font-size: 10px; color: #666;">
-        Presupuesto generado el {{ date('d/m/Y H:i') }} - Token: {{ $budget['token'] }}
-    </div>
+    <!-- FOOTER INSTITUCIONAL -->
+    <table class="institutional-footer">
+        <tr>
+            <td style="width: 60%;">
+                <div class="footer-company">{{ env('APP_NAME', 'Central Norte') }}</div>
+                <div class="footer-details">
+                    {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}<br>
+                    Tel: {{ env('COMPANY_PHONE', '+54 11 4000-0000') }} |
+                    Email: {{ env('COMPANY_EMAIL', 'info@centralnorte.com') }}<br>
+                    Web: {{ env('COMPANY_WEBSITE', 'www.centralnorte.com') }}
+                </div>
+            </td>
+            <td class="footer-right">
+                <strong>Presupuesto generado el {{ date('d/m/Y H:i') }}</strong><br>
+                <em>Documento generado automáticamente</em>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>
