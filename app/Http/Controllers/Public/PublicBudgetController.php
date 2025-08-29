@@ -27,7 +27,7 @@ class PublicBudgetController extends Controller
 
             // Verificar si el presupuesto está activo
             if (!$budget->is_active) {
-                return Inertia::render('public/BudgetNotFound', [
+                return Inertia::render('public/budgets/BudgetNotFound', [
                     'message' => 'Este presupuesto ha sido desactivado temporalmente y no está disponible para visualización.',
                     'reason' => 'inactive'
                 ]);
@@ -35,6 +35,14 @@ class PublicBudgetController extends Controller
 
             // Obtener datos de estado usando el método del modelo
             $statusData = $budget->getStatusData();
+
+            // Verificar si el presupuesto está vigente
+            if ($statusData['is_expired']) {
+                return Inertia::render('public/budgets/BudgetNotFound', [
+                    'message' => 'Este presupuesto esta vencido y no está disponible para visualización.',
+                    'reason' => 'expired'
+                ]);
+            }
 
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
