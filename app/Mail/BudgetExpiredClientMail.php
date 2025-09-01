@@ -14,10 +14,12 @@ class BudgetExpiredClientMail extends Mailable
   use Queueable, SerializesModels;
 
   public Budget $budget;
+  public string $publicUrl;
 
-  public function __construct(Budget $budget)
+  public function __construct(Budget $budget, string $publicUrl)
   {
     $this->budget = $budget;
+    $this->publicUrl = $publicUrl;
   }
 
   public function envelope(): Envelope
@@ -29,13 +31,11 @@ class BudgetExpiredClientMail extends Mailable
 
   public function content(): Content
   {
-    $publicUrl = route('public.budget.show', $this->budget->token);
-
     return new Content(
       view: 'emails.budget-expired-client',
       with: [
         'budget' => $this->budget,
-        'publicUrl' => $publicUrl,
+        'publicUrl' => $this->publicUrl,
         'vendedor' => $this->budget->user,
       ]
     );

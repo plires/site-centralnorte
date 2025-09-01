@@ -14,10 +14,12 @@ class BudgetExpiredMail extends Mailable
   use Queueable, SerializesModels;
 
   public Budget $budget;
+  public string $dashboardUrl;
 
-  public function __construct(Budget $budget)
+  public function __construct(Budget $budget, string $dashboardUrl)
   {
     $this->budget = $budget;
+    $this->dashboardUrl = $dashboardUrl;
   }
 
   public function envelope(): Envelope
@@ -29,13 +31,11 @@ class BudgetExpiredMail extends Mailable
 
   public function content(): Content
   {
-    $dashboardUrl = route('dashboard.budgets.show', $this->budget->id);
-
     return new Content(
       view: 'emails.budget-expired',
       with: [
         'budget' => $this->budget,
-        'dashboardUrl' => $dashboardUrl,
+        'dashboardUrl' => $this->dashboardUrl,
       ]
     );
   }

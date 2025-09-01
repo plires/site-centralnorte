@@ -24,7 +24,7 @@ class SendBudgetNotifications extends Command
         try {
             $warningDays = config('budget.warning_days', env('BUDGET_WARNING_DAYS', 3));
 
-            // Buscar presupuestos que necesitan notificación
+            // ENFOQUE DIRECTO: Buscar presupuestos que necesitan notificación
             $budgetsExpiringSoon = $this->getBudgetsExpiringSoon($warningDays);
             $budgetsExpiredToday = $this->getBudgetsExpiredToday();
 
@@ -125,7 +125,8 @@ class SendBudgetNotifications extends Command
             // Enviar al vendedor
             try {
                 if ($budget->user->email) {
-                    Mail::to($budget->user->email)->send(new BudgetExpiryWarningMail($budget));
+                    $dashboardUrl = route('dashboard.budgets.show', $budget->id);
+                    Mail::to($budget->user->email)->send(new BudgetExpiryWarningMail($budget, $dashboardUrl));
                     $sent++;
                     $this->line("  → Aviso enviado al vendedor: {$budget->user->email} (vence en {$actualDaysUntilExpiry} días)");
                 } else {
@@ -138,7 +139,8 @@ class SendBudgetNotifications extends Command
             // Enviar al cliente
             try {
                 if ($budget->client->email) {
-                    Mail::to($budget->client->email)->send(new BudgetExpiryWarningClientMail($budget));
+                    $publicUrl = route('public.budget.show', $budget->token);
+                    Mail::to($budget->client->email)->send(new BudgetExpiryWarningClientMail($budget, $publicUrl));
                     $sent++;
                     $this->line("  → Aviso enviado al cliente: {$budget->client->email} (vence en {$actualDaysUntilExpiry} días)");
                 } else {
@@ -196,7 +198,8 @@ class SendBudgetNotifications extends Command
             // Enviar al vendedor
             try {
                 if ($budget->user->email) {
-                    Mail::to($budget->user->email)->send(new BudgetExpiredMail($budget));
+                    $dashboardUrl = route('dashboard.budgets.show', $budget->id);
+                    Mail::to($budget->user->email)->send(new BudgetExpiredMail($budget, $dashboardUrl));
                     $sent++;
                     $this->line("  → Vencimiento enviado al vendedor: {$budget->user->email}");
                 } else {
@@ -209,7 +212,8 @@ class SendBudgetNotifications extends Command
             // Enviar al cliente
             try {
                 if ($budget->client->email) {
-                    Mail::to($budget->client->email)->send(new BudgetExpiredClientMail($budget));
+                    $publicUrl = route('public.budget.show', $budget->token);
+                    Mail::to($budget->client->email)->send(new BudgetExpiredClientMail($budget, $publicUrl));
                     $sent++;
                     $this->line("  → Vencimiento enviado al cliente: {$budget->client->email}");
                 } else {

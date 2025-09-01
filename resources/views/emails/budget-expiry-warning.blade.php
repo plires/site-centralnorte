@@ -49,6 +49,13 @@
             border-radius: 5px;
             margin: 20px 0;
         }
+
+        .client-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
     </style>
 </head>
 
@@ -61,22 +68,41 @@
         <h2>Estimado/a {{ $budget->user->name }},</h2>
 
         <div class="warning">
+            <p><strong>¡Atención!</strong> El siguiente presupuesto vencerá en {{ $daysUntilExpiry }}
+                {{ $daysUntilExpiry == 1 ? 'día' : 'días' }}:</p>
+
             <h3>{{ $budget->title }}</h3>
-            <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
-            <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
+            <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
             <p><strong>Total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
         </div>
 
-        <p>Te recomendamos:</p>
+        <div class="client-info">
+            <h4>📋 Información del Cliente</h4>
+            <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
+            @if ($budget->client->company)
+                <p><strong>Empresa:</strong> {{ $budget->client->company }}</p>
+            @endif
+            @if ($budget->client->email)
+                <p><strong>Email:</strong> {{ $budget->client->email }}</p>
+            @endif
+            @if ($budget->client->phone)
+                <p><strong>Teléfono:</strong> {{ $budget->client->phone }}</p>
+            @endif
+        </div>
+
+        <p><strong>Acciones recomendadas:</strong></p>
         <ul>
             <li>Contactar al cliente para confirmar su interés</li>
-            <li>Extender la validez si es necesario</li>
-            <li>Realizar el seguimiento correspondiente</li>
+            <li>Extender la validez del presupuesto si es necesario</li>
+            <li>Realizar el seguimiento comercial correspondiente</li>
+            <li>Considerar actualizar precios si han cambiado</li>
         </ul>
 
         <div style="text-align: center;">
-            <a href="{{ route('dashboard.budgets.show', $budget) }}" class="button">Ver Presupuesto</a>
+            <a href="{{ $dashboardUrl }}" class="button">Ver Presupuesto en Dashboard</a>
         </div>
+
+        <p><em>Nota: El cliente también recibirá una notificación automática sobre el próximo vencimiento.</em></p>
     </div>
 </body>
 

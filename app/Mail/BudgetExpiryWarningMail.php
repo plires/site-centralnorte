@@ -14,10 +14,12 @@ class BudgetExpiryWarningMail extends Mailable
   use Queueable, SerializesModels;
 
   public Budget $budget;
+  public string $dashboardUrl;
 
-  public function __construct(Budget $budget)
+  public function __construct(Budget $budget, string $dashboardUrl)
   {
     $this->budget = $budget;
+    $this->dashboardUrl = $dashboardUrl;
   }
 
   public function envelope(): Envelope
@@ -29,14 +31,12 @@ class BudgetExpiryWarningMail extends Mailable
 
   public function content(): Content
   {
-    $dashboardUrl = route('dashboard.budgets.show', $this->budget->id);
-
     return new Content(
       view: 'emails.budget-expiry-warning',
       with: [
         'budget' => $this->budget,
         'daysUntilExpiry' => $this->budget->getStatusData()['days_until_expiry'],
-        'dashboardUrl' => $dashboardUrl,
+        'dashboardUrl' => $this->dashboardUrl,
       ]
     );
   }

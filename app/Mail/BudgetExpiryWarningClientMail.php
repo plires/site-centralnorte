@@ -14,10 +14,12 @@ class BudgetExpiryWarningClientMail extends Mailable
   use Queueable, SerializesModels;
 
   public Budget $budget;
+  public string $publicUrl;
 
-  public function __construct(Budget $budget)
+  public function __construct(Budget $budget, string $publicUrl)
   {
     $this->budget = $budget;
+    $this->publicUrl = $publicUrl;
   }
 
   public function envelope(): Envelope
@@ -30,14 +32,13 @@ class BudgetExpiryWarningClientMail extends Mailable
   public function content(): Content
   {
     $warningDays = config('budget.warning_days', env('BUDGET_WARNING_DAYS', 3));
-    $publicUrl = route('public.budget.show', $this->budget->token);
 
     return new Content(
       view: 'emails.budget-expiry-warning-client',
       with: [
         'budget' => $this->budget,
         'warningDays' => $warningDays,
-        'publicUrl' => $publicUrl,
+        'publicUrl' => $this->publicUrl,
         'vendedor' => $this->budget->user,
       ]
     );
