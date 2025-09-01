@@ -602,10 +602,17 @@ class BudgetController extends Controller
         }
     }
 
+    /**
+     * Programar notificaciones de vencimiento para un presupuesto
+     * Usa la configuración BUDGET_WARNING_DAYS del .env
+     */
     private function scheduleNotifications(Budget $budget)
     {
-        // Notificación 72 horas antes del vencimiento
-        $warningDate = $budget->expiry_date->subDays(3);
+        // Obtener días de aviso desde .env (por defecto 3)
+        $warningDays = config('budget.warning_days', env('BUDGET_WARNING_DAYS', 3));
+
+        // Notificación X días antes del vencimiento (según configuración)
+        $warningDate = $budget->expiry_date->copy()->subDays($warningDays);
 
         if ($warningDate > now()) {
             \App\Models\BudgetNotification::create([
@@ -613,8 +620,17 @@ class BudgetController extends Controller
                 'type' => 'expiry_warning',
                 'scheduled_for' => $warningDate,
                 'notification_data' => [
-                    'days_until_expiry' => 3
+                    'days_until_expiry' => $warningDays,
+                    // Campos para control de envío único
+                    // Se marcarán como true cuando se envíen
+                    // 'sent_to_seller' => false,
+                    // 'sent_to_client' => false,
                 ]
+            ]);
+
+            Log::info("Notificación de aviso programada para presupuesto #{$budget->id}", [
+                'scheduled_for' => $warningDate->format('Y-m-d H:i:s'),
+                'days_before_expiry' => $warningDays
             ]);
         }
 
@@ -623,7 +639,16 @@ class BudgetController extends Controller
             'budget_id' => $budget->id,
             'type' => 'expired',
             'scheduled_for' => $budget->expiry_date,
-            'notification_data' => []
+            'notification_data' => [
+                // Campos para control de envío único
+                // Se marcarán como true cuando se envíen
+                // 'sent_to_seller' => false,
+                // 'sent_to_client' => false,
+            ]
+        ]);
+
+        Log::info("Notificación de vencimiento programada para presupuesto #{$budget->id}", [
+            'scheduled_for' => $budget->expiry_date->format('Y-m-d H:i:s')
         ]);
     }
 

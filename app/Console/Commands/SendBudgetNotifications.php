@@ -3,72 +3,49 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Models\Budget;
 use App\Models\BudgetNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\BudgetExpiryWarningMail;
 use App\Mail\BudgetExpiredMail;
+use App\Mail\BudgetExpiryWarningClientMail;
+use App\Mail\BudgetExpiredClientMail;
 
 class SendBudgetNotifications extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'budget:send-notifications';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Envía notificaciones de presupuestos próximos a vencer o vencidos';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
         $this->info('Iniciando envío de notificaciones de presupuestos...');
 
         try {
-            // Obtener notificaciones pendientes que deben enviarse
-            $pendingNotifications = BudgetNotification::with(['budget.user', 'budget.client'])
-                ->due()
-                ->get();
+            $warningDays = config('budget.warning_days', env('BUDGET_WARNING_DAYS', 3));
 
-            if ($pendingNotifications->isEmpty()) {
-                $this->info('No hay notificaciones pendientes para enviar.');
-                return Command::SUCCESS;
-            }
+            // Buscar presupuestos que necesitan notificación
+            $budgetsExpiringSoon = $this->getBudgetsExpiringSoon($warningDays);
+            $budgetsExpiredToday = $this->getBudgetsExpiredToday();
 
-            $sentCount = 0;
-            $errorCount = 0;
+            $totalSent = 0;
 
-            foreach ($pendingNotifications as $notification) {
-                try {
-                    $this->sendNotification($notification);
-                    $sentCount++;
-
-                    $this->line("✓ Notificación enviada: {$notification->type} para presupuesto #{$notification->budget_id}");
-                } catch (\Exception $e) {
-                    $errorCount++;
-                    $this->error("✗ Error al enviar notificación #{$notification->id}: " . $e->getMessage());
-                    Log::error('Error al enviar notificación de presupuesto', [
-                        'notification_id' => $notification->id,
-                        'budget_id' => $notification->budget_id,
-                        'error' => $e->getMessage()
-                    ]);
+            // Procesar presupuestos que expiran pronto (3 días o menos)
+            foreach ($budgetsExpiringSoon as $budget) {
+                $statusData = $budget->getStatusData();
+                if ($this->sendExpiryWarning($budget, $statusData['days_until_expiry'])) {
+                    $totalSent++;
                 }
             }
 
-            $this->info("Proceso completado:");
-            $this->info("- Notificaciones enviadas: {$sentCount}");
-            if ($errorCount > 0) {
-                $this->warn("- Errores: {$errorCount}");
+            // Procesar presupuestos que vencen hoy
+            foreach ($budgetsExpiredToday as $budget) {
+                if ($this->sendExpiredNotification($budget)) {
+                    $totalSent++;
+                }
             }
 
+            $this->info("Proceso completado: {$totalSent} notificaciones enviadas.");
             return Command::SUCCESS;
         } catch (\Exception $e) {
             $this->error('Error general en el comando: ' . $e->getMessage());
@@ -76,122 +53,197 @@ class SendBudgetNotifications extends Command
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-
             return Command::FAILURE;
         }
     }
 
     /**
-     * Envía una notificación específica
+     * Obtener presupuestos que expiran en X días o menos y necesitan aviso
      */
-    private function sendNotification(BudgetNotification $notification)
+    private function getBudgetsExpiringSoon(int $warningDays)
     {
-        $budget = $notification->budget;
-        $vendedor = $budget->user;
+        // Obtener todos los presupuestos activos que no han vencido aún
+        $activeBudgets = Budget::with(['user', 'client'])
+            ->where('is_active', true)
+            ->where('expiry_date', '>', now()->startOfDay())
+            ->whereDoesntHave('notifications', function ($query) {
+                $query->where('type', 'expiry_warning')
+                    ->where('sent', true);
+            })
+            ->get();
 
-        // Verificar que el vendedor tenga email
-        if (!$vendedor->email) {
-            throw new \Exception("El vendedor {$vendedor->name} no tiene email configurado");
+        // Filtrar usando getStatusData() para encontrar los que vencen en warningDays o menos
+        return $activeBudgets->filter(function ($budget) use ($warningDays) {
+            $statusData = $budget->getStatusData();
+            return !$statusData['is_expired'] &&
+                !$statusData['is_expiring_today'] &&
+                $statusData['days_until_expiry'] <= $warningDays;
+        });
+    }
+
+    /**
+     * Obtener presupuestos que vencen hoy y necesitan notificación
+     */
+    private function getBudgetsExpiredToday()
+    {
+        // Obtener presupuestos activos y usar getStatusData() para verificar si vencen hoy
+        $activeBudgets = Budget::with(['user', 'client'])
+            ->where('is_active', true)
+            ->whereDate('expiry_date', now()->startOfDay())
+            ->whereDoesntHave('notifications', function ($query) {
+                $query->where('type', 'expired')
+                    ->where('sent', true);
+            })
+            ->get();
+
+        // Filtrar usando getStatusData() para confirmar que vencen hoy
+        return $activeBudgets->filter(function ($budget) {
+            $statusData = $budget->getStatusData();
+            return $statusData['is_expiring_today'] || $statusData['is_expired'];
+        });
+    }
+
+    /**
+     * Enviar aviso de vencimiento próximo
+     */
+    private function sendExpiryWarning(Budget $budget, int $actualDaysUntilExpiry)
+    {
+        try {
+            // Crear registro de notificación para control
+            $notification = BudgetNotification::create([
+                'budget_id' => $budget->id,
+                'type' => 'expiry_warning',
+                'scheduled_for' => now(),
+                'notification_data' => [
+                    'days_until_expiry' => $actualDaysUntilExpiry,
+                ]
+            ]);
+
+            $sent = 0;
+            $errors = [];
+
+            // Enviar al vendedor
+            try {
+                if ($budget->user->email) {
+                    Mail::to($budget->user->email)->send(new BudgetExpiryWarningMail($budget));
+                    $sent++;
+                    $this->line("  → Aviso enviado al vendedor: {$budget->user->email} (vence en {$actualDaysUntilExpiry} días)");
+                } else {
+                    $errors[] = "Vendedor sin email";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error vendedor: " . $e->getMessage();
+            }
+
+            // Enviar al cliente
+            try {
+                if ($budget->client->email) {
+                    Mail::to($budget->client->email)->send(new BudgetExpiryWarningClientMail($budget));
+                    $sent++;
+                    $this->line("  → Aviso enviado al cliente: {$budget->client->email} (vence en {$actualDaysUntilExpiry} días)");
+                } else {
+                    $errors[] = "Cliente sin email";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error cliente: " . $e->getMessage();
+            }
+
+            // Marcar como enviada si se envió al menos uno
+            if ($sent > 0) {
+                $notification->update([
+                    'sent' => true,
+                    'sent_at' => now(),
+                    'notification_data' => array_merge($notification->notification_data, [
+                        'emails_sent' => $sent,
+                        'errors' => $errors
+                    ])
+                ]);
+
+                $this->info("✓ Aviso de vencimiento enviado para presupuesto #{$budget->id} ({$sent} emails, vence en {$actualDaysUntilExpiry} días)");
+
+                if (!empty($errors)) {
+                    $this->warn("  Errores: " . implode(', ', $errors));
+                }
+
+                return true;
+            } else {
+                $this->error("✗ No se pudo enviar ningún email para presupuesto #{$budget->id}");
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->error("✗ Error con presupuesto #{$budget->id}: " . $e->getMessage());
+            return false;
         }
+    }
 
-        // Enviar según el tipo de notificación
-        switch ($notification->type) {
-            case 'expiry_warning':
-                Mail::to($vendedor->email)->send(new BudgetExpiryWarningMail($budget));
-                break;
+    /**
+     * Enviar notificación de vencimiento
+     */
+    private function sendExpiredNotification(Budget $budget)
+    {
+        try {
+            // Crear registro de notificación para control
+            $notification = BudgetNotification::create([
+                'budget_id' => $budget->id,
+                'type' => 'expired',
+                'scheduled_for' => now(),
+                'notification_data' => []
+            ]);
 
-            case 'expired':
-                Mail::to($vendedor->email)->send(new BudgetExpiredMail($budget));
-                break;
+            $sent = 0;
+            $errors = [];
 
-            default:
-                throw new \Exception("Tipo de notificación desconocido: {$notification->type}");
+            // Enviar al vendedor
+            try {
+                if ($budget->user->email) {
+                    Mail::to($budget->user->email)->send(new BudgetExpiredMail($budget));
+                    $sent++;
+                    $this->line("  → Vencimiento enviado al vendedor: {$budget->user->email}");
+                } else {
+                    $errors[] = "Vendedor sin email";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error vendedor: " . $e->getMessage();
+            }
+
+            // Enviar al cliente
+            try {
+                if ($budget->client->email) {
+                    Mail::to($budget->client->email)->send(new BudgetExpiredClientMail($budget));
+                    $sent++;
+                    $this->line("  → Vencimiento enviado al cliente: {$budget->client->email}");
+                } else {
+                    $errors[] = "Cliente sin email";
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Error cliente: " . $e->getMessage();
+            }
+
+            // Marcar como enviada si se envió al menos uno
+            if ($sent > 0) {
+                $notification->update([
+                    'sent' => true,
+                    'sent_at' => now(),
+                    'notification_data' => [
+                        'emails_sent' => $sent,
+                        'errors' => $errors
+                    ]
+                ]);
+
+                $this->info("✓ Notificación de vencimiento enviada para presupuesto #{$budget->id} ({$sent} emails)");
+
+                if (!empty($errors)) {
+                    $this->warn("  Errores: " . implode(', ', $errors));
+                }
+
+                return true;
+            } else {
+                $this->error("✗ No se pudo enviar ningún email para presupuesto #{$budget->id}");
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->error("✗ Error con presupuesto #{$budget->id}: " . $e->getMessage());
+            return false;
         }
-
-        // Marcar como enviada
-        $notification->update([
-            'sent' => true,
-            'sent_at' => now(),
-        ]);
-    }
-}
-
-// También necesitarás estos Mails adicionales:
-
-namespace App\Mail;
-
-use App\Models\Budget;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
-
-class BudgetExpiryWarningMail extends Mailable
-{
-    use Queueable, SerializesModels;
-
-    public Budget $budget;
-
-    public function __construct(Budget $budget)
-    {
-        $this->budget = $budget;
-    }
-
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: '⚠️ Presupuesto próximo a vencer: ' . $this->budget->title,
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.budget-expiry-warning',
-            with: [
-                'budget' => $this->budget,
-                'daysUntilExpiry' => $this->budget->days_until_expiry,
-            ]
-        );
-    }
-
-    public function attachments(): array
-    {
-        return [];
-    }
-}
-
-class BudgetExpiredMail extends Mailable
-{
-    use Queueable, SerializesModels;
-
-    public Budget $budget;
-
-    public function __construct(Budget $budget)
-    {
-        $this->budget = $budget;
-    }
-
-    public function envelope(): Envelope
-    {
-        return new Envelope(
-            subject: '❌ Presupuesto vencido: ' . $this->budget->title,
-        );
-    }
-
-    public function content(): Content
-    {
-        return new Content(
-            view: 'emails.budget-expired',
-            with: [
-                'budget' => $this->budget,
-            ]
-        );
-    }
-
-    public function attachments(): array
-    {
-        return [];
     }
 }
