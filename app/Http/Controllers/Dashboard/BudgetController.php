@@ -69,23 +69,28 @@ class BudgetController extends Controller
                     // JOIN con tabla clients para ordenar por nombre del cliente
                     $query->leftJoin('clients', 'budgets.client_id', '=', 'clients.id')
                         ->select('budgets.*')
-                        ->orderBy('clients.name', $direction);
+                        ->orderBy('clients.name', $direction)
+                        ->orderBy('budgets.id', 'asc'); // FIX: Ordenamiento determinístico
                     break;
 
                 case 'user.name':
                     // JOIN con tabla users para ordenar por nombre del vendedor
                     $query->leftJoin('users', 'budgets.user_id', '=', 'users.id')
                         ->select('budgets.*')
-                        ->orderBy('users.name', $direction);
+                        ->orderBy('users.name', $direction)
+                        ->orderBy('budgets.id', 'asc'); // FIX: Ordenamiento determinístico
                     break;
 
                 default:
                     // Para campos directos de la tabla budgets
-                    $query->orderBy("budgets.{$sortField}", $direction);
+                    $query->orderBy("budgets.{$sortField}", $direction)
+                        ->orderBy('budgets.id', 'asc'); // FIX: Ordenamiento determinístico
                     break;
             }
         } else {
-            $query->orderBy('budgets.created_at', 'desc');
+            // FIX: Ordenamiento por defecto determinístico
+            $query->orderBy('budgets.created_at', 'desc')
+                ->orderBy('budgets.id', 'desc'); // Agregar ID como segundo criterio
         }
 
         $budgets = $query->paginate(10)->withQueryString();
