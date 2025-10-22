@@ -16,7 +16,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Index({ auth, products, filters = {} }) {
+export default function Index({ auth, products, filters = {}, is_readonly, last_sync_info }) {
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
     const [isDeleting, setIsDeleting] = useState(false);
 

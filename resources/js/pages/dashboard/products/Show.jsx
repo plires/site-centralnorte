@@ -5,6 +5,9 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+
 // Componentes extraídos
 import ImagePreviewDialog from './components/ImagePreviewDialog';
 import ProductActionsCard from './components/ProductActionsCard';
@@ -17,7 +20,7 @@ const breadcrumbs = [
     { title: 'Detalles del Producto', href: '#' },
 ];
 
-export default function Show({ product }) {
+export default function Show({ product, is_readonly, last_sync_info }) {
     const [selectedImage, setSelectedImage] = useState(null);
     const [preview, setPreview] = useState(null);
     const [file, setFile] = useState(null);
