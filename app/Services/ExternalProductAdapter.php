@@ -29,7 +29,7 @@ class ExternalProductAdapter
     public function isAvailable(): bool
     {
         try {
-            // Intentar obtener productos (la API no tiene endpoint /health)
+            // Intentar obtener productos
             $response = Http::withHeaders($this->headers)
                 ->timeout(10)
                 ->get("{$this->baseUrl}/generic_product");
@@ -52,7 +52,8 @@ class ExternalProductAdapter
                 ->get("{$this->baseUrl}/generic_product");
 
             if ($response->successful()) {
-                return $response->json('data', []);
+                $responseData = $response->json();
+                return $responseData['generic_products'] ?? [];
             }
 
             Log::error('Error fetching products from API', [
@@ -68,17 +69,41 @@ class ExternalProductAdapter
     }
 
     /**
-     * Obtener un producto específico por SKU
+     * Obtener un producto específico por ID
      */
-    public function fetchBySku(string $sku): ?array
+    public function fetchById(string $id): ?array
     {
         try {
             $response = Http::withHeaders($this->headers)
                 ->timeout($this->timeout)
-                ->get("{$this->baseUrl}/generic_product/{$sku}");
+                ->get("{$this->baseUrl}/generic_product/{$id}");
 
             if ($response->successful()) {
-                return $response->json('data');
+                $responseData = $response->json();
+                return $responseData['generic_product'] ?? null;
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::error("Exception fetching product {$id}: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Obtener un producto específico por SKU (buscar por external_id)
+     */
+    public function fetchBySku(string $sku): ?array
+    {
+        try {
+            // Primero obtener todos y buscar por external_id
+            $products = $this->fetchAll();
+
+            foreach ($products as $product) {
+                $productData = $product['generic_product'] ?? $product;
+                if (isset($productData['external_id']) && $productData['external_id'] == $sku) {
+                    return $product;
+                }
             }
 
             return null;
@@ -99,7 +124,8 @@ class ExternalProductAdapter
                 ->get("{$this->baseUrl}/family");
 
             if ($response->successful()) {
-                return $response->json('data', []);
+                $responseData = $response->json();
+                return $responseData['families'] ?? [];
             }
 
             Log::error('Error fetching categories from API', [
@@ -119,16 +145,14 @@ class ExternalProductAdapter
      */
     public function normalizeProduct(array $externalProduct): array
     {
-        // La API devuelve el producto dentro de 'generic_product'
-        $product = $externalProduct['generic_product'] ?? $externalProduct;
-
+        // La API devuelve directamente el producto (no viene wrapeado en 'generic_product')
         return [
-            'sku' => $product['external_id'] ?? $product['id'] ?? null,
-            'name' => $product['name'] ?? '',
-            'description' => $this->cleanDescription($product['description'] ?? null),
-            'proveedor' => $this->extractSupplier($product),
-            'category_id' => $this->resolveCategoryId($product),
-            'last_price' => $this->parsePrice($product['price'] ?? $product['unit_price'] ?? 0),
+            'sku' => $externalProduct['external_id'] ?? $externalProduct['id'] ?? null,
+            'name' => $externalProduct['name'] ?? '',
+            'description' => $this->cleanDescription($externalProduct['description'] ?? null),
+            'proveedor' => $this->extractSupplier($externalProduct),
+            'category_id' => $this->resolveCategoryId($externalProduct),
+            'last_price' => $this->parsePrice($externalProduct['price'] ?? $externalProduct['discountPrice'] ?? 0),
         ];
     }
 
@@ -141,7 +165,7 @@ class ExternalProductAdapter
             return null;
         }
 
-        // Remover información de LOGO24 y otras notas técnicas
+        // Remover información de LOGO24 y otras notas técnicas si existen
         $description = preg_replace('/\nLOGO24:.*$/s', '', $description);
 
         return trim($description);
@@ -152,14 +176,14 @@ class ExternalProductAdapter
      */
     protected function extractSupplier(array $product): ?string
     {
-        // Buscar en subattributes el que corresponda a marca/proveedor (attribute_id = 2 según el JSON)
+        // Buscar en subattributes el que corresponda a marca
         if (!isset($product['subattributes']) || !is_array($product['subattributes'])) {
             return null;
         }
 
         foreach ($product['subattributes'] as $subattr) {
-            // attribute_id = 2 parece ser la marca según el ejemplo (Tahg)
-            if (isset($subattr['attribute_id']) && $subattr['attribute_id'] == 2) {
+            // Buscar por nombre del atributo "Marca"
+            if (isset($subattr['attribute_name']) && strtolower($subattr['attribute_name']) === 'marca') {
                 return $subattr['name'] ?? null;
             }
         }
@@ -173,8 +197,8 @@ class ExternalProductAdapter
     public function normalizeCategory(array $externalCategory): array
     {
         return [
-            'name' => $externalCategory['name'] ?? $externalCategory['nombre'] ?? '',
-            'description' => $externalCategory['description'] ?? $externalCategory['descripcion'] ?? 'Categoría importada desde API externa',
+            'name' => $externalCategory['description'] ?? $externalCategory['name'] ?? '',
+            'description' => 'Categoría importada desde API externa',
         ];
     }
 
@@ -183,26 +207,21 @@ class ExternalProductAdapter
      */
     public function extractImages(array $externalProduct): array
     {
-        $product = $externalProduct['generic_product'] ?? $externalProduct;
         $images = [];
 
-        // Obtener todas las imágenes de los productos variantes
-        if (isset($product['products']) && is_array($product['products'])) {
+        // La API devuelve 'images' directamente en el producto
+        if (isset($externalProduct['images']) && is_array($externalProduct['images'])) {
             $processedUrls = []; // Para evitar duplicados
 
-            foreach ($product['products'] as $variant) {
-                if (isset($variant['images']) && is_array($variant['images'])) {
-                    foreach ($variant['images'] as $image) {
-                        $imageUrl = $image['imageUrl'] ?? null;
+            foreach ($externalProduct['images'] as $image) {
+                $imageUrl = $image['image_url'] ?? null;
 
-                        if ($imageUrl && !in_array($imageUrl, $processedUrls)) {
-                            $images[] = [
-                                'url' => $imageUrl,
-                                'is_featured' => $image['main'] ?? false,
-                            ];
-                            $processedUrls[] = $imageUrl;
-                        }
-                    }
+                if ($imageUrl && !in_array($imageUrl, $processedUrls)) {
+                    $images[] = [
+                        'url' => $imageUrl,
+                        'is_featured' => $image['main'] ?? false,
+                    ];
+                    $processedUrls[] = $imageUrl;
                 }
             }
         }
@@ -217,23 +236,33 @@ class ExternalProductAdapter
 
     /**
      * Resolver category_id desde el producto
-     * Por ahora, crear una categoría genérica ya que la API no devuelve categorías explícitas
      */
     protected function resolveCategoryId($product): ?int
     {
-        // Buscar en subattributes alguna categoría (attribute_id = 10 parece ser tipo de producto)
-        if (is_array($product) && isset($product['subattributes'])) {
-            foreach ($product['subattributes'] as $subattr) {
-                if (isset($subattr['attribute_id']) && $subattr['attribute_id'] == 10) {
-                    $categoryName = $subattr['name'] ?? null;
-                    if ($categoryName) {
-                        $category = \App\Models\Category::firstOrCreate(
-                            ['name' => $categoryName],
-                            ['description' => 'Categoría importada desde API externa']
-                        );
-                        return $category->id;
-                    }
+        // La API devuelve 'families' que son las categorías
+        if (is_array($product) && isset($product['families']) && !empty($product['families'])) {
+            // Tomar la primera familia o la que sea main
+            $mainFamily = null;
+            foreach ($product['families'] as $family) {
+                if (isset($family['fgp']['main']) && $family['fgp']['main']) {
+                    $mainFamily = $family;
+                    break;
                 }
+            }
+
+            // Si no hay main, tomar la primera
+            if (!$mainFamily && !empty($product['families'])) {
+                $mainFamily = $product['families'][0];
+            }
+
+            if ($mainFamily && isset($mainFamily['description'])) {
+                $categoryName = $mainFamily['description'];
+
+                $category = \App\Models\Category::firstOrCreate(
+                    ['name' => $categoryName],
+                    ['description' => 'Categoría importada desde API externa']
+                );
+                return $category->id;
             }
         }
 
