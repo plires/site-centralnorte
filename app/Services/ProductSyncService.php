@@ -44,7 +44,7 @@ class ProductSyncService
             foreach ($externalCategories as $externalCategory) {
                 try {
                     $normalized = $this->adapter->normalizeCategory($externalCategory);
-                    
+
                     if (empty($normalized['name'])) {
                         Log::warning('Skipping category with empty name', $externalCategory);
                         $stats['errors']++;
@@ -61,7 +61,6 @@ class ProductSyncService
                     } else {
                         $stats['updated']++;
                     }
-
                 } catch (\Exception $e) {
                     $stats['errors']++;
                     Log::error('Error syncing category', [
@@ -115,7 +114,7 @@ class ProductSyncService
             foreach ($externalProducts as $externalProduct) {
                 try {
                     $normalized = $this->adapter->normalizeProduct($externalProduct);
-                    
+
                     if (empty($normalized['sku'])) {
                         Log::warning('Skipping product with empty SKU', $externalProduct);
                         $stats['errors']++;
@@ -139,7 +138,6 @@ class ProductSyncService
                         $this->syncProductImages($product, $images);
                         $stats['images_synced'] += count($images);
                     }
-
                 } catch (\Exception $e) {
                     $stats['errors']++;
                     Log::error('Error syncing product', [
@@ -199,7 +197,6 @@ class ProductSyncService
 
             // Asegurar que haya al menos una imagen destacada
             $this->ensureFeaturedImage($product);
-
         } catch (\Exception $e) {
             Log::error("Error syncing images for product {$product->sku}", [
                 'error' => $e->getMessage()
@@ -213,7 +210,7 @@ class ProductSyncService
     protected function ensureFeaturedImage(Product $product): void
     {
         $hasFeatured = $product->images()->where('is_featured', true)->exists();
-        
+
         if (!$hasFeatured) {
             $firstImage = $product->images()->first();
             if ($firstImage) {
@@ -229,7 +226,7 @@ class ProductSyncService
     {
         try {
             $externalProduct = $this->adapter->fetchBySku($sku);
-            
+
             if (!$externalProduct) {
                 Log::warning("Product {$sku} not found in external API");
                 return null;
@@ -238,7 +235,7 @@ class ProductSyncService
             DB::beginTransaction();
 
             $normalized = $this->adapter->normalizeProduct($externalProduct);
-            
+
             $product = Product::updateOrCreate(
                 ['sku' => $sku],
                 $normalized
@@ -254,7 +251,6 @@ class ProductSyncService
             Log::info("Product {$sku} synced successfully");
 
             return $product->fresh(['category', 'images', 'featuredImage']);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error syncing product {$sku}: " . $e->getMessage());
@@ -268,13 +264,13 @@ class ProductSyncService
     public function shouldSync(): bool
     {
         $lastSync = Cache::get('products_last_sync');
-        
+
         if (!$lastSync) {
             return true;
         }
 
-        $interval = config('services.external_products.sync_interval', 3600);
-        
+        $interval = (int) config('services.external_products.sync_interval', 3600);
+
         return now()->diffInSeconds($lastSync) >= $interval;
     }
 
@@ -284,15 +280,17 @@ class ProductSyncService
     public function getLastSyncInfo(): ?array
     {
         $lastSync = Cache::get('products_last_sync');
-        
+
         if (!$lastSync) {
             return null;
         }
 
+        $interval = (int) config('services.external_products.sync_interval', 3600);
+
         return [
             'last_sync' => $lastSync,
             'last_sync_human' => $lastSync->diffForHumans(),
-            'next_sync' => $lastSync->addSeconds(config('services.external_products.sync_interval', 3600)),
+            'next_sync' => $lastSync->copy()->addSeconds($interval),
         ];
     }
 
@@ -329,7 +327,6 @@ class ProductSyncService
             DB::commit();
 
             Log::info('Orphaned products cleanup completed', $stats);
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error during orphaned products cleanup: ' . $e->getMessage());
