@@ -29,9 +29,8 @@ class ExternalProductAdapter
     public function isAvailable(): bool
     {
         try {
-            // Intentar obtener productos
             $response = Http::withHeaders($this->headers)
-                ->timeout(10)
+                ->timeout($this->timeout)
                 ->get("{$this->baseUrl}/generic_product");
 
             return $response->successful();
