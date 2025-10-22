@@ -1,6 +1,7 @@
 import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { ReadOnlyProductsAlert } from '@/components/dashboard/ReadOnlyProductsAlert';
 import { productColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
@@ -51,6 +52,7 @@ export default function Index({ auth, products, filters = {} }) {
             <Head title="Productos" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
+                    {is_readonly && <ReadOnlyProductsAlert lastSyncInfo={last_sync_info} />}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">

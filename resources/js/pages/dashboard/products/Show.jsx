@@ -1,3 +1,4 @@
+import { ReadOnlyProductsAlert } from '@/components/dashboard/ReadOnlyProductsAlert';
 import PageHeader from '@/components/PageHeader';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
@@ -82,6 +83,7 @@ export default function Show({ product }) {
 
             <div className="py-12">
                 <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
+                    {is_readonly && <ReadOnlyProductsAlert lastSyncInfo={last_sync_info} />}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         {/* Header con botón volver */}
                         <PageHeader backRoute={route('dashboard.products.index')} backText="Volver" />
@@ -97,6 +99,10 @@ export default function Show({ product }) {
                             <div className="mt-6">
                                 <ProductActionsCard productId={product.id} />
                             </div>
+                            <Button variant="outline" size="sm" onClick={() => router.post(route('dashboard.products.sync.one', product.sku))}>
+                                <RefreshCw className="mr-2 h-4 w-4" />
+                                Sincronizar producto
+                            </Button>
 
                             {/* Sección de imágenes */}
                             <div className="mt-6">

@@ -8,10 +8,17 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use PhpParser\Node\Stmt\TryCatch;
+use App\Services\ProductSyncService;
 
 class ProductController extends Controller
 {
+    protected ProductSyncService $syncService;
+
+    public function __construct(ProductSyncService $syncService)
+    {
+        $this->syncService = $syncService;
+    }
+
     public function index(Request $request)
     {
         $query = Product::with('category')->withoutTrashed();
@@ -53,8 +60,13 @@ class ProductController extends Controller
 
         $products = $query->paginate(5)->withQueryString();
 
+        // Información de la última sincronización
+        $lastSyncInfo = $this->syncService->getLastSyncInfo();
+
         return Inertia::render('dashboard/products/Index', [
             'products' => $products,
+            'last_sync_info' => $lastSyncInfo,
+            'is_readonly' => true, // Indicador de que los productos son solo lectura
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,
@@ -65,85 +77,117 @@ class ProductController extends Controller
 
     public function show(Product $product)
     {
-
-        $product->load('category', 'images', 'featuredImage'); // featuredImage en las vistas se recibe como featured_image (Laravel, por defecto, convierte los nombres de atributos de los modelos y relaciones a snake_case cuando los transforma a JSON (que es lo que Inertia pasa a React).)
+        $product->load('category', 'images', 'featuredImage');
 
         return inertia('dashboard/products/Show', [
-            'product' => $product
+            'product' => $product,
+            'is_readonly' => true, // Indicador de que los productos son solo lectura
         ]);
     }
 
+    /**
+     * Sincronizar productos desde la API externa
+     */
+    public function sync(Request $request)
+    {
+        try {
+            $stats = $this->syncService->syncAll();
+
+            if ($stats['errors'] > 0) {
+                return redirect()->back()->with('warning', 
+                    "Sincronización completada con errores: {$stats['created']} creados, {$stats['updated']} actualizados, {$stats['errors']} errores. Revisa los logs."
+                );
+            }
+
+            return redirect()->back()->with('success', 
+                "Sincronización exitosa: {$stats['created']} productos creados, {$stats['updated']} actualizados, {$stats['images_synced']} imágenes sincronizadas."
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Error en sincronización manual de productos: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al sincronizar productos. Revisa los logs.');
+        }
+    }
+
+    /**
+     * Sincronizar un producto específico
+     */
+    public function syncOne(Request $request, string $sku)
+    {
+        try {
+            $product = $this->syncService->syncOne($sku);
+
+            if ($product) {
+                return redirect()->back()->with('success', "Producto {$sku} sincronizado correctamente.");
+            }
+
+            return redirect()->back()->with('error', "No se pudo sincronizar el producto {$sku}. Verifica que exista en la API externa.");
+
+        } catch (\Exception $e) {
+            Log::error("Error sincronizando producto {$sku}: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al sincronizar el producto.');
+        }
+    }
+
+    // ========================================
+    // MÉTODOS DESHABILITADOS (API de solo lectura)
+    // ========================================
+
+    /**
+     * @deprecated Los productos se gestionan desde la API externa
+     */
     public function create()
     {
-        return Inertia::render('dashboard/products/Create', [
-            'categories' => Category::all()
-        ]);
+        return redirect()->route('dashboard.products.index')
+            ->with('warning', 'No puedes crear productos localmente. Los productos se sincronizan desde la API externa.');
     }
 
+    /**
+     * @deprecated Los productos se gestionan desde la API externa
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'sku' => 'required|string|max:255|unique:products,sku,',
-            'name' => ['required', 'string', 'max:255'],
-            'description' => 'nullable|string',
-            'proveedor' => 'nullable|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-        ]);
-
-        try {
-            $product = Product::create($validated);
-
-            return redirect()->back()->with('success', "Producto '{$product->name}' creado correctamente.");
-        } catch (\Exception $e) {
-            Log::error('Error al crear el producto: ' . $e->getMessage());
-
-            return redirect()->back()->with('error', 'Ocurrió un error al crear el producto. Inténtalo de nuevo.');
-        }
+        return redirect()->route('dashboard.products.index')
+            ->with('error', 'No puedes crear productos localmente. Los productos se sincronizan desde la API externa.');
     }
 
+    /**
+     * @deprecated Los productos se gestionan desde la API externa
+     */
     public function edit(Product $product)
     {
-        $categories = Category::all(); // para el select de categorías
-
-        return inertia('dashboard/products/Edit', [
-            'product' => $product,
-            'categories' => $categories,
-        ]);
+        return redirect()->route('dashboard.products.show', $product)
+            ->with('warning', 'No puedes editar productos localmente. Los productos se sincronizan desde la API externa.');
     }
 
-
+    /**
+     * @deprecated Los productos se gestionan desde la API externa
+     */
     public function update(Request $request, Product $product)
     {
-
-        $request->validate([
-            'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
-            'name' => ['required', 'string', 'max:255'],
-            'description' => 'nullable|string',
-            'proveedor' => 'nullable|string|max:255',
-            'category_id' => 'required|exists:categories,id',
-        ]);
-
-        try {
-            $product->update([
-                'sku' => $request->sku,
-                'name' => $request->name,
-                'description' => $request->description,
-                'proveedor' => $request->proveedor,
-                'category_id' => $request->category_id,
-            ]);
-
-            return redirect()->back()->with('success', "Producto '{$product->name}' actualizado correctamente.");
-        } catch (\Throwable $e) {
-            Log::error('Error al actualizar producto: ' . $e->getMessage());
-
-            return redirect()->back()->with('error', 'Ocurrió un error al actualizar el producto.');
-        }
+        return redirect()->route('dashboard.products.show', $product)
+            ->with('error', 'No puedes editar productos localmente. Los productos se sincronizan desde la API externa.');
     }
 
+    /**
+     * @deprecated Los productos se gestionan desde la API externa
+     * Solo se permite soft delete si no tiene budget_items asociados
+     */
     public function destroy(Product $product)
     {
-        $product->delete();
+        // Verificar si tiene budget_items asociados
+        if ($product->budgetItems()->exists()) {
+            return redirect()->route('dashboard.products.index')
+                ->with('error', "No puedes eliminar el producto '{$product->name}' porque está asociado a uno o más presupuestos.");
+        }
 
-        return redirect()->route('dashboard.products.index')->with('success', 'Producto eliminado.');
+        try {
+            $product->delete();
+            return redirect()->route('dashboard.products.index')
+                ->with('success', "Producto '{$product->name}' eliminado de la caché local. Se volverá a sincronizar en la próxima actualización.");
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar producto: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Error al eliminar el producto.');
+        }
     }
 }

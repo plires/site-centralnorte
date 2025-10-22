@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | External Products API Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para la API externa de productos (solo lectura).
+    | Los productos se sincronizan desde esta API hacia la base de datos local.
+    |
+    */
+    'external_products' => [
+        'url' => env('EXTERNAL_PRODUCTS_API_URL'),
+        'api_token' => env('EXTERNAL_PRODUCTS_API_TOKEN'),
+        'timeout' => env('EXTERNAL_PRODUCTS_API_TIMEOUT', 30),
+        'sync_interval' => env('EXTERNAL_PRODUCTS_SYNC_INTERVAL', 3600), // en segundos (1 hora por defecto)
+    ],
+
 ];
