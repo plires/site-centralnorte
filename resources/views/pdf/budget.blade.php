@@ -360,8 +360,8 @@
                         <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                         <td>
                             <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                            @if (isset($item['product']['category']['name']))
-                                <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
+                            @if (isset($item['product']['category_display']) && !empty($item['product']['category_display']))
+                                <br><small style="color: #666;">{{ $item['product']['category_display'] }}</small>
                             @endif
                             @if (isset($item['description']))
                                 <br><small>{{ $item['description'] }}</small>
@@ -428,8 +428,8 @@
                             <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
                             <td>
                                 <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                                @if (isset($item['product']['category']['name']))
-                                    <br><small style="color: #666;">{{ $item['product']['category']['name'] }}</small>
+                                @if (isset($item['product']['category_display']) && !empty($item['product']['category_display']))
+                                    <br><small style="color: #666;">{{ $item['product']['category_display'] }}</small>
                                 @endif
                                 @if (isset($item['description']))
                                     <br><small>{{ $item['description'] }}</small>

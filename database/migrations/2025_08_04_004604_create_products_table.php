@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('proveedor')->nullable();
-            $table->foreignId('category_id')->constrained()->onDelete('cascade');
             $table->decimal('last_price', 10, 2)->nullable();
             $table->timestamps();
             $table->softDeletes();

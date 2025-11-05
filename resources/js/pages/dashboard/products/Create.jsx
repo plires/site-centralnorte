@@ -20,7 +20,7 @@ export default function Create({ categories }) {
         name: '',
         description: '',
         proveedor: '',
-        category_id: '',
+        category_ids: [],
     });
 
     const { handleResponse } = useInertiaResponse();

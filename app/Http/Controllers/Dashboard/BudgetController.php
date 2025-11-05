@@ -134,7 +134,7 @@ class BudgetController extends Controller
                                 $query->where('is_featured', true)->limit(1);
                             },
                             'featuredImage', // Agregar imagen destacada por separado
-                            'category' // Agregar categoría
+                            'categories' // Agregar categorías
                         ]);
                     }
                 ])->orderBy('sort_order');
@@ -192,7 +192,7 @@ class BudgetController extends Controller
             });
 
         // Cargar relaciones necesarias
-        $products = Product::with(['category', 'featuredImage', 'images'])
+        $products = Product::with(['categories', 'featuredImage', 'images'])
             ->orderBy('name')
             ->get();
 
@@ -262,7 +262,7 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
-        // Cargar relaciones necesarias (CORREGIDO: mantener la estructura original)
+        // Cargar relaciones necesarias (mantener la estructura original)
         $budget->load([
             'client',
             'items' => function ($query) {
@@ -271,7 +271,7 @@ class BudgetController extends Controller
                         $query->with([
                             'images', // Cargar TODAS las imágenes
                             'featuredImage', // Y también la imagen destacada por separado
-                            'category' // Y la categoría
+                            'categories' // Y las categorías
                         ]);
                     }
                 ])->orderBy('sort_order');
@@ -292,7 +292,7 @@ class BudgetController extends Controller
             });
 
         // Cargar relaciones necesarias
-        $products = Product::with(['category', 'featuredImage', 'images'])
+        $products = Product::with(['categories', 'featuredImage', 'images'])
             ->orderBy('name')
             ->get();
 

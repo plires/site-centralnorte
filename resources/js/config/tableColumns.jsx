@@ -1,4 +1,5 @@
 import BudgetStatusBadge from '@/components/BudgetStatusBadge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { timeAgo } from '@/utils/date';
@@ -225,7 +226,22 @@ export const productColumns = (actions, isDeleting = false) => [
         label: 'Categoría',
         sortable: true,
         hideOnMobile: true,
-        render: (value, row) => row.category?.name || 'Sin categoría',
+        render: (value, row) => {
+            // Mostrar múltiples categorías
+            if (!row.category_names || row.category_names.length === 0) {
+                return <span className="text-gray-400 italic">Sin categoría</span>;
+            }
+
+            return (
+                <div className="flex flex-wrap gap-1">
+                    {row.category_names.map((categoryName, index) => (
+                        <Badge key={index} variant="secondary" className="text-xs">
+                            {categoryName}
+                        </Badge>
+                    ))}
+                </div>
+            );
+        },
     },
     {
         key: 'proveedor',

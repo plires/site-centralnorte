@@ -22,7 +22,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::with('category')->withoutTrashed();
+        $query = Product::with('categories')->withoutTrashed();
 
         // Búsqueda
         if ($request->filled('search')) {
@@ -31,7 +31,7 @@ class ProductController extends Controller
                 $q->where('products.name', 'like', "%{$search}%")
                     ->orWhere('products.sku', 'like', "%{$search}%")
                     ->orWhere('products.proveedor', 'like', "%{$search}%")
-                    ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                    ->orWhereHas('categories', function ($categoryQuery) use ($search) {
                         $categoryQuery->where('name', 'like', "%{$search}%");
                     });
             });
@@ -45,9 +45,11 @@ class ProductController extends Controller
             switch ($sortField) {
                 case 'category.name':
                     // JOIN con tabla categories para ordenar por nombre de la categoría
-                    $query->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                    $query->leftJoin('category_product', 'products.id', '=', 'category_product.product_id')
+                        ->leftJoin('categories', 'category_product.category_id', '=', 'categories.id')
                         ->select('products.*')
-                        ->orderBy('categories.name', $direction);
+                        ->groupBy('products.id')
+                        ->orderByRaw("MIN(categories.name) {$direction}");
                     break;
 
                 default:
@@ -60,6 +62,12 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(10)->withQueryString();
+
+        // Cargar categorías en cada producto para el frontend
+        $products->getCollection()->transform(function ($product) {
+            $product->category_names = $product->categories->pluck('name')->toArray();
+            return $product;
+        });
 
         // Información de la última sincronización
         $lastSyncInfo = $this->syncService->getLastSyncInfo();
@@ -78,7 +86,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
 
-        $product->load('category', 'images', 'featuredImage');
+        $product->load('categories', 'images', 'featuredImage');
 
         return inertia('dashboard/products/Show', [
             'product' => $product
@@ -143,11 +151,13 @@ class ProductController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string',
             'proveedor' => 'nullable|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'exists:categories,id',
         ]);
 
         try {
             $product = Product::create($validated);
+            $product->categories()->attach($validated['category_ids']);
 
             return redirect()->back()->with('success', "Producto '{$product->name}' creado correctamente.");
         } catch (\Exception $e) {
@@ -159,11 +169,15 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
-        $categories = Category::all(); // para el select de categorías
+        // Cargar categorías del producto
+        $product->load('categories');
+
+        $categories = Category::all();
 
         return inertia('dashboard/products/Edit', [
             'product' => $product,
             'categories' => $categories,
+            'selected_category_ids' => $product->categories->pluck('id')->toArray(),
         ]);
     }
 
@@ -171,22 +185,25 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
 
-        $request->validate([
+        $validated = $request->validate([
             'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
             'name' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string',
             'proveedor' => 'nullable|string|max:255',
-            'category_id' => 'required|exists:categories,id',
+            'category_ids' => 'required|array|min:1',
+            'category_ids.*' => 'exists:categories,id',
         ]);
 
         try {
             $product->update([
-                'sku' => $request->sku,
-                'name' => $request->name,
-                'description' => $request->description,
-                'proveedor' => $request->proveedor,
-                'category_id' => $request->category_id,
+                'sku' => $validated['sku'],
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'proveedor' => $validated['proveedor'],
             ]);
+
+            // Sincronizar categorías (reemplaza todas)
+            $product->categories()->sync($validated['category_ids']);
 
             return redirect()->back()->with('success', "Producto '{$product->name}' actualizado correctamente.");
         } catch (\Throwable $e) {

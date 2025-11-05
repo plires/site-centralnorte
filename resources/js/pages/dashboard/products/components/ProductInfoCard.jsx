@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { FileText, Hash, Package, ShoppingCart, Tag } from 'lucide-react';
 
@@ -54,14 +55,19 @@ export default function ProductInfoCard({ product }) {
 
                 <Separator />
 
-                <div>
-                    <div className="flex items-center gap-2">
-                        <Tag className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm font-medium text-gray-700">Categoría</span>
+                <div className="space-y-2">
+                    <Label>Categorías</Label>
+                    <div className="flex flex-wrap gap-2">
+                        {product.categories?.length > 0 ? (
+                            product.categories.map((category) => (
+                                <Badge key={category.id} variant="secondary">
+                                    {category.name}
+                                </Badge>
+                            ))
+                        ) : (
+                            <span className="text-gray-400 italic">Sin categorías asignadas</span>
+                        )}
                     </div>
-                    <Badge variant="outline" className="text-sm">
-                        {product.category?.name || 'Sin categoría'}
-                    </Badge>
                 </div>
             </CardContent>
         </Card>

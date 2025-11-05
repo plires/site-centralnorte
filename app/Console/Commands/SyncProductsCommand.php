@@ -121,6 +121,12 @@ class SyncProductsCommand extends Command
         $product = $this->syncService->syncOne($sku);
 
         if ($product) {
+            // Manejar múltiples categorías
+            $categoryNames = $product->categories->pluck('name')->toArray();
+            $categoryDisplay = !empty($categoryNames)
+                ? implode(', ', $categoryNames)
+                : 'N/A';
+
             $this->info("✅ Product synced successfully");
             $this->newLine();
             $this->table(
@@ -128,7 +134,8 @@ class SyncProductsCommand extends Command
                 [
                     ['SKU', $product->sku],
                     ['Name', $product->name],
-                    ['Category', $product->category->name ?? 'N/A'],
+                    // Mostrar todas las categorías
+                    ['Categories', $categoryDisplay],
                     ['Price', '$' . number_format($product->last_price, 2)],
                     ['Images', $product->images->count()],
                 ]

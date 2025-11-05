@@ -12,6 +12,8 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Product::factory(20)->create();
+        \App\Models\Product::factory(20)
+            ->withCategories(2) // Cada producto tendrá 1-3 categorías aleatorias
+            ->create();
     }
 }

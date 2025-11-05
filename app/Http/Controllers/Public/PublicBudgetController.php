@@ -21,7 +21,7 @@ class PublicBudgetController extends Controller
                     'user',
                     'items.product.images',
                     'items.product.featuredImage',
-                    'items.product.category'
+                    'items.product.categories'
                 ])
                 ->firstOrFail();
 
@@ -104,7 +104,7 @@ class PublicBudgetController extends Controller
                         // Cargar TODOS los items (sin filtrar por is_selected aquí)
                         $query->with([
                             'product:id,name',
-                            'product.category:id,name',
+                            'product.categories:id,name',
                             'product.featuredImage:id,product_id,url,is_featured'
                         ]);
                     }
@@ -238,6 +238,12 @@ class PublicBudgetController extends Controller
                 $featuredImage = $this->processImage($item->product->featuredImage);
             }
 
+            // Manejar múltiples categorías
+            $categoryNames = [];
+            if ($item->product && $item->product->categories) {
+                $categoryNames = $item->product->categories->pluck('name')->toArray();
+            }
+
             $itemData = [
                 'id' => $item->id,
                 'quantity' => $item->quantity,
@@ -249,7 +255,11 @@ class PublicBudgetController extends Controller
                 'variant_group' => $item->variant_group,
                 'product' => [
                     'name' => $item->product->name ?? 'Producto',
-                    'category' => ['name' => $item->product->category->name ?? '']
+                    // Devuelve array de categorías
+                    'categories' => $categoryNames,
+                    'category_display' => !empty($categoryNames)
+                        ? implode(', ', $categoryNames)
+                        : 'Sin categoría'
                 ],
                 'featured_image' => $featuredImage
             ];

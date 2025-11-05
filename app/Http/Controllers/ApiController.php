@@ -61,7 +61,7 @@ class ApiController extends Controller
         $search = $request->get('search', '');
         $limit = $request->get('limit', 20);
 
-        $query = Product::with(['category', 'featuredImage']);
+        $query = Product::with(['categories', 'featuredImage']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -70,13 +70,19 @@ class ApiController extends Controller
             });
         }
 
-        $products = $query->select('id', 'name', 'sku', 'last_price', 'category_id')
+        $products = $query->select('id', 'name', 'sku', 'last_price')
             ->orderBy('name')
             ->limit($limit)
             ->get();
 
         // Formatear respuesta para el select
         $formattedProducts = $products->map(function ($product) {
+            // Manejar múltiples categorías
+            $categoryNames = $product->categories->pluck('name')->toArray();
+            $categoryDisplay = !empty($categoryNames)
+                ? implode(', ', $categoryNames)
+                : 'Sin categoría';
+
             return [
                 'value' => $product->id,
                 'label' => "{$product->name} ({$product->sku})",
@@ -85,7 +91,9 @@ class ApiController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'last_price' => $product->last_price,
-                    'category' => $product->category ? $product->category->name : 'Sin categoría',
+                    // Devuelve array de nombres de categorías
+                    'categories' => $categoryNames,
+                    'category_display' => $categoryDisplay, // Para mostrar en UI
                     'featured_image' => $product->featuredImage ? $product->featuredImage->full_url : null,
                 ]
             ];
@@ -103,8 +111,14 @@ class ApiController extends Controller
     public function getProduct($id)
     {
         try {
-            $product = Product::with(['category', 'featuredImage'])
+            $product = Product::with(['categories', 'featuredImage'])
                 ->findOrFail($id);
+
+            // Manejar múltiples categorías
+            $categoryNames = $product->categories->pluck('name')->toArray();
+            $categoryDisplay = !empty($categoryNames)
+                ? implode(', ', $categoryNames)
+                : 'Sin categoría';
 
             return response()->json([
                 'success' => true,
@@ -113,7 +127,9 @@ class ApiController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'last_price' => $product->last_price,
-                    'category' => $product->category ? $product->category->name : 'Sin categoría',
+                    // Devolver array de categorías
+                    'categories' => $categoryNames,
+                    'category_display' => $categoryDisplay,
                     'featured_image' => $product->featuredImage ? $product->featuredImage->full_url : null,
                 ]
             ]);

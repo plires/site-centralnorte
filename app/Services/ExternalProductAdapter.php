@@ -144,15 +144,20 @@ class ExternalProductAdapter
      */
     public function normalizeProduct(array $externalProduct): array
     {
+
+        $categoryIds = $this->resolveCategoryIds($externalProduct);
+
         // La API devuelve directamente el producto (no viene wrapeado en 'generic_product')
         return [
             'sku' => $externalProduct['external_id'] ?? $externalProduct['id'] ?? null,
             'name' => $externalProduct['name'] ?? '',
             'description' => $this->cleanDescription($externalProduct['description'] ?? null),
             'proveedor' => $this->extractSupplier($externalProduct),
-            'category_id' => $this->resolveCategoryId($externalProduct),
             'last_price' => $this->parsePrice($externalProduct['price'] ?? $externalProduct['discountPrice'] ?? 0),
         ];
+
+        // Sincronizar todas las categorías
+        $product->categories()->sync($categoryIds);
     }
 
     /**
@@ -236,42 +241,36 @@ class ExternalProductAdapter
     /**
      * Resolver category_id desde el producto
      */
-    protected function resolveCategoryId($product): ?int
+    protected function resolveCategoryIds($product): array
     {
+        $categoryIds = [];
+
         // La API devuelve 'families' que son las categorías
         if (is_array($product) && isset($product['families']) && !empty($product['families'])) {
-            // Tomar la primera familia o la que sea main
-            $mainFamily = null;
             foreach ($product['families'] as $family) {
-                if (isset($family['fgp']['main']) && $family['fgp']['main']) {
-                    $mainFamily = $family;
-                    break;
+                if (isset($family['description'])) {
+                    $categoryName = $family['description'];
+
+                    $category = \App\Models\Category::firstOrCreate(
+                        ['name' => $categoryName],
+                        ['description' => 'Categoría importada desde API externa']
+                    );
+
+                    $categoryIds[] = $category->id;
                 }
-            }
-
-            // Si no hay main, tomar la primera
-            if (!$mainFamily && !empty($product['families'])) {
-                $mainFamily = $product['families'][0];
-            }
-
-            if ($mainFamily && isset($mainFamily['description'])) {
-                $categoryName = $mainFamily['description'];
-
-                $category = \App\Models\Category::firstOrCreate(
-                    ['name' => $categoryName],
-                    ['description' => 'Categoría importada desde API externa']
-                );
-                return $category->id;
             }
         }
 
-        // Fallback: categoría por defecto
-        $category = \App\Models\Category::firstOrCreate(
-            ['name' => 'Productos Importados'],
-            ['description' => 'Productos sincronizados desde API externa']
-        );
+        // Si no se encontraron categorías, usar categoría por defecto
+        if (empty($categoryIds)) {
+            $category = \App\Models\Category::firstOrCreate(
+                ['name' => 'Productos Importados'],
+                ['description' => 'Productos sincronizados desde API externa']
+            );
+            $categoryIds[] = $category->id;
+        }
 
-        return $category->id;
+        return $categoryIds;
     }
 
     /**

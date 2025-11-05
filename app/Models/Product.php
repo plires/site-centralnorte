@@ -22,9 +22,16 @@ class Product extends Model
         'last_price',
     ];
 
-    public function category()
+    public function categories()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsToMany(Category::class, 'category_product')
+            ->withTimestamps();
+    }
+
+    // Mantener un accessor para retrocompatibilidad temporal (opcional)
+    public function getCategoryAttribute()
+    {
+        return $this->categories->first();
     }
 
     public function images()
@@ -52,8 +59,8 @@ class Product extends Model
             });
         }
 
-        return $query->with('category')
-            ->select('id', 'name', 'sku', 'last_price', 'category_id')
+        return $query->with('categories')
+            ->select('id', 'name', 'sku', 'last_price')
             ->orderBy('name');
     }
 }

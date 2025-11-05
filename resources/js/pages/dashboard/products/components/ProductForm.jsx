@@ -1,11 +1,42 @@
 import ButtonCustom from '@/components/ButtonCustom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Package, Save } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Package, Save } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function ProductForm({ data, setData, handleSubmit, processing, errors, categories, isEditing = false }) {
+    const [open, setOpen] = useState(false);
+
+    // Inicializar category_ids si no existe
+    useEffect(() => {
+        if (!data.category_ids) {
+            setData('category_ids', []);
+        }
+    }, []);
+
+    const toggleCategory = (categoryId) => {
+        const currentIds = data.category_ids || [];
+
+        if (currentIds.includes(categoryId)) {
+            // Remover categoría
+            setData(
+                'category_ids',
+                currentIds.filter((id) => id !== categoryId),
+            );
+        } else {
+            // Agregar categoría
+            setData('category_ids', [...currentIds, categoryId]);
+        }
+    };
+
+    const selectedCategories = categories.filter((cat) => (data.category_ids || []).includes(cat.id));
     return (
         <div className="py-12">
             <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -80,23 +111,67 @@ export default function ProductForm({ data, setData, handleSubmit, processing, e
                                         {errors.proveedor && <span className="text-xs text-red-500">{errors.proveedor}</span>}
                                     </div>
 
-                                    {/* Categoría */}
+                                    {/* Multi-select de Categorías */}
                                     <div className="space-y-2">
-                                        <Label htmlFor="category_id">Categoría</Label>
-                                        <select
-                                            id="category_id"
-                                            value={data.category_id}
-                                            onChange={(e) => setData('category_id', e.target.value || '')}
-                                            className={`w-full rounded border px-3 py-2 text-sm ${errors.category_id ? 'border-red-500' : ''}`}
-                                        >
-                                            <option value="">Seleccionar categoría</option>
-                                            {categories.map((cat) => (
-                                                <option key={cat.id} value={cat.id}>
-                                                    {cat.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                        {errors.category_id && <span className="text-xs text-red-500">{errors.category_id}</span>}
+                                        <Label htmlFor="category_ids">
+                                            Categorías <span className="text-red-500">*</span>
+                                        </Label>
+
+                                        <Popover open={open} onOpenChange={setOpen}>
+                                            <PopoverTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    role="combobox"
+                                                    aria-expanded={open}
+                                                    className={`w-full justify-between ${errors.category_ids || errors['category_ids.0'] ? 'border-red-500' : ''}`}
+                                                >
+                                                    {selectedCategories.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {selectedCategories.map((cat) => (
+                                                                <Badge key={cat.id} variant="secondary" className="mr-1">
+                                                                    {cat.name}
+                                                                </Badge>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">Seleccionar categorías...</span>
+                                                    )}
+                                                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent className="w-full p-0">
+                                                <Command>
+                                                    <CommandInput placeholder="Buscar categoría..." />
+                                                    <CommandEmpty>No se encontraron categorías.</CommandEmpty>
+                                                    <CommandGroup className="max-h-64 overflow-auto">
+                                                        {categories.map((category) => {
+                                                            const isSelected = (data.category_ids || []).includes(category.id);
+
+                                                            return (
+                                                                <CommandItem key={category.id} onSelect={() => toggleCategory(category.id)}>
+                                                                    <div className="flex w-full items-center gap-2">
+                                                                        <Checkbox
+                                                                            checked={isSelected}
+                                                                            onCheckedChange={() => toggleCategory(category.id)}
+                                                                        />
+                                                                        <span className="flex-1">{category.name}</span>
+                                                                        {isSelected && <Check className="h-4 w-4 text-green-600" />}
+                                                                    </div>
+                                                                </CommandItem>
+                                                            );
+                                                        })}
+                                                    </CommandGroup>
+                                                </Command>
+                                            </PopoverContent>
+                                        </Popover>
+
+                                        {(errors.category_ids || errors['category_ids.0']) && (
+                                            <span className="text-xs text-red-500">{errors.category_ids || errors['category_ids.0']}</span>
+                                        )}
+
+                                        <p className="text-muted-foreground mt-1 text-xs">
+                                            Puedes seleccionar múltiples categorías para este producto
+                                        </p>
                                     </div>
 
                                     {/* Botones */}

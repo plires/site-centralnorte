@@ -8,13 +8,13 @@ const breadcrumbs = [
     { title: 'Editar Producto', href: '#' },
 ];
 
-export default function Edit({ product, categories }) {
+export default function Edit({ product, categories, selected_category_ids }) {
     const { data, setData, put, processing, errors } = useForm({
         sku: product.sku || '',
         name: product.name || '',
         description: product.description || '',
         proveedor: product.proveedor || '',
-        category_id: product.category_id?.toString() || '',
+        category_ids: selected_category_ids || [],
     });
 
     const { handleResponse } = useInertiaResponse();
