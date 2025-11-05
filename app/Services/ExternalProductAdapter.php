@@ -194,13 +194,31 @@ class ExternalProductAdapter
     }
 
     /**
-     * Normalizar datos de categoría
+     * Normalizar datos de categoría desde la API
      */
     public function normalizeCategory(array $externalCategory): array
     {
         return [
-            'name' => $externalCategory['description'] ?? $externalCategory['name'] ?? '',
-            'description' => 'Categoría importada desde API externa',
+            // name: usamos "description" de la API (ej: "2025 Día del Padre")
+            'name' => $externalCategory['description'] ?? $externalCategory['title'] ?? '',
+
+            // title: viene directamente de la API
+            'title' => $externalCategory['title'] ?? null,
+
+            // description: lo dejamos para uso interno (puede ser null)
+            'description' => null,
+
+            // meta: descripción larga para SEO desde la API
+            'meta' => $externalCategory['meta'] ?? null,
+
+            // icon_url: URL del ícono de la categoría
+            'icon_url' => $externalCategory['icon_url'] ?? null,
+
+            // show: indica si la categoría debe mostrarse
+            'show' => $externalCategory['show'] ?? true,
+
+            // origin: indica el origen del que proviene la categoria
+            'show' => 'Zecat' ?? 'local',
         ];
     }
 
@@ -239,6 +257,7 @@ class ExternalProductAdapter
     /**
      * Resolver category_id desde el producto
      * Ahora retorna un array con la estructura necesaria para sync() con datos pivot
+     * IMPORTANTE: NO sobrescribe datos de categorías, solo las busca/crea mínimamente
      */
     protected function resolveCategoryIds($product): array
     {
@@ -247,21 +266,25 @@ class ExternalProductAdapter
         // La API devuelve 'families' que son las categorías
         if (is_array($product) && isset($product['families']) && !empty($product['families'])) {
             foreach ($product['families'] as $family) {
-                // Filtrar categorías ocultas (show = false)
-                if (isset($family['show']) && $family['show'] === false) {
-                    continue; // Saltar esta categoría
-                }
-
                 if (isset($family['description'])) {
                     $categoryName = $family['description'];
 
+                    // Solo buscar o crear con datos mínimos
+                    // NO actualizamos porque los datos completos vienen de syncCategories()
                     $category = \App\Models\Category::firstOrCreate(
                         ['name' => $categoryName],
-                        ['description' => 'Categoría importada desde API externa']
+                        [
+                            // Solo datos básicos para creación inicial
+                            'title' => $categoryName, // Usar el name como fallback
+                            'description' => null,
+                            'meta' => null,
+                            'icon_url' => null,
+                            'show' => $family['show'] ?? true,
+                            'origin' => 'Zecat' ?? 'local',
+                        ]
                     );
 
                     // Preparar datos para el pivot
-                    // La estructura es: [category_id => [pivot_data]]
                     $syncData[$category->id] = [
                         'show' => $family['show'] ?? true,
                         'is_main' => $family['fgp']['main'] ?? false,
@@ -273,8 +296,15 @@ class ExternalProductAdapter
         // Si no se encontraron categorías, usar categoría por defecto
         if (empty($syncData)) {
             $category = \App\Models\Category::firstOrCreate(
-                ['name' => 'Productos Importados'],
-                ['description' => 'Productos sincronizados desde API externa']
+                ['name' => 'Sin Categoría'],
+                [
+                    'title' => 'Sin Categoría',
+                    'description' => 'Productos sincronizados desde API externa sin categoría',
+                    'meta' => null,
+                    'icon_url' => null,
+                    'show' => true,
+                    'origin' => 'Zecat',
+                ]
             );
 
             $syncData[$category->id] = [
