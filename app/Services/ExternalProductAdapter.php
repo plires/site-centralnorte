@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
+use App\Models\Category;
+use App\Enums\CategoryOrigin;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class ExternalProductAdapter
 {
@@ -218,7 +220,7 @@ class ExternalProductAdapter
             'show' => $externalCategory['show'] ?? true,
 
             // origin: indica el origen del que proviene la categoria
-            'show' => 'Zecat' ?? 'local',
+            'origin' => Category::ORIGIN_ZECAT,
         ];
     }
 
@@ -280,7 +282,7 @@ class ExternalProductAdapter
                             'meta' => null,
                             'icon_url' => null,
                             'show' => $family['show'] ?? true,
-                            'origin' => 'Zecat' ?? 'local',
+                            'origin' => Category::ORIGIN_ZECAT,
                         ]
                     );
 
@@ -303,7 +305,7 @@ class ExternalProductAdapter
                     'meta' => null,
                     'icon_url' => null,
                     'show' => true,
-                    'origin' => 'Zecat',
+                    'origin' => Category::ORIGIN_ZECAT,
                 ]
             );
 

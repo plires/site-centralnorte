@@ -269,6 +269,21 @@ export const categoryColumns = (actions, isDeleting = false) => [
         truncate: true,
     },
     {
+        key: 'origin',
+        label: 'Origen',
+        sortable: true,
+        render: (value, row) => {
+            const origin = value;
+            const { label, className } = row.origin_config;
+
+            return (
+                <Badge variant="outline" className={className}>
+                    {label}
+                </Badge>
+            );
+        },
+    },
+    {
         key: 'products_count',
         label: 'Productos Asociados',
         sortable: false,

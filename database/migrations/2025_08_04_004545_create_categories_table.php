@@ -35,6 +35,9 @@ return new class extends Migration
             // Origen de la categoria
             $table->string('origin')->default('local');
 
+            $table->index('show');
+            $table->index('origin');
+
             $table->timestamps();
             $table->softDeletes();
         });

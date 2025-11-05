@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use Inertia\Inertia;
 use App\Models\Category;
+use App\Enums\CategoryOrigin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -14,6 +15,11 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $query = Category::withoutTrashed();
+
+        // Filtro por origen
+        if ($request->filled('origin')) {
+            $query->where('origin', $request->origin);
+        }
 
         // Búsqueda
         if ($request->filled('search')) {
@@ -36,6 +42,7 @@ class CategoryController extends Controller
 
         return Inertia::render('dashboard/categories/Index', [
             'categories' => $categories,
+            'originOptions' => CategoryOrigin::options(),
             'filters' => [
                 'search' => $request->search,
                 'sort' => $request->sort,
@@ -95,7 +102,10 @@ class CategoryController extends Controller
         ]);
 
         try {
-            $category = Category::create($validated);
+            $category = Category::create([
+                ...$validated,
+                'origin' => CategoryOrigin::LOCAL,
+            ]);
 
             return redirect()->back()->with('success', "Categoría '{$category->name}' creada correctamente.");
         } catch (\Exception $e) {

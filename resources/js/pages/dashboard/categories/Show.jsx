@@ -19,6 +19,8 @@ const breadcrumbs = [
 ];
 
 export default function Show({ category }) {
+    const { is_external } = category.origin_config;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Rol - ${category.name}`} />
@@ -36,10 +38,12 @@ export default function Show({ category }) {
                                 <CategoryProductsCard products={category.products} />
                             </div>
 
-                            {/* Acciones del rol */}
-                            <div className="mt-6">
-                                <CategoryActionsCard categoryId={category.id} />
-                            </div>
+                            {/* Acciones */}
+                            {!is_external && (
+                                <div className="mt-6">
+                                    <CategoryActionsCard categoryId={category.id} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
