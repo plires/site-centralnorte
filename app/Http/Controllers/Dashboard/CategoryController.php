@@ -63,6 +63,14 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
+
+        // Redirigir si intentan editar categoría externa
+        if ($category->isExternal()) {
+            return redirect()
+                ->route('dashboard.categories.index', $category)
+                ->with('error', 'No puedes editar categorías sincronizadas desde la API externa.');
+        }
+
         return inertia('dashboard/categories/Edit', [
             'category' => $category,
         ]);
@@ -71,6 +79,14 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+
+        // No permitir editar categorías externas
+        if ($category->isExternal()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No puedes editar categorías sincronizadas desde la API externa.');
+        }
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'description' => 'nullable|string'
@@ -117,6 +133,14 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+
+        // No permitir eliminar categorías externas
+        if ($category->isExternal()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No puedes eliminar categorías sincronizadas desde la API externa.');
+        }
+
         try {
             // Verificar si la categoria tiene productos asociados
             if ($category->products()->exists()) {
