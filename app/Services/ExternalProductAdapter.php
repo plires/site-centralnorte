@@ -154,10 +154,8 @@ class ExternalProductAdapter
             'description' => $this->cleanDescription($externalProduct['description'] ?? null),
             'proveedor' => $this->extractSupplier($externalProduct),
             'last_price' => $this->parsePrice($externalProduct['price'] ?? $externalProduct['discountPrice'] ?? 0),
+            'category_ids' => $categoryIds, // ← AGREGAR ESTO
         ];
-
-        // Sincronizar todas las categorías
-        $product->categories()->sync($categoryIds);
     }
 
     /**
@@ -240,14 +238,20 @@ class ExternalProductAdapter
 
     /**
      * Resolver category_id desde el producto
+     * Ahora retorna un array con la estructura necesaria para sync() con datos pivot
      */
     protected function resolveCategoryIds($product): array
     {
-        $categoryIds = [];
+        $syncData = [];
 
         // La API devuelve 'families' que son las categorías
         if (is_array($product) && isset($product['families']) && !empty($product['families'])) {
             foreach ($product['families'] as $family) {
+                // Filtrar categorías ocultas (show = false)
+                if (isset($family['show']) && $family['show'] === false) {
+                    continue; // Saltar esta categoría
+                }
+
                 if (isset($family['description'])) {
                     $categoryName = $family['description'];
 
@@ -256,21 +260,30 @@ class ExternalProductAdapter
                         ['description' => 'Categoría importada desde API externa']
                     );
 
-                    $categoryIds[] = $category->id;
+                    // Preparar datos para el pivot
+                    // La estructura es: [category_id => [pivot_data]]
+                    $syncData[$category->id] = [
+                        'show' => $family['show'] ?? true,
+                        'is_main' => $family['fgp']['main'] ?? false,
+                    ];
                 }
             }
         }
 
         // Si no se encontraron categorías, usar categoría por defecto
-        if (empty($categoryIds)) {
+        if (empty($syncData)) {
             $category = \App\Models\Category::firstOrCreate(
                 ['name' => 'Productos Importados'],
                 ['description' => 'Productos sincronizados desde API externa']
             );
-            $categoryIds[] = $category->id;
+
+            $syncData[$category->id] = [
+                'show' => true,
+                'is_main' => true,
+            ];
         }
 
-        return $categoryIds;
+        return $syncData;
     }
 
     /**

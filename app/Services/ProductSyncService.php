@@ -121,10 +121,19 @@ class ProductSyncService
                         continue;
                     }
 
+                    // Extraer category_ids antes de crear el producto
+                    $categoryIds = $normalized['category_ids'] ?? [];
+                    unset($normalized['category_ids']); // Remover del array antes de updateOrCreate
+
                     $product = Product::updateOrCreate(
                         ['sku' => $normalized['sku']],
                         $normalized
                     );
+
+                    // Sincronizar categorías
+                    if (!empty($categoryIds)) {
+                        $product->categories()->sync($categoryIds);
+                    }
 
                     if ($product->wasRecentlyCreated) {
                         $stats['created']++;
@@ -236,10 +245,19 @@ class ProductSyncService
 
             $normalized = $this->adapter->normalizeProduct($externalProduct);
 
+            // Extraer category_ids antes de crear el producto
+            $categoryIds = $normalized['category_ids'] ?? [];
+            unset($normalized['category_ids']); // Remover del array antes de updateOrCreate
+
             $product = Product::updateOrCreate(
                 ['sku' => $sku],
                 $normalized
             );
+
+            // Sincronizar categorías
+            if (!empty($categoryIds)) {
+                $product->categories()->sync($categoryIds);
+            }
 
             $images = $this->adapter->extractImages($externalProduct);
             if (!empty($images)) {

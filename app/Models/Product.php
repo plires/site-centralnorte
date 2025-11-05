@@ -25,6 +25,7 @@ class Product extends Model
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'category_product')
+            ->withPivot('show', 'is_main')
             ->withTimestamps();
     }
 
@@ -32,6 +33,18 @@ class Product extends Model
     public function getCategoryAttribute()
     {
         return $this->categories->first();
+    }
+
+    // Obtener la categoría principal
+    public function getMainCategoryAttribute()
+    {
+        return $this->categories()->wherePivot('is_main', true)->first();
+    }
+
+    // Obtener solo categorías visibles
+    public function getVisibleCategoriesAttribute()
+    {
+        return $this->categories()->wherePivot('show', true)->get();
     }
 
     public function images()
