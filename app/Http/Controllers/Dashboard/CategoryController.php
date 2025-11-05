@@ -13,7 +13,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Category::withoutTrashed()->where('id', '!=', Auth::id());
+        $query = Category::withoutTrashed();
 
         // Búsqueda
         if ($request->filled('search')) {
