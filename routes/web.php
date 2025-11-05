@@ -75,34 +75,38 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_roles'])->prefix('d
 });
 
 // Productos
-// Route::middleware(['auth', 'verified', 'permission:gestionar_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
-//     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-//     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-//     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-//     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-//     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-//     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-//     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
-// });
-
 Route::middleware(['auth', 'verified', 'permission:gestionar_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
-    // Rutas de lectura (permitidas)
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 
     // Sincronización manual
     Route::post('/products/sync', [ProductController::class, 'sync'])->name('products.sync');
     Route::post('/products/sync/{sku}', [ProductController::class, 'syncOne'])->name('products.sync.one');
-
-    // Rutas deshabilitadas (redirigen con mensaje)
-    Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
-    Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-    Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-
-    // Soft delete permitido (solo si no tiene budget_items)
-    Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
 });
+
+// Route::middleware(['auth', 'verified', 'permission:gestionar_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
+//     // Rutas de lectura (permitidas)
+//     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+//     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
+
+//     // Sincronización manual
+//     Route::post('/products/sync', [ProductController::class, 'sync'])->name('products.sync');
+//     Route::post('/products/sync/{sku}', [ProductController::class, 'syncOne'])->name('products.sync.one');
+
+//     // Rutas deshabilitadas (redirigen con mensaje)
+//     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
+//     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+//     Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+//     Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+
+//     // Soft delete permitido (solo si no tiene budget_items)
+//     Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+// });
 
 // Categorias
 Route::middleware(['auth', 'verified', 'permission:gestionar_categorias'])->prefix('dashboard')->name('dashboard.')->group(function () {

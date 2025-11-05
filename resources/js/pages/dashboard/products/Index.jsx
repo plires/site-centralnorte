@@ -16,7 +16,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Index({ auth, products, filters = {}, is_readonly, last_sync_info }) {
+export default function Index({ auth, products, filters = {}, last_sync_info }) {
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -52,7 +52,7 @@ export default function Index({ auth, products, filters = {}, is_readonly, last_
             <Head title="Productos" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
-                    {is_readonly && <ReadOnlyProductsAlert lastSyncInfo={last_sync_info} />}
+                    <ReadOnlyProductsAlert lastSyncInfo={last_sync_info} />
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
