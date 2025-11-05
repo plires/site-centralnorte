@@ -6,7 +6,7 @@ import { timeAgo } from '@/utils/date';
 import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
 
 // Componente reutilizable para acciones
-const ActionsDropdown = ({ row, actions, isDeleting = false }) => (
+const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false }) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -21,14 +21,18 @@ const ActionsDropdown = ({ row, actions, isDeleting = false }) => (
                     Ver
                 </DropdownMenuItem>
             )}
-            {actions.edit && (
-                <DropdownMenuItem onClick={() => actions.edit(row.id)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Editar
-                </DropdownMenuItem>
+            {actions.edit && !isExternal && (
+                <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => actions.edit(row.id)}>
+                        <Edit className="mr-2 h-4 w-4" />
+                        Editar
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                </>
             )}
-            {(actions.view || actions.edit) && actions.delete && <DropdownMenuSeparator />}
-            {actions.delete && (
+
+            {actions.delete && !isExternal && (
                 <DropdownMenuItem
                     onClick={(e) => {
                         e.stopPropagation(); // Por seguridad adicional
@@ -293,6 +297,10 @@ export const categoryColumns = (actions, isDeleting = false) => [
     {
         key: 'actions',
         label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        render: (value, row) => {
+            const { is_external } = row.origin_config;
+
+            return <ActionsDropdown isExternal={is_external} row={row} actions={actions} isDeleting={isDeleting} />;
+        },
     },
 ];
