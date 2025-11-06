@@ -277,7 +277,6 @@ export const categoryColumns = (actions, isDeleting = false) => [
         label: 'Origen',
         sortable: true,
         render: (value, row) => {
-            const origin = value;
             const { label, className } = row.origin_config;
 
             return (
