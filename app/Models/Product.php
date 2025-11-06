@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Category;
 use App\Models\ProductImage;
+use App\Models\ProductAttribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -21,6 +22,54 @@ class Product extends Model
         'category_id',
         'last_price',
     ];
+
+    /**
+     * Relación con ProductAttribute
+     */
+    public function attributes()
+    {
+        return $this->hasMany(ProductAttribute::class);
+    }
+
+    /**
+     * Obtener valores de un atributo específico
+     * 
+     * @param string $attributeName
+     * @return array
+     */
+    public function getAttributeValues(string $attributeName): array
+    {
+        return $this->attributes()
+            ->where('attribute_name', $attributeName)
+            ->pluck('value')
+            ->toArray();
+    }
+
+    /**
+     * Obtener la marca del producto (primer valor de attribute_name = 'Marca')
+     */
+    public function getMarcaAttribute(): ?string
+    {
+        return $this->attributes()
+            ->where('attribute_name', 'Marca')
+            ->value('value');
+    }
+
+    /**
+     * Obtener todas las técnicas de aplicación disponibles
+     */
+    public function getTecnicasAplicacionAttribute(): array
+    {
+        return $this->getAttributeValues('Técnica de aplicación');
+    }
+
+    /**
+     * Obtener todos los materiales disponibles
+     */
+    public function getMaterialesAttribute(): array
+    {
+        return $this->getAttributeValues('Material');
+    }
 
     public function categories()
     {

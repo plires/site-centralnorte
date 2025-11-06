@@ -330,4 +330,31 @@ class ExternalProductAdapter
 
         return (float) $price ?: 0;
     }
+
+    /**
+     * Extraer subattributes del producto desde la API
+     * 
+     * @param array $externalProduct
+     * @return array
+     */
+    public function extractAttributes(array $externalProduct): array
+    {
+        $attributes = [];
+
+        // La API devuelve 'subattributes' directamente en el producto
+        if (isset($externalProduct['subattributes']) && is_array($externalProduct['subattributes'])) {
+            foreach ($externalProduct['subattributes'] as $subattr) {
+                // Validar que tenga los campos necesarios
+                if (isset($subattr['attribute_name']) && isset($subattr['name'])) {
+                    $attributes[] = [
+                        'external_id' => $subattr['id'] ?? null,
+                        'attribute_name' => $subattr['attribute_name'],
+                        'value' => $subattr['name'],
+                    ];
+                }
+            }
+        }
+
+        return $attributes;
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
+use App\Models\ProductAttribute;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -94,7 +95,8 @@ class ProductSyncService
             'updated' => 0,
             'errors' => 0,
             'total' => 0,
-            'images_synced' => 0
+            'images_synced' => 0,
+            'attributes_synced' => 0
         ];
 
         try {
@@ -147,6 +149,13 @@ class ProductSyncService
                         $this->syncProductImages($product, $images);
                         $stats['images_synced'] += count($images);
                     }
+
+                    // Sincronizar atributos
+                    $attributes = $this->adapter->extractAttributes($externalProduct);
+                    if (!empty($attributes)) {
+                        $this->syncProductAttributes($product, $attributes);
+                        $stats['attributes_synced'] += count($attributes);
+                    }
                 } catch (\Exception $e) {
                     $stats['errors']++;
                     Log::error('Error syncing product', [
@@ -169,6 +178,60 @@ class ProductSyncService
         }
 
         return $stats;
+    }
+
+    /**
+     * Sincronizar atributos del producto
+     * 
+     * @param Product $product
+     * @param array $attributes
+     * @return void
+     */
+    protected function syncProductAttributes(Product $product, array $attributes): void
+    {
+        try {
+            // Obtener combinaciones existentes de attribute_name + value como string único
+            $existingCombinations = $product->attributes()
+                ->get()
+                ->map(fn($attr) => $attr->attribute_name . '::' . $attr->value)
+                ->toArray();
+
+            // Nuevas combinaciones desde la API
+            $newCombinations = collect($attributes)
+                ->map(fn($attr) => $attr['attribute_name'] . '::' . $attr['value'])
+                ->toArray();
+
+            // Eliminar atributos que ya no están en la API
+            $combinationsToDelete = array_diff($existingCombinations, $newCombinations);
+
+            if (!empty($combinationsToDelete)) {
+                foreach ($combinationsToDelete as $combo) {
+                    [$attrName, $attrValue] = explode('::', $combo, 2);
+                    $product->attributes()
+                        ->where('attribute_name', $attrName)
+                        ->where('value', $attrValue)
+                        ->delete();
+                }
+            }
+
+            // Agregar/actualizar atributos
+            foreach ($attributes as $attrData) {
+                ProductAttribute::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'attribute_name' => $attrData['attribute_name'],
+                        'value' => $attrData['value']
+                    ],
+                    [
+                        'external_id' => $attrData['external_id']
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error("Error syncing attributes for product {$product->sku}", [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
@@ -260,9 +323,16 @@ class ProductSyncService
                 $product->categories()->sync($categoryIds);
             }
 
+            // Sincronizar imagenes
             $images = $this->adapter->extractImages($externalProduct);
             if (!empty($images)) {
                 $this->syncProductImages($product, $images);
+            }
+
+            // Sincronizar atributos
+            $attributes = $this->adapter->extractAttributes($externalProduct);
+            if (!empty($attributes)) {
+                $this->syncProductAttributes($product, $attributes);
             }
 
             DB::commit();
