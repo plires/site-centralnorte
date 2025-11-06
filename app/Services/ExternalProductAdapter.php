@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Category;
-use App\Enums\CategoryOrigin;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 
