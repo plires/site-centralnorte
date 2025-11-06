@@ -154,7 +154,7 @@ class ExternalProductAdapter
             'name' => $externalProduct['name'] ?? '',
             'description' => $this->cleanDescription($externalProduct['description'] ?? null),
             'proveedor' => $this->extractSupplier($externalProduct),
-            'last_price' => $this->parsePrice($externalProduct['price'] ?? $externalProduct['discountPrice'] ?? 0),
+            'last_price' => $this->parsePrice($externalProduct['price']),
             'origin' => \App\Models\Product::ORIGIN_ZECAT,
             'category_ids' => $categoryIds,
         ];
