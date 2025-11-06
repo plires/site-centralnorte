@@ -206,11 +206,8 @@ class ExternalProductAdapter
             // title: viene directamente de la API
             'title' => $externalCategory['title'] ?? null,
 
-            // description: lo dejamos para uso interno (puede ser null)
-            'description' => null,
-
-            // meta: descripción larga para SEO desde la API
-            'meta' => $externalCategory['meta'] ?? null,
+            // description: seteamos meta ya que en la API externa tiene mucho mas contenido
+            'description' => $externalCategory['meta'] ?? null,
 
             // icon_url: URL del ícono de la categoría
             'icon_url' => $externalCategory['icon_url'] ?? null,
@@ -278,7 +275,6 @@ class ExternalProductAdapter
                             // Solo datos básicos para creación inicial
                             'title' => $categoryName, // Usar el name como fallback
                             'description' => null,
-                            'meta' => null,
                             'icon_url' => null,
                             'show' => $family['show'] ?? true,
                             'origin' => Category::ORIGIN_ZECAT,
@@ -301,7 +297,6 @@ class ExternalProductAdapter
                 [
                     'title' => 'Sin Categoría',
                     'description' => 'Productos sincronizados desde API externa sin categoría',
-                    'meta' => null,
                     'icon_url' => null,
                     'show' => true,
                     'origin' => Category::ORIGIN_ZECAT,

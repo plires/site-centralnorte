@@ -23,9 +23,6 @@ return new class extends Migration
             // Descripción corta (la dejamos para uso interno o futuro)
             $table->text('description')->nullable();
 
-            // Meta descripción (viene de "meta" de la API) - texto largo para SEO
-            $table->text('meta')->nullable();
-
             // URL del ícono (viene de "icon_url" de la API)
             $table->string('icon_url')->nullable();
 
