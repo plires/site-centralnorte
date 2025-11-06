@@ -199,7 +199,8 @@ class ProductSyncService
                         'url' => $imageData['url']
                     ],
                     [
-                        'is_featured' => $imageData['is_featured'] ?? false
+                        'is_featured' => $imageData['is_featured'] ?? false,
+                        'variant' => $imageData['variant'] ?? null
                     ]
                 );
             }

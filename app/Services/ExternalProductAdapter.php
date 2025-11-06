@@ -238,6 +238,7 @@ class ExternalProductAdapter
                     $images[] = [
                         'url' => $imageUrl,
                         'is_featured' => $image['main'] ?? false,
+                        'variant' => $image['variant'] ?? null,
                     ];
                     $processedUrls[] = $imageUrl;
                 }

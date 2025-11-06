@@ -22,18 +22,26 @@ class ProductImageFactory extends Factory
     public function definition(): array
     {
 
-        $width = 600;
-        $height = 600;
+        $width = 800;
+        $height = 800;
         $bgColor = $this->faker->hexColor(); // Sin #
         $textColor = 'FFFFFF';
         $text = urlencode($this->faker->word());
 
-        // https://placehold.co/600x600/000000/FFFFFF.jpg
+        // Generar una variante aleatoria para testing
+        $colors = ['Rojo', 'Azul', 'Verde', 'Negro', 'Blanco', 'Gris', 'Amarillo'];
+        $materials = ['Algodón', 'Poliéster', 'Friselina', 'Nylon', 'Mezcla'];
+        $variant = $this->faker->boolean(70) // 70% de probabilidad de tener variant
+            ? $this->faker->randomElement($colors) . ' / ' .
+            $this->faker->randomElement($colors) . ' / ' .
+            $this->faker->randomElement($materials)
+            : null;
 
         return [
             'product_id' => Product::factory(), // O asignalo manualmente en el seeder
             'url' => "https://placehold.co/{$width}x{$height}/" . ltrim($bgColor, '#') . "/{$textColor}?text={$text}",
             'is_featured' => false,
+            'variant' => $variant
         ];
     }
 }

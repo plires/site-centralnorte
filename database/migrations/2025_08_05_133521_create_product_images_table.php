@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->string('url'); // O path si lo vas a guardar local
             $table->boolean('is_featured')->default(false);
+            $table->string('variant')->nullable();
             $table->timestamps();
         });
     }

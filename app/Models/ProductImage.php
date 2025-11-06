@@ -11,7 +11,7 @@ class ProductImage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['product_id', 'url', 'is_featured'];
+    protected $fillable = ['product_id', 'url', 'is_featured', 'variant'];
     protected $appends = ['full_url']; // nuevo nombre del accessor
 
     public function product(): BelongsTo
