@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
@@ -86,7 +87,12 @@ class CategoryController extends Controller
         }
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('categories', 'name')->ignore($category->id), // o ->ignore($id)
+            ],
             'description' => 'nullable|string'
         ]);
 
@@ -111,7 +117,7 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
             'description' => 'nullable|string',
         ]);
 

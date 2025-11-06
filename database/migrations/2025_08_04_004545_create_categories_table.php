@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
 
             // Nombre de la categoría (viene de "description" de la API)
-            $table->string('name');
+            $table->string('name')->unique();
 
             // Título de la categoría (viene de "title" de la API)
             $table->string('title')->nullable();
