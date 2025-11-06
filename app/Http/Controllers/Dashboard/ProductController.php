@@ -24,6 +24,11 @@ class ProductController extends Controller
     {
         $query = Product::with('categories')->withoutTrashed();
 
+        // Filtro por origen
+        if ($request->filled('origin')) {
+            $query->where('origin', $request->origin);
+        }
+
         // Búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
@@ -169,6 +174,14 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+
+        // Redirigir si intentan editar producto externo
+        if ($product->isExternal()) {
+            return redirect()
+                ->route('dashboard.products.index', $product)
+                ->with('error', 'No puedes editar productos sincronizados desde la API externa.');
+        }
+
         // Cargar categorías del producto
         $product->load('categories');
 
@@ -184,6 +197,13 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product)
     {
+
+        // No permitir editar productos externos
+        if ($product->isExternal()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No puedes editar productos sincronizados desde la API externa.');
+        }
 
         $validated = $request->validate([
             'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
@@ -215,6 +235,14 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+
+        // No permitir eliminar productos externos
+        if ($product->isExternal()) {
+            return redirect()
+                ->back()
+                ->with('error', 'No puedes eliminar productos sincronizados desde la API externa.');
+        }
+
         $product->delete();
 
         return redirect()->route('dashboard.products.index')->with('success', 'Producto eliminado.');

@@ -19,7 +19,7 @@ class CategoryFactory extends Factory
         return [
             'name' => $this->faker->word,
             'description' => $this->faker->sentence(),
-            'origin' => 'local',
+            'origin' => \App\Models\Product::ORIGIN_LOCAL,
         ];
     }
 }

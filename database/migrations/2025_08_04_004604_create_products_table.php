@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('proveedor')->nullable();
             $table->decimal('last_price', 10, 2)->nullable();
+            $table->string('origin')->default('local');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -23,6 +23,7 @@ class ProductFactory extends Factory
             'description' => $this->faker->sentence(),
             'proveedor' => $this->faker->company,
             'last_price' => $this->faker->randomFloat(2, 1000, 50000),
+            'origin' => \App\Models\Product::ORIGIN_LOCAL,
         ];
     }
 
