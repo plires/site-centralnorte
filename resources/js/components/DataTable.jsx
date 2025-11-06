@@ -176,7 +176,7 @@ export default function DataTable({
                                 {columns.map((column) => (
                                     <TableHead
                                         key={column.key}
-                                        className={`font-medium whitespace-nowrap ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}`}
+                                        className={`text-center font-medium whitespace-nowrap ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}`}
                                     >
                                         {column.sortable ? (
                                             <Button

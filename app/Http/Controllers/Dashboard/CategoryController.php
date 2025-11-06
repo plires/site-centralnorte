@@ -91,15 +91,17 @@ class CategoryController extends Controller
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('categories', 'name')->ignore($category->id), // o ->ignore($id)
+                Rule::unique('categories', 'name')->ignore($category->id),
             ],
-            'description' => 'nullable|string'
+            'description' => 'nullable|string',
+            'show' => 'required|boolean',
         ]);
 
         try {
             $category->update([
                 'name' => $request->name,
                 'description' => $request->description,
+                'show' => $request->show
             ]);
 
             return redirect()->back()->with('success', "Categoría '{$category->name}' actualizada correctamente.");
@@ -119,6 +121,7 @@ class CategoryController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
             'description' => 'nullable|string',
+            'show' => 'required|boolean',
         ]);
 
         try {

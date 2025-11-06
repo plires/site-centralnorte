@@ -6,7 +6,7 @@ import CategoryForm from './components/CategoryForm';
 const breadcrumbs = [
     {
         title: 'Categorías',
-        href: '/dashboard/categorias',
+        href: '/dashboard/categories',
     },
     {
         title: 'Editar Categoría',
@@ -18,6 +18,7 @@ export default function Edit({ category }) {
     const { data, setData, put, processing, errors } = useForm({
         name: category.name || '',
         description: category.description || '',
+        show: category.show ?? true,
     });
 
     const { handleResponse } = useInertiaResponse();

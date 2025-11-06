@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { timeAgo } from '@/utils/date';
-import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Edit, Eye, EyeOff, MoreHorizontal, Trash2 } from 'lucide-react';
 
 // Componente reutilizable para acciones
 const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false }) => (
@@ -273,6 +273,16 @@ export const categoryColumns = (actions, isDeleting = false) => [
         truncate: true,
     },
     {
+        key: 'show',
+        label: 'Visible',
+        sortable: true,
+        render: (value) => (
+            <div className="flex justify-center">
+                {value ? <Eye className="h-4 w-4 text-green-600" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
+            </div>
+        ),
+    },
+    {
         key: 'origin',
         label: 'Origen',
         sortable: true,
@@ -292,6 +302,7 @@ export const categoryColumns = (actions, isDeleting = false) => [
         sortable: false,
         hideOnMobile: true,
         truncate: true,
+        render: (value) => <div className="flex justify-center">{value}</div>,
     },
     {
         key: 'actions',

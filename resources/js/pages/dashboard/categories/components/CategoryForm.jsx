@@ -2,8 +2,9 @@ import ButtonCustom from '@/components/ButtonCustom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, ChartBarStacked, Save } from 'lucide-react';
+import { ArrowLeft, ChartBarStacked, Eye, EyeOff, Save } from 'lucide-react';
 
 export default function CategoryForm({ data, setData, handleSubmit, processing, errors, isEditing = false }) {
     return (
@@ -56,6 +57,39 @@ export default function CategoryForm({ data, setData, handleSubmit, processing, 
                                             className={`h-32 resize-y ${errors.description ? 'border-red-500' : ''}`}
                                         />
                                         {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
+                                    </div>
+
+                                    {/* Switch de Visibilidad */}
+                                    <div className="space-y-2 rounded-lg border border-gray-200 p-4">
+                                        <div className="flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <Label htmlFor="category-show" className="text-sm font-medium">
+                                                    Visibilidad de la Categoría
+                                                </Label>
+                                                <p className="text-muted-foreground text-sm">
+                                                    {data.show
+                                                        ? 'La categoría está visible y disponible para seleccionar'
+                                                        : 'La categoría está oculta y no estará disponible'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
+                                                    {data.show ? (
+                                                        <Eye className="h-4 w-4 text-green-600" />
+                                                    ) : (
+                                                        <EyeOff className="h-4 w-4 text-gray-400" />
+                                                    )}
+                                                    <span className={`text-sm font-medium ${data.show ? 'text-green-600' : 'text-gray-600'}`}>
+                                                        {data.show ? 'Visible' : 'Oculta'}
+                                                    </span>
+                                                </div>
+                                                <Switch
+                                                    id="category-show"
+                                                    checked={data.show}
+                                                    onCheckedChange={(checked) => setData('show', checked)}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Botones */}

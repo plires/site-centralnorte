@@ -18,6 +18,7 @@ export default function Create() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         description: '',
+        show: true,
     });
 
     const { handleResponse } = useInertiaResponse();

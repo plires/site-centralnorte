@@ -3,6 +3,8 @@ import { Separator } from '@/components/ui/separator';
 import { ChartBarStacked, FileText, Tag } from 'lucide-react';
 
 export default function CategoryInfoCard({ category }) {
+    const { label } = category.origin_config;
+
     return (
         <Card>
             <CardHeader>
@@ -10,7 +12,7 @@ export default function CategoryInfoCard({ category }) {
                     <ChartBarStacked className="mr-2 h-5 w-5" />
                     Información de la Categoría
                 </CardTitle>
-                <CardDescription>Productos de esta Categoría</CardDescription>
+                <CardDescription>Datos de esta Categoría</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
@@ -29,6 +31,26 @@ export default function CategoryInfoCard({ category }) {
                         <span className="text-sm font-medium text-gray-700">Descripción</span>
                     </div>
                     <p className="line-clamp-6 text-sm text-gray-900">{category.description || 'Sin descripción'}</p>
+                </div>
+
+                <Separator />
+
+                <div>
+                    <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">Origen</span>
+                    </div>
+                    <p className="line-clamp-6 text-sm text-gray-900">{label}</p>
+                </div>
+
+                <Separator />
+
+                <div>
+                    <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">Visibilidad</span>
+                    </div>
+                    <p className="line-clamp-6 text-sm text-gray-900">{category.show ? 'Categoría Activa' : 'Categoría Inactiva'}</p>
                 </div>
             </CardContent>
         </Card>
