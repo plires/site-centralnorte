@@ -6,6 +6,7 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
 use App\Models\ProductAttribute;
+use App\Models\ProductVariant;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -96,7 +97,8 @@ class ProductSyncService
             'errors' => 0,
             'total' => 0,
             'images_synced' => 0,
-            'attributes_synced' => 0
+            'attributes_synced' => 0,
+            'variants_synced' => 0
         ];
 
         try {
@@ -155,6 +157,13 @@ class ProductSyncService
                     if (!empty($attributes)) {
                         $this->syncProductAttributes($product, $attributes);
                         $stats['attributes_synced'] += count($attributes);
+                    }
+
+                    // ← AGREGAR ESTAS LÍNEAS: Sincronizar variantes
+                    $variants = $this->adapter->extractVariants($externalProduct);
+                    if (!empty($variants)) {
+                        $this->syncProductVariants($product, $variants);
+                        $stats['variants_synced'] += count($variants);
                     }
                 } catch (\Exception $e) {
                     $stats['errors']++;
@@ -335,6 +344,12 @@ class ProductSyncService
                 $this->syncProductAttributes($product, $attributes);
             }
 
+            // Sincronizar variantes
+            $variants = $this->adapter->extractVariants($externalProduct);
+            if (!empty($variants)) {
+                $this->syncProductVariants($product, $variants);
+            }
+
             DB::commit();
 
             Log::info("Product {$sku} synced successfully");
@@ -422,5 +437,57 @@ class ProductSyncService
         }
 
         return $stats;
+    }
+
+    /**
+     * Sincronizar variantes del producto
+     * 
+     * @param Product $product
+     * @param array $variants
+     * @return void
+     */
+    protected function syncProductVariants(Product $product, array $variants): void
+    {
+        try {
+            // Obtener SKUs existentes de variantes
+            $existingSkus = $product->variants()->pluck('sku')->toArray();
+            $newSkus = array_column($variants, 'sku');
+
+            // Eliminar variantes que ya no están en la API
+            $skusToDelete = array_diff($existingSkus, $newSkus);
+            if (!empty($skusToDelete)) {
+                $product->variants()->whereIn('sku', $skusToDelete)->delete();
+            }
+
+            // Agregar/actualizar variantes
+            foreach ($variants as $variantData) {
+                if (empty($variantData['sku'])) {
+                    continue;
+                }
+
+                ProductVariant::updateOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'sku' => $variantData['sku']
+                    ],
+                    [
+                        'external_id' => $variantData['external_id'],
+                        'size' => $variantData['size'],
+                        'color' => $variantData['color'],
+                        'element_1' => $variantData['element_1'],
+                        'element_2' => $variantData['element_2'],
+                        'element_3' => $variantData['element_3'],
+                        'stock' => $variantData['stock'],
+                        'primary_color' => $variantData['primary_color'],
+                        'secondary_color' => $variantData['secondary_color'],
+                        'variant_type' => $variantData['variant_type'],
+                    ]
+                );
+            }
+        } catch (\Exception $e) {
+            Log::error("Error syncing variants for product {$product->sku}", [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

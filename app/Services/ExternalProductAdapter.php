@@ -155,7 +155,7 @@ class ExternalProductAdapter
             'description' => $this->cleanDescription($externalProduct['description'] ?? null),
             'proveedor' => $this->extractSupplier($externalProduct),
             'last_price' => $this->parsePrice($externalProduct['price'] ?? $externalProduct['discountPrice'] ?? 0),
-            'category_ids' => $categoryIds, // ← AGREGAR ESTO
+            'category_ids' => $categoryIds,
         ];
     }
 
@@ -356,5 +356,86 @@ class ExternalProductAdapter
         }
 
         return $attributes;
+    }
+
+    /**
+     * Determinar si un producto es de tipo Apparel
+     * 
+     * @param array $externalProduct
+     * @return bool
+     */
+    protected function isApparelProduct(array $externalProduct): bool
+    {
+        if (!isset($externalProduct['families']) || !is_array($externalProduct['families'])) {
+            return false;
+        }
+
+        foreach ($externalProduct['families'] as $family) {
+            $description = $family['description'] ?? '';
+
+            // Buscar "Apparel" en la descripción de la familia (case insensitive)
+            if (stripos($description, 'Apparel') !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extraer variantes del producto desde la API
+     * 
+     * @param array $externalProduct (producto completo con 'products' y 'families')
+     * @return array
+     */
+    public function extractVariants(array $externalProduct): array
+    {
+        $variants = [];
+
+        // Los productos variantes vienen en el array 'products'
+        if (!isset($externalProduct['products']) || !is_array($externalProduct['products'])) {
+            return $variants;
+        }
+
+        // Determinar si es producto tipo Apparel
+        $isApparel = $this->isApparelProduct($externalProduct);
+        $variantType = $isApparel ? 'apparel' : 'standard';
+
+        foreach ($externalProduct['products'] as $variantData) {
+            // Validar que tenga SKU
+            if (empty($variantData['sku'])) {
+                Log::warning('Variant without SKU, skipping', $variantData);
+                continue;
+            }
+
+            $variant = [
+                'external_id' => $variantData['id'] ?? null,
+                'sku' => $variantData['sku'],
+                'stock' => $variantData['stock'] ?? 0,
+                'variant_type' => $variantType,
+                'primary_color' => $variantData['primary_color'] ?? null,
+                'secondary_color' => $variantData['secondary_color'] ?? null,
+            ];
+
+            if ($isApparel) {
+                // Para productos Apparel: guardar size y color
+                $variant['size'] = !empty($variantData['size']) ? $variantData['size'] : null;
+                $variant['color'] = !empty($variantData['color']) ? $variantData['color'] : null;
+                $variant['element_1'] = null;
+                $variant['element_2'] = null;
+                $variant['element_3'] = null;
+            } else {
+                // Para productos Standard: guardar element_description_1, 2, 3
+                $variant['size'] = null;
+                $variant['color'] = null;
+                $variant['element_1'] = $variantData['element_description_1'] ?? null;
+                $variant['element_2'] = $variantData['element_description_2'] ?? null;
+                $variant['element_3'] = $variantData['element_description_3'] ?? null;
+            }
+
+            $variants[] = $variant;
+        }
+
+        return $variants;
     }
 }

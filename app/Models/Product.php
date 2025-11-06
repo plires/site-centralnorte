@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\Category;
 use App\Models\ProductImage;
 use App\Models\ProductAttribute;
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,6 +24,68 @@ class Product extends Model
         'last_price',
     ];
 
+    /* Variantes start */
+    /**
+     * Relación con ProductVariant
+     */
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    /**
+     * Obtener solo variantes tipo Apparel
+     */
+    public function getApparelVariantsAttribute()
+    {
+        return $this->variants()->apparel()->get();
+    }
+
+    /**
+     * Obtener solo variantes tipo Standard
+     */
+    public function getStandardVariantsAttribute()
+    {
+        return $this->variants()->standard()->get();
+    }
+
+    /**
+     * Obtener stock total de todas las variantes
+     */
+    public function getTotalStockAttribute(): int
+    {
+        return $this->variants()->sum('stock');
+    }
+
+    /**
+     * Verificar si el producto tiene stock disponible
+     */
+    public function hasStock(): bool
+    {
+        return $this->variants()->where('stock', '>', 0)->exists();
+    }
+
+    /**
+     * Obtener variantes con stock disponible
+     */
+    public function getAvailableVariantsAttribute()
+    {
+        return $this->variants()->inStock()->get();
+    }
+
+    /**
+     * Verificar si el producto es de tipo Apparel
+     */
+    public function isApparel(): bool
+    {
+        // Revisar si tiene al menos una categoría que contenga "Apparel"
+        return $this->categories()
+            ->where('name', 'like', '%Apparel%')
+            ->exists();
+    }
+    /* Variantes end */
+
+    /* Atributos start */
     /**
      * Relación con ProductAttribute
      */
@@ -70,7 +133,9 @@ class Product extends Model
     {
         return $this->getAttributeValues('Material');
     }
+    /* Atributos end */
 
+    /* Categorias start */
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'category_product')
@@ -95,7 +160,9 @@ class Product extends Model
     {
         return $this->categories()->wherePivot('show', true)->get();
     }
+    /* Categorias end */
 
+    /* Imagenes  start */
     public function images()
     {
         return $this->hasMany(ProductImage::class);
@@ -105,11 +172,14 @@ class Product extends Model
     {
         return $this->hasOne(ProductImage::class)->where('is_featured', true);
     }
+    /* Imagenes  end */
 
+    /* Budgets start */
     public function budgetItems()
     {
         return $this->hasMany(BudgetItem::class);
     }
+    /* Budgets end */
 
     // Para el select con búsqueda
     public function scopeForSelect($query, $search = null)

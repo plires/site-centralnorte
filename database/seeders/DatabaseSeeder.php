@@ -11,6 +11,7 @@ use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\BudgetItemSeeder;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\ProductImageSeeder;
+use Database\Seeders\ProductVariantSeeder;
 use Database\Seeders\VendedoresUserSeeder;
 use Database\Seeders\ProductAttributeSeeder;
 
@@ -31,6 +32,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             ProductImageSeeder::class,
             ProductAttributeSeeder::class,
+            ProductVariantSeeder::class,
             ClientSeeder::class,
             BudgetSeeder::class,
             BudgetItemSeeder::class,

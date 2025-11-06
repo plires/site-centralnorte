@@ -173,6 +173,7 @@ class SyncProductsCommand extends Command
                 ['Updated', $stats['updated']],
                 ['Images Synced', $stats['images_synced']],
                 ['Attributes synced', $stats['attributes_synced']],
+                ['Variants synced', $stats['variants_synced']],
                 ['Errors', $stats['errors']],
             ]
         );
