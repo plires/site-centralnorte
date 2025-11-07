@@ -1,13 +1,13 @@
 import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
-import { ReadOnlyProductsAlert } from '@/components/dashboard/ReadOnlyProductsAlert';
 import { productColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
+import { SyncAllProductsButton } from './components/SyncAllProductsButton';
 
 const breadcrumbs = [
     {
@@ -52,7 +52,7 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
             <Head title="Productos" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
-                    <ReadOnlyProductsAlert lastSyncInfo={last_sync_info} />
+                    <SyncAllProductsButton lastSyncInfo={last_sync_info} />
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">

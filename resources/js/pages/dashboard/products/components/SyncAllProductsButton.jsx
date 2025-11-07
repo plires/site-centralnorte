@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { router } from '@inertiajs/react';
 import { Info, RefreshCw } from 'lucide-react';
 
-export function ReadOnlyProductsAlert({ lastSyncInfo, showSyncButton = true }) {
+export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true }) {
     const handleSync = () => {
         router.post(
             route('dashboard.products.sync'),
@@ -25,7 +25,7 @@ export function ReadOnlyProductsAlert({ lastSyncInfo, showSyncButton = true }) {
                 <div className="text-sm">
                     <p className="mb-1">Los productos se obtienen de una API externa y no se pueden editar directamente desde esta interfaz.</p>
                     {lastSyncInfo && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                             Última sincronización: <strong>{lastSyncInfo.last_sync_human}</strong>
                         </p>
                     )}
