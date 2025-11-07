@@ -119,21 +119,31 @@ export const budgetsColumns = (actions, isDeleting = false) => [
         key: 'status',
         label: 'Vigencia',
         sortable: false,
-        render: (value, row) => <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />,
+        render: (value, row) => (
+            <div className="text-center">
+                <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />
+            </div>
+        ),
     },
     {
         key: 'is_active',
         label: 'Estado',
         sortable: true,
         hideOnMobile: true,
-        render: (value, row) => {
-            return <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />;
-        },
+        render: (value, row) => (
+            <div className="text-center">
+                <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />
+            </div>
+        ),
     },
     {
         key: 'actions',
-        label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
     },
 ];
 
@@ -149,6 +159,7 @@ export const userColumns = (actions, isDeleting = false) => [
         sortable: true,
         hideOnMobile: true,
         truncate: true,
+        render: (value, row) => <div className="text-center">{value}</div>,
     },
     {
         key: 'role',
@@ -159,16 +170,28 @@ export const userColumns = (actions, isDeleting = false) => [
             const roleName = row.role?.name;
 
             if (!roleName) {
-                return <span className="text-gray-400 italic">Sin rol</span>;
+                return (
+                    <div className="text-center">
+                        <span className="text-gray-400 italic">Sin rol</span>
+                    </div>
+                );
             }
 
-            return <StatusBadge value={roleName} type={roleName} />;
+            return (
+                <div className="text-center">
+                    <StatusBadge value={roleName} type={roleName} />
+                </div>
+            );
         },
     },
     {
         key: 'actions',
-        label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
     },
 ];
 
@@ -182,6 +205,7 @@ export const clientsColumns = (actions, isDeleting = false) => [
         key: 'company',
         label: 'Empresa',
         sortable: true,
+        render: (value) => <div className="text-center">{value}</div>,
     },
     {
         key: 'created_at',
@@ -189,12 +213,16 @@ export const clientsColumns = (actions, isDeleting = false) => [
         sortable: true,
         hideOnMobile: true,
         truncate: true,
-        render: (value) => timeAgo(value),
+        render: (value) => <div className="text-center">{timeAgo(value)}</div>,
     },
     {
         key: 'actions',
-        label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
     },
 ];
 
@@ -210,12 +238,16 @@ export const rolesColumns = (actions, isDeleting = false) => [
         sortable: true,
         hideOnMobile: true,
         truncate: true,
-        render: (value) => timeAgo(value),
+        render: (value) => <div className="text-center">{timeAgo(value)}</div>,
     },
     {
         key: 'actions',
-        label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
     },
 ];
 
@@ -230,6 +262,7 @@ export const productColumns = (actions, isDeleting = false) => [
         label: 'Categoría',
         sortable: true,
         hideOnMobile: true,
+        truncate: true,
         render: (value, row) => {
             // Mostrar múltiples categorías
             if (!row.category_names || row.category_names.length === 0) {
@@ -248,14 +281,29 @@ export const productColumns = (actions, isDeleting = false) => [
         },
     },
     {
-        key: 'proveedor',
-        label: 'Proveedor',
+        key: 'origin',
+        label: 'Origen',
         sortable: true,
+        render: (value, row) => {
+            const { label, className } = row.origin_config;
+
+            return (
+                <div className="text-center">
+                    <Badge variant="outline" className={className}>
+                        {label}
+                    </Badge>
+                </div>
+            );
+        },
     },
     {
         key: 'actions',
-        label: '',
-        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
     },
 ];
 
@@ -290,9 +338,11 @@ export const categoryColumns = (actions, isDeleting = false) => [
             const { label, className } = row.origin_config;
 
             return (
-                <Badge variant="outline" className={className}>
-                    {label}
-                </Badge>
+                <div className="text-center">
+                    <Badge variant="outline" className={className}>
+                        {label}
+                    </Badge>
+                </div>
             );
         },
     },
@@ -306,11 +356,15 @@ export const categoryColumns = (actions, isDeleting = false) => [
     },
     {
         key: 'actions',
-        label: '',
+        label: 'Acciones',
         render: (value, row) => {
             const { is_external } = row.origin_config;
 
-            return <ActionsDropdown isExternal={is_external} row={row} actions={actions} isDeleting={isDeleting} />;
+            return (
+                <div className="text-center">
+                    <ActionsDropdown isExternal={is_external} row={row} actions={actions} isDeleting={isDeleting} />
+                </div>
+            );
         },
     },
 ];
