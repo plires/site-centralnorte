@@ -51,7 +51,7 @@ export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true, pro
                 </div>
                 {showSyncButton && (
                     <>
-                        <Button onClick={handleSync} variant="destructive" size="sm" className="ml-4 whitespace-nowrap">
+                        <Button onClick={handleSync} variant="destructive" disabled={loading} size="sm" className="ml-4 whitespace-nowrap">
                             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                             {loading ? 'Sincronizando...' : 'Sincronizar productos'}
                         </Button>
