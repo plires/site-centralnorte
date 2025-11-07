@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import { router } from '@inertiajs/react';
 import { Loader2, RefreshCw } from 'lucide-react';
 import PropTypes from 'prop-types';
@@ -11,6 +12,7 @@ function SyncProductButton({
     infoText = 'Este producto proviene de una API externa. Podés sincronizarlo individualmente para traer los últimos cambios. Usar solo si es imperativo.',
     postUrl,
 }) {
+    const { handleResponse } = useInertiaResponse();
     const [loading, setLoading] = useState(false);
 
     if (!isExternal) return null;
@@ -25,8 +27,7 @@ function SyncProductButton({
                 preserveScroll: true,
                 onStart: () => setLoading(true),
                 onFinish: () => setLoading(false),
-                onSuccess: () => toast.success('Sincronizado'),
-                onError: () => toast.error('Hubo un error, intente más tarde'),
+                ...handleResponse(), // ← Este hook maneja automáticamente los toasts
             },
         );
     };

@@ -132,7 +132,7 @@ class ProductController extends Controller
             $product = $this->syncService->syncOne($sku);
 
             if ($product) {
-                return redirect()->back()->with('success', "Producto {$sku} sincronizado correctamente.");
+                return redirect()->back()->with('success', "Producto {$product->name} sincronizado correctamente.");
             }
 
             return redirect()->back()->with('error', "No se pudo sincronizar el producto {$sku}. Verifica que exista en la API externa.");
