@@ -145,7 +145,7 @@ class ProductSyncService
                         $stats['updated']++;
                     }
 
-                    // Sincronizar imágenes si las proporciona la API
+                    // Sincronizar imágenes
                     $images = $this->adapter->extractImages($externalProduct);
                     if (!empty($images)) {
                         $this->syncProductImages($product, $images);
@@ -159,7 +159,7 @@ class ProductSyncService
                         $stats['attributes_synced'] += count($attributes);
                     }
 
-                    // ← AGREGAR ESTAS LÍNEAS: Sincronizar variantes
+                    // Sincronizar variantes
                     $variants = $this->adapter->extractVariants($externalProduct);
                     if (!empty($variants)) {
                         $this->syncProductVariants($product, $variants);
