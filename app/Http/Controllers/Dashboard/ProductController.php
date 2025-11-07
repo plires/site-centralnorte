@@ -115,7 +115,7 @@ class ProductController extends Controller
 
             return redirect()->back()->with(
                 'success',
-                "Sincronización exitosa: {$stats['created']} productos creados, {$stats['updated']} actualizados, {$stats['images_synced']} imágenes sincronizadas."
+                "Sincronización exitosa: {$stats['created']} productos creados, {$stats['updated']} actualizados, {$stats['images_synced']} imágenes, {$stats['attributes_synced']} atributos y {$stats['variants_synced']} variantes sincronizadas."
             );
         } catch (\Exception $e) {
             Log::error('Error en sincronización manual de productos: ' . $e->getMessage());
