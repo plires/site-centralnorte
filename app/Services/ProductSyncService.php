@@ -354,7 +354,7 @@ class ProductSyncService
 
             Log::info("Product {$sku} synced successfully");
 
-            return $product->fresh(['category', 'images', 'featuredImage']);
+            return $product->fresh(['categories', 'images', 'featuredImage']);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error syncing product {$sku}: " . $e->getMessage());
