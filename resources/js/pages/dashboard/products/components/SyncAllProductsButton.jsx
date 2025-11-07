@@ -1,3 +1,4 @@
+import { useSyncConfirmation } from '@/components/SyncConfirmationDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
@@ -5,13 +6,24 @@ import { router } from '@inertiajs/react';
 import { Info, Loader2, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
-export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true }) {
+export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true, productName = '' }) {
     const { handleResponse } = useInertiaResponse();
+    const { confirmSync, SyncConfirmationDialog } = useSyncConfirmation();
     const [loading, setLoading] = useState(false);
 
-    const handleSync = () => {
+    const handleSync = async () => {
         const url = route('dashboard.products.sync');
+        // Mostrar diálogo de confirmación
+        const confirmed = await confirmSync({
+            title: 'Sincronizar todos los productos externos',
+            description:
+                'Se actualizarán todos los productos desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes.',
+        });
 
+        // Si el usuario cancela, no hacer nada
+        if (!confirmed) return;
+
+        // Si confirma, ejecutar sincronización
         router.post(
             url,
             {},
@@ -38,10 +50,14 @@ export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true }) {
                     )}
                 </div>
                 {showSyncButton && (
-                    <Button onClick={handleSync} variant="destructive" size="sm" className="ml-4 whitespace-nowrap">
-                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                        {loading ? 'Sincronizando...' : 'Sincronizar productos'}
-                    </Button>
+                    <>
+                        <Button onClick={handleSync} variant="destructive" size="sm" className="ml-4 whitespace-nowrap">
+                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                            {loading ? 'Sincronizando...' : 'Sincronizar productos'}
+                        </Button>
+                        {/* Diálogo de confirmación */}
+                        <SyncConfirmationDialog />
+                    </>
                 )}
             </AlertDescription>
         </Alert>
