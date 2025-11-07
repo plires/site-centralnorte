@@ -39,9 +39,9 @@ class ProductVariantFactory extends Factory
       return array_merge($baseData, [
         'size' => $this->faker->randomElement(['XS', 'S', 'M', 'L', 'XL', 'XXL']),
         'color' => $this->faker->randomElement(['Rojo', 'Azul', 'Verde', 'Negro', 'Blanco', 'Gris']),
-        'element_1' => null,
-        'element_2' => null,
-        'element_3' => null,
+        'primary_color_text' => null,
+        'secondary_color_text' => null,
+        'material_text' => null,
       ]);
     }
 
@@ -49,9 +49,9 @@ class ProductVariantFactory extends Factory
     return array_merge($baseData, [
       'size' => null,
       'color' => null,
-      'element_1' => $this->faker->words(2, true),
-      'element_2' => $this->faker->words(2, true),
-      'element_3' => $this->faker->randomElement(['Algodón', 'Poliéster', 'Friselina', 'Nylon']),
+      'primary_color_text' => $this->faker->words(2, true),
+      'secondary_color_text' => $this->faker->words(2, true),
+      'material_text' => $this->faker->randomElement(['Algodón', 'Poliéster', 'Friselina', 'Nylon']),
     ]);
   }
 
@@ -64,9 +64,9 @@ class ProductVariantFactory extends Factory
       'variant_type' => ProductVariant::TYPE_APPAREL,
       'size' => $this->faker->randomElement(['XS', 'S', 'M', 'L', 'XL', 'XXL']),
       'color' => $this->faker->randomElement(['Rojo', 'Azul', 'Verde', 'Negro', 'Blanco', 'Gris']),
-      'element_1' => null,
-      'element_2' => null,
-      'element_3' => null,
+      'primary_color_text' => null,
+      'secondary_color_text' => null,
+      'material_text' => null,
     ]);
   }
 
@@ -79,9 +79,9 @@ class ProductVariantFactory extends Factory
       'variant_type' => ProductVariant::TYPE_STANDARD,
       'size' => null,
       'color' => null,
-      'element_1' => $this->faker->words(2, true),
-      'element_2' => $this->faker->words(2, true),
-      'element_3' => $this->faker->randomElement(['Algodón', 'Poliéster', 'Friselina', 'Nylon']),
+      'primary_color_text' => $this->faker->words(2, true),
+      'secondary_color_text' => $this->faker->words(2, true),
+      'material_text' => $this->faker->randomElement(['Algodón', 'Poliéster', 'Friselina', 'Nylon']),
     ]);
   }
 

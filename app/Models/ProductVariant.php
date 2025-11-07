@@ -19,9 +19,9 @@ class ProductVariant extends Model
     'sku',
     'size',
     'color',
-    'element_1',
-    'element_2',
-    'element_3',
+    'primary_color_text',
+    'secondary_color_text',
+    'material_text',
     'stock',
     'primary_color',
     'secondary_color',
@@ -87,9 +87,9 @@ class ProductVariant extends Model
 
     // Para standard, unir los 3 elementos
     $parts = array_filter([
-      $this->element_1,
-      $this->element_2,
-      $this->element_3,
+      $this->primary_color_text,
+      $this->secondary_color_text,
+      $this->material_text,
     ]);
     return implode(' / ', $parts);
   }

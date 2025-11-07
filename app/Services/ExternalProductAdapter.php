@@ -422,16 +422,16 @@ class ExternalProductAdapter
                 // Para productos Apparel: guardar size y color
                 $variant['size'] = !empty($variantData['size']) ? $variantData['size'] : null;
                 $variant['color'] = !empty($variantData['color']) ? $variantData['color'] : null;
-                $variant['element_1'] = null;
-                $variant['element_2'] = null;
-                $variant['element_3'] = null;
+                $variant['primary_color_text'] = null;
+                $variant['secondary_color_text'] = null;
+                $variant['material_text'] = null;
             } else {
                 // Para productos Standard: guardar element_description_1, 2, 3
                 $variant['size'] = null;
                 $variant['color'] = null;
-                $variant['element_1'] = $variantData['element_description_1'] ?? null;
-                $variant['element_2'] = $variantData['element_description_2'] ?? null;
-                $variant['element_3'] = $variantData['element_description_3'] ?? null;
+                $variant['primary_color_text'] = $variantData['element_description_1'] ?? null;
+                $variant['secondary_color_text'] = $variantData['element_description_2'] ?? null;
+                $variant['material_text'] = $variantData['element_description_3'] ?? null;
             }
 
             $variants[] = $variant;

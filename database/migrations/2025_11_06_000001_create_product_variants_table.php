@@ -22,9 +22,9 @@ return new class extends Migration
       $table->string('color')->nullable();
 
       // Campos para variantes STANDARD (element_description_1, 2, 3)
-      $table->string('element_1')->nullable(); // element_description_1
-      $table->string('element_2')->nullable(); // element_description_2
-      $table->string('element_3')->nullable(); // element_description_3
+      $table->string('primary_color_text')->nullable(); // element_description_1
+      $table->string('secondary_color_text')->nullable(); // element_description_2
+      $table->string('material_text')->nullable(); // element_description_3
 
       // Stock siempre se guarda
       $table->integer('stock')->default(0);
