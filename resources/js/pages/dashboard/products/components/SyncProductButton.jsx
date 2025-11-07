@@ -1,3 +1,4 @@
+import { useSyncConfirmation } from '@/components/SyncConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import { router } from '@inertiajs/react';
@@ -9,17 +10,32 @@ function SyncProductButton({
     sku,
     isExternal,
     className = '',
+    productName = '',
     infoText = 'Este producto proviene de una API externa. Podés sincronizarlo individualmente para traer los últimos cambios. Usar solo si es imperativo.',
     postUrl,
 }) {
     const { handleResponse } = useInertiaResponse();
+    const { confirmSync, SyncConfirmationDialog } = useSyncConfirmation();
+
     const [loading, setLoading] = useState(false);
 
     if (!isExternal) return null;
 
-    const handleSync = () => {
+    const handleSync = async () => {
         const url = postUrl ?? route('dashboard.products.sync.one', sku);
+        // Mostrar diálogo de confirmación
+        const confirmed = await confirmSync({
+            title: 'Sincronizar producto',
+            description:
+                'Se actualizarán todos los datos del producto desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes.',
+            productName: productName || 'Sin nombre',
+            sku: sku,
+        });
 
+        // Si el usuario cancela, no hacer nada
+        if (!confirmed) return;
+
+        // Si confirma, ejecutar sincronización
         router.post(
             url,
             {},
@@ -40,6 +56,8 @@ function SyncProductButton({
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
                 {loading ? 'Sincronizando...' : 'Sincronizar producto'}
             </Button>
+            {/* Diálogo de confirmación */}
+            <SyncConfirmationDialog />
         </div>
     );
 }
