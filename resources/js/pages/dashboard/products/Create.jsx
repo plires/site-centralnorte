@@ -21,6 +21,8 @@ export default function Create({ categories }) {
         description: '',
         proveedor: '',
         category_ids: [],
+        attributes: [],
+        variants: [],
     });
 
     const { handleResponse } = useInertiaResponse();

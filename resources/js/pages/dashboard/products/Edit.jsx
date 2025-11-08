@@ -15,6 +15,8 @@ export default function Edit({ product, categories, selected_category_ids }) {
         description: product.description || '',
         proveedor: product.proveedor || '',
         category_ids: selected_category_ids || [],
+        attributes: product.attributes || [],
+        variants: product.variants || [],
     });
 
     const { handleResponse } = useInertiaResponse();

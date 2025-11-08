@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Services\ProductSyncService;
@@ -158,11 +159,50 @@ class ProductController extends Controller
             'proveedor' => 'nullable|string|max:255',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'exists:categories,id',
+            // VALIDACIONES PARA ATRIBUTOS
+            'attributes' => 'nullable|array',
+            'attributes.*.attribute_name' => 'required_with:attributes|string|max:255',
+            'attributes.*.value' => 'required_with:attributes|string|max:255',
+            // VALIDACIONES PARA VARIANTES
+            'variants' => 'nullable|array',
+            'variants.*.sku' => 'required_with:variants|string|max:255|unique:product_variants,sku',
+            'variants.*.variant_type' => 'required_with:variants|in:apparel,standard',
+            'variants.*.stock' => 'nullable|integer|min:0',
+            'variants.*.size' => 'nullable|string|max:50',
+            'variants.*.color' => 'nullable|string|max:100',
+            'variants.*.primary_color_text' => 'nullable|string|max:255',
+            'variants.*.secondary_color_text' => 'nullable|string|max:255',
+            'variants.*.material_text' => 'nullable|string|max:255',
+            'variants.*.primary_color' => 'nullable|string|max:50',
+            'variants.*.secondary_color' => 'nullable|string|max:50',
         ]);
 
         try {
+
+            DB::beginTransaction();
+
             $product = Product::create($validated);
             $product->categories()->attach($validated['category_ids']);
+
+            // Crear variantes
+            if (!empty($validated['variants'])) {
+                foreach ($validated['variants'] as $variantData) {
+                    $product->variants()->create([
+                        'sku' => $variantData['sku'],
+                        'variant_type' => $variantData['variant_type'],
+                        'stock' => $variantData['stock'] ?? 0,
+                        'size' => $variantData['size'] ?? null,
+                        'color' => $variantData['color'] ?? null,
+                        'primary_color_text' => $variantData['primary_color_text'] ?? null,
+                        'secondary_color_text' => $variantData['secondary_color_text'] ?? null,
+                        'material_text' => $variantData['material_text'] ?? null,
+                        'primary_color' => $variantData['primary_color'] ?? null,
+                        'secondary_color' => $variantData['secondary_color'] ?? null,
+                    ]);
+                }
+            }
+
+            DB::commit();
 
             return redirect()->back()->with('success', "Producto '{$product->name}' creado correctamente.");
         } catch (\Exception $e) {
@@ -183,7 +223,7 @@ class ProductController extends Controller
         }
 
         // Cargar categorías del producto
-        $product->load('categories');
+        $product->load('categories', 'attributes', 'variants');
 
         $categories = Category::all();
 
@@ -212,9 +252,27 @@ class ProductController extends Controller
             'proveedor' => 'nullable|string|max:255',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'exists:categories,id',
+            // VALIDACIONES PARA ATRIBUTOS
+            'attributes' => 'nullable|array',
+            'attributes.*.attribute_name' => 'required_with:attributes|string|max:255',
+            'attributes.*.value' => 'required_with:attributes|string|max:255',
+            // VALIDACIONES PARA VARIANTES
+            'variants' => 'nullable|array',
+            'variants.*.sku' => 'required_with:variants|string|max:255',
+            'variants.*.variant_type' => 'required_with:variants|in:apparel,standard',
+            'variants.*.stock' => 'nullable|integer|min:0',
+            'variants.*.size' => 'nullable|string|max:50',
+            'variants.*.color' => 'nullable|string|max:100',
+            'variants.*.primary_color_text' => 'nullable|string|max:255',
+            'variants.*.secondary_color_text' => 'nullable|string|max:255',
+            'variants.*.material_text' => 'nullable|string|max:255',
+            'variants.*.primary_color' => 'nullable|string|max:50',
+            'variants.*.secondary_color' => 'nullable|string|max:50',
         ]);
 
         try {
+            DB::beginTransaction();
+
             $product->update([
                 'sku' => $validated['sku'],
                 'name' => $validated['name'],
@@ -224,6 +282,51 @@ class ProductController extends Controller
 
             // Sincronizar categorías (reemplaza todas)
             $product->categories()->sync($validated['category_ids']);
+
+            // 👇 AGREGAR: Sincronizar atributos
+            // Eliminar atributos existentes y crear nuevos
+            $product->attributes()->delete();
+            if (!empty($validated['attributes'])) {
+                foreach ($validated['attributes'] as $attrData) {
+                    $product->attributes()->create([
+                        'attribute_name' => $attrData['attribute_name'],
+                        'value' => $attrData['value'],
+                    ]);
+                }
+            }
+
+            // Sincronizar variantes
+            // Obtener SKUs existentes y nuevos
+            $existingSkus = $product->variants()->pluck('sku')->toArray();
+            $newSkus = collect($validated['variants'] ?? [])->pluck('sku')->toArray();
+
+            // Eliminar variantes que ya no están
+            $skusToDelete = array_diff($existingSkus, $newSkus);
+            if (!empty($skusToDelete)) {
+                $product->variants()->whereIn('sku', $skusToDelete)->delete();
+            }
+
+            // Actualizar o crear variantes
+            if (!empty($validated['variants'])) {
+                foreach ($validated['variants'] as $variantData) {
+                    $product->variants()->updateOrCreate(
+                        ['sku' => $variantData['sku']],
+                        [
+                            'variant_type' => $variantData['variant_type'],
+                            'stock' => $variantData['stock'] ?? 0,
+                            'size' => $variantData['size'] ?? null,
+                            'color' => $variantData['color'] ?? null,
+                            'primary_color_text' => $variantData['primary_color_text'] ?? null,
+                            'secondary_color_text' => $variantData['secondary_color_text'] ?? null,
+                            'material_text' => $variantData['material_text'] ?? null,
+                            'primary_color' => $variantData['primary_color'] ?? null,
+                            'secondary_color' => $variantData['secondary_color'] ?? null,
+                        ]
+                    );
+                }
+            }
+
+            DB::commit();
 
             return redirect()->back()->with('success', "Producto '{$product->name}' actualizado correctamente.");
         } catch (\Throwable $e) {

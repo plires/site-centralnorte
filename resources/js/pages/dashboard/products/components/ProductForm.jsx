@@ -10,6 +10,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Check, ChevronDown, Package, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import ProductAttributesSection from './ProductAttributesSection';
+import ProductVariantsSection from './ProductVariantsSection';
 
 export default function ProductForm({ data, setData, handleSubmit, processing, errors, categories, isEditing = false }) {
     const [open, setOpen] = useState(false);
@@ -173,6 +175,20 @@ export default function ProductForm({ data, setData, handleSubmit, processing, e
                                             Puedes seleccionar múltiples categorías para este producto
                                         </p>
                                     </div>
+
+                                    {/* Atributos */}
+                                    <ProductAttributesSection
+                                        attributes={data.attributes || []}
+                                        onChange={(attrs) => setData('attributes', attrs)}
+                                        errors={errors}
+                                    />
+
+                                    {/* Variantes */}
+                                    <ProductVariantsSection
+                                        variants={data.variants || []}
+                                        onChange={(vars) => setData('variants', vars)}
+                                        errors={errors}
+                                    />
 
                                     {/* Botones */}
                                     <div className="flex items-center justify-end space-x-4 pt-6">
