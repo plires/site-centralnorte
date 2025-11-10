@@ -183,7 +183,7 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                             <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center">
                                 <Grid3x3 className="mx-auto h-12 w-12 text-gray-400" />
                                 <p className="mt-2 text-sm text-gray-500">
-                                    No hay variantes tipo Standard. Haz clic en "Agregar Variante Standard" para comenzar.
+                                    No hay variantes tipo Standard (no apparel). Haz clic en "Agregar Variante Standard" para comenzar.
                                 </p>
                             </div>
                         ) : (
@@ -219,33 +219,33 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                 )}
                                             </div>
 
-                                            {/* Elemento 1 */}
+                                            {/* Nombre color primario */}
                                             <div className="space-y-2">
-                                                <Label>Elemento 1</Label>
+                                                <Label>Nombre color primario</Label>
                                                 <Input
                                                     value={variant.primary_color_text || ''}
                                                     onChange={(e) => updateVariant(index, 'primary_color_text', e.target.value)}
-                                                    placeholder="Descripción 1"
+                                                    placeholder="Nombre color primario"
                                                 />
                                             </div>
 
-                                            {/* Elemento 2 */}
+                                            {/* Nombre color secundario */}
                                             <div className="space-y-2">
-                                                <Label>Elemento 2</Label>
+                                                <Label>Nombre color secundario</Label>
                                                 <Input
                                                     value={variant.secondary_color_text || ''}
                                                     onChange={(e) => updateVariant(index, 'secondary_color_text', e.target.value)}
-                                                    placeholder="Descripción 2"
+                                                    placeholder="Nombre color secundario"
                                                 />
                                             </div>
 
-                                            {/* Elemento 3 */}
+                                            {/* Material */}
                                             <div className="space-y-2">
-                                                <Label>Elemento 3</Label>
+                                                <Label>Material</Label>
                                                 <Input
                                                     value={variant.material_text || ''}
                                                     onChange={(e) => updateVariant(index, 'material_text', e.target.value)}
-                                                    placeholder="Descripción 3"
+                                                    placeholder="Material"
                                                 />
                                             </div>
 
@@ -288,7 +288,7 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
 
                         <Button type="button" variant="outline" onClick={() => addVariant('standard')} className="w-full">
                             <Plus className="mr-2 h-4 w-4" />
-                            Agregar Variante Standard
+                            Agregar Variante Standard (no Apparel)
                         </Button>
                     </TabsContent>
                 </Tabs>

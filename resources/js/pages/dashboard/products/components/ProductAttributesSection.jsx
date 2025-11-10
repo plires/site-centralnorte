@@ -63,14 +63,14 @@ export default function ProductAttributesSection({ attributes, onChange, errors 
 
                                     {/* Valor */}
                                     <div className="space-y-2">
-                                        <div className="flex items-center justify-between">
+                                        <div className="relative flex items-center justify-between">
                                             <Label htmlFor={`attribute_value_${index}`}>Valor</Label>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => removeAttribute(index)}
-                                                className="h-8 text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                className="absolute right-0 h-8 text-red-600 hover:bg-red-50 hover:text-red-700"
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
