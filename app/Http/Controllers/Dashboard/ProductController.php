@@ -146,7 +146,7 @@ class ProductController extends Controller
     public function create()
     {
         return Inertia::render('dashboard/products/Create', [
-            'categories' => Category::all()
+            'categories' => Category::where('show', true)->get()
         ]);
     }
 
@@ -225,7 +225,7 @@ class ProductController extends Controller
         // Cargar categorías del producto
         $product->load('categories', 'attributes', 'variants');
 
-        $categories = Category::all();
+        $categories = Category::where('show', true)->get();
 
         return inertia('dashboard/products/Edit', [
             'product' => $product,
