@@ -17,6 +17,9 @@ import { useState } from 'react';
 export default function ImageItem({ image, product, isFeatured, onImageClick, onDeleteImage, onSetFeaturedImage }) {
     const [imageToDelete, setImageToDelete] = useState(null);
 
+    // Determinar si el producto es externo
+    const isExternal = product?.origin_config?.is_external || false;
+
     return (
         <div
             className={cn(
@@ -33,49 +36,69 @@ export default function ImageItem({ image, product, isFeatured, onImageClick, on
                 onClick={() => onImageClick(image.full_url)}
             />
 
-            {/* Botón Eliminar con AlertDialog */}
-            <AlertDialog>
-                <AlertDialogTrigger asChild>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-2 right-2 cursor-pointer bg-white/80 transition hover:bg-red-500 hover:text-white"
-                        onClick={() => setImageToDelete(image.id)}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </AlertDialogTrigger>
-
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar esta imagen?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Esta acción no se puede deshacer. La imagen será eliminada permanentemente del producto.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                onDeleteImage(product.id, imageToDelete);
-                                setImageToDelete(null);
-                            }}
+            {/* Botón Eliminar con AlertDialog - Solo para productos NO externos */}
+            {!isExternal && (
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 cursor-pointer bg-white/80 transition hover:bg-red-500 hover:text-white"
+                            onClick={() => setImageToDelete(image.id)}
                         >
-                            Eliminar
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </AlertDialogTrigger>
 
-            {/* Botón Destacar */}
-            <Button
-                variant="ghost"
-                size="icon"
-                className={`absolute top-2 left-2 cursor-pointer bg-white/80 transition hover:bg-green-600 hover:text-white ${isFeatured && 'cursor-default bg-green-600 text-white'}`}
-                onClick={!isFeatured ? () => onSetFeaturedImage(product.id, image.id) : undefined}
-            >
-                {isFeatured ? <Star className="h-4 w-4" /> : <StarOff className="h-4 w-4" />}
-            </Button>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar esta imagen?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Esta acción no se puede deshacer. La imagen será eliminada permanentemente del producto.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                                onClick={() => {
+                                    onDeleteImage(product.id, imageToDelete);
+                                    setImageToDelete(null);
+                                }}
+                            >
+                                Eliminar
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+            )}
+
+            {/* Indicador de imagen destacada - Siempre visible */}
+            {/* Para productos externos: solo muestra el indicador visual */}
+            {/* Para productos internos: permite cambiar la imagen destacada */}
+            {isExternal ? (
+                // Solo indicador visual para productos externos
+                isFeatured && (
+                    <div className="absolute top-2 left-2 rounded-md bg-green-600 p-2 text-white shadow-lg">
+                        <Star className="h-4 w-4 fill-white" />
+                    </div>
+                )
+            ) : (
+                // Botón interactivo para productos internos
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn(
+                        'absolute top-2 left-2 bg-white/80 transition',
+                        isFeatured
+                            ? 'cursor-default bg-green-600 text-white hover:bg-green-600 hover:text-white'
+                            : 'cursor-pointer hover:bg-green-600 hover:text-white',
+                    )}
+                    onClick={!isFeatured ? () => onSetFeaturedImage(product.id, image.id) : undefined}
+                    disabled={isFeatured}
+                >
+                    {isFeatured ? <Star className="h-4 w-4 fill-white" /> : <StarOff className="h-4 w-4" />}
+                </Button>
+            )}
         </div>
     );
 }
