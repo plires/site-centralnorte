@@ -17,7 +17,7 @@ export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true, pro
         const confirmed = await confirmSync({
             title: 'Sincronizar todos los productos externos',
             description:
-                'Se actualizarán todos los productos desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes.',
+                'Se actualizarán todos los productos desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes. Esta operación puede tardar unos minutos, no debe actualizar la página durante el proceso. ¿Deseas continuar?',
         });
 
         // Si el usuario cancela, no hacer nada

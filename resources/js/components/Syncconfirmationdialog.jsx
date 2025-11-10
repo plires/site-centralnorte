@@ -63,7 +63,7 @@ export function useSyncConfirmation() {
                             )}
                             <p className="text-gray-600">
                                 {syncData?.description ||
-                                    'Se sincronizará este producto con la API externa, sobrescribiendo los datos locales. ¿Deseas continuar?'}
+                                    'Se sincronizará este producto con la API externa, sobrescribiendo los datos locales. Esta operación puede tardar unos minutos, no debe actualizar la página durante el proceso.¿Deseas continuar?'}
                             </p>
                         </div>
 

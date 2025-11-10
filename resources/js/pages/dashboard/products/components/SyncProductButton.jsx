@@ -27,7 +27,7 @@ function SyncProductButton({
         const confirmed = await confirmSync({
             title: 'Sincronizar producto',
             description:
-                'Se actualizarán todos los datos del producto desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes.',
+                'Se actualizarán todos los datos del producto desde la API externa, incluyendo nombre, descripción, precio, imágenes, atributos y variantes. Esta operación puede tardar unos minutos, no debe actualizar la página durante el proceso. ¿Deseas continuar?',
             productName: productName || 'Sin nombre',
             sku: sku,
         });
