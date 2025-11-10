@@ -23,7 +23,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $query = Product::with('categories')->withoutTrashed();
+        $query = Product::with(['categories', 'featuredImage'])->withoutTrashed();
 
         // Filtro por origen
         if ($request->filled('origin')) {

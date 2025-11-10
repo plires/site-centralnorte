@@ -253,6 +253,26 @@ export const rolesColumns = (actions, isDeleting = false) => [
 
 export const productColumns = (actions, isDeleting = false) => [
     {
+        key: 'featured_image',
+        label: 'Imagen',
+        sortable: false,
+        render: (value, row) => {
+            const imageUrl = row.featured_image?.full_url || '/images/product-placeholder.jpg';
+            return (
+                <div className="flex justify-center">
+                    <img
+                        src={imageUrl}
+                        alt={row.name}
+                        className="h-12 w-12 rounded-md object-cover"
+                        onError={(e) => {
+                            e.target.src = '/images/product-placeholder.jpg';
+                        }}
+                    />
+                </div>
+            );
+        },
+    },
+    {
         key: 'name',
         label: 'Producto',
         sortable: true,

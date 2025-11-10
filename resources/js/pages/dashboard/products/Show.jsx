@@ -70,8 +70,6 @@ export default function Show({ product, is_readonly, last_sync_info }) {
     };
 
     const handleSetFeaturedImage = (productId, imageId) => {
-        const { is_external } = category.origin_config;
-
         router.patch(
             route('dashboard.products.images.set-featured', { product: productId, image: imageId }),
             {},
