@@ -192,7 +192,7 @@ class BudgetController extends Controller
             });
 
         // Cargar relaciones necesarias
-        $products = Product::with(['categories', 'featuredImage', 'images'])
+        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
             ->orderBy('name')
             ->get();
 
@@ -292,7 +292,7 @@ class BudgetController extends Controller
             });
 
         // Cargar relaciones necesarias
-        $products = Product::with(['categories', 'featuredImage', 'images'])
+        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
             ->orderBy('name')
             ->get();
 
