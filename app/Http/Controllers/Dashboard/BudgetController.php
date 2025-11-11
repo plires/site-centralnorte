@@ -262,7 +262,7 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
-        // Cargar relaciones necesarias (mantener la estructura original)
+        // Cargar relaciones necesarias 
         $budget->load([
             'client',
             'items' => function ($query) {
@@ -273,7 +273,8 @@ class BudgetController extends Controller
                             'featuredImage', // Y también la imagen destacada por separado
                             'categories' // Y las categorías
                         ]);
-                    }
+                    },
+                    'productVariant'
                 ])->orderBy('sort_order');
             }
         ]);
@@ -417,6 +418,7 @@ class BudgetController extends Controller
                 $budgetItem = BudgetItem::create([
                     'budget_id' => $budget->id,
                     'product_id' => $itemData['product_id'],
+                    'product_variant_id' => $itemData['product_variant_id'] ?? null,
                     'quantity' => (int) $itemData['quantity'],
                     'unit_price' => (float) $itemData['unit_price'],
                     'production_time_days' => isset($itemData['production_time_days']) && $itemData['production_time_days'] !== ''
@@ -551,9 +553,10 @@ class BudgetController extends Controller
                     'variant_group' => $itemData['variant_group'] ?? null
                 ]);
 
-                // Crear el item del presupuesto - CORREGIDO: Incluir is_selected
+                // Crear el item del presupuesto 
                 $budgetItem = $budget->items()->create([
                     'product_id' => $itemData['product_id'],
+                    'product_variant_id' => $itemData['product_variant_id'] ?? null,
                     'quantity' => (int) $itemData['quantity'],
                     'unit_price' => (float) $itemData['unit_price'],
                     'production_time_days' => !empty($itemData['production_time_days']) ? (int) $itemData['production_time_days'] : null,

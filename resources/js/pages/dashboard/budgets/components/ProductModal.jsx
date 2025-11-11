@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, CheckCircle, Package, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import ProductVariantSelector from './ProductVariantSelector';
 import VariantForm from './VariantForm';
 
 export default function ProductModal({ products, existingItems = [], editingItem = null, onClose, onSubmit, checkForDuplicates = null }) {
     // Estados principales
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isVariantMode, setIsVariantMode] = useState(false);
+    const [selectedProductVariantId, setSelectedProductVariantId] = useState(null);
     const [variants, setVariants] = useState([]);
     const [errors, setErrors] = useState([]);
     const [warnings, setWarnings] = useState([]);
@@ -58,6 +60,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
             if (product) {
                 setSelectedProduct(product);
                 setIsVariantMode(false);
+                setSelectedProductVariantId(editingItem.product_variant_id || null);
 
                 setVariants([
                     {
@@ -78,6 +81,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
         setVariants([createEmptyVariant()]);
         setErrors([]);
         setWarnings([]);
+        setSelectedProductVariantId(null);
     };
 
     const createEmptyVariant = () => ({
@@ -94,6 +98,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
         if (!product) return;
 
         setSelectedProduct(product);
+        setSelectedProductVariantId(null);
 
         // Crear nueva variante con precio del producto
         const newVariant = {
@@ -207,6 +212,14 @@ export default function ProductModal({ products, existingItems = [], editingItem
             setErrors(newErrors);
             setWarnings(newWarnings);
             return false;
+        }
+
+        // 1a. Validar selección de variante si el producto tiene variantes
+        if (selectedProduct.variants && selectedProduct.variants.length > 0 && !selectedProductVariantId) {
+            newErrors.push({
+                field: 'product_variant',
+                message: 'Debe seleccionar una variante del producto',
+            });
         }
 
         // 2. Verificar duplicados en el presupuesto (solo si no estamos editando)
@@ -365,6 +378,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
             const item = {
                 id: itemId,
                 product_id: selectedProduct.id,
+                product_variant_id: selectedProductVariantId,
                 product: selectedProduct,
                 quantity,
                 unit_price: unitPrice,
@@ -442,6 +456,23 @@ export default function ProductModal({ products, existingItems = [], editingItem
                             <p className="mt-1 text-sm text-red-600">{errors.find((e) => e.field === 'product').message}</p>
                         )}
                     </div>
+
+                    {/* ⬅️ NUEVO: Selector de variantes del producto */}
+                    {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 && (
+                        <ProductVariantSelector
+                            product={selectedProduct}
+                            selectedVariantId={selectedProductVariantId}
+                            onVariantSelect={setSelectedProductVariantId}
+                        />
+                    )}
+
+                    {/* ⬅️ NUEVO: Mostrar error si no se seleccionó variante */}
+                    {errors.some((e) => e.field === 'product_variant') && (
+                        <Alert className="border-red-200 bg-red-50">
+                            <X className="h-4 w-4 text-red-600" />
+                            <AlertDescription className="text-red-800">{errors.find((e) => e.field === 'product_variant').message}</AlertDescription>
+                        </Alert>
+                    )}
 
                     {/* Alertas de advertencia */}
                     {warnings.length > 0 && (

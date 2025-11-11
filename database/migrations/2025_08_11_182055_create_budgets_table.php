@@ -20,6 +20,12 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained()->onDelete('restrict'); // Vendedor
             $table->foreignId('client_id')->constrained()->onDelete('restrict'); // Cliente
 
+            // campo para almacenar la variante del producto seleccionada
+            $table->foreignId('product_variant_id')
+                ->nullable()
+                // ->constrained('product_variants')
+                ->nullOnDelete();
+
             // Fechas
             $table->date('issue_date'); // Fecha de emisión
             $table->date('expiry_date'); // Fecha de vencimiento
@@ -44,6 +50,7 @@ return new class extends Migration
             $table->index(['user_id', 'is_active']);
             $table->index(['expiry_date', 'is_active']);
             $table->index('token');
+            $table->index('product_variant_id');
         });
     }
 

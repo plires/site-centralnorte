@@ -3,7 +3,9 @@
 
 namespace App\Models;
 
+use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BudgetItem extends Model
@@ -13,6 +15,7 @@ class BudgetItem extends Model
     protected $fillable = [
         'budget_id',
         'product_id',
+        'product_variant_id',
         'quantity',
         'unit_price',
         'production_time_days',
@@ -21,7 +24,7 @@ class BudgetItem extends Model
         'sort_order',
         'variant_group',
         'is_variant',
-        'is_selected', // NUEVO: Campo agregado
+        'is_selected',
     ];
 
     protected $casts = [
@@ -31,7 +34,7 @@ class BudgetItem extends Model
         'line_total' => 'decimal:2',
         'sort_order' => 'integer',
         'is_variant' => 'boolean',
-        'is_selected' => 'boolean', // NUEVO: Cast agregado
+        'is_selected' => 'boolean',
     ];
 
     protected static function boot()
@@ -62,6 +65,14 @@ class BudgetItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Relación con la variante del producto seleccionada
+     */
+    public function productVariant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
     // Scopes
