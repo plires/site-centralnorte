@@ -98,7 +98,30 @@ export default function ProductModal({ products, existingItems = [], editingItem
         if (!product) return;
 
         setSelectedProduct(product);
-        setSelectedProductVariantId(null);
+
+        // Auto-seleccionar primera variante si el producto tiene variantes
+        if (product.variants && product.variants.length > 0) {
+            // Determinar el tipo de producto
+            const isApparelProduct = product.categories?.some((category) => category.name?.toLowerCase().includes('apparel'));
+
+            // Filtrar variantes relevantes según el tipo
+            const relevantVariants = product.variants.filter((variant) => {
+                if (isApparelProduct) {
+                    return variant.variant_type === 'apparel';
+                } else {
+                    return variant.variant_type === 'standard';
+                }
+            });
+
+            // Seleccionar automáticamente la primera variante relevante
+            if (relevantVariants.length > 0) {
+                setSelectedProductVariantId(relevantVariants[0].id);
+            } else {
+                setSelectedProductVariantId(null);
+            }
+        } else {
+            setSelectedProductVariantId(null);
+        }
 
         // Crear nueva variante con precio del producto
         const newVariant = {
@@ -215,12 +238,12 @@ export default function ProductModal({ products, existingItems = [], editingItem
         }
 
         // 1a. Validar selección de variante si el producto tiene variantes
-        if (selectedProduct.variants && selectedProduct.variants.length > 0 && !selectedProductVariantId) {
-            newErrors.push({
-                field: 'product_variant',
-                message: 'Debe seleccionar una variante del producto',
-            });
-        }
+        // if (selectedProduct.variants && selectedProduct.variants.length > 0 && !selectedProductVariantId) {
+        //     newErrors.push({
+        //         field: 'product_variant',
+        //         message: 'Debe seleccionar una variante del producto',
+        //     });
+        // }
 
         // 2. Verificar duplicados en el presupuesto (solo si no estamos editando)
         if (!editingItem && checkForDuplicates) {
