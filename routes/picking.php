@@ -1,0 +1,119 @@
+<?php
+
+/**
+ * ===========================================================================
+ * RUTAS DE PICKING - Presupuestos de Armado de Kits
+ * ===========================================================================
+ * 
+ * Estas rutas manejan todo el módulo de presupuestos de picking/armado de kits.
+ * Acceso: Vendedores y Administradores
+ */
+
+
+use App\Http\Controllers\Dashboard\PickingBudgetController;
+use App\Http\Controllers\Dashboard\PickingConfigurationController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth'])->group(function () {
+
+    // ========================================================================
+    // PRESUPUESTOS DE PICKING
+    // ========================================================================
+    Route::prefix('picking')->name('picking.')->group(function () {
+
+        // Lista y gestión de presupuestos
+        Route::get('/', [PickingBudgetController::class, 'index'])
+            ->name('budgets.index');
+
+        Route::get('/create', [PickingBudgetController::class, 'create'])
+            ->name('budgets.create');
+
+        Route::post('/', [PickingBudgetController::class, 'store'])
+            ->name('budgets.store');
+
+        Route::get('/{pickingBudget}', [PickingBudgetController::class, 'show'])
+            ->name('budgets.show');
+
+        Route::get('/{pickingBudget}/edit', [PickingBudgetController::class, 'edit'])
+            ->name('budgets.edit');
+
+        Route::put('/{pickingBudget}', [PickingBudgetController::class, 'update'])
+            ->name('budgets.update');
+
+        Route::delete('/{pickingBudget}', [PickingBudgetController::class, 'destroy'])
+            ->name('budgets.destroy');
+
+        // Acciones especiales sobre presupuestos
+        Route::post('/{pickingBudget}/duplicate', [PickingBudgetController::class, 'duplicate'])
+            ->name('budgets.duplicate');
+
+        Route::post('/{pickingBudget}/send', [PickingBudgetController::class, 'send'])
+            ->name('budgets.send');
+
+        Route::get('/{pickingBudget}/pdf', [PickingBudgetController::class, 'downloadPdf'])
+            ->name('budgets.pdf');
+
+        // ====================================================================
+        // CONFIGURACIÓN (Solo Administradores)
+        // ====================================================================
+        Route::middleware(['role:admin'])->prefix('config')->name('config.')->group(function () {
+
+            // Gestión de Cajas
+            Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])
+                ->name('boxes');
+
+            Route::put('/boxes/{pickingBox}', [PickingConfigurationController::class, 'updateBox'])
+                ->name('boxes.update');
+
+            Route::post('/boxes', [PickingConfigurationController::class, 'storeBox'])
+                ->name('boxes.store');
+
+            Route::delete('/boxes/{pickingBox}', [PickingConfigurationController::class, 'destroyBox'])
+                ->name('boxes.destroy');
+
+            // Gestión de Escalas de Costos
+            Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
+                ->name('cost-scales');
+
+            Route::put('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'updateCostScale'])
+                ->name('cost-scales.update');
+
+            Route::post('/cost-scales', [PickingConfigurationController::class, 'storeCostScale'])
+                ->name('cost-scales.store');
+
+            Route::delete('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'destroyCostScale'])
+                ->name('cost-scales.destroy');
+
+            // Gestión de Incrementos por Componentes
+            Route::get('/component-increments', [PickingConfigurationController::class, 'componentIncrements'])
+                ->name('component-increments');
+
+            Route::put('/component-increments/{pickingComponentIncrement}', [PickingConfigurationController::class, 'updateComponentIncrement'])
+                ->name('component-increments.update');
+
+            Route::post('/component-increments', [PickingConfigurationController::class, 'storeComponentIncrement'])
+                ->name('component-increments.store');
+
+            Route::delete('/component-increments/{pickingComponentIncrement}', [PickingConfigurationController::class, 'destroyComponentIncrement'])
+                ->name('component-increments.destroy');
+        });
+    });
+
+    // ========================================================================
+    // API - RUTAS AJAX PARA CÁLCULOS EN TIEMPO REAL
+    // ========================================================================
+    Route::prefix('api/picking')->name('api.picking.')->group(function () {
+
+        // Calcular totales del presupuesto en tiempo real
+        Route::post('/calculate', [PickingBudgetController::class, 'calculateTotals'])
+            ->name('calculate');
+
+        // Obtener escala de costos según cantidad de kits
+        Route::get('/cost-scale/{quantity}', [PickingBudgetController::class, 'getCostScaleForQuantity'])
+            ->name('cost-scale');
+
+        // Obtener incremento según cantidad de componentes
+        Route::get('/component-increment/{components}', [PickingBudgetController::class, 'getComponentIncrementForQuantity'])
+            ->name('component-increment');
+    });
+});
