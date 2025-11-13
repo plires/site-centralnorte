@@ -10,10 +10,13 @@ use Database\Seeders\ClientSeeder;
 use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\BudgetItemSeeder;
 use Database\Seeders\PermissionSeeder;
+use Database\Seeders\PickingBoxSeeder;
 use Database\Seeders\ProductImageSeeder;
 use Database\Seeders\ProductVariantSeeder;
 use Database\Seeders\VendedoresUserSeeder;
+use Database\Seeders\PickingCostScaleSeeder;
 use Database\Seeders\ProductAttributeSeeder;
+use Database\Seeders\PickingComponentIncrementSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -36,6 +39,9 @@ class DatabaseSeeder extends Seeder
             ClientSeeder::class,
             BudgetSeeder::class,
             BudgetItemSeeder::class,
+            PickingBoxSeeder::class,
+            PickingCostScaleSeeder::class,
+            PickingComponentIncrementSeeder::class,
         ]);
     }
 }
