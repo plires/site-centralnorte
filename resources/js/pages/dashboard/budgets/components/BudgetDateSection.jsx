@@ -3,8 +3,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getTodayISO, getTomorrowISO } from '@/utils/dateUtils';
 import { CalendarDays } from 'lucide-react';
+import VendedorCombobox from './VendedorCombobox';
 
 export default function BudgetDateSection({ data, setData, errors, user, isEditing = false }) {
+    // Verificar si el usuario actual es admin
+    const isAdmin = user?.role?.name === 'admin';
+
     const getMinIssueDate = () => {
         // Si está editando, no aplicar restricción mínima (aunque no debería ser editable)
         if (isEditing) {
@@ -120,7 +124,22 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
 
                 <div>
                     <Label>Vendedor</Label>
-                    <p className="rounded-md bg-gray-50 px-3 py-2 text-sm font-medium">{user.name}</p>
+                    {/* Si es admin y está editando, mostrar combobox */}
+                    {isAdmin && isEditing ? (
+                        <>
+                            <VendedorCombobox
+                                value={data.user_id}
+                                onChange={(vendedorId) => setData('user_id', parseInt(vendedorId))}
+                                error={errors.user_id}
+                                placeholder="Seleccionar vendedor..."
+                            />
+                            {errors.user_id && <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>}
+                            <p className="mt-1 text-xs text-gray-500">Como administrador puede cambiar el vendedor asignado</p>
+                        </>
+                    ) : (
+                        /* Para todos los demás casos, mostrar texto readonly */
+                        <p className="rounded-md bg-gray-50 px-3 py-2 text-sm font-medium">{user.name}</p>
+                    )}
                 </div>
             </CardContent>
         </Card>

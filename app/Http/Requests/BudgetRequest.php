@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class BudgetRequest extends FormRequest
@@ -21,8 +22,10 @@ class BudgetRequest extends FormRequest
     public function rules(): array
     {
         $isEditing = $this->isMethod('PUT') || $this->isMethod('PATCH');
+        $user = Auth::user();
+        $isAdmin = $user && $user->role && $user->role->name === 'admin';
 
-        return [
+        $rules = [
             'title' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
             'issue_date' => $this->getIssueDateRules($isEditing),
@@ -43,6 +46,13 @@ class BudgetRequest extends FormRequest
             'items.*.line_total' => 'nullable|numeric',
             'items.*.product' => 'nullable|array',
         ];
+
+        // Si es admin y está editando, permitir cambiar el user_id
+        if ($isAdmin && $isEditing) {
+            $rules['user_id'] = 'required|exists:users,id';
+        }
+
+        return $rules;
     }
 
     /**
@@ -139,6 +149,9 @@ class BudgetRequest extends FormRequest
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',
 
+            'user_id.required' => 'Debe seleccionar un vendedor.',
+            'user_id.exists' => 'El vendedor seleccionado no existe.',
+
             'issue_date.required' => 'La fecha de emisión es obligatoria.',
             'issue_date.date' => 'La fecha de emisión debe ser una fecha válida.',
 
@@ -188,6 +201,7 @@ class BudgetRequest extends FormRequest
         return [
             'title' => 'título',
             'client_id' => 'cliente',
+            'user_id' => 'vendedor',
             'issue_date' => 'fecha de emisión',
             'expiry_date' => 'fecha de vencimiento',
             'send_email_to_client' => 'envío automático al cliente',

@@ -265,6 +265,7 @@ class BudgetController extends Controller
         // Cargar relaciones necesarias 
         $budget->load([
             'client',
+            'user', // Cargar el usuario/vendedor asignado
             'items' => function ($query) {
                 $query->with([
                     'product' => function ($query) {
@@ -302,6 +303,7 @@ class BudgetController extends Controller
                 'id' => $budget->id,
                 'title' => $budget->title,
                 'client_id' => $budget->client_id,
+                'user_id' => $budget->user_id, // Enviar el user_id al frontend
                 'issue_date' => $budget->issue_date_iso, // Usar accessor para input HTML
                 'expiry_date' => $budget->expiry_date_iso, // Usar accessor para input HTML
                 'send_email_to_client' => $budget->send_email_to_client,
@@ -327,22 +329,30 @@ class BudgetController extends Controller
             DB::beginTransaction();
 
             $user = Auth::user();
+            $isAdmin = $user->role->name === 'admin';
 
             // Verificar permisos
-            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+            if (!$isAdmin && $budget->user_id !== $user->id) {
                 abort(403, 'No tienes permisos para editar este presupuesto.');
             }
 
-            // Los datos ya están validados por BudgetRequest
-            // Actualizar datos básicos del presupuesto
-            $budget->update([
+            // Preparar datos de actualización
+            $updateData = [
                 'title' => $request->title,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date, // En edición no debería cambiar, pero si llega se valida
                 'expiry_date' => $request->expiry_date,
                 'send_email_to_client' => $request->boolean('send_email_to_client'),
                 'footer_comments' => $request->footer_comments,
-            ]);
+            ];
+
+            // Si es admin y se envió user_id, permitir cambiar el vendedor asignado
+            if ($isAdmin && $request->has('user_id')) {
+                $updateData['user_id'] = $request->user_id;
+            }
+
+            // Actualizar datos básicos del presupuesto
+            $budget->update($updateData);
 
             // Eliminar items existentes y recrear
             $budget->items()->delete();
@@ -406,15 +416,6 @@ class BudgetController extends Controller
 
         foreach ($items as $index => $itemData) {
             try {
-                // Log para debug
-                Log::info('Creating budget item', [
-                    'index' => $index,
-                    'product_id' => $itemData['product_id'],
-                    'is_variant' => $itemData['is_variant'] ?? false,
-                    'is_selected' => $itemData['is_selected'] ?? true,
-                    'variant_group' => $itemData['variant_group'] ?? null
-                ]);
-
                 $budgetItem = BudgetItem::create([
                     'budget_id' => $budget->id,
                     'product_id' => $itemData['product_id'],
@@ -441,12 +442,6 @@ class BudgetController extends Controller
                         'last_price' => $newPrice
                     ];
                 }
-
-                Log::info('Budget item created successfully', [
-                    'item_id' => $budgetItem->id,
-                    'product_id' => $itemData['product_id'],
-                    'is_selected' => $budgetItem->is_selected
-                ]);
             } catch (\Exception $e) {
                 Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
                 throw $e;
@@ -458,7 +453,6 @@ class BudgetController extends Controller
             foreach ($productPriceUpdates as $update) {
                 Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
             }
-            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
         }
     }
 
@@ -534,8 +528,6 @@ class BudgetController extends Controller
         $productPriceUpdates = [];
         $sortOrder = 0;
 
-        Log::info('Processing budget items', ['count' => count($items)]);
-
         foreach ($items as $index => $itemData) {
             try {
                 // Validar que los datos requeridos estén presentes
@@ -543,15 +535,6 @@ class BudgetController extends Controller
                     Log::error('Missing required item data', ['index' => $index, 'item' => $itemData]);
                     throw new \Exception("Datos incompletos en el item {$index}");
                 }
-
-                // Log para debug (igual que createBudgetItems)
-                Log::info('Creating budget item', [
-                    'index' => $index,
-                    'product_id' => $itemData['product_id'],
-                    'is_variant' => $itemData['is_variant'] ?? false,
-                    'is_selected' => $itemData['is_selected'] ?? true,
-                    'variant_group' => $itemData['variant_group'] ?? null
-                ]);
 
                 // Crear el item del presupuesto 
                 $budgetItem = $budget->items()->create([
@@ -565,7 +548,7 @@ class BudgetController extends Controller
                     'sort_order' => $sortOrder++,
                     'variant_group' => $itemData['variant_group'] ?? null,
                     'is_variant' => (bool) ($itemData['is_variant'] ?? false),
-                    'is_selected' => isset($itemData['is_selected']) ? (bool) $itemData['is_selected'] : true, // AGREGADO: Manejo de is_selected
+                    'is_selected' => isset($itemData['is_selected']) ? (bool) $itemData['is_selected'] : true, // Manejo de is_selected
                 ]);
 
                 // Preparar actualización de precio del producto si es diferente
@@ -578,12 +561,6 @@ class BudgetController extends Controller
                         'last_price' => $newPrice
                     ];
                 }
-
-                Log::info('Budget item created successfully', [
-                    'item_id' => $budgetItem->id,
-                    'product_id' => $itemData['product_id'],
-                    'is_selected' => $budgetItem->is_selected // AGREGADO: Log del is_selected
-                ]);
             } catch (\Exception $e) {
                 Log::error('Error creating budget item', ['index' => $index, 'error' => $e->getMessage(), 'item' => $itemData]);
                 throw $e;
@@ -595,7 +572,6 @@ class BudgetController extends Controller
             foreach ($productPriceUpdates as $update) {
                 Product::where('id', $update['id'])->update(['last_price' => $update['last_price']]);
             }
-            Log::info('Product prices updated', ['count' => count($productPriceUpdates)]);
         }
     }
 
@@ -635,11 +611,6 @@ class BudgetController extends Controller
                     // 'sent_to_client' => false,
                 ]
             ]);
-
-            Log::info("Notificación de aviso programada para presupuesto #{$budget->id}", [
-                'scheduled_for' => $warningDate->format('Y-m-d H:i:s'),
-                'days_before_expiry' => $warningDays
-            ]);
         }
 
         // Notificación el día del vencimiento
@@ -653,10 +624,6 @@ class BudgetController extends Controller
                 // 'sent_to_seller' => false,
                 // 'sent_to_client' => false,
             ]
-        ]);
-
-        Log::info("Notificación de vencimiento programada para presupuesto #{$budget->id}", [
-            'scheduled_for' => $budget->expiry_date->format('Y-m-d H:i:s')
         ]);
     }
 
@@ -689,11 +656,6 @@ class BudgetController extends Controller
             $budget->update([
                 'email_sent' => true,
                 'email_sent_at' => now(),
-            ]);
-
-            Log::info('Email de presupuesto enviado', [
-                'budget_id' => $budget->id,
-                'client_email' => $budget->client->email
             ]);
 
             return true;
