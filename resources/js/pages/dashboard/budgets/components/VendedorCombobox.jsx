@@ -40,7 +40,6 @@ export default function VendedorCombobox({ value, onChange, error, placeholder =
 
     // Obtener vendedor seleccionado
     const selectedVendedor = vendedores.find((v) => v.value.toString() === value?.toString());
-    console.log(selectedVendedor);
 
     // Filtrar vendedores según búsqueda
     const filteredVendedores = searchTerm

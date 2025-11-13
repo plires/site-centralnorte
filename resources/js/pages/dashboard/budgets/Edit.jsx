@@ -29,6 +29,7 @@ export default function Edit({ budget, clients, products, user, businessConfig }
         send_email_to_client: budget.send_email_to_client,
         footer_comments: budget.footer_comments || '',
         items: budget.items || [],
+        user_id: budget.user_id,
     });
 
     const { handleResponse } = useInertiaResponse();
