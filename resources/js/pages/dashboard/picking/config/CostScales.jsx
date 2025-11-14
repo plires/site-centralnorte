@@ -108,12 +108,12 @@ export default function CostScales({ scales: initialScales }) {
                     value={value || ''}
                     onChange={(e) => handleCellChange(index, field, e.target.value)}
                     placeholder={placeholder}
-                    className={`h-9 ${className}`}
+                    className={`h-7 px-2 text-xs ${className}`}
                     step={type === 'number' ? '0.01' : undefined}
                 />
             );
         }
-        return <span className="font-medium">{value || '-'}</span>;
+        return <span className="text-xs font-medium">{value || '-'}</span>;
     };
 
     return (
@@ -121,15 +121,13 @@ export default function CostScales({ scales: initialScales }) {
             <Head title="Configuración - Escalas de Costos" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-[1800px] sm:px-6 lg:px-8">
+                <div className="max-w-8xl mx-auto py-12 sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
-                            <div className="flex items-center justify-between">
+                            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
-                                    <h1 className="text-3xl font-bold">Configuración de Escalas de Costos</h1>
-                                    <p className="text-muted-foreground mt-1">
-                                        Gestiona las escalas de precios según la cantidad de kits
-                                    </p>
+                                    <h3 className="text-lg font-medium">Configuración de Escalas de Costos</h3>
+                                    <p className="text-muted-foreground mt-1 text-sm">Gestiona las escalas de precios según la cantidad de kits</p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center space-x-2">
@@ -147,7 +145,7 @@ export default function CostScales({ scales: initialScales }) {
                                 </div>
                             </div>
 
-                            <Card className="mt-6">
+                            <Card styles={{ width: '40%' }}>
                                 <CardHeader>
                                     <CardTitle>Listado de Escalas de Costos</CardTitle>
                                     <CardDescription>
@@ -156,37 +154,46 @@ export default function CostScales({ scales: initialScales }) {
                                             : '📋 Vista de solo lectura: Activa el modo edición para modificar'}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="overflow-x-auto rounded-md border">
+                                <CardContent className="p-0">
+                                    <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="sticky left-0 z-10 bg-white">#</TableHead>
-                                                    <TableHead className="min-w-[120px]">Cantidad Desde</TableHead>
-                                                    <TableHead className="min-w-[120px]">Cantidad Hasta</TableHead>
-                                                    <TableHead className="min-w-[140px]">Sin Armado ($)</TableHead>
-                                                    <TableHead className="min-w-[140px]">Con Armado ($)</TableHead>
-                                                    <TableHead className="min-w-[180px]">Pallet. Sin Pallet ($)</TableHead>
-                                                    <TableHead className="min-w-[180px]">Pallet. Con Pallet ($)</TableHead>
-                                                    <TableHead className="min-w-[150px]">Con Rotulado ($)</TableHead>
-                                                    <TableHead className="min-w-[150px]">Sin Rotulado ($)</TableHead>
-                                                    <TableHead className="min-w-[160px]">Ensamble Adic. ($)</TableHead>
-                                                    <TableHead className="min-w-[160px]">Control Calidad ($)</TableHead>
-                                                    <TableHead className="min-w-[120px]">Domes ($/u)</TableHead>
-                                                    <TableHead className="min-w-[130px]">Viruta 50g ($/u)</TableHead>
-                                                    <TableHead className="min-w-[140px]">Viruta 100g ($/u)</TableHead>
-                                                    <TableHead className="min-w-[140px]">Viruta 200g ($/u)</TableHead>
-                                                    <TableHead className="min-w-[130px]">Bolsa 10x15 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[130px]">Bolsa 20x30 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[130px]">Bolsa 35x45 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[150px]">Burb. 5x10 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[150px]">Burb. 10x15 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[150px]">Burb. 20x30 ($/u)</TableHead>
-                                                    <TableHead className="min-w-[150px]">T. Producción</TableHead>
-                                                    <TableHead className="min-w-[100px]">Estado</TableHead>
+                                                <TableRow className="text-xs">
+                                                    {isEditMode ? (
+                                                        <>
+                                                            <TableHead className="sticky left-0 z-10 min-w-[90px] bg-white px-2 py-2 text-xs">
+                                                                Desde
+                                                            </TableHead>
+                                                            <TableHead className="min-w-[90px] px-2 py-2 text-xs">Hasta</TableHead>
+                                                        </>
+                                                    ) : (
+                                                        <TableHead className="sticky left-0 z-10 min-w-[110px] bg-white px-2 py-2 text-xs">
+                                                            Rango
+                                                        </TableHead>
+                                                    )}
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Sin Armado</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Con Armado</TableHead>
+                                                    <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. S/Pallet</TableHead>
+                                                    <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. C/Pallet</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">C/Rotulado</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">S/Rotulado</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ens. Adic.</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ctrl Calidad</TableHead>
+                                                    <TableHead className="min-w-[85px] px-2 py-2 text-xs">Domes</TableHead>
+                                                    <TableHead className="min-w-[85px] px-2 py-2 text-xs">Viruta 50g</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 100g</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 200g</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 10x15</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 20x30</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 35x45</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 5x10</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 10x15</TableHead>
+                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 20x30</TableHead>
+                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">T. Produc.</TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">Estado</TableHead>
                                                     {isEditMode && (
-                                                        <TableHead className="sticky right-0 z-10 bg-white text-right">
-                                                            Acciones
+                                                        <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">
+                                                            Acc.
                                                         </TableHead>
                                                     )}
                                                 </TableRow>
@@ -194,28 +201,39 @@ export default function CostScales({ scales: initialScales }) {
                                             <TableBody>
                                                 {editedScales.map((scale, index) => (
                                                     <TableRow key={scale.id} className={scale.isNew ? 'bg-blue-50' : ''}>
-                                                        <TableCell className="text-muted-foreground sticky left-0 z-10 bg-white">
-                                                            {index + 1}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="quantity_from"
-                                                                value={scale.quantity_from}
-                                                                type="number"
-                                                                placeholder="1"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="quantity_to"
-                                                                value={scale.quantity_to}
-                                                                type="number"
-                                                                placeholder="o más"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell>
+                                                        {isEditMode ? (
+                                                            <>
+                                                                <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
+                                                                    <EditableCell
+                                                                        index={index}
+                                                                        field="quantity_from"
+                                                                        value={scale.quantity_from}
+                                                                        type="number"
+                                                                        placeholder="1"
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell className="px-2 py-2">
+                                                                    <EditableCell
+                                                                        index={index}
+                                                                        field="quantity_to"
+                                                                        value={scale.quantity_to}
+                                                                        type="number"
+                                                                        placeholder="o más"
+                                                                    />
+                                                                </TableCell>
+                                                            </>
+                                                        ) : (
+                                                            <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
+                                                                <span className="text-xs font-medium">
+                                                                    {scale.quantity_from && scale.quantity_to
+                                                                        ? `de ${scale.quantity_from} a ${scale.quantity_to}`
+                                                                        : scale.quantity_from
+                                                                          ? `${scale.quantity_from} o más`
+                                                                          : '-'}
+                                                                </span>
+                                                            </TableCell>
+                                                        )}
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="cost_without_assembly"
@@ -224,7 +242,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="cost_with_assembly"
@@ -233,7 +251,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="palletizing_without_pallet"
@@ -242,7 +260,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="palletizing_with_pallet"
@@ -251,7 +269,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="cost_with_labeling"
@@ -260,7 +278,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="cost_without_labeling"
@@ -269,7 +287,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="additional_assembly"
@@ -278,7 +296,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="quality_control"
@@ -287,7 +305,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="dome_sticking_unit"
@@ -296,7 +314,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="shavings_50g_unit"
@@ -305,7 +323,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="shavings_100g_unit"
@@ -314,7 +332,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="shavings_200g_unit"
@@ -323,7 +341,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bag_10x15_unit"
@@ -332,7 +350,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bag_20x30_unit"
@@ -341,7 +359,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bag_35x45_unit"
@@ -350,7 +368,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bubble_wrap_5x10_unit"
@@ -359,7 +377,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bubble_wrap_10x15_unit"
@@ -368,7 +386,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="bubble_wrap_20x30_unit"
@@ -377,7 +395,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="0.00"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             <EditableCell
                                                                 index={index}
                                                                 field="production_time"
@@ -386,28 +404,27 @@ export default function CostScales({ scales: initialScales }) {
                                                                 placeholder="24 hs"
                                                             />
                                                         </TableCell>
-                                                        <TableCell>
+                                                        <TableCell className="px-2 py-2">
                                                             {isEditMode ? (
                                                                 <Switch
                                                                     checked={scale.is_active}
-                                                                    onCheckedChange={(checked) =>
-                                                                        handleCellChange(index, 'is_active', checked)
-                                                                    }
+                                                                    onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
                                                                 />
                                                             ) : (
-                                                                <Badge variant={scale.is_active ? 'default' : 'secondary'}>
+                                                                <Badge variant={scale.is_active ? 'default' : 'secondary'} className="text-xs">
                                                                     {scale.is_active ? 'Activa' : 'Inactiva'}
                                                                 </Badge>
                                                             )}
                                                         </TableCell>
                                                         {isEditMode && (
-                                                            <TableCell className="sticky right-0 z-10 bg-white text-right">
+                                                            <TableCell className="sticky right-0 z-10 bg-white px-2 py-2 text-right">
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
                                                                     onClick={() => handleDeleteRow(index)}
+                                                                    className="h-7 w-7 p-0"
                                                                 >
-                                                                    <Trash2 className="text-destructive h-4 w-4" />
+                                                                    <Trash2 className="text-destructive h-3.5 w-3.5" />
                                                                 </Button>
                                                             </TableCell>
                                                         )}
@@ -417,11 +434,10 @@ export default function CostScales({ scales: initialScales }) {
                                                 {editedScales.length === 0 && (
                                                     <TableRow>
                                                         <TableCell
-                                                            colSpan={isEditMode ? 24 : 23}
-                                                            className="text-muted-foreground py-8 text-center"
+                                                            colSpan={isEditMode ? 23 : 22}
+                                                            className="text-muted-foreground py-8 text-center text-sm"
                                                         >
-                                                            No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear
-                                                            una.
+                                                            No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear una.
                                                         </TableCell>
                                                     </TableRow>
                                                 )}
@@ -430,7 +446,7 @@ export default function CostScales({ scales: initialScales }) {
                                     </div>
 
                                     {isEditMode && hasChanges && (
-                                        <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
+                                        <div className="m-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
                                                 <span className="text-sm font-medium text-amber-900">Tienes cambios sin guardar</span>
@@ -449,11 +465,10 @@ export default function CostScales({ scales: initialScales }) {
                                     )}
 
                                     {!isEditMode && (
-                                        <div className="bg-muted/50 mt-4 rounded-lg p-4">
+                                        <div className="bg-muted/50 m-6 rounded-lg p-4">
                                             <p className="text-muted-foreground text-sm">
-                                                💡 <strong>Tip:</strong> Activa el "Modo Edición" para modificar todas las celdas que
-                                                necesites y guardar todos los cambios de una sola vez. Usa scroll horizontal para ver
-                                                todas las columnas.
+                                                💡 <strong>Tip:</strong> Activa el "Modo Edición" para modificar todas las celdas que necesites y
+                                                guardar todos los cambios de una sola vez. Usa scroll horizontal para ver todas las columnas.
                                             </p>
                                         </div>
                                     )}
