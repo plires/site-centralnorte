@@ -115,6 +115,107 @@ class PickingConfigurationController extends Controller
     // ========================================================================
 
     /**
+     * Update all cost scales at once (bulk update)
+     */
+    public function updateAllCostScales(Request $request)
+    {
+        $validated = $request->validate([
+            'scales' => 'required|array',
+            'scales.*.id' => 'nullable',
+            'scales.*.quantity_from' => 'required|integer|min:1',
+            'scales.*.quantity_to' => 'nullable|integer|min:1',
+            'scales.*.cost_without_assembly' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.cost_with_assembly' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.palletizing_without_pallet' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.palletizing_with_pallet' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.cost_with_labeling' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.cost_without_labeling' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.additional_assembly' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.quality_control' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.dome_sticking_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.shavings_50g_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.shavings_100g_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.shavings_200g_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bag_10x15_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bag_20x30_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bag_35x45_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bubble_wrap_5x10_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bubble_wrap_10x15_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.bubble_wrap_20x30_unit' => 'required|numeric|min:0|max:999999.99',
+            'scales.*.production_time' => 'required|string|max:50',
+            'scales.*.is_active' => 'boolean',
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($validated['scales'] as $scaleData) {
+                if (isset($scaleData['id']) && !str_starts_with($scaleData['id'], 'new-')) {
+                    // Actualizar escala existente
+                    $scale = PickingCostScale::findOrFail($scaleData['id']);
+                    $scale->update([
+                        'quantity_from' => $scaleData['quantity_from'],
+                        'quantity_to' => $scaleData['quantity_to'] ?? null,
+                        'cost_without_assembly' => $scaleData['cost_without_assembly'],
+                        'cost_with_assembly' => $scaleData['cost_with_assembly'],
+                        'palletizing_without_pallet' => $scaleData['palletizing_without_pallet'],
+                        'palletizing_with_pallet' => $scaleData['palletizing_with_pallet'],
+                        'cost_with_labeling' => $scaleData['cost_with_labeling'],
+                        'cost_without_labeling' => $scaleData['cost_without_labeling'],
+                        'additional_assembly' => $scaleData['additional_assembly'],
+                        'quality_control' => $scaleData['quality_control'],
+                        'dome_sticking_unit' => $scaleData['dome_sticking_unit'],
+                        'shavings_50g_unit' => $scaleData['shavings_50g_unit'],
+                        'shavings_100g_unit' => $scaleData['shavings_100g_unit'],
+                        'shavings_200g_unit' => $scaleData['shavings_200g_unit'],
+                        'bag_10x15_unit' => $scaleData['bag_10x15_unit'],
+                        'bag_20x30_unit' => $scaleData['bag_20x30_unit'],
+                        'bag_35x45_unit' => $scaleData['bag_35x45_unit'],
+                        'bubble_wrap_5x10_unit' => $scaleData['bubble_wrap_5x10_unit'],
+                        'bubble_wrap_10x15_unit' => $scaleData['bubble_wrap_10x15_unit'],
+                        'bubble_wrap_20x30_unit' => $scaleData['bubble_wrap_20x30_unit'],
+                        'production_time' => $scaleData['production_time'],
+                        'is_active' => $scaleData['is_active'] ?? true,
+                    ]);
+                } else {
+                    // Crear nueva escala
+                    PickingCostScale::create([
+                        'quantity_from' => $scaleData['quantity_from'],
+                        'quantity_to' => $scaleData['quantity_to'] ?? null,
+                        'cost_without_assembly' => $scaleData['cost_without_assembly'],
+                        'cost_with_assembly' => $scaleData['cost_with_assembly'],
+                        'palletizing_without_pallet' => $scaleData['palletizing_without_pallet'],
+                        'palletizing_with_pallet' => $scaleData['palletizing_with_pallet'],
+                        'cost_with_labeling' => $scaleData['cost_with_labeling'],
+                        'cost_without_labeling' => $scaleData['cost_without_labeling'],
+                        'additional_assembly' => $scaleData['additional_assembly'],
+                        'quality_control' => $scaleData['quality_control'],
+                        'dome_sticking_unit' => $scaleData['dome_sticking_unit'],
+                        'shavings_50g_unit' => $scaleData['shavings_50g_unit'],
+                        'shavings_100g_unit' => $scaleData['shavings_100g_unit'],
+                        'shavings_200g_unit' => $scaleData['shavings_200g_unit'],
+                        'bag_10x15_unit' => $scaleData['bag_10x15_unit'],
+                        'bag_20x30_unit' => $scaleData['bag_20x30_unit'],
+                        'bag_35x45_unit' => $scaleData['bag_35x45_unit'],
+                        'bubble_wrap_5x10_unit' => $scaleData['bubble_wrap_5x10_unit'],
+                        'bubble_wrap_10x15_unit' => $scaleData['bubble_wrap_10x15_unit'],
+                        'bubble_wrap_20x30_unit' => $scaleData['bubble_wrap_20x30_unit'],
+                        'production_time' => $scaleData['production_time'],
+                        'is_active' => $scaleData['is_active'] ?? true,
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Todas las escalas de costos fueron actualizadas correctamente.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Error al actualizar las escalas de costos: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
      * Display cost scales configuration
      */
     public function costScales()

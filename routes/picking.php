@@ -75,6 +75,22 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
                 ->name('boxes.destroy');
 
             // Gestión de Escalas de Costos
+            // Gestión de Escalas de Costos
+            Route::put('/cost-scales/update-all', [PickingConfigurationController::class, 'updateAllCostScales'])
+                ->name('cost-scales.update-all');
+
+            Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
+                ->name('cost-scales');
+
+            Route::put('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'updateCostScale'])
+                ->name('cost-scales.update');
+
+            Route::post('/cost-scales', [PickingConfigurationController::class, 'storeCostScale'])
+                ->name('cost-scales.store');
+
+            Route::delete('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'destroyCostScale'])
+                ->name('cost-scales.destroy');
+
             Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
                 ->name('cost-scales');
 
