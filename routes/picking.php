@@ -59,6 +59,9 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
         Route::prefix('config')->name('config.')->group(function () {
 
             // Gestión de Cajas
+            Route::put('/boxes/update-all', [PickingConfigurationController::class, 'updateAllBoxes'])
+                ->name('boxes.update-all');
+
             Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])
                 ->name('boxes');
 

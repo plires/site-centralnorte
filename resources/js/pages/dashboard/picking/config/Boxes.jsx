@@ -2,240 +2,238 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
+import { Label } from '@/Components/ui/label';
+import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
-import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { Plus, Save, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-const breadcrumbs = [
-    {
-        title: 'Costos Cajas',
-        href: '/dashboard/picking/config/boxes',
-    },
-];
-
-export default function Boxes({ boxes }) {
+export default function Boxes({ boxes: initialBoxes }) {
     const { handleCrudResponse } = useInertiaResponse();
 
-    const [editingId, setEditingId] = useState(null);
-    const [isAdding, setIsAdding] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editedBoxes, setEditedBoxes] = useState([]);
+    const [hasChanges, setHasChanges] = useState(false);
 
-    const {
-        data,
-        setData,
-        put,
-        post,
-        delete: destroy,
-        processing,
-        reset,
-    } = useForm({
-        dimensions: '',
-        cost: '',
-        is_active: true,
-    });
+    // Inicializar editedBoxes cuando cambian las cajas
+    useEffect(() => {
+        setEditedBoxes(initialBoxes.map((box) => ({ ...box })));
+    }, [initialBoxes]);
 
-    const startEdit = (box) => {
-        setEditingId(box.id);
-        setData({
-            dimensions: box.dimensions,
-            cost: box.cost,
-            is_active: box.is_active,
-        });
-        setIsAdding(false);
+    const handleCellChange = (index, field, value) => {
+        const newBoxes = [...editedBoxes];
+        newBoxes[index] = {
+            ...newBoxes[index],
+            [field]: value,
+        };
+        setEditedBoxes(newBoxes);
+        setHasChanges(true);
     };
 
-    const startAdd = () => {
-        setIsAdding(true);
-        setEditingId(null);
-        reset();
-    };
-
-    const cancelEdit = () => {
-        setEditingId(null);
-        setIsAdding(false);
-        reset();
-    };
-
-    const handleSave = (id) => {
-        put(route('picking.config.boxes.update', id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setEditingId(null);
-                reset();
+    const handleSaveAll = () => {
+        // Enviar todas las cajas modificadas al backend
+        // router.put(
+        //     route('dashboard.picking.config.boxes.update-all'),
+        //     handleCrudResponse(() => {
+        //         // Callback de éxito: limpiar formulario
+        //         reset();
+        //     }),
+        // );
+        router.put(
+            route('dashboard.picking.config.boxes.update-all'),
+            {
+                boxes: editedBoxes,
             },
-        });
-    };
-
-    const handleCreate = () => {
-        post(route('picking.config.boxes.store'), {
-            preserveScroll: true,
-            onSuccess: () => {
-                setIsAdding(false);
-                reset();
-            },
-        });
-    };
-
-    const handleDelete = (id) => {
-        if (confirm('¿Estás seguro de desactivar esta caja?')) {
-            destroy(route('picking.config.boxes.destroy', id), {
+            {
                 preserveScroll: true,
-            });
+                onSuccess: () => {
+                    setIsEditMode(false);
+                    setHasChanges(false);
+                },
+            },
+        );
+    };
+
+    const handleCancel = () => {
+        // Restaurar valores originales
+        setEditedBoxes(initialBoxes.map((box) => ({ ...box })));
+        setIsEditMode(false);
+        setHasChanges(false);
+    };
+
+    const handleAddRow = () => {
+        const newBox = {
+            id: `new-${Date.now()}`,
+            dimensions: '',
+            cost: '',
+            is_active: true,
+            isNew: true,
+        };
+        setEditedBoxes([...editedBoxes, newBox]);
+        setHasChanges(true);
+        if (!isEditMode) {
+            setIsEditMode(true);
+        }
+    };
+
+    const handleDeleteRow = (index) => {
+        if (confirm('¿Estás seguro de eliminar esta caja?')) {
+            const newBoxes = [...editedBoxes];
+            newBoxes.splice(index, 1);
+            setEditedBoxes(newBoxes);
+            setHasChanges(true);
         }
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout>
             <Head title="Configuración - Cajas" />
 
-            <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-3xl font-bold">Configuración de Cajas</h1>
-                        <p className="text-muted-foreground mt-1">Gestiona las cajas disponibles para presupuestos de picking</p>
-                    </div>
-                    {!isAdding && (
-                        <Button onClick={startAdd}>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Nueva Caja
-                        </Button>
-                    )}
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Listado de Cajas</CardTitle>
-                        <CardDescription>
-                            Haz clic en el botón editar para modificar una caja. Los cambios se guardan individualmente.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="rounded-md border">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[40%]">Dimensiones (LxAxH)</TableHead>
-                                        <TableHead className="w-[25%]">Costo</TableHead>
-                                        <TableHead className="w-[20%]">Estado</TableHead>
-                                        <TableHead className="w-[15%] text-right">Acciones</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isAdding && (
-                                        <TableRow className="bg-muted/50">
-                                            <TableCell>
-                                                <Input
-                                                    type="text"
-                                                    placeholder="200 x 200 x 100"
-                                                    value={data.dimensions}
-                                                    onChange={(e) => setData('dimensions', e.target.value)}
-                                                    disabled={processing}
-                                                    autoFocus
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    placeholder="0.00"
-                                                    value={data.cost}
-                                                    onChange={(e) => setData('cost', e.target.value)}
-                                                    disabled={processing}
-                                                />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="default">Activa</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <Button size="sm" onClick={handleCreate} disabled={processing}>
-                                                        <Save className="mr-1 h-3 w-3" />
-                                                        Guardar
-                                                    </Button>
-                                                    <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={processing}>
-                                                        <X className="mr-1 h-3 w-3" />
-                                                        Cancelar
-                                                    </Button>
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
+            <div className="py-12">
+                <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
+                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        <div className="p-6 text-gray-900">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h1 className="text-3xl font-bold">Configuración de Cajas</h1>
+                                    <p className="text-muted-foreground mt-1">Gestiona las cajas disponibles para presupuestos de picking</p>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Switch id="edit-mode" checked={isEditMode} onCheckedChange={setIsEditMode} />
+                                        <Label htmlFor="edit-mode" className="cursor-pointer">
+                                            Modo Edición
+                                        </Label>
+                                    </div>
+                                    {!isEditMode && (
+                                        <Button onClick={handleAddRow}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            Agregar Fila
+                                        </Button>
                                     )}
+                                </div>
+                            </div>
 
-                                    {boxes.map((box) => (
-                                        <TableRow key={box.id}>
-                                            <TableCell>
-                                                {editingId === box.id ? (
-                                                    <Input
-                                                        type="text"
-                                                        value={data.dimensions}
-                                                        onChange={(e) => setData('dimensions', e.target.value)}
-                                                        disabled={processing}
-                                                    />
-                                                ) : (
-                                                    <span className="font-medium">{box.dimensions}</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {editingId === box.id ? (
-                                                    <Input
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={data.cost}
-                                                        onChange={(e) => setData('cost', e.target.value)}
-                                                        disabled={processing}
-                                                    />
-                                                ) : (
-                                                    <span>${parseFloat(box.cost).toFixed(2)}</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={box.is_active ? 'default' : 'secondary'}>
-                                                    {box.is_active ? 'Activa' : 'Inactiva'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {editingId === box.id ? (
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button size="sm" onClick={() => handleSave(box.id)} disabled={processing}>
-                                                            <Save className="mr-1 h-3 w-3" />
-                                                            Guardar
-                                                        </Button>
-                                                        <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={processing}>
-                                                            <X className="mr-1 h-3 w-3" />
-                                                            Cancelar
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex justify-end gap-2">
-                                                        <Button size="sm" variant="outline" onClick={() => startEdit(box)} disabled={isAdding}>
-                                                            <Pencil className="mr-1 h-3 w-3" />
-                                                            Editar
-                                                        </Button>
-                                                        {box.is_active && (
-                                                            <Button size="sm" variant="ghost" onClick={() => handleDelete(box.id)}>
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </Button>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Listado de Cajas</CardTitle>
+                                    <CardDescription>
+                                        {isEditMode
+                                            ? '✏️ Modo edición activo: Modifica las celdas que necesites y guarda todos los cambios juntos'
+                                            : '📋 Vista de solo lectura: Activa el modo edición para modificar'}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="rounded-md border">
+                                        <Table>
+                                            <TableHeader>
+                                                <TableRow>
+                                                    <TableHead className="w-[5%]">#</TableHead>
+                                                    <TableHead className="w-[40%]">Dimensiones (LxAxH)</TableHead>
+                                                    <TableHead className="w-[25%]">Costo ($)</TableHead>
+                                                    <TableHead className="w-[20%]">Estado</TableHead>
+                                                    {isEditMode && <TableHead className="w-[10%] text-right">Acciones</TableHead>}
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {editedBoxes.map((box, index) => (
+                                                    <TableRow key={box.id} className={box.isNew ? 'bg-blue-50' : ''}>
+                                                        <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                                                        <TableCell>
+                                                            {isEditMode ? (
+                                                                <Input
+                                                                    type="text"
+                                                                    value={box.dimensions}
+                                                                    onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
+                                                                    placeholder="200 x 200 x 100"
+                                                                    className="h-9"
+                                                                />
+                                                            ) : (
+                                                                <span className="font-medium">{box.dimensions}</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {isEditMode ? (
+                                                                <Input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    value={box.cost}
+                                                                    onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
+                                                                    placeholder="0.00"
+                                                                    className="h-9"
+                                                                />
+                                                            ) : (
+                                                                <span>${parseFloat(box.cost || 0).toFixed(2)}</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {isEditMode ? (
+                                                                <Switch
+                                                                    checked={box.is_active}
+                                                                    onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
+                                                                />
+                                                            ) : (
+                                                                <Badge variant={box.is_active ? 'default' : 'secondary'}>
+                                                                    {box.is_active ? 'Activa' : 'Inactiva'}
+                                                                </Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        {isEditMode && (
+                                                            <TableCell className="text-right">
+                                                                <Button size="sm" variant="ghost" onClick={() => handleDeleteRow(index)}>
+                                                                    <Trash2 className="text-destructive h-4 w-4" />
+                                                                </Button>
+                                                            </TableCell>
                                                         )}
-                                                    </div>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                                    </TableRow>
+                                                ))}
 
-                                    {boxes.length === 0 && !isAdding && (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="text-muted-foreground py-8 text-center">
-                                                No hay cajas registradas. Haz clic en "Nueva Caja" para agregar una.
-                                            </TableCell>
-                                        </TableRow>
+                                                {editedBoxes.length === 0 && (
+                                                    <TableRow>
+                                                        <TableCell colSpan={isEditMode ? 5 : 4} className="text-muted-foreground py-8 text-center">
+                                                            No hay cajas registradas. Haz clic en "Agregar Fila" para crear una.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+
+                                    {isEditMode && hasChanges && (
+                                        <div className="mt-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
+                                                <span className="text-sm font-medium text-amber-900">Tienes cambios sin guardar</span>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" onClick={handleCancel}>
+                                                    <X className="mr-2 h-4 w-4" />
+                                                    Cancelar
+                                                </Button>
+                                                <Button onClick={handleSaveAll}>
+                                                    <Save className="mr-2 h-4 w-4" />
+                                                    Guardar Todos los Cambios
+                                                </Button>
+                                            </div>
+                                        </div>
                                     )}
-                                </TableBody>
-                            </Table>
+
+                                    {!isEditMode && (
+                                        <div className="bg-muted/50 mt-4 rounded-lg p-4">
+                                            <p className="text-muted-foreground text-sm">
+                                                💡 <strong>Tip:</strong> Activa el "Modo Edición" para modificar todas las celdas que necesites y
+                                                guardar todos los cambios de una sola vez.
+                                            </p>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </AppLayout>
     );
