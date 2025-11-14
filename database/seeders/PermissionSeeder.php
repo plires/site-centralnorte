@@ -23,11 +23,12 @@ class PermissionSeeder extends Seeder
         $permProductImages = Permission::create(['name' => 'gestionar_imagenes_de_productos']);
         $permPresupuestosMerch = Permission::create(['name' => 'gestionar_presupuestos_merch']);
         $permPresupuestosPick = Permission::create(['name' => 'gestionar_presupuestos_pick']);
+        $permCostosPick = Permission::create(['name' => 'gestionar_costos_pick']);
         $permSlides = Permission::create(['name' => 'gestionar_slides']);
         $permBlog = Permission::create(['name' => 'gestionar_blog']);
 
         $admin = Role::where('name', 'admin')->first();
-        $admin->permissions()->attach([$permDashboard->id, $permUsers->id, $permClientes->id, $permRoles->id, $permProducts->id, $permCategories->id, $permProductImages->id, $permPresupuestosMerch->id, $permPresupuestosPick->id, $permSlides->id, $permBlog->id]);
+        $admin->permissions()->attach([$permDashboard->id, $permUsers->id, $permClientes->id, $permRoles->id, $permProducts->id, $permCategories->id, $permProductImages->id, $permPresupuestosMerch->id, $permPresupuestosPick->id, $permCostosPick->id, $permSlides->id, $permBlog->id]);
 
         $seller = Role::where('name', 'vendedor')->first();
         $seller->permissions()->attach([$permDashboard->id, $permProducts->id, $permCategories->id, $permProductImages->id, $permPresupuestosMerch->id, $permPresupuestosPick->id]);

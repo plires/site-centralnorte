@@ -78,7 +78,7 @@ class PickingBudgetController extends Controller
 
         $budgets = $query->paginate(15)->withQueryString();
 
-        return Inertia::render('Picking/Index', [
+        return Inertia::render('dashboard/picking/Index', [
             'budgets' => $budgets,
             'filters' => $request->only(['status', 'vendor_id', 'from_date', 'to_date', 'search']),
         ]);
@@ -93,7 +93,7 @@ class PickingBudgetController extends Controller
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        return Inertia::render('Picking/Create', [
+        return Inertia::render('dashboard/picking/Create', [
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
@@ -198,7 +198,7 @@ class PickingBudgetController extends Controller
 
         $pickingBudget->load(['vendor:id,name,email', 'services']);
 
-        return Inertia::render('Picking/Show', [
+        return Inertia::render('dashboard/picking/Show', [
             'budget' => $pickingBudget,
         ]);
     }
@@ -226,7 +226,7 @@ class PickingBudgetController extends Controller
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        return Inertia::render('Picking/Edit', [
+        return Inertia::render('dashboard/picking/Edit', [
             'budget' => $pickingBudget,
             'boxes' => $boxes,
             'costScales' => $scales,

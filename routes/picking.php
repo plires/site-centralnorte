@@ -14,7 +14,7 @@ use App\Http\Controllers\Dashboard\PickingBudgetController;
 use App\Http\Controllers\Dashboard\PickingConfigurationController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
     // ========================================================================
     // PRESUPUESTOS DE PICKING
@@ -56,7 +56,7 @@ Route::middleware(['auth'])->group(function () {
         // ====================================================================
         // CONFIGURACIÓN (Solo Administradores)
         // ====================================================================
-        Route::middleware(['role:admin'])->prefix('config')->name('config.')->group(function () {
+        Route::prefix('config')->name('config.')->group(function () {
 
             // Gestión de Cajas
             Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])

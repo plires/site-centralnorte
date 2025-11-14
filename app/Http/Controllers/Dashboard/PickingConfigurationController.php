@@ -27,7 +27,7 @@ class PickingConfigurationController extends Controller
     {
         $boxes = PickingBox::orderBy('cost')->get();
 
-        return Inertia::render('Picking/Config/Boxes', [
+        return Inertia::render('dashboard/picking/config/Boxes', [
             'boxes' => $boxes
         ]);
     }
@@ -75,7 +75,7 @@ class PickingConfigurationController extends Controller
     {
         $scales = PickingCostScale::orderBy('quantity_from')->get();
 
-        return Inertia::render('Picking/Config/CostScales', [
+        return Inertia::render('dashboard/picking/config/CostScales', [
             'scales' => $scales
         ]);
     }
@@ -122,7 +122,7 @@ class PickingConfigurationController extends Controller
     {
         $increments = PickingComponentIncrement::orderBy('components_from')->get();
 
-        return Inertia::render('Picking/Config/ComponentIncrements', [
+        return Inertia::render('dashboard/picking/config/ComponentIncrements', [
             'increments' => $increments
         ]);
     }

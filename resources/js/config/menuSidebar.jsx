@@ -5,9 +5,13 @@ import {
     ChartBarStacked,
     ChartColumnStacked,
     Contact,
+    DollarSign,
     Folder,
+    Layers,
     LayoutGrid,
     NotebookText,
+    Package,
+    Settings,
     ShoppingBasket,
     SlidersHorizontal,
     Users,
@@ -55,6 +59,29 @@ export const mainNavItems = () => [
         url: '/dashboard/budgets',
         icon: NotebookText,
         permission: 'gestionar_presupuestos_merch',
+    },
+    ,
+    {
+        title: 'Configuración Costos Picking',
+        icon: Settings,
+        permission: 'gestionar_costos_pick',
+        items: [
+            {
+                title: 'Cajas',
+                url: '/dashboard/picking/config/boxes',
+                icon: Package,
+            },
+            {
+                title: 'Escalas de Costos',
+                url: '/dashboard/picking/config/cost-scales',
+                icon: DollarSign,
+            },
+            {
+                title: 'Incrementos',
+                url: '/dashboard/picking/config/component-increments',
+                icon: Layers,
+            },
+        ],
     },
     {
         title: 'Presupuestos de Picking',
