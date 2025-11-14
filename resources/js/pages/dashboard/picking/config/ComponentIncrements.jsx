@@ -69,7 +69,7 @@ export default function ComponentIncrements({ increments }) {
             percentage: parseFloat(data.percentage) / 100,
         };
 
-        put(route('picking.config.component-increments.update', id), {
+        put(route('dashboard.picking.config.component-increments.update', id), {
             data: dataToSend,
             preserveScroll: true,
             onSuccess: () => {
@@ -86,7 +86,7 @@ export default function ComponentIncrements({ increments }) {
             percentage: parseFloat(data.percentage) / 100,
         };
 
-        post(route('picking.config.component-increments.store'), {
+        post(route('dashboard.picking.config.component-increments.store'), {
             data: dataToSend,
             preserveScroll: true,
             onSuccess: () => {
