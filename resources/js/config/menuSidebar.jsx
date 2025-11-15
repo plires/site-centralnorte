@@ -60,7 +60,6 @@ export const mainNavItems = () => [
         icon: NotebookText,
         permission: 'gestionar_presupuestos_merch',
     },
-    ,
     {
         title: 'Configuración Costos Picking',
         icon: Settings,
