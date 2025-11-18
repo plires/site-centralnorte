@@ -299,8 +299,8 @@ export default function CostScales({ scales: initialScales }) {
                                             : '📋 Vista de solo lectura: Activa el modo edición para modificar'}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-0">
-                                    <div className="overflow-x-auto">
+                                <CardContent>
+                                    <div className="rounded-md border">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="text-xs">

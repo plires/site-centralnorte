@@ -140,55 +140,125 @@ export default function ComponentIncrements({ increments }) {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="rounded-md border">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow>
-                                                    <TableHead className="w-[15%]">Desde</TableHead>
-                                                    <TableHead className="w-[15%]">Hasta</TableHead>
-                                                    <TableHead className="w-[30%]">Descripción</TableHead>
-                                                    <TableHead className="w-[15%]">Porcentaje</TableHead>
-                                                    <TableHead className="w-[15%]">Estado</TableHead>
-                                                    <TableHead className="w-[10%] text-right">Acciones</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {isAdding && (
-                                                    <TableRow className="bg-muted/50">
-                                                        <TableCell>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead className="w-[15%]">Desde</TableHead>
+                                                <TableHead className="w-[15%]">Hasta</TableHead>
+                                                <TableHead className="w-[30%]">Descripción</TableHead>
+                                                <TableHead className="w-[15%]">Porcentaje</TableHead>
+                                                <TableHead className="w-[15%]">Estado</TableHead>
+                                                <TableHead className="w-[10%] text-right">Acciones</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {isAdding && (
+                                                <TableRow className="bg-muted/50">
+                                                    <TableCell>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="1"
+                                                            value={data.components_from}
+                                                            onChange={(e) => setData('components_from', e.target.value)}
+                                                            disabled={processing}
+                                                            autoFocus
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Vacío = ilimitado"
+                                                            value={data.components_to}
+                                                            onChange={(e) => setData('components_to', e.target.value)}
+                                                            disabled={processing}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="1 A 3 componentes"
+                                                            value={data.description}
+                                                            onChange={(e) => setData('description', e.target.value)}
+                                                            disabled={processing}
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
                                                             <Input
                                                                 type="number"
-                                                                placeholder="1"
+                                                                step="1"
+                                                                placeholder="0"
+                                                                value={data.percentage}
+                                                                onChange={(e) => setData('percentage', e.target.value)}
+                                                                disabled={processing}
+                                                                className="w-20"
+                                                            />
+                                                            <span className="text-muted-foreground">%</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="default">Activo</Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-2">
+                                                            <Button size="sm" onClick={handleCreate} disabled={processing}>
+                                                                <Save className="mr-1 h-3 w-3" />
+                                                                Guardar
+                                                            </Button>
+                                                            <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={processing}>
+                                                                <X className="mr-1 h-3 w-3" />
+                                                                Cancelar
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+
+                                            {increments.map((increment) => (
+                                                <TableRow key={increment.id}>
+                                                    <TableCell>
+                                                        {editingId === increment.id ? (
+                                                            <Input
+                                                                type="number"
                                                                 value={data.components_from}
                                                                 onChange={(e) => setData('components_from', e.target.value)}
                                                                 disabled={processing}
-                                                                autoFocus
                                                             />
-                                                        </TableCell>
-                                                        <TableCell>
+                                                        ) : (
+                                                            <span className="font-medium">{increment.components_from}</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {editingId === increment.id ? (
                                                             <Input
                                                                 type="number"
-                                                                placeholder="Vacío = ilimitado"
                                                                 value={data.components_to}
                                                                 onChange={(e) => setData('components_to', e.target.value)}
                                                                 disabled={processing}
+                                                                placeholder="Ilimitado"
                                                             />
-                                                        </TableCell>
-                                                        <TableCell>
+                                                        ) : (
+                                                            <span>{increment.components_to || '∞'}</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {editingId === increment.id ? (
                                                             <Input
                                                                 type="text"
-                                                                placeholder="1 A 3 componentes"
                                                                 value={data.description}
                                                                 onChange={(e) => setData('description', e.target.value)}
                                                                 disabled={processing}
                                                             />
-                                                        </TableCell>
-                                                        <TableCell>
+                                                        ) : (
+                                                            <span>{increment.description}</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {editingId === increment.id ? (
                                                             <div className="flex items-center gap-2">
                                                                 <Input
                                                                     type="number"
                                                                     step="1"
-                                                                    placeholder="0"
                                                                     value={data.percentage}
                                                                     onChange={(e) => setData('percentage', e.target.value)}
                                                                     disabled={processing}
@@ -196,13 +266,19 @@ export default function ComponentIncrements({ increments }) {
                                                                 />
                                                                 <span className="text-muted-foreground">%</span>
                                                             </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="default">Activo</Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
+                                                        ) : (
+                                                            <span className="font-medium">{(increment.percentage * 100).toFixed(0)}%</span>
+                                                        )}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={increment.is_active ? 'default' : 'secondary'}>
+                                                            {increment.is_active ? 'Activo' : 'Inactivo'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {editingId === increment.id ? (
                                                             <div className="flex justify-end gap-2">
-                                                                <Button size="sm" onClick={handleCreate} disabled={processing}>
+                                                                <Button size="sm" onClick={() => handleSave(increment.id)} disabled={processing}>
                                                                     <Save className="mr-1 h-3 w-3" />
                                                                     Guardar
                                                                 </Button>
@@ -211,115 +287,37 @@ export default function ComponentIncrements({ increments }) {
                                                                     Cancelar
                                                                 </Button>
                                                             </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
+                                                        ) : (
+                                                            <div className="flex justify-end gap-2">
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() => startEdit(increment)}
+                                                                    disabled={isAdding}
+                                                                >
+                                                                    <Pencil className="mr-1 h-3 w-3" />
+                                                                    Editar
+                                                                </Button>
+                                                                {increment.is_active && (
+                                                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(increment.id)}>
+                                                                        <Trash2 className="h-3 w-3" />
+                                                                    </Button>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
 
-                                                {increments.map((increment) => (
-                                                    <TableRow key={increment.id}>
-                                                        <TableCell>
-                                                            {editingId === increment.id ? (
-                                                                <Input
-                                                                    type="number"
-                                                                    value={data.components_from}
-                                                                    onChange={(e) => setData('components_from', e.target.value)}
-                                                                    disabled={processing}
-                                                                />
-                                                            ) : (
-                                                                <span className="font-medium">{increment.components_from}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {editingId === increment.id ? (
-                                                                <Input
-                                                                    type="number"
-                                                                    value={data.components_to}
-                                                                    onChange={(e) => setData('components_to', e.target.value)}
-                                                                    disabled={processing}
-                                                                    placeholder="Ilimitado"
-                                                                />
-                                                            ) : (
-                                                                <span>{increment.components_to || '∞'}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {editingId === increment.id ? (
-                                                                <Input
-                                                                    type="text"
-                                                                    value={data.description}
-                                                                    onChange={(e) => setData('description', e.target.value)}
-                                                                    disabled={processing}
-                                                                />
-                                                            ) : (
-                                                                <span>{increment.description}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {editingId === increment.id ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <Input
-                                                                        type="number"
-                                                                        step="1"
-                                                                        value={data.percentage}
-                                                                        onChange={(e) => setData('percentage', e.target.value)}
-                                                                        disabled={processing}
-                                                                        className="w-20"
-                                                                    />
-                                                                    <span className="text-muted-foreground">%</span>
-                                                                </div>
-                                                            ) : (
-                                                                <span className="font-medium">{(increment.percentage * 100).toFixed(0)}%</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={increment.is_active ? 'default' : 'secondary'}>
-                                                                {increment.is_active ? 'Activo' : 'Inactivo'}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {editingId === increment.id ? (
-                                                                <div className="flex justify-end gap-2">
-                                                                    <Button size="sm" onClick={() => handleSave(increment.id)} disabled={processing}>
-                                                                        <Save className="mr-1 h-3 w-3" />
-                                                                        Guardar
-                                                                    </Button>
-                                                                    <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={processing}>
-                                                                        <X className="mr-1 h-3 w-3" />
-                                                                        Cancelar
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex justify-end gap-2">
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="outline"
-                                                                        onClick={() => startEdit(increment)}
-                                                                        disabled={isAdding}
-                                                                    >
-                                                                        <Pencil className="mr-1 h-3 w-3" />
-                                                                        Editar
-                                                                    </Button>
-                                                                    {increment.is_active && (
-                                                                        <Button size="sm" variant="ghost" onClick={() => handleDelete(increment.id)}>
-                                                                            <Trash2 className="h-3 w-3" />
-                                                                        </Button>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-
-                                                {increments.length === 0 && !isAdding && (
-                                                    <TableRow>
-                                                        <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
-                                                            No hay incrementos registrados. Haz clic en "Nuevo Incremento" para agregar uno.
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
+                                            {increments.length === 0 && !isAdding && (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
+                                                        No hay incrementos registrados. Haz clic en "Nuevo Incremento" para agregar uno.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
 
                                     <div className="bg-muted mt-4 rounded-lg p-4">
                                         <h4 className="mb-2 font-semibold">💡 Información</h4>
