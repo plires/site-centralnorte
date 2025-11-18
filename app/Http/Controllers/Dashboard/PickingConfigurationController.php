@@ -25,6 +25,9 @@ class PickingConfigurationController extends Controller
     /**
      * Update all boxes at once (bulk update)
      */
+    /**
+     * Update all boxes at once (bulk update)
+     */
     public function updateAllBoxes(Request $request)
     {
         $validated = $request->validate([
@@ -38,15 +41,32 @@ class PickingConfigurationController extends Controller
         DB::beginTransaction();
 
         try {
+            // Obtener todos los IDs de las cajas que vienen del frontend
+            $submittedIds = collect($validated['boxes'])
+                ->pluck('id')
+                ->filter(fn($id) => $id && !str_starts_with($id, 'new-'))
+                ->toArray();
+
+            // Eliminar las cajas que ya no están en la lista (fueron borradas por el usuario)
+            if (!empty($submittedIds)) {
+                PickingBox::whereNotIn('id', $submittedIds)->delete();
+            } else {
+                // Si no hay IDs válidos, significa que el usuario borró todas las cajas existentes
+                PickingBox::truncate();
+            }
+
+            // Actualizar o crear las cajas que vienen del frontend
             foreach ($validated['boxes'] as $boxData) {
                 if (isset($boxData['id']) && !str_starts_with($boxData['id'], 'new-')) {
                     // Actualizar caja existente
-                    $box = PickingBox::findOrFail($boxData['id']);
-                    $box->update([
-                        'dimensions' => $boxData['dimensions'],
-                        'cost' => $boxData['cost'],
-                        'is_active' => $boxData['is_active'] ?? true,
-                    ]);
+                    $box = PickingBox::find($boxData['id']);
+                    if ($box) {
+                        $box->update([
+                            'dimensions' => $boxData['dimensions'],
+                            'cost' => $boxData['cost'],
+                            'is_active' => $boxData['is_active'] ?? true,
+                        ]);
+                    }
                 } else {
                     // Crear nueva caja
                     PickingBox::create([
@@ -62,7 +82,7 @@ class PickingConfigurationController extends Controller
             return redirect()->back()->with('success', 'Todas las cajas fueron actualizadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Error al actualizar las cajas: ' . $e->getMessage()]);
+            return redirect()->back()->with('error', 'Error al actualizar las cajas: ' . $e->getMessage());
         }
     }
 
@@ -117,6 +137,9 @@ class PickingConfigurationController extends Controller
     /**
      * Update all cost scales at once (bulk update)
      */
+    /**
+     * Update all cost scales at once (bulk update)
+     */
     public function updateAllCostScales(Request $request)
     {
         $validated = $request->validate([
@@ -149,34 +172,50 @@ class PickingConfigurationController extends Controller
         DB::beginTransaction();
 
         try {
+            // Obtener todos los IDs de las escalas que vienen del frontend
+            $submittedIds = collect($validated['scales'])
+                ->pluck('id')
+                ->filter(fn($id) => $id && !str_starts_with($id, 'new-'))
+                ->toArray();
+
+            // Eliminar las escalas que ya no están en la lista
+            if (!empty($submittedIds)) {
+                PickingCostScale::whereNotIn('id', $submittedIds)->delete();
+            } else {
+                PickingCostScale::truncate();
+            }
+
+            // Actualizar o crear las escalas que vienen del frontend
             foreach ($validated['scales'] as $scaleData) {
                 if (isset($scaleData['id']) && !str_starts_with($scaleData['id'], 'new-')) {
                     // Actualizar escala existente
-                    $scale = PickingCostScale::findOrFail($scaleData['id']);
-                    $scale->update([
-                        'quantity_from' => $scaleData['quantity_from'],
-                        'quantity_to' => $scaleData['quantity_to'] ?? null,
-                        'cost_without_assembly' => $scaleData['cost_without_assembly'],
-                        'cost_with_assembly' => $scaleData['cost_with_assembly'],
-                        'palletizing_without_pallet' => $scaleData['palletizing_without_pallet'],
-                        'palletizing_with_pallet' => $scaleData['palletizing_with_pallet'],
-                        'cost_with_labeling' => $scaleData['cost_with_labeling'],
-                        'cost_without_labeling' => $scaleData['cost_without_labeling'],
-                        'additional_assembly' => $scaleData['additional_assembly'],
-                        'quality_control' => $scaleData['quality_control'],
-                        'dome_sticking_unit' => $scaleData['dome_sticking_unit'],
-                        'shavings_50g_unit' => $scaleData['shavings_50g_unit'],
-                        'shavings_100g_unit' => $scaleData['shavings_100g_unit'],
-                        'shavings_200g_unit' => $scaleData['shavings_200g_unit'],
-                        'bag_10x15_unit' => $scaleData['bag_10x15_unit'],
-                        'bag_20x30_unit' => $scaleData['bag_20x30_unit'],
-                        'bag_35x45_unit' => $scaleData['bag_35x45_unit'],
-                        'bubble_wrap_5x10_unit' => $scaleData['bubble_wrap_5x10_unit'],
-                        'bubble_wrap_10x15_unit' => $scaleData['bubble_wrap_10x15_unit'],
-                        'bubble_wrap_20x30_unit' => $scaleData['bubble_wrap_20x30_unit'],
-                        'production_time' => $scaleData['production_time'],
-                        'is_active' => $scaleData['is_active'] ?? true,
-                    ]);
+                    $scale = PickingCostScale::find($scaleData['id']);
+                    if ($scale) {
+                        $scale->update([
+                            'quantity_from' => $scaleData['quantity_from'],
+                            'quantity_to' => $scaleData['quantity_to'] ?? null,
+                            'cost_without_assembly' => $scaleData['cost_without_assembly'],
+                            'cost_with_assembly' => $scaleData['cost_with_assembly'],
+                            'palletizing_without_pallet' => $scaleData['palletizing_without_pallet'],
+                            'palletizing_with_pallet' => $scaleData['palletizing_with_pallet'],
+                            'cost_with_labeling' => $scaleData['cost_with_labeling'],
+                            'cost_without_labeling' => $scaleData['cost_without_labeling'],
+                            'additional_assembly' => $scaleData['additional_assembly'],
+                            'quality_control' => $scaleData['quality_control'],
+                            'dome_sticking_unit' => $scaleData['dome_sticking_unit'],
+                            'shavings_50g_unit' => $scaleData['shavings_50g_unit'],
+                            'shavings_100g_unit' => $scaleData['shavings_100g_unit'],
+                            'shavings_200g_unit' => $scaleData['shavings_200g_unit'],
+                            'bag_10x15_unit' => $scaleData['bag_10x15_unit'],
+                            'bag_20x30_unit' => $scaleData['bag_20x30_unit'],
+                            'bag_35x45_unit' => $scaleData['bag_35x45_unit'],
+                            'bubble_wrap_5x10_unit' => $scaleData['bubble_wrap_5x10_unit'],
+                            'bubble_wrap_10x15_unit' => $scaleData['bubble_wrap_10x15_unit'],
+                            'bubble_wrap_20x30_unit' => $scaleData['bubble_wrap_20x30_unit'],
+                            'production_time' => $scaleData['production_time'],
+                            'is_active' => $scaleData['is_active'] ?? true,
+                        ]);
+                    }
                 } else {
                     // Crear nueva escala
                     PickingCostScale::create([
@@ -211,7 +250,7 @@ class PickingConfigurationController extends Controller
             return redirect()->back()->with('success', 'Todas las escalas de costos fueron actualizadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->withErrors(['error' => 'Error al actualizar las escalas de costos: ' . $e->getMessage()]);
+            return redirect()->back()->with('error', 'Error al actualizar las escalas de costos: ' . $e->getMessage());
         }
     }
 
