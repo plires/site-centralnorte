@@ -121,7 +121,7 @@ export default function CostScales({ scales: initialScales }) {
             <Head title="Configuración - Escalas de Costos" />
 
             <div className="py-12">
-                <div className="max-w-8xl mx-auto py-12 sm:px-6 lg:px-8">
+                <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -145,7 +145,7 @@ export default function CostScales({ scales: initialScales }) {
                                 </div>
                             </div>
 
-                            <Card styles={{ width: '40%' }}>
+                            <Card>
                                 <CardHeader>
                                     <CardTitle>Listado de Escalas de Costos</CardTitle>
                                     <CardDescription>
@@ -154,296 +154,286 @@ export default function CostScales({ scales: initialScales }) {
                                             : '📋 Vista de solo lectura: Activa el modo edición para modificar'}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-0">
-                                    <div className="overflow-x-auto">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow className="text-xs">
+                                <CardContent>
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow className="text-xs">
+                                                {isEditMode ? (
+                                                    <>
+                                                        <TableHead className="min-w-[90px] bg-white px-2 py-2 text-xs">Desde</TableHead>
+                                                        <TableHead className="min-w-[90px] px-2 py-2 text-xs">Hasta</TableHead>
+                                                    </>
+                                                ) : (
+                                                    <TableHead className="min-w-[110px] bg-white px-2 py-2 text-xs">Rango</TableHead>
+                                                )}
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">Sin Armado</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">Con Armado</TableHead>
+                                                <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. S/Pallet</TableHead>
+                                                <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. C/Pallet</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">C/Rotulado</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">S/Rotulado</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ens. Adic.</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ctrl Calidad</TableHead>
+                                                <TableHead className="min-w-[85px] px-2 py-2 text-xs">Domes</TableHead>
+                                                <TableHead className="min-w-[85px] px-2 py-2 text-xs">Viruta 50g</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 100g</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 200g</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 10x15</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 20x30</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 35x45</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 5x10</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 10x15</TableHead>
+                                                <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 20x30</TableHead>
+                                                <TableHead className="min-w-[100px] px-2 py-2 text-xs">T. Produc.</TableHead>
+                                                <TableHead className="min-w-[80px] px-2 py-2 text-xs">Estado</TableHead>
+                                                {isEditMode && <TableHead className="bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>}
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {editedScales.map((scale, index) => (
+                                                <TableRow key={scale.id} className={scale.isNew ? 'bg-blue-50' : ''}>
                                                     {isEditMode ? (
                                                         <>
-                                                            <TableHead className="sticky left-0 z-10 min-w-[90px] bg-white px-2 py-2 text-xs">
-                                                                Desde
-                                                            </TableHead>
-                                                            <TableHead className="min-w-[90px] px-2 py-2 text-xs">Hasta</TableHead>
+                                                            <TableCell className="bg-white px-2 py-2">
+                                                                <EditableCell
+                                                                    index={index}
+                                                                    field="quantity_from"
+                                                                    value={scale.quantity_from}
+                                                                    type="number"
+                                                                    placeholder="1"
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell className="px-2 py-2">
+                                                                <EditableCell
+                                                                    index={index}
+                                                                    field="quantity_to"
+                                                                    value={scale.quantity_to}
+                                                                    type="number"
+                                                                    placeholder="o más"
+                                                                />
+                                                            </TableCell>
                                                         </>
                                                     ) : (
-                                                        <TableHead className="sticky left-0 z-10 min-w-[110px] bg-white px-2 py-2 text-xs">
-                                                            Rango
-                                                        </TableHead>
+                                                        <TableCell className="bg-white px-2 py-2">
+                                                            <span className="text-xs font-medium">
+                                                                {scale.quantity_from && scale.quantity_to
+                                                                    ? `de ${scale.quantity_from} a ${scale.quantity_to}`
+                                                                    : scale.quantity_from
+                                                                      ? `${scale.quantity_from} o más`
+                                                                      : '-'}
+                                                            </span>
+                                                        </TableCell>
                                                     )}
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Sin Armado</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Con Armado</TableHead>
-                                                    <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. S/Pallet</TableHead>
-                                                    <TableHead className="min-w-[110px] px-2 py-2 text-xs">Pal. C/Pallet</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">C/Rotulado</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">S/Rotulado</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ens. Adic.</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Ctrl Calidad</TableHead>
-                                                    <TableHead className="min-w-[85px] px-2 py-2 text-xs">Domes</TableHead>
-                                                    <TableHead className="min-w-[85px] px-2 py-2 text-xs">Viruta 50g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 100g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Viruta 200g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 10x15</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 20x30</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 35x45</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 5x10</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 10x15</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 20x30</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">T. Produc.</TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">Estado</TableHead>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="cost_without_assembly"
+                                                            value={scale.cost_without_assembly}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="cost_with_assembly"
+                                                            value={scale.cost_with_assembly}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="palletizing_without_pallet"
+                                                            value={scale.palletizing_without_pallet}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="palletizing_with_pallet"
+                                                            value={scale.palletizing_with_pallet}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="cost_with_labeling"
+                                                            value={scale.cost_with_labeling}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="cost_without_labeling"
+                                                            value={scale.cost_without_labeling}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="additional_assembly"
+                                                            value={scale.additional_assembly}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="quality_control"
+                                                            value={scale.quality_control}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="dome_sticking_unit"
+                                                            value={scale.dome_sticking_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="shavings_50g_unit"
+                                                            value={scale.shavings_50g_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="shavings_100g_unit"
+                                                            value={scale.shavings_100g_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="shavings_200g_unit"
+                                                            value={scale.shavings_200g_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bag_10x15_unit"
+                                                            value={scale.bag_10x15_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bag_20x30_unit"
+                                                            value={scale.bag_20x30_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bag_35x45_unit"
+                                                            value={scale.bag_35x45_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bubble_wrap_5x10_unit"
+                                                            value={scale.bubble_wrap_5x10_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bubble_wrap_10x15_unit"
+                                                            value={scale.bubble_wrap_10x15_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="bubble_wrap_20x30_unit"
+                                                            value={scale.bubble_wrap_20x30_unit}
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        <EditableCell
+                                                            index={index}
+                                                            field="production_time"
+                                                            value={scale.production_time}
+                                                            type="text"
+                                                            placeholder="24 hs"
+                                                        />
+                                                    </TableCell>
+                                                    <TableCell className="px-2 py-2">
+                                                        {isEditMode ? (
+                                                            <Switch
+                                                                checked={scale.is_active}
+                                                                onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
+                                                            />
+                                                        ) : (
+                                                            <Badge variant={scale.is_active ? 'default' : 'secondary'} className="text-xs">
+                                                                {scale.is_active ? 'Activa' : 'Inactiva'}
+                                                            </Badge>
+                                                        )}
+                                                    </TableCell>
                                                     {isEditMode && (
-                                                        <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">
-                                                            Acc.
-                                                        </TableHead>
+                                                        <TableCell className="bg-white px-2 py-2 text-right">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleDeleteRow(index)}
+                                                                className="h-7 w-7 p-0"
+                                                            >
+                                                                <Trash2 className="text-destructive h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TableCell>
                                                     )}
                                                 </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {editedScales.map((scale, index) => (
-                                                    <TableRow key={scale.id} className={scale.isNew ? 'bg-blue-50' : ''}>
-                                                        {isEditMode ? (
-                                                            <>
-                                                                <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
-                                                                    <EditableCell
-                                                                        index={index}
-                                                                        field="quantity_from"
-                                                                        value={scale.quantity_from}
-                                                                        type="number"
-                                                                        placeholder="1"
-                                                                    />
-                                                                </TableCell>
-                                                                <TableCell className="px-2 py-2">
-                                                                    <EditableCell
-                                                                        index={index}
-                                                                        field="quantity_to"
-                                                                        value={scale.quantity_to}
-                                                                        type="number"
-                                                                        placeholder="o más"
-                                                                    />
-                                                                </TableCell>
-                                                            </>
-                                                        ) : (
-                                                            <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
-                                                                <span className="text-xs font-medium">
-                                                                    {scale.quantity_from && scale.quantity_to
-                                                                        ? `de ${scale.quantity_from} a ${scale.quantity_to}`
-                                                                        : scale.quantity_from
-                                                                          ? `${scale.quantity_from} o más`
-                                                                          : '-'}
-                                                                </span>
-                                                            </TableCell>
-                                                        )}
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="cost_without_assembly"
-                                                                value={scale.cost_without_assembly}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="cost_with_assembly"
-                                                                value={scale.cost_with_assembly}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="palletizing_without_pallet"
-                                                                value={scale.palletizing_without_pallet}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="palletizing_with_pallet"
-                                                                value={scale.palletizing_with_pallet}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="cost_with_labeling"
-                                                                value={scale.cost_with_labeling}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="cost_without_labeling"
-                                                                value={scale.cost_without_labeling}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="additional_assembly"
-                                                                value={scale.additional_assembly}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="quality_control"
-                                                                value={scale.quality_control}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="dome_sticking_unit"
-                                                                value={scale.dome_sticking_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="shavings_50g_unit"
-                                                                value={scale.shavings_50g_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="shavings_100g_unit"
-                                                                value={scale.shavings_100g_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="shavings_200g_unit"
-                                                                value={scale.shavings_200g_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bag_10x15_unit"
-                                                                value={scale.bag_10x15_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bag_20x30_unit"
-                                                                value={scale.bag_20x30_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bag_35x45_unit"
-                                                                value={scale.bag_35x45_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bubble_wrap_5x10_unit"
-                                                                value={scale.bubble_wrap_5x10_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bubble_wrap_10x15_unit"
-                                                                value={scale.bubble_wrap_10x15_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="bubble_wrap_20x30_unit"
-                                                                value={scale.bubble_wrap_20x30_unit}
-                                                                type="number"
-                                                                placeholder="0.00"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            <EditableCell
-                                                                index={index}
-                                                                field="production_time"
-                                                                value={scale.production_time}
-                                                                type="text"
-                                                                placeholder="24 hs"
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell className="px-2 py-2">
-                                                            {isEditMode ? (
-                                                                <Switch
-                                                                    checked={scale.is_active}
-                                                                    onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
-                                                                />
-                                                            ) : (
-                                                                <Badge variant={scale.is_active ? 'default' : 'secondary'} className="text-xs">
-                                                                    {scale.is_active ? 'Activa' : 'Inactiva'}
-                                                                </Badge>
-                                                            )}
-                                                        </TableCell>
-                                                        {isEditMode && (
-                                                            <TableCell className="sticky right-0 z-10 bg-white px-2 py-2 text-right">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleDeleteRow(index)}
-                                                                    className="h-7 w-7 p-0"
-                                                                >
-                                                                    <Trash2 className="text-destructive h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        )}
-                                                    </TableRow>
-                                                ))}
+                                            ))}
 
-                                                {editedScales.length === 0 && (
-                                                    <TableRow>
-                                                        <TableCell
-                                                            colSpan={isEditMode ? 23 : 22}
-                                                            className="text-muted-foreground py-8 text-center text-sm"
-                                                        >
-                                                            No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear una.
-                                                        </TableCell>
-                                                    </TableRow>
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
+                                            {editedScales.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell
+                                                        colSpan={isEditMode ? 23 : 22}
+                                                        className="text-muted-foreground py-8 text-center text-sm"
+                                                    >
+                                                        No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear una.
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
 
                                     {isEditMode && hasChanges && (
                                         <div className="m-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
