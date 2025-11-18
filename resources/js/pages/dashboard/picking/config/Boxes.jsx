@@ -8,15 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Plus, Save, Trash2, X } from 'lucide-react';
+import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Boxes({ boxes: initialBoxes }) {
-    const { handleCrudResponse } = useInertiaResponse();
+    const { handleResponse } = useInertiaResponse();
 
     const [isEditMode, setIsEditMode] = useState(false);
     const [editedBoxes, setEditedBoxes] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
+    const [percentageValue, setPercentageValue] = useState('');
 
     // Inicializar editedBoxes cuando cambian las cajas
     useEffect(() => {
@@ -34,14 +35,6 @@ export default function Boxes({ boxes: initialBoxes }) {
     };
 
     const handleSaveAll = () => {
-        // Enviar todas las cajas modificadas al backend
-        // router.put(
-        //     route('dashboard.picking.config.boxes.update-all'),
-        //     handleCrudResponse(() => {
-        //         // Callback de éxito: limpiar formulario
-        //         reset();
-        //     }),
-        // );
         router.put(
             route('dashboard.picking.config.boxes.update-all'),
             {
@@ -49,10 +42,12 @@ export default function Boxes({ boxes: initialBoxes }) {
             },
             {
                 preserveScroll: true,
-                onSuccess: () => {
+                ...handleResponse(() => {
+                    // Callback de éxito
                     setIsEditMode(false);
                     setHasChanges(false);
-                },
+                    setPercentageValue('');
+                }),
             },
         );
     };
@@ -62,6 +57,47 @@ export default function Boxes({ boxes: initialBoxes }) {
         setEditedBoxes(initialBoxes.map((box) => ({ ...box })));
         setIsEditMode(false);
         setHasChanges(false);
+        setPercentageValue('');
+    };
+
+    // Función para aplicar incremento/decremento porcentual masivo
+    const applyPercentageChange = (isIncrease) => {
+        const percentage = parseFloat(percentageValue);
+
+        if (isNaN(percentage) || percentage <= 0) {
+            alert('Por favor ingresa un porcentaje válido mayor a 0');
+            return;
+        }
+
+        if (percentage > 100) {
+            alert('El porcentaje no puede ser mayor a 100%');
+            return;
+        }
+
+        // Confirmar la acción
+        const action = isIncrease ? 'incrementar' : 'decrementar';
+        if (!confirm(`¿Estás seguro de ${action} todos los costos en ${percentage}%?`)) {
+            return;
+        }
+
+        const multiplier = isIncrease ? 1 + percentage / 100 : 1 - percentage / 100;
+
+        const newBoxes = editedBoxes.map((box) => {
+            const currentCost = parseFloat(box.cost);
+
+            if (!isNaN(currentCost) && currentCost > 0) {
+                return {
+                    ...box,
+                    cost: Math.round(currentCost * multiplier * 100) / 100,
+                };
+            }
+
+            return box;
+        });
+
+        setEditedBoxes(newBoxes);
+        setHasChanges(true);
+        setPercentageValue(''); // Limpiar el input después de aplicar
     };
 
     const handleAddRow = () => {
@@ -116,6 +152,61 @@ export default function Boxes({ boxes: initialBoxes }) {
                                     )}
                                 </div>
                             </div>
+
+                            {/* Panel de incremento/decremento porcentual masivo */}
+                            {isEditMode && (
+                                <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                    <div className="mb-3 flex items-center gap-2">
+                                        <Percent className="h-5 w-5 text-blue-600" />
+                                        <h4 className="font-semibold text-blue-900">Ajuste Masivo de Costos</h4>
+                                    </div>
+                                    <p className="text-muted-foreground mb-4 text-sm">
+                                        Incrementa o decrementa todos los costos de todas las cajas en un porcentaje específico
+                                    </p>
+                                    <div className="flex flex-wrap items-end gap-3">
+                                        <div className="min-w-[200px] flex-1">
+                                            <Label htmlFor="percentage" className="mb-2 block text-sm font-medium">
+                                                Porcentaje (%)
+                                            </Label>
+                                            <Input
+                                                id="percentage"
+                                                type="number"
+                                                value={percentageValue}
+                                                onChange={(e) => setPercentageValue(e.target.value)}
+                                                placeholder="Ej: 10"
+                                                min="0"
+                                                max="100"
+                                                step="0.1"
+                                                className="h-10"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={() => applyPercentageChange(true)}
+                                                variant="default"
+                                                disabled={!percentageValue}
+                                                className="bg-green-600 hover:bg-green-700"
+                                            >
+                                                <TrendingUp className="mr-2 h-4 w-4" />
+                                                Incrementar
+                                            </Button>
+                                            <Button
+                                                onClick={() => applyPercentageChange(false)}
+                                                variant="default"
+                                                disabled={!percentageValue}
+                                                className="bg-red-600 hover:bg-red-700"
+                                            >
+                                                <TrendingDown className="mr-2 h-4 w-4" />
+                                                Decrementar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <p className="text-muted-foreground mt-3 text-xs">
+                                        ⚠️ <strong>Importante:</strong> Esta acción afectará todos los costos de todas las cajas. Asegúrate de revisar
+                                        los cambios antes de guardar.
+                                    </p>
+                                </div>
+                            )}
 
                             <Card>
                                 <CardHeader>

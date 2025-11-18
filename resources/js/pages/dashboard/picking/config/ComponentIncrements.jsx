@@ -5,7 +5,7 @@ import { Input } from '@/Components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,7 +17,7 @@ const breadcrumbs = [
 ];
 
 export default function ComponentIncrements({ increments }) {
-    useInertiaResponse();
+    const { handleResponse } = useInertiaResponse();
 
     const [editingId, setEditingId] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
@@ -69,14 +69,20 @@ export default function ComponentIncrements({ increments }) {
             percentage: parseFloat(data.percentage) / 100,
         };
 
-        put(route('dashboard.picking.config.component-increments.update', id), {
-            data: dataToSend,
-            preserveScroll: true,
-            onSuccess: () => {
-                setEditingId(null);
-                reset();
+        router.put(
+            route('dashboard.picking.config.component-increments.update', id),
+            {
+                data: dataToSend,
             },
-        });
+            {
+                preserveScroll: true,
+                ...handleResponse(() => {
+                    // Callback de éxito
+                    setEditingId(null);
+                    reset();
+                }),
+            },
+        );
     };
 
     const handleCreate = () => {

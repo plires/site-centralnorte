@@ -12,7 +12,7 @@ import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide
 import { useEffect, useState } from 'react';
 
 export default function CostScales({ scales: initialScales }) {
-    const { handleCrudResponse } = useInertiaResponse();
+    const { handleResponse } = useInertiaResponse();
 
     const [isEditMode, setIsEditMode] = useState(false);
     const [editedScales, setEditedScales] = useState([]);
@@ -42,11 +42,12 @@ export default function CostScales({ scales: initialScales }) {
             },
             {
                 preserveScroll: true,
-                onSuccess: () => {
+                ...handleResponse(() => {
+                    // Callback de éxito
                     setIsEditMode(false);
                     setHasChanges(false);
                     setPercentageValue('');
-                },
+                }),
             },
         );
     };
