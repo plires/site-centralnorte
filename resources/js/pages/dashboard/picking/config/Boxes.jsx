@@ -97,7 +97,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="flex items-center justify-between">
-                                <div>
+                                <div className="mb-5">
                                     <h3 className="text-lg font-medium">Configuración de Cajas</h3>
                                     <p className="text-muted-foreground mt-1">Gestiona las cajas disponibles para presupuestos de picking</p>
                                 </div>
