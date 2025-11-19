@@ -5,6 +5,8 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
+import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfirmationDialog';
+import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
@@ -13,8 +15,11 @@ import { useEffect, useState } from 'react';
 
 export default function CostScales({ scales: initialScales }) {
     const { handleResponse } = useInertiaResponse();
+    const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
+    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
 
-    const [isEditMode, setIsEditMode] = useState(false);
+    const [isMassEditMode, setIsMassEditMode] = useState(false);
+    const [isIndividualEditMode, setIsIndividualEditMode] = useState(false);
     const [editedScales, setEditedScales] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [percentageValue, setPercentageValue] = useState('');
@@ -44,7 +49,7 @@ export default function CostScales({ scales: initialScales }) {
                 preserveScroll: true,
                 ...handleResponse(() => {
                     // Callback de éxito
-                    setIsEditMode(false);
+                    setIsIndividualEditMode(false);
                     setHasChanges(false);
                     setPercentageValue('');
                 }),
@@ -55,7 +60,7 @@ export default function CostScales({ scales: initialScales }) {
     const handleCancel = () => {
         // Restaurar valores originales
         setEditedScales(initialScales.map((scale) => ({ ...scale })));
-        setIsEditMode(false);
+        setIsIndividualEditMode(false);
         setHasChanges(false);
         setPercentageValue('');
     };
@@ -89,22 +94,35 @@ export default function CostScales({ scales: initialScales }) {
         };
         setEditedScales([...editedScales, newScale]);
         setHasChanges(true);
-        if (!isEditMode) {
-            setIsEditMode(true);
+        if (!isIndividualEditMode) {
+            setIsIndividualEditMode(true);
         }
     };
 
-    const handleDeleteRow = (index) => {
-        if (confirm('¿Estás seguro de eliminar esta escala de costos?')) {
-            const newScales = [...editedScales];
-            newScales.splice(index, 1);
-            setEditedScales(newScales);
-            setHasChanges(true);
-        }
+    const handleDeleteRow = async (index, scale) => {
+        const rangeText =
+            scale.quantity_from && scale.quantity_to
+                ? `de ${scale.quantity_from} a ${scale.quantity_to}`
+                : scale.quantity_from
+                  ? `${scale.quantity_from} o más`
+                  : 'Sin rango definido';
+
+        const confirmed = await confirmDelete({
+            title: 'Eliminar Escala de Costos',
+            description: 'Esta acción no se puede deshacer. La escala de costos será eliminada permanentemente del sistema.',
+            itemName: `Rango: ${rangeText}`,
+        });
+
+        if (!confirmed) return;
+
+        const newScales = [...editedScales];
+        newScales.splice(index, 1);
+        setEditedScales(newScales);
+        setHasChanges(true);
     };
 
     // Función para aplicar incremento/decremento porcentual masivo
-    const applyPercentageChange = (isIncrease) => {
+    const applyPercentageChange = async (isIncrease) => {
         const percentage = parseFloat(percentageValue);
 
         if (isNaN(percentage) || percentage <= 0) {
@@ -114,12 +132,6 @@ export default function CostScales({ scales: initialScales }) {
 
         if (percentage > 100) {
             alert('El porcentaje no puede ser mayor a 100%');
-            return;
-        }
-
-        // Confirmar la acción
-        const action = isIncrease ? 'incrementar' : 'decrementar';
-        if (!confirm(`¿Estás seguro de ${action} todos los valores numéricos en ${percentage}%?`)) {
             return;
         }
 
@@ -145,6 +157,19 @@ export default function CostScales({ scales: initialScales }) {
             'bubble_wrap_20x30_unit',
         ];
 
+        // Mostrar modal de confirmación
+        const confirmed = await confirmAdjustment({
+            title: `${isIncrease ? 'Incrementar' : 'Decrementar'} Valores`,
+            description: `Esta acción ${isIncrease ? 'incrementará' : 'decrementará'} todos los valores numéricos de las escalas de costos en ${percentage}% y guardará los cambios automáticamente.`,
+            percentage: percentage,
+            affectedItems: `${editedScales.length} ${editedScales.length === 1 ? 'escala' : 'escalas'} (${numericFields.length} campos por escala)`,
+            isIncrease: isIncrease,
+        });
+
+        // Si el usuario cancela, no hacer nada
+        if (!confirmed) return;
+
+        // Aplicar el cambio porcentual
         const multiplier = isIncrease ? 1 + percentage / 100 : 1 - percentage / 100;
 
         const newScales = editedScales.map((scale) => {
@@ -153,9 +178,7 @@ export default function CostScales({ scales: initialScales }) {
             numericFields.forEach((field) => {
                 const currentValue = parseFloat(updatedScale[field]);
                 if (!isNaN(currentValue) && currentValue > 0) {
-                    // Guardar sin toFixed para mantener los decimales originales
                     const newValue = currentValue * multiplier;
-                    // Redondear a 2 decimales pero sin forzar el formato
                     updatedScale[field] = Math.round(newValue * 100) / 100;
                 }
             });
@@ -163,9 +186,22 @@ export default function CostScales({ scales: initialScales }) {
             return updatedScale;
         });
 
-        setEditedScales(newScales);
-        setHasChanges(true);
-        setPercentageValue(''); // Limpiar el input después de aplicar
+        // Guardar inmediatamente después de aplicar cambios
+        router.put(
+            route('dashboard.picking.config.cost-scales.update-all'),
+            {
+                scales: newScales,
+            },
+            {
+                preserveScroll: true,
+                ...handleResponse(() => {
+                    // Callback de éxito: salir del modo edición
+                    setIsMassEditMode(false);
+                    setHasChanges(false);
+                    setPercentageValue('');
+                }),
+            },
+        );
     };
 
     // Componente reutilizable para celdas editables
@@ -177,7 +213,7 @@ export default function CostScales({ scales: initialScales }) {
             setLocalValue(value || '');
         }, [value]);
 
-        if (isEditMode) {
+        if (isIndividualEditMode) {
             const inputType = type === 'number' ? 'text' : type;
 
             return (
@@ -186,14 +222,13 @@ export default function CostScales({ scales: initialScales }) {
                     value={localValue}
                     onChange={(e) => {
                         const inputValue = e.target.value;
-                        setLocalValue(inputValue); // Actualizar estado local inmediatamente
+                        setLocalValue(inputValue);
                     }}
-                    onBlur={(e) => {
-                        // Solo actualizar el estado global cuando pierda el foco
+                    onBlur={() => {
                         let finalValue = localValue;
 
-                        if (type === 'number') {
-                            finalValue = finalValue.replace(',', '.');
+                        if (type === 'number' && finalValue) {
+                            finalValue = String(finalValue).replace(/,/g, '.');
                         }
 
                         handleCellChange(index, field, finalValue);
@@ -222,12 +257,32 @@ export default function CostScales({ scales: initialScales }) {
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center space-x-2">
-                                        <Switch id="edit-mode" checked={isEditMode} onCheckedChange={setIsEditMode} />
-                                        <Label htmlFor="edit-mode" className="cursor-pointer">
-                                            Modo Edición
+                                        <Switch
+                                            id="mass-edit-mode"
+                                            checked={isMassEditMode}
+                                            onCheckedChange={(checked) => {
+                                                setIsMassEditMode(checked);
+                                                if (checked) setIsIndividualEditMode(false);
+                                            }}
+                                        />
+                                        <Label htmlFor="mass-edit-mode" className="cursor-pointer whitespace-nowrap">
+                                            Modificación Masiva
                                         </Label>
                                     </div>
-                                    {!isEditMode && (
+                                    <div className="flex items-center space-x-2">
+                                        <Switch
+                                            id="individual-edit-mode"
+                                            checked={isIndividualEditMode}
+                                            onCheckedChange={(checked) => {
+                                                setIsIndividualEditMode(checked);
+                                                if (checked) setIsMassEditMode(false);
+                                            }}
+                                        />
+                                        <Label htmlFor="individual-edit-mode" className="cursor-pointer whitespace-nowrap">
+                                            Modificación Individual
+                                        </Label>
+                                    </div>
+                                    {!isIndividualEditMode && !isMassEditMode && (
                                         <Button onClick={handleAddRow}>
                                             <Plus className="mr-2 h-4 w-4" />
                                             Agregar Fila
@@ -236,15 +291,45 @@ export default function CostScales({ scales: initialScales }) {
                                 </div>
                             </div>
 
+                            {isIndividualEditMode && hasChanges && (
+                                <div className="mb-5 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
+                                        <span className="text-sm font-medium text-amber-900">Tienes cambios sin guardar</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" onClick={handleCancel}>
+                                            <X className="mr-2 h-4 w-4" />
+                                            Cancelar
+                                        </Button>
+                                        <Button onClick={handleSaveAll}>
+                                            <Save className="mr-2 h-4 w-4" />
+                                            Guardar Todos los Cambios
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isIndividualEditMode && !isMassEditMode && (
+                                <div className="bg-muted/50 mt-4 mb-5 rounded-lg p-4">
+                                    <p className="text-muted-foreground text-sm">
+                                        💡 <strong>Tip:</strong> Activa <strong>Modificación Individual</strong> para editar celdas una por una, o{' '}
+                                        <strong>Modificación Masiva</strong> para ajustar todos los valores con un porcentaje. Usa scroll horizontal
+                                        para ver todas las columnas.
+                                    </p>
+                                </div>
+                            )}
+
                             {/* Panel de incremento/decremento porcentual masivo */}
-                            {isEditMode && (
+                            {isMassEditMode && (
                                 <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
                                     <div className="mb-3 flex items-center gap-2">
                                         <Percent className="h-5 w-5 text-blue-600" />
                                         <h4 className="font-semibold text-blue-900">Ajuste Masivo de Valores</h4>
                                     </div>
                                     <p className="text-muted-foreground mb-4 text-sm">
-                                        Incrementa o decrementa todos los valores numéricos de todas las filas en un porcentaje específico
+                                        Incrementa o decrementa todos los valores numéricos de todas las filas en un porcentaje específico. Los
+                                        cambios se guardarán automáticamente al confirmar.
                                     </p>
                                     <div className="flex flex-wrap items-end gap-3">
                                         <div className="min-w-[200px] flex-1">
@@ -285,8 +370,7 @@ export default function CostScales({ scales: initialScales }) {
                                         </div>
                                     </div>
                                     <p className="text-muted-foreground mt-3 text-xs">
-                                        ⚠️ <strong>Importante:</strong> Esta acción afectará todas las celdas numéricas de todas las filas. Asegúrate
-                                        de revisar los cambios antes de guardar.
+                                        ⚠️ <strong>Nota:</strong> Al confirmar el ajuste, los cambios se aplicarán y guardarán automáticamente.
                                     </p>
                                 </div>
                             )}
@@ -295,59 +379,116 @@ export default function CostScales({ scales: initialScales }) {
                                 <CardHeader>
                                     <CardTitle>Listado de Escalas de Costos</CardTitle>
                                     <CardDescription>
-                                        {isEditMode
-                                            ? '✏️ Modo edición activo: Modifica las celdas que necesites y guarda todos los cambios juntos'
-                                            : '📋 Vista de solo lectura: Activa el modo edición para modificar'}
+                                        {isMassEditMode
+                                            ? '📊 Modificación Masiva: Usa los controles para ajustar todos los valores'
+                                            : isIndividualEditMode
+                                              ? '✏️ Modificación Individual: Edita cada celda según necesites'
+                                              : '📋 Vista de solo lectura: Activa un modo de edición para modificar'}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="rounded-md border">
+                                <CardContent className="p-0">
+                                    <div className="overflow-x-auto">
                                         <Table>
                                             <TableHeader>
                                                 <TableRow className="text-xs">
-                                                    {isEditMode ? (
+                                                    {isIndividualEditMode ? (
                                                         <>
-                                                            <TableHead className="sticky left-0 min-w-[80px] bg-white px-2 py-2 text-xs">
+                                                            <TableHead className="sticky left-0 z-2 min-w-[80px] bg-white px-2 py-2 text-xs">
                                                                 Desde
                                                             </TableHead>
                                                             <TableHead className="min-w-[80px] px-2 py-2 text-xs">Hasta</TableHead>
                                                         </>
                                                     ) : (
-                                                        <TableHead className="sticky left-0 min-w-[120px] bg-white px-2 py-2 text-xs">
+                                                        <TableHead className="sticky left-0 z-2 min-w-[120px] bg-white px-2 py-2 text-xs">
                                                             Rango
                                                         </TableHead>
                                                     )}
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Sin Armado</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Con Armado</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Paletiz. S/P</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Paletiz. C/P</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Con Etiq.</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Sin Etiq.</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Armado Adic.</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">Control Cal.</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Pegado Dome</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Virutas 50g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Virutas 100g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Virutas 200g</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 10x15</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 20x30</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Bolsa 35x45</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 5x10</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 10x15</TableHead>
-                                                    <TableHead className="min-w-[90px] px-2 py-2 text-xs">Burb. 20x30</TableHead>
-                                                    <TableHead className="min-w-[100px] px-2 py-2 text-xs">T. Produc.</TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Sin
+                                                        <br /> Armado
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Con
+                                                        <br /> Armado
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Paletiz.
+                                                        <br /> S/P
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Paletiz.
+                                                        <br /> C/P
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Con
+                                                        <br /> Etiq.
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Sin
+                                                        <br /> Etiq.
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Armado
+                                                        <br /> Adic.
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Control
+                                                        <br /> Cal.
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Pegado
+                                                        <br /> Dome
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Viruta
+                                                        <br /> 50g
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Viruta
+                                                        <br /> 100g
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Viruta
+                                                        <br /> 200g
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Bolsa
+                                                        <br /> 10x15
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Bolsa
+                                                        <br /> 20x30
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Bolsa
+                                                        <br /> 35x45
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Plub
+                                                        <br /> 5x10
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Plub
+                                                        <br /> 10x15
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                        Plub
+                                                        <br /> 20x30
+                                                    </TableHead>
+                                                    <TableHead className="min-w-[70px] px-2 py-2 text-xs">
+                                                        T.
+                                                        <br /> Produc.
+                                                    </TableHead>
                                                     <TableHead className="min-w-[80px] px-2 py-2 text-xs">Estado</TableHead>
-                                                    {isEditMode && (
-                                                        <TableHead className="sticky right-0 bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>
-                                                    )}
+                                                    <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
                                                 {editedScales.map((scale, index) => (
                                                     <TableRow key={scale.id} className={scale.isNew ? 'bg-blue-50' : ''}>
-                                                        {isEditMode ? (
+                                                        {isIndividualEditMode ? (
                                                             <>
-                                                                <TableCell className="sticky left-0 bg-white px-2 py-2">
+                                                                <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
                                                                     <EditableCell
                                                                         index={index}
                                                                         field="quantity_from"
@@ -367,7 +508,7 @@ export default function CostScales({ scales: initialScales }) {
                                                                 </TableCell>
                                                             </>
                                                         ) : (
-                                                            <TableCell className="sticky left-0 bg-white px-2 py-2">
+                                                            <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
                                                                 <span className="text-xs font-medium">
                                                                     {scale.quantity_from && scale.quantity_to
                                                                         ? `de ${scale.quantity_from} a ${scale.quantity_to}`
@@ -549,7 +690,7 @@ export default function CostScales({ scales: initialScales }) {
                                                             />
                                                         </TableCell>
                                                         <TableCell className="px-2 py-2">
-                                                            {isEditMode ? (
+                                                            {isIndividualEditMode ? (
                                                                 <Switch
                                                                     checked={scale.is_active}
                                                                     onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
@@ -560,27 +701,22 @@ export default function CostScales({ scales: initialScales }) {
                                                                 </Badge>
                                                             )}
                                                         </TableCell>
-                                                        {isEditMode && (
-                                                            <TableCell className="sticky right-0 bg-white px-2 py-2 text-right">
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleDeleteRow(index)}
-                                                                    className="h-7 w-7 p-0"
-                                                                >
-                                                                    <Trash2 className="text-destructive h-3.5 w-3.5" />
-                                                                </Button>
-                                                            </TableCell>
-                                                        )}
+                                                        <TableCell className="sticky right-0 z-10 bg-white px-2 py-2 text-right">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleDeleteRow(index, scale)}
+                                                                className="h-7 w-7 p-0 hover:bg-red-50"
+                                                            >
+                                                                <Trash2 className="text-destructive h-3.5 w-3.5" />
+                                                            </Button>
+                                                        </TableCell>
                                                     </TableRow>
                                                 ))}
 
                                                 {editedScales.length === 0 && (
                                                     <TableRow>
-                                                        <TableCell
-                                                            colSpan={isEditMode ? 23 : 22}
-                                                            className="text-muted-foreground py-8 text-center text-sm"
-                                                        >
+                                                        <TableCell colSpan={22} className="text-muted-foreground py-8 text-center text-sm">
                                                             No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear una.
                                                         </TableCell>
                                                     </TableRow>
@@ -588,40 +724,16 @@ export default function CostScales({ scales: initialScales }) {
                                             </TableBody>
                                         </Table>
                                     </div>
-
-                                    {isEditMode && hasChanges && (
-                                        <div className="m-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-2 w-2 animate-pulse rounded-full bg-amber-500"></div>
-                                                <span className="text-sm font-medium text-amber-900">Tienes cambios sin guardar</span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" onClick={handleCancel}>
-                                                    <X className="mr-2 h-4 w-4" />
-                                                    Cancelar
-                                                </Button>
-                                                <Button onClick={handleSaveAll}>
-                                                    <Save className="mr-2 h-4 w-4" />
-                                                    Guardar Todos los Cambios
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {!isEditMode && (
-                                        <div className="bg-muted/50 m-6 rounded-lg p-4">
-                                            <p className="text-muted-foreground text-sm">
-                                                💡 <strong>Tip:</strong> Activa el "Modo Edición" para modificar todas las celdas que necesites y
-                                                guardar todos los cambios de una sola vez. Usa scroll horizontal para ver todas las columnas.
-                                            </p>
-                                        </div>
-                                    )}
                                 </CardContent>
                             </Card>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Modales de confirmación */}
+            <CostAdjustmentConfirmationDialog />
+            <DeleteConfirmationDialog />
         </AppLayout>
     );
 }
