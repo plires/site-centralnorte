@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller;
+use Inertia\Inertia;
 use App\Models\PickingBox;
+use Illuminate\Http\Request;
 use App\Models\PickingCostScale;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\StorePickingBoxRequest;
 use App\Http\Requests\Picking\UpdatePickingBoxRequest;
@@ -12,9 +16,10 @@ use App\Http\Requests\Picking\StorePickingCostScaleRequest;
 use App\Http\Requests\Picking\UpdatePickingCostScaleRequest;
 use App\Http\Requests\Picking\StorePickingComponentIncrementRequest;
 use App\Http\Requests\Picking\UpdatePickingComponentIncrementRequest;
-use Inertia\Inertia;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\Request;
+
+use function Laravel\Prompts\error;
+use function PHPUnit\Framework\throwException;
+use Exception;
 
 class PickingConfigurationController extends Controller
 {
@@ -123,11 +128,14 @@ class PickingConfigurationController extends Controller
      */
     public function destroyBox(PickingBox $pickingBox)
     {
-        // Verificar si hay presupuestos usando esta caja
-        // Si hay, mejor desactivar en lugar de eliminar
-        $pickingBox->update(['is_active' => false]);
+        try {
+            $pickingBox->delete();
 
-        return back()->with('success', 'Caja desactivada correctamente.');
+            return back()->with('success', 'Caja eliminada correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar caja: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar la caja.');
+        }
     }
 
     // ========================================================================
