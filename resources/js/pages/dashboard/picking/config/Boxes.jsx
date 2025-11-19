@@ -359,7 +359,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="text-right">
-                                                            {!isIndividualEditMode && (
+                                                            {!isIndividualEditMode && !isMassEditMode && (
                                                                 <Button
                                                                     size="sm"
                                                                     variant="ghost"
