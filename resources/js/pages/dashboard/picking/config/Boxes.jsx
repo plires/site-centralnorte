@@ -83,16 +83,21 @@ export default function Boxes({ boxes: initialBoxes }) {
     const handleDeleteRow = async (index, box) => {
         const confirmed = await confirmDelete({
             title: 'Eliminar Caja',
-            description: 'Esta acción no se puede deshacer. La caja será eliminada permanentemente del sistema.',
+            description: 'Esta acción eliminará la caja de la base de datos. Si está en uso, será desactivada.',
             itemName: box.dimensions || 'Sin dimensiones',
         });
 
         if (!confirmed) return;
 
-        const newBoxes = [...editedBoxes];
-        newBoxes.splice(index, 1);
-        setEditedBoxes(newBoxes);
-        setHasChanges(true);
+        router.delete(route('dashboard.picking.config.boxes.destroy', box.id), {
+            preserveScroll: true,
+            ...handleResponse(() => {
+                // Callback de éxito
+                const newBoxes = [...editedBoxes];
+                newBoxes.splice(index, 1);
+                setEditedBoxes(newBoxes);
+            }),
+        });
     };
 
     // Función para aplicar incremento/decremento porcentual masivo
@@ -354,14 +359,16 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="text-right">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => handleDeleteRow(index, box)}
-                                                                className="hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="text-destructive h-4 w-4" />
-                                                            </Button>
+                                                            {!isIndividualEditMode && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => handleDeleteRow(index, box)}
+                                                                    className="hover:bg-red-50"
+                                                                >
+                                                                    <Trash2 className="text-destructive h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
