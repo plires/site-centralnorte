@@ -403,83 +403,83 @@ export default function CostScales({ scales: initialScales }) {
                                                             Rango
                                                         </TableHead>
                                                     )}
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Sin
                                                         <br /> Armado
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Con
                                                         <br /> Armado
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Paletiz.
                                                         <br /> S/P
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Paletiz.
                                                         <br /> C/P
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Con
                                                         <br /> Etiq.
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Sin
                                                         <br /> Etiq.
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Armado
                                                         <br /> Adic.
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Control
                                                         <br /> Cal.
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Pegado
                                                         <br /> Dome
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Viruta
                                                         <br /> 50g
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Viruta
                                                         <br /> 100g
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Viruta
                                                         <br /> 200g
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Bolsa
                                                         <br /> 10x15
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Bolsa
                                                         <br /> 20x30
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Bolsa
                                                         <br /> 35x45
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Plub
                                                         <br /> 5x10
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Plub
                                                         <br /> 10x15
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         Plub
                                                         <br /> 20x30
                                                     </TableHead>
-                                                    <TableHead className="min-w-[70px] px-2 py-2 text-xs">
+                                                    <TableHead className="px-2 py-2 text-xs">
                                                         T.
                                                         <br /> Produc.
                                                     </TableHead>
-                                                    <TableHead className="min-w-[80px] px-2 py-2 text-xs">Estado</TableHead>
+                                                    <TableHead className="px-2 py-2 text-xs">Estado</TableHead>
                                                     <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
