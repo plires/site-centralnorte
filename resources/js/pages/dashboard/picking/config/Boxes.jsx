@@ -9,11 +9,14 @@ import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfir
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function Boxes({ boxes: initialBoxes }) {
+    const { props } = usePage();
+    const errors = props.errors || {};
+
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
@@ -47,13 +50,17 @@ export default function Boxes({ boxes: initialBoxes }) {
             },
             {
                 preserveScroll: true,
-                ...handleResponse(), // Maneja los toasts automáticamente
-                onFinish: () => {
-                    // Se ejecuta SIEMPRE
-                    setIsIndividualEditMode(false);
-                    setHasChanges(false);
-                    setPercentageValue('');
-                },
+                ...handleResponse(
+                    () => {
+                        setIsIndividualEditMode(false);
+                        setHasChanges(false);
+                        setPercentageValue('');
+                    }, // Éxito
+                    () => {
+                        handleAddRow();
+                        setIsIndividualEditMode(false);
+                    }, // Error
+                ),
             },
         );
     };
@@ -260,6 +267,18 @@ export default function Boxes({ boxes: initialBoxes }) {
                                         💡 <strong>Tip:</strong> Activa <strong>Modificación Individual</strong> para editar celdas una por una, o{' '}
                                         <strong>Modificación Masiva</strong> para ajustar todos los costos con un porcentaje.
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Errores globales debajo de la tabla */}
+                            {Object.keys(errors).length > 0 && (
+                                <div className="mt-4 space-y-1">
+                                    {Object.entries(errors).map(([field, message]) => (
+                                        <p key={field} className="text-sm text-red-500">
+                                            {/* por si viene como string o array */}
+                                            {Array.isArray(message) ? message.join(', ') : message}
+                                        </p>
+                                    ))}
                                 </div>
                             )}
 
