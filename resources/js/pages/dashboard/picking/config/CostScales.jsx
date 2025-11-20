@@ -102,23 +102,30 @@ export default function CostScales({ scales: initialScales }) {
     const handleDeleteRow = async (index, scale) => {
         const rangeText =
             scale.quantity_from && scale.quantity_to
-                ? `de ${scale.quantity_from} a ${scale.quantity_to}`
+                ? `Rango de kits desde ${scale.quantity_from} a ${scale.quantity_to}`
                 : scale.quantity_from
                   ? `${scale.quantity_from} o más`
                   : 'Sin rango definido';
 
         const confirmed = await confirmDelete({
-            title: 'Eliminar Escala de Costos',
-            description: 'Esta acción no se puede deshacer. La escala de costos será eliminada permanentemente del sistema.',
-            itemName: `Rango: ${rangeText}`,
+            title: 'Eliminar Rango',
+            description: `Esta acción eliminará el rango que contiene los rangos de kits desde ${scale.quantity_from} a ${scale.quantity_to} de la base de datos. Esta acción no se puede deshacer.`,
+            itemName: rangeText,
         });
 
         if (!confirmed) return;
 
-        const newScales = [...editedScales];
-        newScales.splice(index, 1);
-        setEditedScales(newScales);
-        setHasChanges(true);
+        router.delete(route('dashboard.picking.config.cost-scales.destroy', scale.id), {
+            preserveScroll: true,
+            ...handleResponse(() => {
+                // Callback de éxito
+                const newScales = [...editedScales];
+                newScales.splice(index, 1);
+                setEditedScales(newScales);
+                setHasChanges(true);
+                setEditedScales(newScales);
+            }),
+        });
     };
 
     // Función para aplicar incremento/decremento porcentual masivo
@@ -702,14 +709,16 @@ export default function CostScales({ scales: initialScales }) {
                                                             )}
                                                         </TableCell>
                                                         <TableCell className="sticky right-0 z-10 bg-white px-2 py-2 text-right">
-                                                            <Button
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => handleDeleteRow(index, scale)}
-                                                                className="h-7 w-7 p-0 hover:bg-red-50"
-                                                            >
-                                                                <Trash2 className="text-destructive h-3.5 w-3.5" />
-                                                            </Button>
+                                                            {!isIndividualEditMode && !isMassEditMode && (
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => handleDeleteRow(index, scale)}
+                                                                    className="h-7 w-7 p-0 hover:bg-red-50"
+                                                                >
+                                                                    <Trash2 className="text-destructive h-3.5 w-3.5" />
+                                                                </Button>
+                                                            )}
                                                         </TableCell>
                                                     </TableRow>
                                                 ))}
