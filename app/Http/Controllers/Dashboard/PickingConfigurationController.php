@@ -299,10 +299,14 @@ class PickingConfigurationController extends Controller
      */
     public function destroyCostScale(PickingCostScale $pickingCostScale)
     {
-        // Desactivar en lugar de eliminar para mantener histórico
-        $pickingCostScale->update(['is_active' => false]);
+        try {
+            $pickingCostScale->delete();
 
-        return back()->with('success', 'Escala de costos desactivada correctamente.');
+            return back()->with('success', 'Rango eliminado correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar el rango: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar el rango.');
+        }
     }
 
     // ========================================================================
