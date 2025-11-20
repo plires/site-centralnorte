@@ -330,9 +330,14 @@ class PickingConfigurationController extends Controller
      */
     public function storeComponentIncrement(StorePickingComponentIncrementRequest $request)
     {
-        PickingComponentIncrement::create($request->validated());
 
-        return back()->with('success', 'Incremento por componentes creado correctamente.');
+        try {
+            PickingComponentIncrement::create($request->validated());
+            return back()->with('success', 'Incremento por componentes creado correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar incremento por componentes: ' . $e->getMessage());
+            return back()->with('error', 'Error al actualizar el incremento por componentes.');
+        }
     }
 
     /**
