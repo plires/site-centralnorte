@@ -50,8 +50,11 @@ class UpdatePickingComponentIncrementRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'components_to.gt' => 'Los componentes hasta debe ser mayor que los componentes desde.',
-            'percentage.max' => 'El porcentaje no puede ser mayor a 1 (100%).',
+            'components_from.min' => 'Los componentes "desde" debe ser mayor a 1.',
+            'components_to.gt' => 'Los componentes "hasta" debe ser mayor que los componentes "desde".',
+            'percentage.min' => 'El porcentaje no puede ser menor a 0%.',
+            'percentage.max' => 'El porcentaje no puede ser mayor a 100%.',
+            'description.max' => 'El campo descripcion no puede ser mayor a 255 caracteres.',
         ];
     }
 }
