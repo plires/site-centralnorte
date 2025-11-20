@@ -340,9 +340,13 @@ class PickingConfigurationController extends Controller
      */
     public function updateComponentIncrement(UpdatePickingComponentIncrementRequest $request, PickingComponentIncrement $pickingComponentIncrement)
     {
-        $pickingComponentIncrement->update($request->validated());
-
-        return back()->with('success', 'Incremento por componentes actualizado correctamente.');
+        try {
+            $pickingComponentIncrement->update($request->validated());
+            return back()->with('success', 'Incremento por componentes actualizado correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar Incremento por componentes: ' . $e->getMessage());
+            return back()->with('error', 'Error al actualizar el incremento por componentes.');
+        }
     }
 
     /**
@@ -350,9 +354,14 @@ class PickingConfigurationController extends Controller
      */
     public function destroyComponentIncrement(PickingComponentIncrement $pickingComponentIncrement)
     {
-        // Desactivar en lugar de eliminar
-        $pickingComponentIncrement->update(['is_active' => false]);
 
-        return back()->with('success', 'Incremento por componentes desactivado correctamente.');
+        try {
+            $pickingComponentIncrement->delete();
+
+            return back()->with('success', 'Incremento por componentes eliminado correctamente.');
+        } catch (\Exception $e) {
+            Log::error('Error al eliminar Incremento por componentes: ' . $e->getMessage());
+            return back()->with('error', 'Error al eliminar el incremento por componentes.');
+        }
     }
 }
