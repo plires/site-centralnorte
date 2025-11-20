@@ -47,12 +47,13 @@ export default function Boxes({ boxes: initialBoxes }) {
             },
             {
                 preserveScroll: true,
-                ...handleResponse(() => {
-                    // Callback de éxito
+                ...handleResponse(), // Maneja los toasts automáticamente
+                onFinish: () => {
+                    // Se ejecuta SIEMPRE
                     setIsIndividualEditMode(false);
                     setHasChanges(false);
                     setPercentageValue('');
-                }),
+                },
             },
         );
     };
@@ -73,8 +74,12 @@ export default function Boxes({ boxes: initialBoxes }) {
             is_active: true,
             isNew: true,
         };
-        setEditedBoxes([...editedBoxes, newBox]);
+
+        // Agregar la nueva fila AL PRINCIPIO del array
+        setEditedBoxes([newBox, ...editedBoxes]);
         setHasChanges(true);
+
+        // Activar automáticamente el modo edición individual
         if (!isIndividualEditMode) {
             setIsIndividualEditMode(true);
         }
@@ -160,6 +165,15 @@ export default function Boxes({ boxes: initialBoxes }) {
         );
     };
 
+    // Verificar si hay nuevas filas sin guardar
+    const hasNewRows = editedBoxes.some((box) => box.isNew);
+
+    // Determinar si un campo debe estar deshabilitado
+    const isFieldDisabled = (box) => {
+        // Si hay nuevas filas y esta NO es nueva, deshabilitar
+        return hasNewRows && !box.isNew;
+    };
+
     return (
         <AppLayout>
             <Head title="Configuración - Cajas" />
@@ -182,6 +196,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                 setIsMassEditMode(checked);
                                                 if (checked) setIsIndividualEditMode(false);
                                             }}
+                                            disabled={hasNewRows}
                                         />
                                         <Label htmlFor="mass-edit-mode" className="cursor-pointer whitespace-nowrap">
                                             Modificación Masiva
@@ -195,6 +210,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                 setIsIndividualEditMode(checked);
                                                 if (checked) setIsMassEditMode(false);
                                             }}
+                                            disabled={hasNewRows}
                                         />
                                         <Label htmlFor="individual-edit-mode" className="cursor-pointer whitespace-nowrap">
                                             Modificación Individual
@@ -228,7 +244,17 @@ export default function Boxes({ boxes: initialBoxes }) {
                                 </div>
                             )}
 
-                            {!isIndividualEditMode && !isMassEditMode && (
+                            {/* Banner informativo cuando hay filas nuevas */}
+                            {hasNewRows && (
+                                <div className="mt-4 mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                    <p className="text-sm text-blue-900">
+                                        <strong>✨ Nueva fila agregada:</strong> Completa los datos de la nueva caja y presiona "Guardar Todos los
+                                        Cambios" cuando termines. Las filas existentes están bloqueadas mientras agregas nuevas cajas.
+                                    </p>
+                                </div>
+                            )}
+
+                            {!isIndividualEditMode && !isMassEditMode && !hasNewRows && (
                                 <div className="bg-muted/50 mt-4 mb-5 rounded-lg p-4">
                                     <p className="text-muted-foreground text-sm">
                                         💡 <strong>Tip:</strong> Activa <strong>Modificación Individual</strong> para editar celdas una por una, o{' '}
@@ -316,62 +342,72 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {editedBoxes.map((box, index) => (
-                                                    <TableRow key={box.id} className={box.isNew ? 'bg-blue-50' : ''}>
-                                                        <TableCell className="text-muted-foreground">{index + 1}</TableCell>
-                                                        <TableCell>
-                                                            {isIndividualEditMode ? (
-                                                                <Input
-                                                                    type="text"
-                                                                    value={box.dimensions}
-                                                                    onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
-                                                                    placeholder="200 x 200 x 100"
-                                                                    className="h-9"
-                                                                />
-                                                            ) : (
-                                                                <span className="font-medium">{box.dimensions}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {isIndividualEditMode ? (
-                                                                <Input
-                                                                    type="number"
-                                                                    value={box.cost}
-                                                                    onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
-                                                                    placeholder="0.00"
-                                                                    step="0.01"
-                                                                    className="h-9"
-                                                                />
-                                                            ) : (
-                                                                <span className="font-medium">${parseFloat(box.cost || 0).toFixed(2)}</span>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            {isIndividualEditMode ? (
-                                                                <Switch
-                                                                    checked={box.is_active}
-                                                                    onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
-                                                                />
-                                                            ) : (
-                                                                <Badge variant={box.is_active ? 'default' : 'secondary'}>
-                                                                    {box.is_active ? 'Activa' : 'Inactiva'}
-                                                                </Badge>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="text-right">
-                                                            {!isIndividualEditMode && !isMassEditMode && (
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleDeleteRow(index, box)}
-                                                                    className="hover:bg-red-50"
-                                                                >
-                                                                    <Trash2 className="text-destructive h-4 w-4" />
-                                                                </Button>
-                                                            )}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
+                                                {editedBoxes.map((box, index) => {
+                                                    const disabled = isFieldDisabled(box);
+
+                                                    return (
+                                                        <TableRow
+                                                            key={box.id}
+                                                            className={`${box.isNew ? 'border-l-4 border-green-500 bg-green-50' : ''} ${disabled ? 'opacity-50' : ''}`}
+                                                        >
+                                                            <TableCell className="text-muted-foreground">{index + 1}</TableCell>
+                                                            <TableCell>
+                                                                {isIndividualEditMode ? (
+                                                                    <Input
+                                                                        type="text"
+                                                                        value={box.dimensions}
+                                                                        onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
+                                                                        placeholder="200 x 200 x 100"
+                                                                        className="h-9"
+                                                                        disabled={disabled}
+                                                                    />
+                                                                ) : (
+                                                                    <span className="font-medium">{box.dimensions}</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {isIndividualEditMode ? (
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={box.cost}
+                                                                        onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
+                                                                        placeholder="0.00"
+                                                                        step="0.01"
+                                                                        className="h-9"
+                                                                        disabled={disabled}
+                                                                    />
+                                                                ) : (
+                                                                    <span className="font-medium">${parseFloat(box.cost || 0).toFixed(2)}</span>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                {isIndividualEditMode ? (
+                                                                    <Switch
+                                                                        checked={box.is_active}
+                                                                        onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
+                                                                        disabled={disabled}
+                                                                    />
+                                                                ) : (
+                                                                    <Badge variant={box.is_active ? 'default' : 'secondary'}>
+                                                                        {box.is_active ? 'Activa' : 'Inactiva'}
+                                                                    </Badge>
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-right">
+                                                                {!isIndividualEditMode && !isMassEditMode && (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="ghost"
+                                                                        onClick={() => handleDeleteRow(index, box)}
+                                                                        className="hover:bg-red-50"
+                                                                    >
+                                                                        <Trash2 className="text-destructive h-4 w-4" />
+                                                                    </Button>
+                                                                )}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    );
+                                                })}
 
                                                 {editedBoxes.length === 0 && (
                                                     <TableRow>
