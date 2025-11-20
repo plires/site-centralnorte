@@ -1,3 +1,4 @@
+import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
@@ -5,7 +6,7 @@ import { Input } from '@/Components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -17,10 +18,14 @@ const breadcrumbs = [
 ];
 
 export default function ComponentIncrements({ increments }) {
+    const { props } = usePage();
+    const errors = props.errors || {};
+
     const { handleResponse } = useInertiaResponse();
 
     const [editingId, setEditingId] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
+    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
 
     const {
         data,
@@ -69,20 +74,16 @@ export default function ComponentIncrements({ increments }) {
             percentage: parseFloat(data.percentage) / 100,
         };
 
-        router.put(
-            route('dashboard.picking.config.component-increments.update', id),
-            {
-                data: dataToSend,
-            },
-            {
-                preserveScroll: true,
-                ...handleResponse(() => {
-                    // Callback de éxito
+        router.put(route('dashboard.picking.config.component-increments.update', id), dataToSend, {
+            preserveScroll: true,
+            ...handleResponse(
+                () => {
                     setEditingId(null);
                     reset();
-                }),
-            },
-        );
+                }, // Éxito
+                () => {}, // Error
+            ),
+        });
     };
 
     const handleCreate = () => {
@@ -92,22 +93,33 @@ export default function ComponentIncrements({ increments }) {
             percentage: parseFloat(data.percentage) / 100,
         };
 
-        post(route('dashboard.picking.config.component-increments.store'), {
-            data: dataToSend,
+        router.post(route('dashboard.picking.config.component-increments.store'), dataToSend, {
             preserveScroll: true,
-            onSuccess: () => {
-                setIsAdding(false);
-                reset();
-            },
+            ...handleResponse(
+                () => {
+                    setIsAdding(false);
+                    reset();
+                }, // Éxito
+                () => {}, // Error
+            ),
         });
     };
 
-    const handleDelete = (id) => {
-        if (confirm('¿Estás seguro de desactivar este incremento?')) {
-            destroy(route('picking.config.component-increments.destroy', id), {
-                preserveScroll: true,
-            });
-        }
+    const handleDelete = async (increment) => {
+        const confirmed = await confirmDelete({
+            title: `Borrar rango`,
+            description: `Esta acción eliminará el rango de componentes ${increment.description} de la base de datos. Esta acción es irreversible.`,
+            itemName: increment.description || 'Sin dimensiones',
+        });
+
+        if (!confirmed) return;
+
+        router.delete(route('dashboard.picking.config.component-increments.destroy', increment.id), {
+            preserveScroll: true,
+            ...handleResponse(() => {
+                // Callback de éxito
+            }),
+        });
     };
 
     const formatRange = (increment) => {
@@ -286,7 +298,7 @@ export default function ComponentIncrements({ increments }) {
                                                             <div className="flex justify-end gap-2">
                                                                 <Button size="sm" onClick={() => handleSave(increment.id)} disabled={processing}>
                                                                     <Save className="mr-1 h-3 w-3" />
-                                                                    Guardar
+                                                                    Actualizar
                                                                 </Button>
                                                                 <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={processing}>
                                                                     <X className="mr-1 h-3 w-3" />
@@ -305,7 +317,7 @@ export default function ComponentIncrements({ increments }) {
                                                                     Editar
                                                                 </Button>
                                                                 {increment.is_active && (
-                                                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(increment.id)}>
+                                                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(increment)}>
                                                                         <Trash2 className="h-3 w-3" />
                                                                     </Button>
                                                                 )}
@@ -325,6 +337,18 @@ export default function ComponentIncrements({ increments }) {
                                         </TableBody>
                                     </Table>
 
+                                    {/* Errores globales debajo de la tabla */}
+                                    {Object.keys(errors).length > 0 && (
+                                        <div className="mt-4 space-y-1">
+                                            {Object.entries(errors).map(([field, message]) => (
+                                                <p key={field} className="text-sm text-red-500">
+                                                    {/* por si viene como string o array */}
+                                                    {Array.isArray(message) ? message.join(', ') : message}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )}
+
                                     <div className="bg-muted mt-4 rounded-lg p-4">
                                         <h4 className="mb-2 font-semibold">💡 Información</h4>
                                         <p className="text-muted-foreground text-sm">
@@ -338,6 +362,9 @@ export default function ComponentIncrements({ increments }) {
                     </div>
                 </div>
             </div>
+
+            {/* Modales de confirmación */}
+            <DeleteConfirmationDialog />
         </AppLayout>
     );
 }
