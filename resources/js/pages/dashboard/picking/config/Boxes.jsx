@@ -11,24 +11,11 @@ import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function Boxes({ boxes: initialBoxes }) {
     const { props } = usePage();
-
-    // 1) Errores crudos del backend (NO se tocan)
-    const backendErrors = props.errors || {};
-
-    // 2) Errores que mostramos en el UI (sí se pueden limpiar)
-    const [visibleErrors, setVisibleErrors] = useState(backendErrors);
-
-    // Cuando el backend mande errores nuevos, actualizamos los visibles
-    useEffect(() => {
-        setVisibleErrors(backendErrors);
-    }, [backendErrors]);
-
-    // Helper para limpiar errores visibles (por botón, cancel, etc.)
-    const clearVisibleErrors = () => setVisibleErrors({});
+    const serverErrors = props.errors || {};
 
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
@@ -39,27 +26,40 @@ export default function Boxes({ boxes: initialBoxes }) {
     const [editedBoxes, setEditedBoxes] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [percentageValue, setPercentageValue] = useState('');
+    const [localErrors, setLocalErrors] = useState({});
+    const [pendingNewBoxes, setPendingNewBoxes] = useState([]); // Guardar filas nuevas
+    const lastServerErrorsRef = useRef('');
+
+    // Sincronizar errores del servidor con el estado local
+    // Solo actualizar cuando los serverErrors realmente cambien (no cuando sean los mismos)
+    useEffect(() => {
+        const currentErrorsKey = JSON.stringify(serverErrors);
+
+        // Solo actualizar si los errores del servidor han cambiado
+        if (currentErrorsKey !== lastServerErrorsRef.current) {
+            lastServerErrorsRef.current = currentErrorsKey;
+            setLocalErrors(serverErrors);
+        }
+    }, [serverErrors]);
 
     // Inicializar editedBoxes cuando cambian las cajas
     // IMPORTANTE: Preservar filas nuevas (isNew) cuando hay errores de validación
     useEffect(() => {
         setEditedBoxes((prevBoxes) => {
-            // Si el backend devolvió errores de validación
-            const hasValidationErrors = Object.keys(backendErrors).length > 0;
+            // Si hay errores, significa que hubo una validación fallida
+            const hasValidationErrors = Object.keys(localErrors).length > 0;
 
-            if (hasValidationErrors) {
-                // Preservar filas nuevas que vivían en el cliente
-                const newBoxes = prevBoxes.filter((box) => box.isNew);
+            // Si hay errores, restaurar las filas nuevas que guardamos
+            if (hasValidationErrors && pendingNewBoxes.length > 0) {
                 const existingBoxes = initialBoxes.map((box) => ({ ...box }));
-
-                // La fila nueva (con borde verde, etc.) sigue primera
-                return [...newBoxes, ...existingBoxes];
+                // Mantener las nuevas filas al principio
+                return [...pendingNewBoxes, ...existingBoxes];
             }
 
-            // Sin errores → reseteamos todo a lo que viene del backend
+            // Si no hay errores, resetear completamente
             return initialBoxes.map((box) => ({ ...box }));
         });
-    }, [initialBoxes, backendErrors]);
+    }, [initialBoxes, localErrors, pendingNewBoxes]);
 
     const handleCellChange = (index, field, value) => {
         const newBoxes = [...editedBoxes];
@@ -72,6 +72,10 @@ export default function Boxes({ boxes: initialBoxes }) {
     };
 
     const handleSaveAll = () => {
+        // Guardar las filas nuevas ANTES de hacer el submit
+        const newBoxes = editedBoxes.filter((box) => box.isNew);
+        setPendingNewBoxes(newBoxes);
+
         router.put(
             route('dashboard.picking.config.boxes.update-all'),
             {
@@ -81,14 +85,14 @@ export default function Boxes({ boxes: initialBoxes }) {
                 preserveScroll: true,
                 ...handleResponse(
                     () => {
-                        // Callback de ÉXITO: resetear estados
+                        // Callback de ÉXITO: resetear estados y limpiar pending
+                        setPendingNewBoxes([]);
                         setIsIndividualEditMode(false);
                         setHasChanges(false);
                         setPercentageValue('');
                     },
                     () => {
-                        // Callback de ERROR: NO hacer nada, preservar el estado actual
-                        // Las filas nuevas se preservarán por el useEffect
+                        // Callback de ERROR: las filas se restaurarán por el useEffect
                     },
                 ),
             },
@@ -101,7 +105,13 @@ export default function Boxes({ boxes: initialBoxes }) {
         setIsIndividualEditMode(false);
         setHasChanges(false);
         setPercentageValue('');
-        clearVisibleErrors();
+
+        // Limpiar errores locales y filas pendientes
+        setLocalErrors({});
+        setPendingNewBoxes([]);
+
+        // Actualizar la ref para que no se vuelvan a sincronizar los mismos errores
+        lastServerErrorsRef.current = JSON.stringify({});
     };
 
     const handleAddRow = () => {
@@ -218,9 +228,11 @@ export default function Boxes({ boxes: initialBoxes }) {
      */
     const getFieldError = (index, field) => {
         const errorKey = `boxes.${index}.${field}`;
-        const errorMessage = visibleErrors[errorKey];
+        const errorMessage = localErrors[errorKey];
 
         if (!errorMessage) return null;
+
+        // Laravel puede devolver el error como string o como array
         return Array.isArray(errorMessage) ? errorMessage[0] : errorMessage;
     };
 
