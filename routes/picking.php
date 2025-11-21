@@ -65,9 +65,6 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])
                 ->name('boxes');
 
-            Route::post('/boxes', [PickingConfigurationController::class, 'storeBox'])
-                ->name('boxes.store');
-
             Route::delete('/boxes/{pickingBox}', [PickingConfigurationController::class, 'destroyBox'])
                 ->name('boxes.destroy');
 
@@ -77,12 +74,6 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
 
             Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
                 ->name('cost-scales');
-
-            Route::put('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'updateCostScale'])
-                ->name('cost-scales.update');
-
-            Route::post('/cost-scales', [PickingConfigurationController::class, 'storeCostScale'])
-                ->name('cost-scales.store');
 
             Route::delete('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'destroyCostScale'])
                 ->name('cost-scales.destroy');
