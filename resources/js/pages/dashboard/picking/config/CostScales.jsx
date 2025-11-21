@@ -9,11 +9,14 @@ import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfir
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function CostScales({ scales: initialScales }) {
+    const { props } = usePage();
+    const backendErrors = props.errors || {};
+
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
@@ -360,6 +363,21 @@ export default function CostScales({ scales: initialScales }) {
                                         <strong>Modificación Masiva</strong> para ajustar todos los valores con un porcentaje. Usa scroll horizontal
                                         para ver todas las columnas.
                                     </p>
+                                </div>
+                            )}
+
+                            {/* Bloque de errores globales */}
+                            {Object.keys(backendErrors).length > 0 && (
+                                <div className="mt-4 mb-5 rounded-md border border-red-200 bg-red-50 p-3">
+                                    <p className="mb-2 text-sm font-semibold text-red-700">Se encontraron algunos errores:</p>
+                                    <ul className="list-disc space-y-1 pl-5 text-sm text-red-600">
+                                        {Object.entries(backendErrors).map(([field, message]) => (
+                                            <li key={field}>
+                                                {/* Puede venir como string o como array */}
+                                                {Array.isArray(message) ? message.join(', ') : message}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 </div>
                             )}
 
