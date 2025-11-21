@@ -178,6 +178,27 @@ export default function Boxes({ boxes: initialBoxes }) {
         return hasNewRows && !box.isNew;
     };
 
+    /**
+     * Helper para obtener el mensaje de error de un campo específico
+     * Los errores vienen con la estructura: boxes.0.dimensions, boxes.1.cost, etc.
+     */
+    const getFieldError = (index, field) => {
+        const errorKey = `boxes.${index}.${field}`;
+        const errorMessage = errors[errorKey];
+
+        if (!errorMessage) return null;
+
+        // Laravel puede devolver el error como string o como array
+        return Array.isArray(errorMessage) ? errorMessage[0] : errorMessage;
+    };
+
+    /**
+     * Verifica si una fila tiene algún error
+     */
+    const hasRowError = (index) => {
+        return ['dimensions', 'cost', 'is_active'].some((field) => getFieldError(index, field));
+    };
+
     return (
         <AppLayout>
             <Head title="Configuración - Cajas" />
@@ -267,18 +288,6 @@ export default function Boxes({ boxes: initialBoxes }) {
                                 </div>
                             )}
 
-                            {/* Errores globales debajo de la tabla */}
-                            {Object.keys(errors).length > 0 && (
-                                <div className="mt-4 mb-5 rounded-lg border border-red-200 bg-red-50 p-4">
-                                    {Object.entries(errors).map(([field, message]) => (
-                                        <p key={field} className="text-sm text-red-500">
-                                            {/* por si viene como string o array */}
-                                            {Array.isArray(message) ? message.join(', ') : message}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-
                             {/* Panel de incremento/decremento porcentual masivo */}
                             {isMassEditMode && (
                                 <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -360,6 +369,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                                             <TableBody>
                                                 {editedBoxes.map((box, index) => {
                                                     const disabled = isFieldDisabled(box);
+                                                    const rowHasError = hasRowError(index);
 
                                                     return (
                                                         <TableRow
@@ -374,11 +384,14 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                                         value={box.dimensions}
                                                                         onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
                                                                         placeholder="200 x 200 x 100"
-                                                                        className="h-9"
+                                                                        className={`h-9 ${getFieldError(index, 'dimensions') ? 'border-red-500' : ''}`}
                                                                         disabled={disabled}
                                                                     />
                                                                 ) : (
                                                                     <span className="font-medium">{box.dimensions}</span>
+                                                                )}
+                                                                {getFieldError(index, 'dimensions') && (
+                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'dimensions')}</p>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell>
@@ -389,11 +402,14 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                                         onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
                                                                         placeholder="0.00"
                                                                         step="0.01"
-                                                                        className="h-9"
+                                                                        className={`h-9 ${getFieldError(index, 'cost') ? 'border-red-500' : ''}`}
                                                                         disabled={disabled}
                                                                     />
                                                                 ) : (
                                                                     <span className="font-medium">${parseFloat(box.cost || 0).toFixed(2)}</span>
+                                                                )}
+                                                                {getFieldError(index, 'cost') && (
+                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'cost')}</p>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell>
@@ -407,6 +423,9 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                                     <Badge variant={box.is_active ? 'default' : 'secondary'}>
                                                                         {box.is_active ? 'Activa' : 'Inactiva'}
                                                                     </Badge>
+                                                                )}
+                                                                {getFieldError(index, 'is_active') && (
+                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'is_active')}</p>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-right">
