@@ -9,11 +9,21 @@ import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfir
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
-import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Head, router, usePage } from '@inertiajs/react';
+import { AlertCircle, Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+
+const breadcrumbs = [
+    {
+        title: 'Configuración - Escalas de Costos',
+        href: '/dashboard/picking/config/cost-scales',
+    },
+];
 
 export default function CostScales({ scales: initialScales }) {
+    const { props } = usePage();
+    const serverErrors = props.errors || {};
+
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
@@ -23,11 +33,40 @@ export default function CostScales({ scales: initialScales }) {
     const [editedScales, setEditedScales] = useState([]);
     const [hasChanges, setHasChanges] = useState(false);
     const [percentageValue, setPercentageValue] = useState('');
+    const [localErrors, setLocalErrors] = useState({});
+    const [pendingNewScales, setPendingNewScales] = useState([]); // Guardar filas nuevas
+    const lastServerErrorsRef = useRef('');
+
+    // Sincronizar errores del servidor con el estado local
+    // Solo actualizar cuando los serverErrors realmente cambien (no cuando sean los mismos)
+    useEffect(() => {
+        const currentErrorsKey = JSON.stringify(serverErrors);
+
+        // Solo actualizar si los errores del servidor han cambiado
+        if (currentErrorsKey !== lastServerErrorsRef.current) {
+            lastServerErrorsRef.current = currentErrorsKey;
+            setLocalErrors(serverErrors);
+        }
+    }, [serverErrors]);
 
     // Inicializar editedScales cuando cambian las escalas
+    // IMPORTANTE: Preservar filas nuevas (isNew) cuando hay errores de validación
     useEffect(() => {
-        setEditedScales(initialScales.map((scale) => ({ ...scale })));
-    }, [initialScales]);
+        setEditedScales((prevScales) => {
+            // Si hay errores, significa que hubo una validación fallida
+            const hasValidationErrors = Object.keys(localErrors).length > 0;
+
+            // Si hay errores, restaurar las filas nuevas que guardamos
+            if (hasValidationErrors && pendingNewScales.length > 0) {
+                const existingScales = initialScales.map((scale) => ({ ...scale }));
+                // Mantener las nuevas filas al principio
+                return [...pendingNewScales, ...existingScales];
+            }
+
+            // Si no hay errores, resetear completamente
+            return initialScales.map((scale) => ({ ...scale }));
+        });
+    }, [initialScales, localErrors, pendingNewScales]);
 
     const handleCellChange = (index, field, value) => {
         const newScales = [...editedScales];
@@ -40,6 +79,10 @@ export default function CostScales({ scales: initialScales }) {
     };
 
     const handleSaveAll = () => {
+        // Guardar las filas nuevas ANTES de hacer el submit
+        const newScales = editedScales.filter((scale) => scale.isNew);
+        setPendingNewScales(newScales);
+
         router.put(
             route('dashboard.picking.config.cost-scales.update-all'),
             {
@@ -47,13 +90,18 @@ export default function CostScales({ scales: initialScales }) {
             },
             {
                 preserveScroll: true,
-                ...handleResponse(),
-                onFinish: () => {
-                    // Se ejecuta SIEMPRE (éxito o error)
-                    setIsIndividualEditMode(false);
-                    setHasChanges(false);
-                    setPercentageValue('');
-                },
+                ...handleResponse(
+                    () => {
+                        // Callback de ÉXITO: resetear estados y limpiar pending
+                        setPendingNewScales([]);
+                        setIsIndividualEditMode(false);
+                        setHasChanges(false);
+                        setPercentageValue('');
+                    },
+                    () => {
+                        // Callback de ERROR: las filas se restaurarán por el useEffect
+                    },
+                ),
             },
         );
     };
@@ -64,6 +112,13 @@ export default function CostScales({ scales: initialScales }) {
         setIsIndividualEditMode(false);
         setHasChanges(false);
         setPercentageValue('');
+
+        // Limpiar errores locales y filas pendientes
+        setLocalErrors({});
+        setPendingNewScales([]);
+
+        // Actualizar la ref para que no se vuelvan a sincronizar los mismos errores
+        lastServerErrorsRef.current = JSON.stringify({});
     };
 
     const handleAddRow = () => {
@@ -126,8 +181,6 @@ export default function CostScales({ scales: initialScales }) {
                 // Callback de éxito
                 const newScales = [...editedScales];
                 newScales.splice(index, 1);
-                setEditedScales(newScales);
-                setHasChanges(true);
                 setEditedScales(newScales);
             }),
         });
@@ -206,13 +259,12 @@ export default function CostScales({ scales: initialScales }) {
             },
             {
                 preserveScroll: true,
-                ...handleResponse(),
-                onFinish: () => {
-                    // Se ejecuta SIEMPRE
+                ...handleResponse(() => {
+                    // Callback de éxito: salir del modo edición
                     setIsMassEditMode(false);
                     setHasChanges(false);
                     setPercentageValue('');
-                },
+                }),
             },
         );
     };
@@ -226,68 +278,139 @@ export default function CostScales({ scales: initialScales }) {
         return hasNewRows && !scale.isNew;
     };
 
+    /**
+     * Helper para verificar si una fila tiene errores
+     */
+    const hasRowError = (index) => {
+        const rowPrefix = `scales.${index}.`;
+        return Object.keys(localErrors).some((key) => key.startsWith(rowPrefix));
+    };
+
+    /**
+     * Helper para obtener todos los errores de una fila específica
+     */
+    const getRowErrors = (index) => {
+        const rowPrefix = `scales.${index}.`;
+        const errors = [];
+
+        Object.entries(localErrors).forEach(([key, message]) => {
+            if (key.startsWith(rowPrefix)) {
+                const fieldName = key.replace(rowPrefix, '');
+                const errorMessage = Array.isArray(message) ? message[0] : message;
+                errors.push({ field: fieldName, message: errorMessage });
+            }
+        });
+
+        return errors;
+    };
+
     // Componente reutilizable para celdas editables
     const EditableCell = ({ index, field, value, type = 'text', placeholder = '', className = '', scale }) => {
         const [localValue, setLocalValue] = useState(value || '');
         const disabled = isFieldDisabled(scale);
+        const inputRef = useRef(null); // Referencia al input
 
         // Sincronizar con el valor externo solo cuando cambia desde fuera
         useEffect(() => {
             setLocalValue(value || '');
         }, [value]);
 
+        // Manejar la navegación con TAB y Enter
+        const handleKeyDown = (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+
+                // Guardar el valor actual antes de mover el foco
+                if (localValue !== value) {
+                    handleCellChange(index, field, localValue);
+                }
+
+                // Encontrar todos los inputs habilitados (no disabled)
+                const allInputs = Array.from(document.querySelectorAll('input[type="number"]:not([disabled]), input[type="text"]:not([disabled])'));
+                const currentIndex = allInputs.indexOf(inputRef.current);
+
+                if (e.shiftKey) {
+                    // Retroceder con Shift+Tab
+                    const prevIndex = currentIndex - 1;
+                    if (prevIndex >= 0) {
+                        allInputs[prevIndex].focus();
+                        allInputs[prevIndex].select();
+                    }
+                } else {
+                    // Avanzar con Tab
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < allInputs.length) {
+                        allInputs[nextIndex].focus();
+                        allInputs[nextIndex].select();
+                    }
+                }
+            }
+
+            // Permitir Enter para guardar y moverse al siguiente input
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (localValue !== value) {
+                    handleCellChange(index, field, localValue);
+                }
+
+                // Simular un Tab para moverse al siguiente input
+                const allInputs = Array.from(document.querySelectorAll('input[type="number"]:not([disabled]), input[type="text"]:not([disabled])'));
+                const currentIndex = allInputs.indexOf(inputRef.current);
+                const nextIndex = currentIndex + 1;
+                if (nextIndex < allInputs.length) {
+                    allInputs[nextIndex].focus();
+                    allInputs[nextIndex].select();
+                }
+            }
+        };
+
         if (isIndividualEditMode) {
-            const inputType = type === 'number' ? 'text' : type;
+            const inputType = type === 'number' ? 'text' : 'text';
 
             return (
                 <Input
+                    ref={inputRef}
                     type={inputType}
                     value={localValue}
-                    onChange={(e) => {
-                        const inputValue = e.target.value;
-                        setLocalValue(inputValue);
-                    }}
+                    onChange={(e) => setLocalValue(e.target.value)}
                     onBlur={() => {
-                        let finalValue = localValue;
-
-                        if (type === 'number' && finalValue) {
-                            finalValue = String(finalValue).replace(/,/g, '.');
+                        // Actualizar el valor cuando el input pierde el foco
+                        if (localValue !== value) {
+                            handleCellChange(index, field, localValue);
                         }
-
-                        handleCellChange(index, field, finalValue);
                     }}
+                    onKeyDown={handleKeyDown} // Agregar handler de teclado
                     placeholder={placeholder}
-                    className={`h-7 px-2 ${className}`}
-                    inputMode={type === 'number' ? 'decimal' : undefined}
-                    disabled={disabled}
+                    step={type === 'number' ? '0.01' : undefined}
+                    className={`h-9 text-center ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${className}`}
                     style={{
                         fontSize: 12,
+                        padding: 0,
                     }}
+                    disabled={disabled}
+                    tabIndex={disabled ? -1 : 0} // Excluir inputs disabled del tab order
                 />
             );
         }
 
-        // Modo solo lectura
-        if (type === 'number' && field !== 'production_time') {
-            const numValue = parseFloat(value);
-            return <span className="text-xs">{!isNaN(numValue) ? `$${numValue.toFixed(2)}` : '-'}</span>;
-        }
-
+        // Vista de solo lectura
         return <span className="text-xs">{value || '-'}</span>;
     };
 
     return (
-        <AppLayout>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Configuración - Escalas de Costos" />
 
             <div className="py-12">
-                <div className="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
+                <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 className="text-lg font-medium">Configuración de Escalas de Costos</h3>
-                                    <p className="text-muted-foreground mt-1 text-sm">Gestiona las escalas de costos para presupuestos de picking</p>
+                                    <p className="text-muted-foreground mt-1 text-sm">
+                                        Gestiona las escalas de costos para presupuestos de picking según cantidad de kits
+                                    </p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center space-x-2">
@@ -366,6 +489,42 @@ export default function CostScales({ scales: initialScales }) {
                                 </div>
                             )}
 
+                            {/* Bloque de errores - Mostrar si hay errores */}
+                            {Object.keys(localErrors).length > 0 && (
+                                <div className="mt-4 mb-5 rounded-lg border-2 border-red-200 bg-red-50 p-4">
+                                    <div className="mb-3 flex items-center gap-2">
+                                        <AlertCircle className="h-5 w-5 text-red-600" />
+                                        <h4 className="font-semibold text-red-900">Errores de Validación</h4>
+                                    </div>
+                                    <p className="mb-3 text-sm text-red-700">
+                                        Se encontraron errores en los siguientes campos. Las filas con errores están resaltadas en rojo:
+                                    </p>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        <ul className="space-y-2">
+                                            {editedScales.map((scale, index) => {
+                                                const errors = getRowErrors(index);
+                                                if (errors.length === 0) return null;
+
+                                                return (
+                                                    <li key={index} className="rounded border border-red-300 bg-white p-3">
+                                                        <p className="mb-1 text-sm font-semibold text-red-800">
+                                                            Fila #{index + 1} {scale.isNew && '(Nueva fila)'}
+                                                        </p>
+                                                        <ul className="ml-4 list-disc space-y-1">
+                                                            {errors.map((error, idx) => (
+                                                                <li key={idx} className="text-xs text-red-600">
+                                                                    {error.message}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Panel de incremento/decremento porcentual masivo */}
                             {isMassEditMode && (
                                 <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
@@ -377,47 +536,37 @@ export default function CostScales({ scales: initialScales }) {
                                         Incrementa o decrementa todos los valores numéricos de todas las filas en un porcentaje específico. Los
                                         cambios se guardarán automáticamente al confirmar.
                                     </p>
-                                    <div className="flex flex-wrap items-end gap-3">
-                                        <div className="min-w-[200px] flex-1">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                                        <div className="flex-1">
                                             <Label htmlFor="percentage" className="mb-2 block text-sm font-medium">
-                                                Porcentaje (%)
+                                                Porcentaje de Ajuste
                                             </Label>
-                                            <Input
-                                                id="percentage"
-                                                type="number"
-                                                value={percentageValue}
-                                                onChange={(e) => setPercentageValue(e.target.value)}
-                                                placeholder="Ej: 10"
-                                                min="0"
-                                                max="100"
-                                                step="0.1"
-                                                className="h-10"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <Percent className="text-muted-foreground h-4 w-4" />
+                                                <Input
+                                                    id="percentage"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max="100"
+                                                    placeholder="Ej: 10"
+                                                    value={percentageValue}
+                                                    onChange={(e) => setPercentageValue(e.target.value)}
+                                                    className="max-w-xs"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button
-                                                onClick={() => applyPercentageChange(true)}
-                                                variant="default"
-                                                disabled={!percentageValue}
-                                                className="bg-green-600 hover:bg-green-700"
-                                            >
-                                                <TrendingUp className="mr-2 h-4 w-4" />
-                                                Incrementar
-                                            </Button>
-                                            <Button
-                                                onClick={() => applyPercentageChange(false)}
-                                                variant="default"
-                                                disabled={!percentageValue}
-                                                className="bg-red-600 hover:bg-red-700"
-                                            >
+                                            <Button variant="outline" onClick={() => applyPercentageChange(false)} className="whitespace-nowrap">
                                                 <TrendingDown className="mr-2 h-4 w-4" />
                                                 Decrementar
                                             </Button>
+                                            <Button onClick={() => applyPercentageChange(true)} className="whitespace-nowrap">
+                                                <TrendingUp className="mr-2 h-4 w-4" />
+                                                Incrementar
+                                            </Button>
                                         </div>
                                     </div>
-                                    <p className="text-muted-foreground mt-3 text-xs">
-                                        ⚠️ <strong>Nota:</strong> Al confirmar el ajuste, los cambios se aplicarán y guardarán automáticamente.
-                                    </p>
                                 </div>
                             )}
 
@@ -437,60 +586,51 @@ export default function CostScales({ scales: initialScales }) {
                                         <Table>
                                             <TableHeader>
                                                 <TableRow>
-                                                    {isIndividualEditMode ? (
-                                                        <>
-                                                            <TableHead className="sticky left-0 z-10 bg-white px-2 py-2 text-xs">Desde</TableHead>
-                                                            <TableHead className="px-2 py-2 text-xs">Hasta</TableHead>
-                                                        </>
-                                                    ) : (
-                                                        <TableHead className="sticky left-0 z-10 bg-white px-2 py-2 text-xs">Rango</TableHead>
-                                                    )}
+                                                    <TableHead className="sticky left-0 z-20 bg-white px-2 py-2 text-xs">Rango de Kits</TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Sin
-                                                        <br /> Armado
+                                                        <br />
+                                                        Armado
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Con
-                                                        <br /> Armado
+                                                        Con <br />
+                                                        Armado
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Pal.
-                                                        <br /> Sin P.
+                                                        <br /> S/P
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Pal.
-                                                        <br /> Con P.
+                                                        <br /> C/P
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Con
-                                                        <br /> Etiq.
+                                                        <br /> Rot.
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Sin
-                                                        <br /> Etiq.
+                                                        <br /> Rot.
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         Arm.
                                                         <br /> Adic.
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Ctrl.
+                                                        Ctrl
                                                         <br /> Cal.
                                                     </TableHead>
+                                                    <TableHead className="px-2 py-2 text-xs">Domes</TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Peg.
-                                                        <br /> Domo
-                                                    </TableHead>
-                                                    <TableHead className="px-2 py-2 text-xs">
-                                                        Virutas
+                                                        Viruta
                                                         <br /> 50g
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Virutas
+                                                        Viruta
                                                         <br /> 100g
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Virutas
+                                                        Viruta
                                                         <br /> 200g
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
@@ -506,20 +646,20 @@ export default function CostScales({ scales: initialScales }) {
                                                         <br /> 35x45
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Plub
+                                                        Plur.
                                                         <br /> 5x10
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Plub
+                                                        Plur.
                                                         <br /> 10x15
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
-                                                        Plub
+                                                        Plur.
                                                         <br /> 20x30
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">
                                                         T.
-                                                        <br /> Produc.
+                                                        <br /> Prod.
                                                     </TableHead>
                                                     <TableHead className="px-2 py-2 text-xs">Estado</TableHead>
                                                     <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>
@@ -528,40 +668,44 @@ export default function CostScales({ scales: initialScales }) {
                                             <TableBody>
                                                 {editedScales.map((scale, index) => {
                                                     const disabled = isFieldDisabled(scale);
+                                                    const rowHasError = hasRowError(index);
 
                                                     return (
                                                         <TableRow
                                                             key={scale.id}
-                                                            className={`${scale.isNew ? 'border-l-4 border-green-500 bg-green-50' : ''} ${disabled ? 'opacity-50' : ''}`}
+                                                            className={` ${scale.isNew ? 'border-l-4 border-green-500 bg-green-50' : ''} ${disabled ? 'opacity-50' : ''} ${rowHasError ? 'border-l-4 border-red-500 bg-red-50' : ''} `}
                                                         >
                                                             {isIndividualEditMode ? (
                                                                 <>
                                                                     <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
-                                                                        <EditableCell
-                                                                            index={index}
-                                                                            field="quantity_from"
-                                                                            value={scale.quantity_from}
-                                                                            type="number"
-                                                                            placeholder="1"
-                                                                            scale={scale}
-                                                                        />
-                                                                    </TableCell>
-                                                                    <TableCell className="px-2 py-2">
-                                                                        <EditableCell
-                                                                            index={index}
-                                                                            field="quantity_to"
-                                                                            value={scale.quantity_to}
-                                                                            type="number"
-                                                                            placeholder="o más"
-                                                                            scale={scale}
-                                                                        />
+                                                                        <div className="flex gap-1">
+                                                                            <EditableCell
+                                                                                index={index}
+                                                                                field="quantity_from"
+                                                                                value={scale.quantity_from}
+                                                                                type="number"
+                                                                                placeholder="Desde"
+                                                                                scale={scale}
+                                                                                className="w-16"
+                                                                            />
+                                                                            <span className="self-center text-xs">-</span>
+                                                                            <EditableCell
+                                                                                index={index}
+                                                                                field="quantity_to"
+                                                                                value={scale.quantity_to}
+                                                                                type="number"
+                                                                                placeholder="Hasta"
+                                                                                scale={scale}
+                                                                                className="w-16"
+                                                                            />
+                                                                        </div>
                                                                     </TableCell>
                                                                 </>
                                                             ) : (
                                                                 <TableCell className="sticky left-0 z-10 bg-white px-2 py-2">
                                                                     <span className="text-xs font-medium">
                                                                         {scale.quantity_from && scale.quantity_to
-                                                                            ? `de ${scale.quantity_from} a ${scale.quantity_to}`
+                                                                            ? `${scale.quantity_from} - ${scale.quantity_to}`
                                                                             : scale.quantity_from
                                                                               ? `${scale.quantity_from} o más`
                                                                               : '-'}
@@ -753,8 +897,8 @@ export default function CostScales({ scales: initialScales }) {
                                                                     index={index}
                                                                     field="production_time"
                                                                     value={scale.production_time}
-                                                                    type="number"
-                                                                    placeholder="0"
+                                                                    type="text"
+                                                                    placeholder="Ej: 5-7 días"
                                                                     scale={scale}
                                                                 />
                                                             </TableCell>
