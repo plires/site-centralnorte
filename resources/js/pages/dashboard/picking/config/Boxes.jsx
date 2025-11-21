@@ -15,7 +15,20 @@ import { useEffect, useState } from 'react';
 
 export default function Boxes({ boxes: initialBoxes }) {
     const { props } = usePage();
-    const errors = props.errors || {};
+
+    // 1) Errores crudos del backend (NO se tocan)
+    const backendErrors = props.errors || {};
+
+    // 2) Errores que mostramos en el UI (sí se pueden limpiar)
+    const [visibleErrors, setVisibleErrors] = useState(backendErrors);
+
+    // Cuando el backend mande errores nuevos, actualizamos los visibles
+    useEffect(() => {
+        setVisibleErrors(backendErrors);
+    }, [backendErrors]);
+
+    // Helper para limpiar errores visibles (por botón, cancel, etc.)
+    const clearVisibleErrors = () => setVisibleErrors({});
 
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
@@ -28,9 +41,25 @@ export default function Boxes({ boxes: initialBoxes }) {
     const [percentageValue, setPercentageValue] = useState('');
 
     // Inicializar editedBoxes cuando cambian las cajas
+    // IMPORTANTE: Preservar filas nuevas (isNew) cuando hay errores de validación
     useEffect(() => {
-        setEditedBoxes(initialBoxes.map((box) => ({ ...box })));
-    }, [initialBoxes]);
+        setEditedBoxes((prevBoxes) => {
+            // Si el backend devolvió errores de validación
+            const hasValidationErrors = Object.keys(backendErrors).length > 0;
+
+            if (hasValidationErrors) {
+                // Preservar filas nuevas que vivían en el cliente
+                const newBoxes = prevBoxes.filter((box) => box.isNew);
+                const existingBoxes = initialBoxes.map((box) => ({ ...box }));
+
+                // La fila nueva (con borde verde, etc.) sigue primera
+                return [...newBoxes, ...existingBoxes];
+            }
+
+            // Sin errores → reseteamos todo a lo que viene del backend
+            return initialBoxes.map((box) => ({ ...box }));
+        });
+    }, [initialBoxes, backendErrors]);
 
     const handleCellChange = (index, field, value) => {
         const newBoxes = [...editedBoxes];
@@ -52,11 +81,15 @@ export default function Boxes({ boxes: initialBoxes }) {
                 preserveScroll: true,
                 ...handleResponse(
                     () => {
+                        // Callback de ÉXITO: resetear estados
                         setIsIndividualEditMode(false);
                         setHasChanges(false);
                         setPercentageValue('');
-                    }, // Éxito
-                    () => {}, // Error
+                    },
+                    () => {
+                        // Callback de ERROR: NO hacer nada, preservar el estado actual
+                        // Las filas nuevas se preservarán por el useEffect
+                    },
                 ),
             },
         );
@@ -68,6 +101,7 @@ export default function Boxes({ boxes: initialBoxes }) {
         setIsIndividualEditMode(false);
         setHasChanges(false);
         setPercentageValue('');
+        clearVisibleErrors();
     };
 
     const handleAddRow = () => {
@@ -184,11 +218,9 @@ export default function Boxes({ boxes: initialBoxes }) {
      */
     const getFieldError = (index, field) => {
         const errorKey = `boxes.${index}.${field}`;
-        const errorMessage = errors[errorKey];
+        const errorMessage = visibleErrors[errorKey];
 
         if (!errorMessage) return null;
-
-        // Laravel puede devolver el error como string o como array
         return Array.isArray(errorMessage) ? errorMessage[0] : errorMessage;
     };
 
@@ -269,7 +301,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                                 </div>
                             )}
 
-                            {/* Banner informativo cuando hay filas nuevas */}
+                            {/* Banner informativo cuando hay filas nuevas - SIEMPRE visible mientras exista una fila nueva */}
                             {hasNewRows && (
                                 <div className="mt-4 mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4">
                                     <p className="text-sm text-blue-900">
@@ -288,58 +320,39 @@ export default function Boxes({ boxes: initialBoxes }) {
                                 </div>
                             )}
 
-                            {/* Panel de incremento/decremento porcentual masivo */}
                             {isMassEditMode && (
-                                <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                                    <div className="mb-3 flex items-center gap-2">
-                                        <Percent className="h-5 w-5 text-blue-600" />
-                                        <h4 className="font-semibold text-blue-900">Ajuste Masivo de Costos</h4>
-                                    </div>
-                                    <p className="text-muted-foreground mb-4 text-sm">
-                                        Incrementa o decrementa todos los costos de todas las cajas en un porcentaje específico. Los cambios se
-                                        guardarán automáticamente al confirmar.
-                                    </p>
-                                    <div className="flex flex-wrap items-end gap-3">
-                                        <div className="min-w-[200px] flex-1">
+                                <div className="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                                        <div className="flex-1">
                                             <Label htmlFor="percentage" className="mb-2 block text-sm font-medium">
-                                                Porcentaje (%)
+                                                Porcentaje de Ajuste
                                             </Label>
-                                            <Input
-                                                id="percentage"
-                                                type="number"
-                                                value={percentageValue}
-                                                onChange={(e) => setPercentageValue(e.target.value)}
-                                                placeholder="Ej: 10"
-                                                min="0"
-                                                max="100"
-                                                step="0.1"
-                                                className="h-10"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <Percent className="text-muted-foreground h-4 w-4" />
+                                                <Input
+                                                    id="percentage"
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    max="100"
+                                                    placeholder="Ej: 10"
+                                                    value={percentageValue}
+                                                    onChange={(e) => setPercentageValue(e.target.value)}
+                                                    className="max-w-xs"
+                                                />
+                                            </div>
                                         </div>
                                         <div className="flex gap-2">
-                                            <Button
-                                                onClick={() => applyPercentageChange(true)}
-                                                variant="default"
-                                                disabled={!percentageValue}
-                                                className="bg-green-600 hover:bg-green-700"
-                                            >
-                                                <TrendingUp className="mr-2 h-4 w-4" />
-                                                Incrementar
-                                            </Button>
-                                            <Button
-                                                onClick={() => applyPercentageChange(false)}
-                                                variant="default"
-                                                disabled={!percentageValue}
-                                                className="bg-red-600 hover:bg-red-700"
-                                            >
+                                            <Button variant="outline" onClick={() => applyPercentageChange(false)} className="whitespace-nowrap">
                                                 <TrendingDown className="mr-2 h-4 w-4" />
                                                 Decrementar
                                             </Button>
+                                            <Button onClick={() => applyPercentageChange(true)} className="whitespace-nowrap">
+                                                <TrendingUp className="mr-2 h-4 w-4" />
+                                                Incrementar
+                                            </Button>
                                         </div>
                                     </div>
-                                    <p className="text-muted-foreground mt-3 text-xs">
-                                        ⚠️ <strong>Nota:</strong> Al confirmar el ajuste, los cambios se aplicarán y guardarán automáticamente.
-                                    </p>
                                 </div>
                             )}
 
@@ -379,53 +392,67 @@ export default function Boxes({ boxes: initialBoxes }) {
                                                             <TableCell className="text-muted-foreground">{index + 1}</TableCell>
                                                             <TableCell>
                                                                 {isIndividualEditMode ? (
-                                                                    <Input
-                                                                        type="text"
-                                                                        value={box.dimensions}
-                                                                        onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
-                                                                        placeholder="200 x 200 x 100"
-                                                                        className={`h-9 ${getFieldError(index, 'dimensions') ? 'border-red-500' : ''}`}
-                                                                        disabled={disabled}
-                                                                    />
+                                                                    <>
+                                                                        <Input
+                                                                            type="text"
+                                                                            value={box.dimensions}
+                                                                            onChange={(e) => handleCellChange(index, 'dimensions', e.target.value)}
+                                                                            placeholder="200 x 200 x 100"
+                                                                            className={`h-9 ${getFieldError(index, 'dimensions') ? 'border-red-500' : ''}`}
+                                                                            disabled={disabled}
+                                                                        />
+                                                                        {getFieldError(index, 'dimensions') && (
+                                                                            <p className="mt-1 text-xs text-red-600">
+                                                                                {getFieldError(index, 'dimensions')}
+                                                                            </p>
+                                                                        )}
+                                                                    </>
                                                                 ) : (
                                                                     <span className="font-medium">{box.dimensions}</span>
                                                                 )}
-                                                                {getFieldError(index, 'dimensions') && (
-                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'dimensions')}</p>
-                                                                )}
                                                             </TableCell>
                                                             <TableCell>
                                                                 {isIndividualEditMode ? (
-                                                                    <Input
-                                                                        type="number"
-                                                                        value={box.cost}
-                                                                        onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
-                                                                        placeholder="0.00"
-                                                                        step="0.01"
-                                                                        className={`h-9 ${getFieldError(index, 'cost') ? 'border-red-500' : ''}`}
-                                                                        disabled={disabled}
-                                                                    />
+                                                                    <>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={box.cost}
+                                                                            onChange={(e) => handleCellChange(index, 'cost', e.target.value)}
+                                                                            placeholder="0.00"
+                                                                            step="0.01"
+                                                                            className={`h-9 ${getFieldError(index, 'cost') ? 'border-red-500' : ''}`}
+                                                                            disabled={disabled}
+                                                                        />
+                                                                        {getFieldError(index, 'cost') && (
+                                                                            <p className="mt-1 text-xs text-red-600">
+                                                                                {getFieldError(index, 'cost')}
+                                                                            </p>
+                                                                        )}
+                                                                    </>
                                                                 ) : (
                                                                     <span className="font-medium">${parseFloat(box.cost || 0).toFixed(2)}</span>
                                                                 )}
-                                                                {getFieldError(index, 'cost') && (
-                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'cost')}</p>
-                                                                )}
                                                             </TableCell>
                                                             <TableCell>
                                                                 {isIndividualEditMode ? (
-                                                                    <Switch
-                                                                        checked={box.is_active}
-                                                                        onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
-                                                                        disabled={disabled}
-                                                                    />
+                                                                    <>
+                                                                        <Switch
+                                                                            checked={box.is_active}
+                                                                            onCheckedChange={(checked) =>
+                                                                                handleCellChange(index, 'is_active', checked)
+                                                                            }
+                                                                            disabled={disabled}
+                                                                        />
+                                                                        {getFieldError(index, 'is_active') && (
+                                                                            <p className="mt-1 text-xs text-red-600">
+                                                                                {getFieldError(index, 'is_active')}
+                                                                            </p>
+                                                                        )}
+                                                                    </>
                                                                 ) : (
                                                                     <Badge variant={box.is_active ? 'default' : 'secondary'}>
                                                                         {box.is_active ? 'Activa' : 'Inactiva'}
                                                                     </Badge>
-                                                                )}
-                                                                {getFieldError(index, 'is_active') && (
-                                                                    <p className="text-xs text-red-600">{getFieldError(index, 'is_active')}</p>
                                                                 )}
                                                             </TableCell>
                                                             <TableCell className="text-right">
