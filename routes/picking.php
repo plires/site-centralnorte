@@ -65,9 +65,6 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])
                 ->name('boxes');
 
-            Route::put('/boxes/{pickingBox}', [PickingConfigurationController::class, 'updateBox'])
-                ->name('boxes.update');
-
             Route::post('/boxes', [PickingConfigurationController::class, 'storeBox'])
                 ->name('boxes.store');
 

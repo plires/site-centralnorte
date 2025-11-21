@@ -56,10 +56,7 @@ export default function Boxes({ boxes: initialBoxes }) {
                         setHasChanges(false);
                         setPercentageValue('');
                     }, // Éxito
-                    () => {
-                        handleAddRow();
-                        setIsIndividualEditMode(false);
-                    }, // Error
+                    () => {}, // Error
                 ),
             },
         );
@@ -272,7 +269,7 @@ export default function Boxes({ boxes: initialBoxes }) {
 
                             {/* Errores globales debajo de la tabla */}
                             {Object.keys(errors).length > 0 && (
-                                <div className="mt-4 space-y-1">
+                                <div className="mt-4 mb-5 rounded-lg border border-red-200 bg-red-50 p-4">
                                     {Object.entries(errors).map(([field, message]) => (
                                         <p key={field} className="text-sm text-red-500">
                                             {/* por si viene como string o array */}

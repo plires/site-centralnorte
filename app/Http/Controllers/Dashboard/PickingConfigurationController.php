@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use Exception;
 use Inertia\Inertia;
 use App\Models\PickingBox;
 use Illuminate\Http\Request;
 use App\Models\PickingCostScale;
 use Illuminate\Support\Facades\DB;
+use function Laravel\Prompts\error;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Models\PickingComponentIncrement;
+use function PHPUnit\Framework\throwException;
 use App\Http\Requests\Picking\StorePickingBoxRequest;
-use App\Http\Requests\Picking\UpdatePickingBoxRequest;
 use App\Http\Requests\Picking\StorePickingCostScaleRequest;
+
+use App\Http\Requests\Picking\UpdateAllPickingBoxesRequest;
 use App\Http\Requests\Picking\UpdatePickingCostScaleRequest;
 use App\Http\Requests\Picking\StorePickingComponentIncrementRequest;
 use App\Http\Requests\Picking\UpdatePickingComponentIncrementRequest;
-
-use function Laravel\Prompts\error;
-use function PHPUnit\Framework\throwException;
-use Exception;
 
 class PickingConfigurationController extends Controller
 {
@@ -30,18 +30,9 @@ class PickingConfigurationController extends Controller
     /**
      * Update all boxes at once (bulk update)
      */
-    /**
-     * Update all boxes at once (bulk update)
-     */
-    public function updateAllBoxes(Request $request)
+    public function updateAllBoxes(UpdateAllPickingBoxesRequest $request)
     {
-        $validated = $request->validate([
-            'boxes' => 'required|array',
-            'boxes.*.id' => 'nullable', // nullable para nuevas cajas
-            'boxes.*.dimensions' => 'required|string|max:50',
-            'boxes.*.cost' => 'required|numeric|min:0|max:999999.99',
-            'boxes.*.is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -87,7 +78,10 @@ class PickingConfigurationController extends Controller
             return redirect()->back()->with('success', 'Todas las cajas fueron actualizadas correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Error al actualizar las cajas: ' . $e->getMessage());
+            Log::error('Error al actualizar cajas masivamente: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+            return redirect()->back()->with('error', 'Ocurrió un error al actualizar las cajas. Por favor, verifica los datos e intenta nuevamente.');
         }
     }
 
@@ -111,16 +105,6 @@ class PickingConfigurationController extends Controller
         PickingBox::create($request->validated());
 
         return back()->with('success', 'Caja creada correctamente.');
-    }
-
-    /**
-     * Update the specified box
-     */
-    public function updateBox(UpdatePickingBoxRequest $request, PickingBox $pickingBox)
-    {
-        $pickingBox->update($request->validated());
-
-        return back()->with('success', 'Caja actualizada correctamente.');
     }
 
     /**
