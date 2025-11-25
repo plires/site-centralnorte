@@ -1,4 +1,3 @@
-// resources/js/Components/nav-main.jsx (ajusta la ruta según tu estructura)
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
     SidebarGroup,
@@ -32,7 +31,7 @@ export function NavMain({ items = [] }) {
                     const Icon = item.icon;
                     const hasChildren = Array.isArray(item.items) && item.items.length > 0;
 
-                    // 👉 Item con subitems (ej: "Configuración Costos Picking")
+                    // Item con subitems (ej: "Configuración Costos Picking")
                     if (hasChildren) {
                         const openByDefault = hasActiveChild(item);
 
@@ -40,11 +39,10 @@ export function NavMain({ items = [] }) {
                             <Collapsible key={item.title} asChild defaultOpen={openByDefault} className="group/collapsible">
                                 <SidebarMenuItem>
                                     <CollapsibleTrigger asChild>
-                                        <SidebarMenuButton isActive={openByDefault} className="whitespace-nowrap">
-                                            {Icon && <Icon />}
-                                            <span>{item.title}</span>
-
-                                            <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                        <SidebarMenuButton isActive={openByDefault} className="h-auto min-h-[2rem] py-2">
+                                            {Icon && <Icon className="shrink-0" />}
+                                            <span className="flex-1 leading-tight break-words">{item.title}</span>
+                                            <ChevronRight className="ml-auto h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                                         </SidebarMenuButton>
                                     </CollapsibleTrigger>
 
@@ -71,7 +69,7 @@ export function NavMain({ items = [] }) {
                         );
                     }
 
-                    // 👉 Item normal sin subitems
+                    // Item normal sin subitems
                     return (
                         <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild isActive={isActive(item.url)}>
