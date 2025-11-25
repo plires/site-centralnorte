@@ -309,18 +309,20 @@ export default function ComponentIncrements({ increments }) {
                                                             <div className="flex justify-end gap-2">
                                                                 <Button
                                                                     size="sm"
-                                                                    variant="outline"
+                                                                    variant="ghost"
                                                                     onClick={() => startEdit(increment)}
-                                                                    disabled={isAdding}
+                                                                    disabled={isAdding || editingId !== null}
                                                                 >
-                                                                    <Pencil className="mr-1 h-3 w-3" />
-                                                                    Editar
+                                                                    <Pencil className="h-4 w-4" />
                                                                 </Button>
-                                                                {increment.is_active && (
-                                                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(increment)}>
-                                                                        <Trash2 className="h-3 w-3" />
-                                                                    </Button>
-                                                                )}
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant="ghost"
+                                                                    onClick={() => handleDelete(increment)}
+                                                                    disabled={isAdding || editingId !== null}
+                                                                >
+                                                                    <Trash2 className="text-destructive h-4 w-4" />
+                                                                </Button>
                                                             </div>
                                                         )}
                                                     </TableCell>
