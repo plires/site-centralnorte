@@ -80,6 +80,11 @@ export const mainNavItems = () => [
                 url: '/dashboard/picking/config/component-increments',
                 icon: Layers,
             },
+            {
+                title: 'Condiciones de Pago',
+                url: '/dashboard/picking/config/payment-conditions',
+                icon: DollarSign,
+            },
         ],
     },
     {

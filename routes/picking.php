@@ -10,9 +10,10 @@
  */
 
 
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Dashboard\PickingBudgetController;
 use App\Http\Controllers\Dashboard\PickingConfigurationController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Dashboard\PickingPaymentConditionController;
 
 Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
@@ -90,6 +91,19 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
 
             Route::delete('/component-increments/{pickingComponentIncrement}', [PickingConfigurationController::class, 'destroyComponentIncrement'])
                 ->name('component-increments.destroy');
+
+            // Gestión de Condiciones de Pago
+            Route::get('/payment-conditions', [PickingPaymentConditionController::class, 'index'])
+                ->name('payment-conditions');
+
+            Route::post('/payment-conditions', [PickingPaymentConditionController::class, 'store'])
+                ->name('payment-conditions.store');
+
+            Route::put('/payment-conditions/{pickingPaymentCondition}', [PickingPaymentConditionController::class, 'update'])
+                ->name('payment-conditions.update');
+
+            Route::delete('/payment-conditions/{pickingPaymentCondition}', [PickingPaymentConditionController::class, 'destroy'])
+                ->name('payment-conditions.destroy');
         });
     });
 
