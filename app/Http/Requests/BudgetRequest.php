@@ -28,6 +28,7 @@ class BudgetRequest extends FormRequest
         $rules = [
             'title' => 'required|string|max:255',
             'client_id' => 'required|exists:clients,id',
+            'picking_payment_condition_id' => ['nullable', 'exists:picking_payment_conditions,id'],
             'issue_date' => $this->getIssueDateRules($isEditing),
             'expiry_date' => $this->getExpiryDateRules($isEditing),
             'send_email_to_client' => 'boolean',
@@ -57,7 +58,7 @@ class BudgetRequest extends FormRequest
 
     /**
      * Get validation rules for issue_date based on operation type
-     * ACTUALIZADO: Para creación debe ser hoy, para edición el campo no se debe editar
+     * Para creación debe ser hoy, para edición el campo no se debe editar
      */
     private function getIssueDateRules(bool $isEditing): array
     {
@@ -149,6 +150,8 @@ class BudgetRequest extends FormRequest
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',
 
+            'picking_payment_condition_id.exists' => 'La condición de pago seleccionada no existe.',
+
             'user_id.required' => 'Debe seleccionar un vendedor.',
             'user_id.exists' => 'El vendedor seleccionado no existe.',
 
@@ -201,6 +204,7 @@ class BudgetRequest extends FormRequest
         return [
             'title' => 'título',
             'client_id' => 'cliente',
+            'picking_payment_condition_id' => 'condición de pago',
             'user_id' => 'vendedor',
             'issue_date' => 'fecha de emisión',
             'expiry_date' => 'fecha de vencimiento',

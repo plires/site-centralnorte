@@ -21,7 +21,8 @@ class PublicBudgetController extends Controller
                     'user',
                     'items.product.images',
                     'items.product.featuredImage',
-                    'items.product.categories'
+                    'items.product.categories',
+                    'paymentCondition',
                 ])
                 ->firstOrFail();
 
@@ -58,7 +59,12 @@ class PublicBudgetController extends Controller
                     'id' => $budget->id,
                     'title' => $budget->title,
                     'token' => $budget->token,
-                    'is_active' => $budget->is_active, // AGREGADO: Para consistencia
+                    'is_active' => $budget->is_active,
+
+                    'picking_payment_condition_id' => $budget->picking_payment_condition_id,
+                    'payment_condition_description' => $budget->payment_condition_description,
+                    'payment_condition_percentage' => $budget->payment_condition_percentage,
+
                     'issue_date_formatted' => $budget->issue_date_formatted,
                     'expiry_date_formatted' => $budget->expiry_date_formatted,
                     'issue_date_short' => $budget->issue_date_short,
@@ -100,6 +106,7 @@ class PublicBudgetController extends Controller
                 ->with([
                     'client:id,name,company,email,phone',
                     'user:id,name,email',
+                    'paymentCondition:id,description,percentage',
                     'items' => function ($query) {
                         // Cargar TODOS los items (sin filtrar por is_selected aquí)
                         $query->with([
@@ -130,7 +137,12 @@ class PublicBudgetController extends Controller
             ];
 
             $statusData = $budget->getStatusData();
-            $calculatedTotals = $this->calculateFilteredTotals($filteredItems, $businessConfig);
+
+            $calculatedTotals = $this->calculateFilteredTotals(
+                $filteredItems,
+                $businessConfig,
+                $budget  // NUEVO: Pasar el budget para acceder a payment_condition_percentage
+            );
 
             $budgetData = array_merge([
                 'id' => $budget->id,
@@ -142,6 +154,11 @@ class PublicBudgetController extends Controller
                 'expiry_date_short' => $budget->expiry_date_short,
                 'footer_comments' => $budget->footer_comments,
                 'subtotal' => $calculatedTotals['subtotal'],
+                'payment_condition' => $budget->paymentCondition ? [
+                    'description' => $budget->payment_condition_description,
+                    'percentage' => $budget->payment_condition_percentage,
+                ] : null,
+                'payment_condition_amount' => $calculatedTotals['payment_condition_amount'],
                 'total' => $calculatedTotals['total'],
                 'client' => [
                     'name' => $budget->client->name,
@@ -333,14 +350,28 @@ class PublicBudgetController extends Controller
     /**
      * Calcular totales basados en items filtrados
      */
-    private function calculateFilteredTotals($filteredItems, $businessConfig)
+    private function calculateFilteredTotals($filteredItems, $businessConfig, $budget = null)
     {
         $subtotal = $filteredItems->sum('line_total');
-        $ivaAmount = $businessConfig['apply_iva'] ? $subtotal * $businessConfig['iva_rate'] : 0;
-        $total = $subtotal + $ivaAmount;
+
+        // Calcular ajuste por condición de pago
+        $paymentConditionAmount = 0;
+        if ($budget && $budget->payment_condition_percentage) {
+            $paymentConditionAmount = $subtotal * ($budget->payment_condition_percentage / 100);
+        }
+
+        // Aplicar ajuste de pago al subtotal antes del IVA
+        $subtotalWithPayment = $subtotal + $paymentConditionAmount;
+
+        $ivaAmount = $businessConfig['apply_iva']
+            ? $subtotalWithPayment * $businessConfig['iva_rate']
+            : 0;
+
+        $total = $subtotalWithPayment + $ivaAmount;
 
         return [
             'subtotal' => $subtotal,
+            'payment_condition_amount' => $paymentConditionAmount,
             'iva' => $ivaAmount,
             'total' => $total,
         ];

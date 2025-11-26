@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\BudgetRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Models\PickingPaymentCondition;
 
 class BudgetController extends Controller
 {
@@ -120,91 +121,85 @@ class BudgetController extends Controller
         $user = Auth::user();
 
         // Verificar permisos
-        $this->authorizeUserAccess($budget);
+        if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+            abort(403, 'No tienes permisos para ver este presupuesto.');
+        }
 
-        // Cargar todas las relaciones necesarias
+        // Cargar relaciones necesarias
         $budget->load([
-            'user',
             'client',
-            'items' => function ($query) {
-                $query->with([
-                    'product' => function ($query) {
-                        $query->with([
-                            'images' => function ($query) {
-                                $query->where('is_featured', true)->limit(1);
-                            },
-                            'featuredImage', // Agregar imagen destacada por separado
-                            'categories' // Agregar categorías
-                        ]);
-                    }
-                ])->orderBy('sort_order');
-            }
+            'user',
+            'items.product.featuredImage',
+            'items.product.variants',
+            'items.productVariant',
+            'paymentCondition',
         ]);
 
-        // Usar método del modelo
-        $statusData = $budget->getStatusData();
-
-        // Separar items regulares y grupos de variantes
-        $regularItems = $budget->items->whereNull('variant_group')->values();
+        // Agrupar items
+        $regularItems = [];
         $variantGroups = [];
 
-        if ($budget->hasVariants()) {
-            $groupedVariants = $budget->items
-                ->whereNotNull('variant_group')
-                ->groupBy('variant_group');
-
-            foreach ($groupedVariants as $group => $items) {
-                $variantGroups[$group] = $items->values();
+        foreach ($budget->items as $item) {
+            if ($item->variant_group) {
+                if (!isset($variantGroups[$item->variant_group])) {
+                    $variantGroups[$item->variant_group] = [];
+                }
+                $variantGroups[$item->variant_group][] = $item;
+            } else {
+                $regularItems[] = $item;
             }
         }
 
-        // Obtener configuración de IVA
-        $businessConfig = [
-            'iva_rate' => config('business.tax.iva_rate', 0.21),
-            'apply_iva' => config('business.tax.apply_iva', true),
-        ];
+        $hasVariants = count($variantGroups) > 0;
 
-        // Pasar budget como array combinado con statusData (igual que PublicBudgetController)
+        $statusData = $budget->getStatusData();
+        $budgetFinal = array_merge($budget->toArray(), $statusData);
+
         return Inertia::render('dashboard/budgets/Show', [
-            'budget' => array_merge($budget->toArray(), $statusData), // Combinar datos del presupuesto con estado
+            'budget' => $budgetFinal,
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
-            'hasVariants' => $budget->hasVariants(),
-            'businessConfig' => $businessConfig,
+            'hasVariants' => $hasVariants,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ]
         ]);
     }
-
     public function create()
     {
         $user = Auth::user();
 
-        // Obtener clientes y productos para los selects
-        $clients = Client::select('id', 'name', 'company')
-            ->orderBy('name')
+        $clients = Client::orderBy('name')
             ->get()
             ->map(function ($client) {
                 return [
-                    'id' => $client->id,
-                    'name' => $client->name,
-                    'display_name' => $client->company ?
-                        "{$client->name} ({$client->company})" : $client->name,
+                    'value' => $client->id,
+                    'label' => $client->company
+                        ? "{$client->name} ({$client->company})"
+                        : $client->name,
                 ];
             });
 
-        // Cargar relaciones necesarias
         $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
             ->orderBy('name')
+            ->get();
+
+        // Cargar condiciones de pago activas
+        $paymentConditions = PickingPaymentCondition::active()
+            ->orderBy('description')
             ->get();
 
         return Inertia::render('dashboard/budgets/Create', [
             'clients' => $clients,
             'products' => $products,
+            'paymentConditions' => $paymentConditions,
             'user' => $user,
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
-                'default_validity_days' => config('business.budget.default_validity_days', 30), // NUEVO
-                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3), // NUEVO
+                'default_validity_days' => config('business.budget.default_validity_days', 30),
+                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3),
             ]
         ]);
     }
@@ -216,27 +211,40 @@ class BudgetController extends Controller
 
             $user = Auth::user();
 
+            // Obtener snapshot de la condición de pago si fue seleccionada
+            $paymentConditionData = [];
+            if ($request->picking_payment_condition_id) {
+                $paymentCondition = PickingPaymentCondition::find($request->picking_payment_condition_id);
+                if ($paymentCondition) {
+                    $paymentConditionData = [
+                        'picking_payment_condition_id' => $paymentCondition->id,
+                        'payment_condition_description' => $paymentCondition->description,
+                        'payment_condition_percentage' => $paymentCondition->percentage,
+                    ];
+                }
+            }
+
             // Crear el presupuesto usando los datos validados
-            $budget = Budget::create([
+            $budget = Budget::create(array_merge([
                 'title' => $request->title,
                 'user_id' => $user->id,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
-                'expiry_date' => $request->expiry_date, // Ya calculada automáticamente en BudgetRequest
-                'is_active' => $request->boolean('is_active', true), // Activo por defecto
+                'expiry_date' => $request->expiry_date,
+                'is_active' => $request->boolean('is_active', true),
                 'send_email_to_client' => $request->boolean('send_email_to_client'),
                 'footer_comments' => $request->footer_comments,
-            ]);
+            ], $paymentConditionData)); // Merge con datos de condición de pago
 
             // Procesar items del presupuesto
             $this->processBudgetItems($budget, $request->items);
 
-            // Calcular totales
+            // Calcular totales (ahora incluye el ajuste de condición de pago)
             $budget->calculateTotals();
 
-            // Enviar email si está configurado (sin fallar la creación) (NUEVO PRESUPUESTO, no es reenvío)
+            // Enviar email si está configurado
             if ($request->boolean('send_email_to_client')) {
-                $this->sendBudgetEmail($budget, false, false); // false = nuevo, false = no lanzar excepción
+                $this->sendBudgetEmail($budget, false, false);
             }
 
             DB::commit();
@@ -262,63 +270,65 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
-        // Cargar relaciones necesarias 
+        // Cargar relaciones necesarias
         $budget->load([
             'client',
-            'user', // Cargar el usuario/vendedor asignado
-            'items' => function ($query) {
-                $query->with([
-                    'product' => function ($query) {
-                        $query->with([
-                            'images', // Cargar TODAS las imágenes
-                            'featuredImage', // Y también la imagen destacada por separado
-                            'categories' // Y las categorías
-                        ]);
-                    },
-                    'productVariant'
-                ])->orderBy('sort_order');
-            }
+            'user',
+            'items.product.featuredImage',
+            'items.product.variants',
+            'items.productVariant',
+            'paymentCondition',
         ]);
 
-        // Obtener clientes para el select
-        $clients = Client::select('id', 'name', 'company')
-            ->orderBy('name')
+        // Agrupar items en regulares y variantes
+        $regularItems = [];
+        $variantGroups = [];
+
+        foreach ($budget->items as $item) {
+            if ($item->variant_group) {
+                if (!isset($variantGroups[$item->variant_group])) {
+                    $variantGroups[$item->variant_group] = [];
+                }
+                $variantGroups[$item->variant_group][] = $item;
+            } else {
+                $regularItems[] = $item;
+            }
+        }
+
+        // Obtener clientes para el selector
+        $clients = Client::orderBy('name')
             ->get()
             ->map(function ($client) {
                 return [
-                    'id' => $client->id,
-                    'name' => $client->name,
-                    'display_name' => $client->company ?
-                        "{$client->name} ({$client->company})" : $client->name,
+                    'value' => $client->id,
+                    'label' => $client->company
+                        ? "{$client->name} ({$client->company})"
+                        : $client->name,
                 ];
             });
 
-        // Cargar relaciones necesarias
+        // Obtener productos
         $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
             ->orderBy('name')
             ->get();
 
+        // Cargar condiciones de pago activas
+        $paymentConditions = PickingPaymentCondition::active()
+            ->orderBy('description')
+            ->get();
+
         return Inertia::render('dashboard/budgets/Edit', [
-            'budget' => [
-                'id' => $budget->id,
-                'title' => $budget->title,
-                'client_id' => $budget->client_id,
-                'user_id' => $budget->user_id, // Enviar el user_id al frontend
-                'issue_date' => $budget->issue_date_iso, // Usar accessor para input HTML
-                'expiry_date' => $budget->expiry_date_iso, // Usar accessor para input HTML
-                'send_email_to_client' => $budget->send_email_to_client,
-                'footer_comments' => $budget->footer_comments,
-                'items' => $budget->items, // Las relaciones ya están cargadas correctamente
-                'is_active' => $budget->is_active, // Campo faltante para el switch
-            ],
+            'budget' => $budget,
+            'regularItems' => $regularItems,
+            'variantGroups' => $variantGroups,
             'clients' => $clients,
             'products' => $products,
-            'user' => $user,
+            'paymentConditions' => $paymentConditions,
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
-                'default_validity_days' => config('business.budget.default_validity_days', 30), // NUEVO
-                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3), // NUEVO
+                'default_validity_days' => config('business.budget.default_validity_days', 30),
+                'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry', 3),
             ]
         ]);
     }
@@ -329,36 +339,47 @@ class BudgetController extends Controller
             DB::beginTransaction();
 
             $user = Auth::user();
-            $isAdmin = $user->role->name === 'admin';
 
             // Verificar permisos
-            if (!$isAdmin && $budget->user_id !== $user->id) {
+            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
                 abort(403, 'No tienes permisos para editar este presupuesto.');
             }
 
-            // Preparar datos de actualización
-            $updateData = [
-                'title' => $request->title,
-                'client_id' => $request->client_id,
-                'issue_date' => $request->issue_date, // En edición no debería cambiar, pero si llega se valida
-                'expiry_date' => $request->expiry_date,
-                'send_email_to_client' => $request->boolean('send_email_to_client'),
-                'footer_comments' => $request->footer_comments,
+            // Obtener snapshot de la condición de pago si fue seleccionada
+            $paymentConditionData = [
+                'picking_payment_condition_id' => null,
+                'payment_condition_description' => null,
+                'payment_condition_percentage' => null,
             ];
 
-            // Si es admin y se envió user_id, permitir cambiar el vendedor asignado
-            if ($isAdmin && $request->has('user_id')) {
-                $updateData['user_id'] = $request->user_id;
+            if ($request->picking_payment_condition_id) {
+                $paymentCondition = PickingPaymentCondition::find($request->picking_payment_condition_id);
+                if ($paymentCondition) {
+                    $paymentConditionData = [
+                        'picking_payment_condition_id' => $paymentCondition->id,
+                        'payment_condition_description' => $paymentCondition->description,
+                        'payment_condition_percentage' => $paymentCondition->percentage,
+                    ];
+                }
             }
 
-            // Actualizar datos básicos del presupuesto
-            $budget->update($updateData);
+            // Actualizar el presupuesto
+            $budget->update(array_merge([
+                'title' => $request->title,
+                'client_id' => $request->client_id,
+                'issue_date' => $request->issue_date,
+                'expiry_date' => $request->expiry_date,
+                'is_active' => $request->boolean('is_active', true),
+                'footer_comments' => $request->footer_comments,
+            ], $paymentConditionData)); // Merge con datos de condición de pago
 
-            // Eliminar items existentes y recrear
+            // Eliminar items existentes
             $budget->items()->delete();
-            $this->createBudgetItems($budget, $request->items);
 
-            // Calcular totales
+            // Procesar nuevos items
+            $this->processBudgetItems($budget, $request->items);
+
+            // Recalcular totales (ahora incluye el ajuste de condición de pago)
             $budget->calculateTotals();
 
             DB::commit();
@@ -371,7 +392,7 @@ class BudgetController extends Controller
             Log::error('Error al actualizar presupuesto: ' . $e->getMessage());
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Ocurrió un error al actualizar el presupuesto. Inténtalo de nuevo.');
+                ->with('error', 'Ocurrió un error al actualizar el presupuesto.');
         }
     }
 

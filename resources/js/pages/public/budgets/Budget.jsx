@@ -106,7 +106,7 @@ export default function Budget({ budget, businessConfig }) {
                 />
 
                 {/* Totales */}
-                <BudgetTotalsCard calculatedTotals={calculatedTotals} ivaRate={ivaRate} applyIva={applyIva} />
+                <BudgetTotalsCard budget={budget} calculatedTotals={calculatedTotals} ivaRate={ivaRate} applyIva={applyIva} />
 
                 {/* Comentarios del pie */}
                 <BudgetComments budget={budget} />

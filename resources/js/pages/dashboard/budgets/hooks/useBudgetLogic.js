@@ -1,10 +1,11 @@
 // resources/js/pages/dashboard/budgets/hooks/useBudgetLogic.js
-
 import { useEffect, useRef, useState } from 'react';
 
-export function useBudgetLogic(items = [], businessConfig = null) {
+export function useBudgetLogic(items = [], businessConfig = null, paymentConditionId = null, paymentConditions = []) {
     const [totals, setTotals] = useState({
         subtotal: 0,
+        paymentConditionAmount: 0,
+        subtotalWithPayment: 0,
         iva: 0,
         total: 0,
     });
@@ -16,6 +17,9 @@ export function useBudgetLogic(items = [], businessConfig = null) {
     // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
     const applyIva = businessConfig?.apply_iva ?? true;
+
+    // Obtener condición de pago seleccionada
+    const selectedPaymentCondition = paymentConditionId ? paymentConditions?.find((pc) => pc.id === parseInt(paymentConditionId)) : null;
 
     // Organizar items por tipo
     const organizeItems = (items) => {
@@ -137,7 +141,7 @@ export function useBudgetLogic(items = [], businessConfig = null) {
         }));
     };
 
-    // Calcular totales - con logs mínimos para debug
+    // Calcular totales incluyendo ajuste de condición de pago
     const calculateTotals = () => {
         let subtotal = 0;
 
@@ -146,32 +150,43 @@ export function useBudgetLogic(items = [], businessConfig = null) {
             subtotal += parseFloat(item.line_total || 0);
         });
 
-        console.log(`Subtotal items regulares: ${subtotal}`);
-
         // Sumar variantes seleccionadas
         Object.keys(variantGroups).forEach((group) => {
             const selectedItemId = selectedVariants[group];
             const selectedItem = variantGroups[group].find((item) => item.id === selectedItemId);
             if (selectedItem) {
-                console.log(`Grupo ${group}: sumando ${selectedItem.line_total}`);
                 subtotal += parseFloat(selectedItem.line_total || 0);
-            } else {
-                console.log(`Grupo ${group}: NO encontrado item ${selectedItemId}`);
             }
         });
 
-        const ivaAmount = applyIva ? subtotal * ivaRate : 0;
-        const total = subtotal + ivaAmount;
+        // Calcular ajuste por condición de pago
+        let paymentConditionAmount = 0;
+        if (selectedPaymentCondition) {
+            paymentConditionAmount = subtotal * (parseFloat(selectedPaymentCondition.percentage) / 100);
+        }
 
-        console.log(`Totales finales: subtotal=${subtotal}, total=${total}`);
+        // Subtotal con ajuste de pago
+        const subtotalWithPayment = subtotal + paymentConditionAmount;
+
+        // Calcular IVA sobre subtotal con ajuste
+        const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+        const total = subtotalWithPayment + ivaAmount;
 
         setTotals({
             subtotal,
+            paymentConditionAmount,
+            subtotalWithPayment,
             iva: ivaAmount,
             total,
         });
 
-        return { subtotal, iva: ivaAmount, total };
+        return {
+            subtotal,
+            paymentConditionAmount,
+            subtotalWithPayment,
+            iva: ivaAmount,
+            total,
+        };
     };
 
     // Recalcular totales cuando cambien las selecciones - pero no disparar constantemente
@@ -198,6 +213,18 @@ export function useBudgetLogic(items = [], businessConfig = null) {
         }
     }, [items]);
 
+    // Recalcular cuando cambie la condición de pago
+    useEffect(() => {
+        if (isInitialized.current) {
+            console.log('Recalculando totales por cambio en condición de pago');
+            const timeoutId = setTimeout(() => {
+                calculateTotals();
+            }, 10);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [paymentConditionId]);
+
     // Función para actualizar is_selected en los items
     const updateItemsSelection = (itemsToUpdate = items) => {
         return itemsToUpdate.map((item) => {
@@ -220,6 +247,7 @@ export function useBudgetLogic(items = [], businessConfig = null) {
         selectedVariants,
         regularItems,
         variantGroups,
+        selectedPaymentCondition,
         handleVariantChange,
         calculateTotals,
         updateItemsSelection,

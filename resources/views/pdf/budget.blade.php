@@ -458,6 +458,25 @@
         @endforeach
     @endif
 
+    {{-- Información de condición de pago --}}
+    @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
+        <div style="background-color: #f3f4f6; padding: 15px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+            <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
+            <small style="color: #6b7280;">
+                @php
+                    $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
+                @endphp
+                @if ($paymentPercentage > 0)
+                    Se ha aplicado un recargo del {{ number_format($paymentPercentage, 2) }}% sobre el subtotal.
+                @elseif ($paymentPercentage < 0)
+                    Se ha aplicado un descuento del {{ number_format(abs($paymentPercentage), 2) }}% sobre el subtotal.
+                @else
+                    Sin ajuste adicional.
+                @endif
+            </small>
+        </div>
+    @endif
+
     <!-- COMENTARIOS -->
     @if (!empty($budget['footer_comments']))
         <div class="comments">
@@ -473,14 +492,36 @@
                 <td><strong>Subtotal:</strong></td>
                 <td class="text-right">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
             </tr>
+
+            {{-- Mostrar ajuste de condición de pago si existe --}}
+            @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
+                @php
+                    $paymentAmount = floatval($budget['payment_condition_amount'] ?? 0);
+                    $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
+                @endphp
+
+                @if ($paymentAmount != 0)
+                    <tr style="color: {{ $paymentAmount > 0 ? '#dc2626' : '#16a34a' }};">
+                        <td>
+                            {{ $budget['payment_condition']['description'] ?? 'Ajuste de pago' }}
+                            ({{ $paymentAmount > 0 ? '+' : '' }}{{ number_format($paymentPercentage, 2) }}%):
+                        </td>
+                        <td class="text-right">
+                            {{ $paymentAmount > 0 ? '+' : '' }}${{ number_format(abs($paymentAmount), 2, ',', '.') }}
+                        </td>
+                    </tr>
+                @endif
+            @endif
+
             @if ($businessConfig['apply_iva'])
                 <tr>
                     <td>IVA ({{ $businessConfig['iva_rate'] * 100 }}%):</td>
                     <td class="text-right">
-                        ${{ number_format(($budget['subtotal'] ?? 0) * $businessConfig['iva_rate'], 2, ',', '.') }}
+                        ${{ number_format((($budget['subtotal'] ?? 0) + ($budget['payment_condition_amount'] ?? 0)) * $businessConfig['iva_rate'], 2, ',', '.') }}
                     </td>
                 </tr>
             @endif
+
             <tr class="total-row">
                 <td><strong>TOTAL:</strong></td>
                 <td class="text-right"><strong>${{ number_format($budget['total'] ?? 0, 2, ',', '.') }}</strong></td>

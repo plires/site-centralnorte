@@ -138,7 +138,7 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                         </>
                     ) : (
                         /* Para todos los demás casos, mostrar texto readonly */
-                        <p className="rounded-md bg-gray-50 px-3 py-2 text-sm font-medium">{user.name}</p>
+                        <p className="rounded-md bg-gray-50 px-3 py-2 text-sm font-medium">{user?.name || 'Usuario no disponible'}</p>
                     )}
                 </div>
             </CardContent>

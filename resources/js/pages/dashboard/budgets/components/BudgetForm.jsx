@@ -1,3 +1,4 @@
+// resources/js/pages/dashboard/budgets/components/BudgetForm.jsx
 import PageHeader from '@/components/PageHeader';
 import {
     AlertDialog,
@@ -20,6 +21,7 @@ import BudgetCommentsSection from './BudgetCommentsSection';
 import BudgetDateSection from './BudgetDateSection';
 import BudgetItemsSection from './BudgetItemsSection';
 import BudgetTotalsSection from './BudgetTotalsSection';
+import PaymentConditionSelector from './PaymentConditionSelector';
 
 export default function BudgetForm({
     data,
@@ -29,6 +31,7 @@ export default function BudgetForm({
     errors,
     clients,
     products,
+    paymentConditions,
     user,
     businessConfig = null,
     isEditing = false,
@@ -37,9 +40,14 @@ export default function BudgetForm({
     const [showExitDialog, setShowExitDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState(null);
 
-    const { totals, selectedVariants, handleVariantChange, calculateTotals, getItemsWithUpdatedSelection } = useBudgetLogic(
+    console.log(data);
+
+    // MODIFICADO: Pasar paymentConditionId y paymentConditions al hook
+    const { totals, selectedVariants, selectedPaymentCondition, handleVariantChange, calculateTotals, getItemsWithUpdatedSelection } = useBudgetLogic(
         data.items,
         businessConfig,
+        data.picking_payment_condition_id,
+        paymentConditions,
     );
 
     const handleExit = () => {
@@ -94,6 +102,15 @@ export default function BudgetForm({
                     {/* Fechas del presupuesto */}
                     <BudgetDateSection data={data} setData={setData} errors={errors} user={user} isEditing={isEditing} />
 
+                    {/* Selector de Condición de Pago */}
+                    <PaymentConditionSelector
+                        value={data.picking_payment_condition_id}
+                        onChange={(value) => setData('picking_payment_condition_id', value)}
+                        paymentConditions={paymentConditions}
+                        disabled={processing}
+                        showInfo={true}
+                    />
+
                     {/* Items del presupuesto */}
                     <BudgetItemsSection
                         data={data}
@@ -104,8 +121,13 @@ export default function BudgetForm({
                         onItemsChange={handleItemsChange}
                     />
 
-                    {/* Totales */}
-                    <BudgetTotalsSection totals={totals} ivaRate={businessConfig?.iva_rate ?? 0.21} showIva={businessConfig?.apply_iva ?? true} />
+                    {/* Totales - ahora incluye paymentConditionAmount */}
+                    <BudgetTotalsSection
+                        totals={totals}
+                        ivaRate={businessConfig?.iva_rate ?? 0.21}
+                        showIva={businessConfig?.apply_iva ?? true}
+                        paymentCondition={selectedPaymentCondition}
+                    />
 
                     {/* Comentarios */}
                     <BudgetCommentsSection data={data} setData={setData} errors={errors} />

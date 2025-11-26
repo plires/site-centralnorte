@@ -1,3 +1,5 @@
+// resources/js/pages/dashboard/budgets/Show.jsx
+
 import PageHeader from '@/components/PageHeader';
 import AppLayout from '@/layouts/app-layout';
 import { Head, usePage } from '@inertiajs/react';
@@ -29,6 +31,8 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
+        paymentConditionAmount: 0,
+        subtotalWithPayment: 0,
         iva: 0,
         total: parseFloat(budget.total),
     });
@@ -88,7 +92,7 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
         }
     }, [Object.keys(variantGroups).join(',')]); // Depender solo de las keys, no del objeto completo
 
-    // Recalcular totales
+    // Recalcular totales incluyendo condición de pago
     useEffect(() => {
         let newSubtotal = 0;
 
@@ -106,15 +110,27 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             }
         });
 
-        const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
-        const totalWithIva = newSubtotal + ivaAmount;
+        // Calcular ajuste por condición de pago
+        let paymentConditionAmount = 0;
+        if (budget.payment_condition_percentage) {
+            paymentConditionAmount = newSubtotal * (parseFloat(budget.payment_condition_percentage) / 100);
+        }
+
+        // Subtotal con ajuste
+        const subtotalWithPayment = newSubtotal + paymentConditionAmount;
+
+        // Calcular IVA sobre subtotal con ajuste
+        const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+        const totalWithIva = subtotalWithPayment + ivaAmount;
 
         setCalculatedTotals({
             subtotal: newSubtotal,
+            paymentConditionAmount,
+            subtotalWithPayment,
             iva: ivaAmount,
             total: totalWithIva,
         });
-    }, [selectedVariants, regularItems, Object.keys(variantGroups).join(','), ivaRate, applyIva]);
+    }, [selectedVariants, regularItems, Object.keys(variantGroups).join(','), ivaRate, applyIva, budget.payment_condition_percentage]);
 
     const handleVariantChange = (group, itemId) => {
         setSelectedVariants((prev) => ({
@@ -122,6 +138,14 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             [group]: itemId,
         }));
     };
+
+    // Construir objeto de condición de pago para BudgetTotalsSection
+    const paymentConditionInfo = budget.payment_condition_description
+        ? {
+              description: budget.payment_condition_description,
+              percentage: budget.payment_condition_percentage,
+          }
+        : null;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -147,7 +171,13 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
 
                             <BudgetCommentsDisplay budget={budget} />
 
-                            <BudgetTotalsSection totals={calculatedTotals} ivaRate={ivaRate} showIva={applyIva} />
+                            {/* Totales con información de condición de pago integrada */}
+                            <BudgetTotalsSection
+                                totals={calculatedTotals}
+                                ivaRate={ivaRate}
+                                showIva={applyIva}
+                                paymentCondition={paymentConditionInfo}
+                            />
 
                             <BudgetActionsSection budget={budget} />
                         </div>

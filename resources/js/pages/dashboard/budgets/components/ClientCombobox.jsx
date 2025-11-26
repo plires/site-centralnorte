@@ -13,21 +13,20 @@ export default function ClientCombobox({ clients, value, onChange, error, placeh
     const [searchTerm, setSearchTerm] = useState('');
 
     // Obtener cliente seleccionado
-    const selectedClient = clients.find((c) => c.id.toString() === value?.toString());
+    // CORREGIDO: Ahora funciona con formato {value, label}
+    const selectedClient = clients?.find((c) => c.value?.toString() === value?.toString());
 
     // Filtrar clientes según búsqueda
     const filteredClients = searchTerm
-        ? clients.filter((client) => {
+        ? clients?.filter((client) => {
               const searchLower = searchTerm.toLowerCase();
-              const nameMatch = client.name?.toLowerCase().includes(searchLower);
-              const companyMatch = client.company?.toLowerCase().includes(searchLower);
-              const emailMatch = client.email?.toLowerCase().includes(searchLower);
-              return nameMatch || companyMatch || emailMatch;
+              const labelMatch = client.label?.toLowerCase().includes(searchLower);
+              return labelMatch;
           })
         : clients;
 
-    const handleSelect = (clientId) => {
-        onChange(clientId === value ? '' : clientId);
+    const handleSelect = (clientValue) => {
+        onChange(clientValue === value ? '' : clientValue);
         setOpen(false);
         setSearchTerm('');
     };
@@ -35,7 +34,7 @@ export default function ClientCombobox({ clients, value, onChange, error, placeh
     // Formatear display del cliente
     const getClientDisplay = (client) => {
         if (!client) return placeholder;
-        return client.company ? `${client.name} (${client.company})` : client.name;
+        return client.label || placeholder;
     };
 
     return (
@@ -51,21 +50,17 @@ export default function ClientCombobox({ clients, value, onChange, error, placeh
             </PopoverTrigger>
             <PopoverContent className="w-full p-0" align="start">
                 <Command>
-                    <CommandInput placeholder="Buscar por nombre, empresa o email..." value={searchTerm} onValueChange={setSearchTerm} />
+                    <CommandInput placeholder="Buscar cliente..." value={searchTerm} onValueChange={setSearchTerm} />
                     <CommandEmpty>No se encontraron clientes.</CommandEmpty>
                     <CommandGroup className="max-h-64 overflow-auto">
-                        {filteredClients.map((client) => {
-                            const isSelected = value?.toString() === client.id.toString();
+                        {filteredClients?.map((client) => {
+                            const isSelected = value?.toString() === client.value?.toString();
 
                             return (
-                                <CommandItem key={client.id} onSelect={() => handleSelect(client.id.toString())} className="cursor-pointer">
+                                <CommandItem key={client.value} onSelect={() => handleSelect(client.value.toString())} className="cursor-pointer">
                                     <div className="flex w-full items-center justify-between gap-2">
                                         <div className="flex-1 overflow-hidden">
-                                            <p className="truncate font-medium">{client.name}</p>
-                                            <div className="text-muted-foreground flex flex-col gap-0.5 text-xs">
-                                                {client.company && <span className="truncate">🏢 {client.company}</span>}
-                                                {client.email && <span className="truncate">✉️ {client.email}</span>}
-                                            </div>
+                                            <p className="truncate font-medium">{client.label}</p>
                                         </div>
                                         <Check className={cn('h-4 w-4 flex-shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
                                     </div>

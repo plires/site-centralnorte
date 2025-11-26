@@ -38,12 +38,27 @@ export const useBudgetCalculations = (budget, selectedVariants, businessConfig) 
             }
         });
 
-        // Calcular IVA y total
-        const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
-        const totalWithIva = newSubtotal + ivaAmount;
+        // Calcular ajuste por condición de pago
+        let paymentConditionAmount = 0;
+        if (budget.payment_condition?.percentage) {
+            paymentConditionAmount = newSubtotal * (parseFloat(budget.payment_condition.percentage) / 100);
+        }
+
+        // Aplicar ajuste al subtotal antes del IVA
+        const subtotalWithPayment = newSubtotal + paymentConditionAmount;
+
+        // Calcular IVA
+        const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+        const totalWithIva = subtotalWithPayment + ivaAmount;
+
+        // // Calcular IVA y total
+        // const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
+        // const totalWithIva = newSubtotal + ivaAmount;
 
         setCalculatedTotals({
             subtotal: newSubtotal,
+            paymentConditionAmount,
+            subtotalWithPayment,
             iva: ivaAmount,
             total: totalWithIva,
         });

@@ -18,6 +18,9 @@ class Budget extends Model
         'token',
         'user_id',
         'client_id',
+        'picking_payment_condition_id',
+        'payment_condition_description',
+        'payment_condition_percentage',
         'issue_date',
         'expiry_date',
         'is_active',
@@ -26,6 +29,7 @@ class Budget extends Model
         'email_sent_at',
         'footer_comments',
         'subtotal',
+        'payment_condition_amount',
         'total',
     ];
 
@@ -37,10 +41,12 @@ class Budget extends Model
         'email_sent' => 'boolean',
         'email_sent_at' => 'datetime',
         'subtotal' => 'decimal:2',
+        'payment_condition_percentage' => 'decimal:2',
+        'payment_condition_amount' => 'decimal:2',
         'total' => 'decimal:2',
     ];
 
-    // Agregar accessors para fechas formateadas que se incluirán en JSON
+    // accessors para fechas formateadas que se incluirán en JSON
     protected $appends = [
         'issue_date_formatted',
         'expiry_date_formatted',
@@ -119,6 +125,11 @@ class Budget extends Model
         return $this->hasMany(BudgetNotification::class);
     }
 
+    public function paymentCondition()
+    {
+        return $this->belongsTo(PickingPaymentCondition::class, 'picking_payment_condition_id');
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -154,20 +165,38 @@ class Budget extends Model
 
         $subtotal += $selectedVariants->sum('line_total');
 
+        // Calcular ajuste por condición de pago
+        $paymentConditionAmount = 0;
+        if ($this->payment_condition_percentage) {
+            $paymentConditionAmount = $subtotal * ($this->payment_condition_percentage / 100);
+        }
+
+        // Aplicar IVA
         $ivaRate = config('business.tax.iva_rate', 0.21);
         $applyIva = config('business.tax.apply_iva', true);
 
-        $total = $subtotal;
+        $subtotalWithPayment = $subtotal + $paymentConditionAmount;
+
+        $total = $subtotalWithPayment;
         if ($applyIva) {
-            $total = $subtotal * (1 + $ivaRate);
+            $total = $subtotalWithPayment * (1 + $ivaRate);
         }
 
         $this->update([
             'subtotal' => $subtotal,
+            'payment_condition_amount' => $paymentConditionAmount,
             'total' => $total,
         ]);
 
         return $this;
+    }
+
+    /**
+     * Obtener subtotal con el ajuste de condición de pago aplicado
+     */
+    public function getSubtotalWithPaymentCondition()
+    {
+        return $this->subtotal + $this->payment_condition_amount;
     }
 
     /**
