@@ -151,8 +151,8 @@ export default function BudgetVariantGroups({
                                                                     {isSelected && <CheckCircle className="h-3 w-3 text-white" />}
                                                                 </div>
                                                             </div>
-                                                            <p className="mt-1 text-sm font-medium text-gray-600">Total Línea</p>
-                                                            <p className="text-lg font-bold text-gray-900 sm:text-xl">
+                                                            <p className="mt-1 text-sm font-medium text-gray-500">Total Línea</p>
+                                                            <p className="text-lg font-bold text-gray-500 sm:text-xl">
                                                                 {formatCurrency(item.line_total)}
                                                             </p>
                                                         </div>

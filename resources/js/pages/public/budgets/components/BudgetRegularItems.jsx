@@ -96,8 +96,8 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                         {/* Precio total - Centrado en móvil, derecha en desktop */}
                                         <div className="text-center sm:self-center sm:text-right">
                                             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-                                                <p className="text-sm font-medium text-gray-600">Total Línea</p>
-                                                <p className="text-lg font-bold text-gray-900 sm:text-xl">{formatCurrency(item.line_total)}</p>
+                                                <p className="text-sm font-medium text-gray-500">Total Línea</p>
+                                                <p className="text-lg font-bold text-gray-500 sm:text-xl">{formatCurrency(item.line_total)}</p>
                                             </div>
                                         </div>
                                     </div>

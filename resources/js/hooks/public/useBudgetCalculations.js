@@ -1,4 +1,4 @@
-// resources/js/hooks/useBudgetCalculations.js
+// resources/js/hooks/public/useBudgetCalculations.js
 
 import { useEffect, useState } from 'react';
 
@@ -12,6 +12,8 @@ import { useEffect, useState } from 'react';
 export const useBudgetCalculations = (budget, selectedVariants, businessConfig) => {
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
+        paymentConditionAmount: 0,
+        subtotalWithPayment: 0,
         iva: 0,
         total: parseFloat(budget.total),
     });
@@ -38,22 +40,18 @@ export const useBudgetCalculations = (budget, selectedVariants, businessConfig) 
             }
         });
 
-        // Calcular ajuste por condición de pago
+        // CORREGIDO: Calcular ajuste por condición de pago
         let paymentConditionAmount = 0;
-        if (budget.payment_condition?.percentage) {
-            paymentConditionAmount = newSubtotal * (parseFloat(budget.payment_condition.percentage) / 100);
+        if (budget.payment_condition_percentage) {
+            paymentConditionAmount = newSubtotal * (parseFloat(budget.payment_condition_percentage) / 100);
         }
 
         // Aplicar ajuste al subtotal antes del IVA
         const subtotalWithPayment = newSubtotal + paymentConditionAmount;
 
-        // Calcular IVA
+        // Calcular IVA sobre subtotal con ajuste
         const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
         const totalWithIva = subtotalWithPayment + ivaAmount;
-
-        // // Calcular IVA y total
-        // const ivaAmount = applyIva ? newSubtotal * ivaRate : 0;
-        // const totalWithIva = newSubtotal + ivaAmount;
 
         setCalculatedTotals({
             subtotal: newSubtotal,
@@ -62,7 +60,7 @@ export const useBudgetCalculations = (budget, selectedVariants, businessConfig) 
             iva: ivaAmount,
             total: totalWithIva,
         });
-    }, [selectedVariants, budget.grouped_items, ivaRate, applyIva]);
+    }, [selectedVariants, budget.grouped_items, budget.payment_condition_percentage, ivaRate, applyIva]);
 
     return {
         calculatedTotals,
