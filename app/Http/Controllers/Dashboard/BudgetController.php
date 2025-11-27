@@ -322,6 +322,7 @@ class BudgetController extends Controller
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
             'clients' => $clients,
+            'user' => $user,
             'products' => $products,
             'paymentConditions' => $paymentConditions,
             'businessConfig' => [
@@ -366,6 +367,7 @@ class BudgetController extends Controller
             // Actualizar el presupuesto
             $budget->update(array_merge([
                 'title' => $request->title,
+                'user_id' => $request->user_id,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
                 'expiry_date' => $request->expiry_date,
