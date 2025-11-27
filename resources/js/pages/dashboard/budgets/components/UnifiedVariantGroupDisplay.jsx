@@ -11,7 +11,7 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
     };
 
     const firstVariant = items[0];
-    const productImage = firstVariant?.product?.images?.[0];
+    const productImage = items[0].product.featured_image;
 
     return (
         <div className="mt-6">

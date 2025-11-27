@@ -16,18 +16,13 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
                 {/* Lado izquierdo: Imagen + Contenido */}
                 <div className="flex flex-1 gap-4">
                     {/* Imagen del producto */}
-                    {item.product.images?.[0] ? (
-                        <img
-                            src={item.product.images[0].full_url || item.product.images[0].url}
-                            alt={item.product.name}
-                            className="h-16 w-16 rounded object-cover"
-                        />
+                    {item.product.featured_image.url ? (
+                        <img src={item.product.featured_image.url} alt={item.product.name} className="h-16 w-16 rounded object-cover" />
                     ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded border bg-gray-100">
                             <Package className="h-8 w-8 text-gray-400" />
                         </div>
                     )}
-
                     <div className="flex-1">
                         <div>
                             <h5 className="font-medium text-gray-900">{item.product.name}</h5>
