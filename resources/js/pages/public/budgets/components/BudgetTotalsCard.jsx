@@ -51,14 +51,15 @@ export default function BudgetTotalsCard({ budget, calculatedTotals, ivaRate, ap
                         <div className={`rounded-md border p-3 ${adjustmentBorderColor} `}>
                             <div className="space-y-2">
                                 {/* Línea de ajuste */}
-                                <div className={`flex items-center justify-between ${adjustmentColor}`}>
+                                <div className={`flex items-center justify-between gap-2 ${adjustmentColor}`}>
                                     <span className="flex items-center gap-2 font-medium">
-                                        {isPositiveAdjustment ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                        <span className={`${adjustmentColor}`}>Condición de pago:</span>
                                         <span>{budget.payment_condition_description}</span>
+                                        {isPositiveAdjustment ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                         <span className="text-sm">({formatPercentage(budget.payment_condition_percentage)})</span>
                                     </span>
                                     <span className="font-bold">
-                                        {isPositiveAdjustment ? '+' : ''}
+                                        {isPositiveAdjustment ? '+ ' : '- '}
                                         {formatCurrency(Math.abs(paymentConditionAmount))}
                                     </span>
                                 </div>
