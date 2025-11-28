@@ -22,8 +22,8 @@ class PickingBudgetServiceFactory extends Factory
     public function definition(): array
     {
         $serviceType = fake()->randomElement(PickingServiceType::cases());
-        $unitCost = fake()->randomFloat(2, 5, 100);
-        $quantity = fake()->numberBetween(1, 50);
+        $unitCost = fake()->randomFloat(2, 10, 250);
+        $quantity = fake()->numberBetween(1, 100);
         
         return [
             'picking_budget_id' => PickingBudget::factory(),
@@ -56,11 +56,33 @@ class PickingBudgetServiceFactory extends Factory
     /**
      * Create an assembly service.
      */
-    public function assembly(): static
+    public function assembly(bool $withAssembly = true): static
     {
         return $this->state(fn (array $attributes) => [
             'service_type' => PickingServiceType::ASSEMBLY,
-            'service_description' => 'Con armado',
+            'service_description' => $withAssembly ? 'Con armado' : 'Sin armado',
+        ]);
+    }
+
+    /**
+     * Create a palletizing service.
+     */
+    public function palletizing(bool $withPallet = true): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'service_type' => PickingServiceType::PALLETIZING,
+            'service_description' => $withPallet ? 'Palletizado con pallet' : 'Palletizado sin pallet',
+        ]);
+    }
+
+    /**
+     * Create a labeling service.
+     */
+    public function labeling(bool $withLabeling = true): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'service_type' => PickingServiceType::LABELING,
+            'service_description' => $withLabeling ? 'Con rotulado' : 'Sin rotulado',
         ]);
     }
 
@@ -98,13 +120,61 @@ class PickingBudgetServiceFactory extends Factory
     }
 
     /**
+     * Create a dome sticking service.
+     */
+    public function domeSticking(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'service_type' => PickingServiceType::DOME_STICKING,
+            'service_description' => 'Pegado de domes',
+        ]);
+    }
+
+    /**
+     * Create an additional assembly service.
+     */
+    public function additionalAssembly(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'service_type' => PickingServiceType::ADDITIONAL_ASSEMBLY,
+            'service_description' => 'Ensamble adicional',
+        ]);
+    }
+
+    /**
+     * Create a quality control service.
+     */
+    public function qualityControl(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'service_type' => PickingServiceType::QUALITY_CONTROL,
+            'service_description' => 'Control de calidad',
+        ]);
+    }
+
+    /**
      * Set a specific quantity.
      */
     public function quantity(int $quantity): static
     {
-        return $this->state(fn (array $attributes) => [
-            'quantity' => $quantity,
-            'subtotal' => $attributes['unit_cost'] * $quantity,
-        ]);
+        return $this->state(function (array $attributes) use ($quantity) {
+            return [
+                'quantity' => $quantity,
+                'subtotal' => $attributes['unit_cost'] * $quantity,
+            ];
+        });
+    }
+
+    /**
+     * Set a specific unit cost.
+     */
+    public function unitCost(float $cost): static
+    {
+        return $this->state(function (array $attributes) use ($cost) {
+            return [
+                'unit_cost' => $cost,
+                'subtotal' => $cost * $attributes['quantity'],
+            ];
+        });
     }
 }

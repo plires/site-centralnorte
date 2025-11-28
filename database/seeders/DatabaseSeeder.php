@@ -16,6 +16,7 @@ use Database\Seeders\ProductVariantSeeder;
 use Database\Seeders\VendedoresUserSeeder;
 use Database\Seeders\PickingCostScaleSeeder;
 use Database\Seeders\ProductAttributeSeeder;
+use Database\Seeders\SimplePickingBudgetSeeder;
 use Database\Seeders\PickingPaymentConditionSeeder;
 use Database\Seeders\PickingComponentIncrementSeeder;
 
@@ -44,6 +45,7 @@ class DatabaseSeeder extends Seeder
             PickingCostScaleSeeder::class,
             PickingComponentIncrementSeeder::class,
             PickingPaymentConditionSeeder::class,
+            SimplePickingBudgetSeeder::class,
         ]);
     }
 }
