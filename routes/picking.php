@@ -22,35 +22,27 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
     // ========================================================================
     Route::prefix('picking')->name('picking.')->group(function () {
 
-        // Lista y gestión de presupuestos
+        // CRUD básico
         Route::get('/', [PickingBudgetController::class, 'index'])
             ->name('budgets.index');
-
         Route::get('/create', [PickingBudgetController::class, 'create'])
             ->name('budgets.create');
-
         Route::post('/', [PickingBudgetController::class, 'store'])
             ->name('budgets.store');
-
         Route::get('/{pickingBudget}', [PickingBudgetController::class, 'show'])
             ->name('budgets.show');
-
         Route::get('/{pickingBudget}/edit', [PickingBudgetController::class, 'edit'])
             ->name('budgets.edit');
-
         Route::put('/{pickingBudget}', [PickingBudgetController::class, 'update'])
             ->name('budgets.update');
-
         Route::delete('/{pickingBudget}', [PickingBudgetController::class, 'destroy'])
             ->name('budgets.destroy');
 
-        // Acciones especiales sobre presupuestos
+        // Acciones especiales
         Route::post('/{pickingBudget}/duplicate', [PickingBudgetController::class, 'duplicate'])
             ->name('budgets.duplicate');
-
         Route::post('/{pickingBudget}/send', [PickingBudgetController::class, 'send'])
             ->name('budgets.send');
-
         Route::get('/{pickingBudget}/pdf', [PickingBudgetController::class, 'downloadPdf'])
             ->name('budgets.pdf');
 
