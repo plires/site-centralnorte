@@ -89,7 +89,7 @@ export const mainNavItems = () => [
     },
     {
         title: 'Presupuestos de Picking',
-        url: '/dashboard/presupuestos/picking',
+        url: '/dashboard/picking',
         icon: BookText,
         permission: 'gestionar_presupuestos_pick',
     },
