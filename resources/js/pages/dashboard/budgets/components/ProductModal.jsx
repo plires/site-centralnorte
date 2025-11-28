@@ -458,7 +458,11 @@ export default function ProductModal({ products, existingItems = [], editingItem
                                     <SelectItem className="py-2" key={product.id} value={product.id.toString()}>
                                         <div className="flex items-center gap-3">
                                             {product.images && product.images.length > 0 ? (
-                                                <img src={product.images[0].url} alt={product.name} className="h-10 w-10 rounded object-cover" />
+                                                <img
+                                                    src={product.featured_image.full_url}
+                                                    alt={product.name}
+                                                    className="h-10 w-10 rounded object-cover"
+                                                />
                                             ) : (
                                                 <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
                                                     <Package className="h-5 w-5 text-gray-400" />
@@ -480,7 +484,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
                         )}
                     </div>
 
-                    {/* ⬅️ NUEVO: Selector de variantes del producto */}
+                    {/* Selector de variantes del producto */}
                     {selectedProduct && selectedProduct.variants && selectedProduct.variants.length > 0 && (
                         <ProductVariantSelector
                             product={selectedProduct}
@@ -489,7 +493,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
                         />
                     )}
 
-                    {/* ⬅️ NUEVO: Mostrar error si no se seleccionó variante */}
+                    {/* Mostrar error si no se seleccionó variante */}
                     {errors.some((e) => e.field === 'product_variant') && (
                         <Alert className="border-red-200 bg-red-50">
                             <X className="h-4 w-4 text-red-600" />
