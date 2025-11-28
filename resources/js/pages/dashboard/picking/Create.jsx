@@ -1,7 +1,6 @@
 // resources/js/pages/dashboard/picking/Create.jsx
 // EJEMPLO BÁSICO - Expandir según necesidades
 
-import ButtonCustom from '@/components/ButtonCustom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,30 +8,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm } from '@inertiajs/react';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox';
+import { useForm } from '@inertiajs/react';
+import { Box, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-const breadcrumbs = [
-    {
-        title: 'Presupuestos de Picking',
-        href: '/dashboard/picking',
-    },
-    {
-        title: 'Nuevo Presupuesto',
-        href: '#',
-    },
-];
-
-export default function Create({ auth, boxes, costScales, componentIncrements }) {
+export default function Create({ auth, boxes, costScales, clients, componentIncrements }) {
+    const handleClientSelect = (clientId) => {
+        setData('client_id', clientId);
+    };
     const { data, setData, post, processing, errors } = useForm({
         client_name: '',
         client_email: '',
         client_phone: '',
         total_kits: '',
         total_components_per_kit: '',
-        box_id: '',
+        boxes: [], // Array de cajas
         services: [],
         notes: '',
     });
@@ -43,57 +35,144 @@ export default function Create({ auth, boxes, costScales, componentIncrements })
         servicesSubtotal: 0,
         incrementAmount: 0,
         subtotalWithIncrement: 0,
-        boxCost: 0,
+        boxTotal: 0,
         total: 0,
+        unitPricePerKit: 0,
     });
 
-    // Buscar escala según cantidad de kits
+    // Buscar escala según total_kits
     useEffect(() => {
-        if (data.total_kits) {
-            const scale = costScales.find(
-                (s) =>
-                    s.quantity_from <= parseInt(data.total_kits) &&
-                    (s.quantity_to === null || s.quantity_to >= parseInt(data.total_kits)),
-            );
-            setCurrentScale(scale);
+        if (data.total_kits && costScales) {
+            const kits = parseInt(data.total_kits);
+            const scale = costScales.find((s) => s.quantity_from <= kits && (s.quantity_to === null || s.quantity_to >= kits));
+            setCurrentScale(scale || null);
+        } else {
+            setCurrentScale(null);
         }
     }, [data.total_kits, costScales]);
 
-    // Buscar incremento según componentes
+    // Buscar incremento según total_components_per_kit
     useEffect(() => {
-        if (data.total_components_per_kit) {
+        if (data.total_components_per_kit && componentIncrements) {
+            const components = parseInt(data.total_components_per_kit);
             const increment = componentIncrements.find(
-                (i) =>
-                    i.components_from <= parseInt(data.total_components_per_kit) &&
-                    (i.components_to === null || i.components_to >= parseInt(data.total_components_per_kit)),
+                (i) => i.components_from <= components && (i.components_to === null || i.components_to >= components),
             );
-            setCurrentIncrement(increment);
+            setCurrentIncrement(increment || null);
+        } else {
+            setCurrentIncrement(null);
         }
     }, [data.total_components_per_kit, componentIncrements]);
 
-    // Calcular totales
+    // Calcular totales en tiempo real
     useEffect(() => {
+        // Subtotal de servicios
         const servicesSubtotal = data.services.reduce((sum, service) => {
-            return sum + service.unit_cost * service.quantity;
+            const unitCost = parseFloat(service.unit_cost) || 0;
+            const quantity = parseInt(service.quantity) || 0;
+            return sum + unitCost * quantity;
         }, 0);
 
-        const incrementAmount = currentIncrement ? servicesSubtotal * parseFloat(currentIncrement.percentage) : 0;
+        // Incremento por componentes
+        const incrementPercentage = currentIncrement ? currentIncrement.percentage : 0;
+        const incrementAmount = servicesSubtotal * incrementPercentage;
 
+        // Subtotal con incremento
         const subtotalWithIncrement = servicesSubtotal + incrementAmount;
 
-        const selectedBox = boxes.find((b) => b.id === parseInt(data.box_id));
-        const boxCost = selectedBox ? parseFloat(selectedBox.cost) : 0;
+        // Total de cajas (suma de todas las cajas)
+        const boxTotal = data.boxes.reduce((sum, box) => {
+            const unitCost = parseFloat(box.box_unit_cost) || 0;
+            const quantity = parseInt(box.quantity) || 0;
+            return sum + unitCost * quantity;
+        }, 0);
 
-        const total = subtotalWithIncrement + boxCost;
+        // Total general
+        const total = subtotalWithIncrement + boxTotal;
+
+        // Precio unitario por kit
+        const kits = parseInt(data.total_kits) || 0;
+        const unitPricePerKit = kits > 0 ? total / kits : 0;
 
         setTotals({
             servicesSubtotal,
             incrementAmount,
             subtotalWithIncrement,
-            boxCost,
+            boxTotal,
             total,
+            unitPricePerKit,
         });
-    }, [data.services, data.box_id, currentIncrement, boxes]);
+    }, [data.services, data.boxes, data.total_kits, currentIncrement]);
+
+    // Agregar caja
+    const addBox = () => {
+        setData('boxes', [
+            ...data.boxes,
+            {
+                box_id: '',
+                box_dimensions: '',
+                box_unit_cost: '',
+                quantity: '',
+            },
+        ]);
+    };
+
+    // Eliminar caja
+    const removeBox = (index) => {
+        const newBoxes = data.boxes.filter((_, i) => i !== index);
+        setData('boxes', newBoxes);
+    };
+
+    // Actualizar caja
+    const updateBox = (index, field, value) => {
+        const newBoxes = [...data.boxes];
+        newBoxes[index][field] = value;
+
+        // Si se selecciona una caja del select, autocompletar dimensiones y costo
+        if (field === 'box_id' && value) {
+            // VALIDACIÓN: Verificar si la caja ya existe
+            const isDuplicate = newBoxes.some((box, i) => i !== index && box.box_id === value);
+
+            if (isDuplicate) {
+                toast.error('Esta caja ya fue agregada al presupuesto');
+                return; // No permitir la selección
+            }
+
+            const selectedBox = boxes.find((b) => b.id === parseInt(value));
+            if (selectedBox) {
+                newBoxes[index].box_dimensions = selectedBox.dimensions;
+                newBoxes[index].box_unit_cost = selectedBox.cost;
+            }
+        }
+
+        setData('boxes', newBoxes);
+    };
+
+    // Agregar servicio
+    const addService = () => {
+        setData('services', [
+            ...data.services,
+            {
+                service_type: '',
+                service_description: '',
+                unit_cost: '',
+                quantity: '',
+            },
+        ]);
+    };
+
+    // Eliminar servicio
+    const removeService = (index) => {
+        const newServices = data.services.filter((_, i) => i !== index);
+        setData('services', newServices);
+    };
+
+    // Actualizar servicio
+    const updateService = (index, field, value) => {
+        const newServices = [...data.services];
+        newServices[index][field] = value;
+        setData('services', newServices);
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -102,313 +181,410 @@ export default function Create({ auth, boxes, costScales, componentIncrements })
                 toast.success('Presupuesto creado correctamente');
             },
             onError: () => {
-                toast.error('Error al crear el presupuesto');
+                toast.error('Error al crear el presupuesto. Verifica los datos.');
             },
         });
     };
 
-    const addService = () => {
-        setData('services', [
-            ...data.services,
-            {
-                service_type: 'assembly',
-                service_description: 'Con armado',
-                unit_cost: currentScale?.cost_with_assembly || 0,
-                quantity: 1,
-            },
-        ]);
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+        }).format(value);
     };
 
-    const removeService = (index) => {
-        const newServices = data.services.filter((_, i) => i !== index);
-        setData('services', newServices);
-    };
-
-    const updateService = (index, field, value) => {
-        const newServices = [...data.services];
-        newServices[index][field] = value;
-        setData('services', newServices);
-    };
+    const breadcrumbs = [
+        {
+            title: 'Presupuestos de Picking',
+            href: '/dashboard/picking',
+        },
+        {
+            title: 'Nuevo Presupuesto',
+            href: '#',
+        },
+    ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>
-            <Head title="Nuevo Presupuesto de Picking" />
+        <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
+            <div className="p-6">
+                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8"></div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-2xl font-bold text-gray-900">Nuevo Presupuesto de Picking</h1>
+                        <Button type="submit" disabled={processing}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {processing ? 'Guardando...' : 'Guardar Presupuesto'}
+                        </Button>
+                    </div>
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <form onSubmit={handleSubmit}>
-                        <div className="mb-6 flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-gray-900">Nuevo Presupuesto de Picking</h2>
-                            <div className="flex gap-2">
-                                <ButtonCustom type="button" variant="outline" route={route('dashboard.picking.budgets.index')}>
-                                    Cancelar
-                                </ButtonCustom>
-                                <Button type="submit" disabled={processing}>
-                                    <Save className="mr-2 h-4 w-4" />
-                                    {processing ? 'Guardando...' : 'Guardar'}
-                                </Button>
+                    {/* Información del Cliente */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Información del Cliente</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4">
+                                <div>
+                                    <Label htmlFor="client_id">Cliente *</Label>
+                                    <ClientCombobox
+                                        clients={clients}
+                                        value={data.client_id}
+                                        onChange={handleClientSelect}
+                                        error={errors.client_id}
+                                        placeholder="Seleccionar cliente..."
+                                    />
+                                    {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
+                                </div>
                             </div>
-                        </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* Información del Cliente */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>Información del Cliente</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid gap-4 md:grid-cols-3">
-                                    <div>
-                                        <Label htmlFor="client_name">
-                                            Nombre <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                            id="client_name"
-                                            value={data.client_name}
-                                            onChange={(e) => setData('client_name', e.target.value)}
-                                            placeholder="Nombre del cliente"
-                                            className={errors.client_name ? 'border-red-500' : ''}
-                                        />
-                                        {errors.client_name && <p className="mt-1 text-sm text-red-500">{errors.client_name}</p>}
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="client_email">Email</Label>
-                                        <Input
-                                            id="client_email"
-                                            type="email"
-                                            value={data.client_email}
-                                            onChange={(e) => setData('client_email', e.target.value)}
-                                            placeholder="email@ejemplo.com"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="client_phone">Teléfono</Label>
-                                        <Input
-                                            id="client_phone"
-                                            value={data.client_phone}
-                                            onChange={(e) => setData('client_phone', e.target.value)}
-                                            placeholder="+54 11 1234-5678"
-                                        />
-                                    </div>
+                    {/* Cantidades */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Cantidades</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div>
+                                    <Label htmlFor="total_kits">
+                                        Total de Kits <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="total_kits"
+                                        type="number"
+                                        min="1"
+                                        value={data.total_kits}
+                                        onChange={(e) => setData('total_kits', e.target.value)}
+                                        placeholder="100"
+                                    />
+                                    {errors.total_kits && <p className="mt-1 text-sm text-red-600">{errors.total_kits}</p>}
+                                    {currentScale && (
+                                        <p className="mt-1 text-sm text-green-600">
+                                            ✓ Escala encontrada: {currentScale.quantity_from} - {currentScale.quantity_to || 'más'} kits
+                                        </p>
+                                    )}
                                 </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Cantidades */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>Cantidades</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid gap-4 md:grid-cols-2">
-                                    <div>
-                                        <Label htmlFor="total_kits">
-                                            Total de Kits <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                            id="total_kits"
-                                            type="number"
-                                            value={data.total_kits}
-                                            onChange={(e) => setData('total_kits', e.target.value)}
-                                            placeholder="100"
-                                            min="1"
-                                            className={errors.total_kits ? 'border-red-500' : ''}
-                                        />
-                                        {errors.total_kits && <p className="mt-1 text-sm text-red-500">{errors.total_kits}</p>}
-                                        {currentScale && (
-                                            <p className="mt-1 text-sm text-gray-500">
-                                                Escala: {currentScale.quantity_from} -{' '}
-                                                {currentScale.quantity_to || '∞'} | Tiempo: {currentScale.production_time}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <Label htmlFor="total_components_per_kit">
-                                            Componentes por Kit <span className="text-red-500">*</span>
-                                        </Label>
-                                        <Input
-                                            id="total_components_per_kit"
-                                            type="number"
-                                            value={data.total_components_per_kit}
-                                            onChange={(e) => setData('total_components_per_kit', e.target.value)}
-                                            placeholder="5"
-                                            min="1"
-                                            className={errors.total_components_per_kit ? 'border-red-500' : ''}
-                                        />
-                                        {errors.total_components_per_kit && (
-                                            <p className="mt-1 text-sm text-red-500">{errors.total_components_per_kit}</p>
-                                        )}
-                                        {currentIncrement && (
-                                            <p className="mt-1 text-sm text-gray-500">
-                                                Incremento: {currentIncrement.description} -{' '}
-                                                {(currentIncrement.percentage * 100).toFixed(0)}%
-                                            </p>
-                                        )}
-                                    </div>
+                                <div>
+                                    <Label htmlFor="total_components_per_kit">
+                                        Componentes por Kit <span className="text-red-500">*</span>
+                                    </Label>
+                                    <Input
+                                        id="total_components_per_kit"
+                                        type="number"
+                                        min="1"
+                                        value={data.total_components_per_kit}
+                                        onChange={(e) => setData('total_components_per_kit', e.target.value)}
+                                        placeholder="5"
+                                    />
+                                    {errors.total_components_per_kit && (
+                                        <p className="mt-1 text-sm text-red-600">{errors.total_components_per_kit}</p>
+                                    )}
+                                    {currentIncrement && (
+                                        <p className="mt-1 text-sm text-green-600">
+                                            ✓ Incremento: {currentIncrement.description} ({(currentIncrement.percentage * 100).toFixed(0)}%)
+                                        </p>
+                                    )}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                        {/* Selección de Caja */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>
-                                    Caja <span className="text-red-500">*</span>
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Select value={data.box_id.toString()} onValueChange={(value) => setData('box_id', value)}>
-                                    <SelectTrigger className={errors.box_id ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Seleccionar caja" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {boxes.map((box) => (
-                                            <SelectItem key={box.id} value={box.id.toString()}>
-                                                {box.dimensions} - ${parseFloat(box.cost).toFixed(2)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {errors.box_id && <p className="mt-1 text-sm text-red-500">{errors.box_id}</p>}
-                            </CardContent>
-                        </Card>
-
-                        {/* Servicios - SIMPLIFICADO */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <CardTitle>
-                                        Servicios <span className="text-red-500">*</span>
-                                    </CardTitle>
-                                    <Button type="button" variant="outline" size="sm" onClick={addService}>
-                                        <Plus className="mr-2 h-4 w-4" />
-                                        Agregar Servicio
-                                    </Button>
+                    {/* Selección de Cajas */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Box className="h-5 w-5" />
+                                Selección de Cajas
+                            </CardTitle>
+                            <Button type="button" onClick={addBox} size="sm" variant="outline">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar Caja
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {data.boxes.length === 0 ? (
+                                <div className="py-8 text-center text-gray-500">
+                                    <Box className="mx-auto mb-3 h-12 w-12 opacity-30" />
+                                    <p>No hay cajas agregadas.</p>
+                                    <p className="mt-1 text-sm">Haz clic en "Agregar Caja" para añadir una o más cajas.</p>
                                 </div>
-                            </CardHeader>
-                            <CardContent>
-                                {data.services.length === 0 && (
-                                    <p className="text-center text-sm text-gray-500 py-4">
-                                        No hay servicios agregados. Haz clic en "Agregar Servicio" para comenzar.
-                                    </p>
-                                )}
-                                {data.services.map((service, index) => (
-                                    <div key={index} className="mb-4 rounded border p-4">
-                                        <div className="grid gap-4 md:grid-cols-4">
-                                            <div>
-                                                <Label>Descripción</Label>
-                                                <Input
-                                                    value={service.service_description}
-                                                    onChange={(e) => updateService(index, 'service_description', e.target.value)}
-                                                    placeholder="Descripción del servicio"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>Costo Unitario</Label>
-                                                <Input
-                                                    type="number"
-                                                    step="0.01"
-                                                    value={service.unit_cost}
-                                                    onChange={(e) => updateService(index, 'unit_cost', parseFloat(e.target.value) || 0)}
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label>Cantidad</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    value={service.quantity}
-                                                    onChange={(e) => updateService(index, 'quantity', parseInt(e.target.value) || 1)}
-                                                    placeholder="1"
-                                                />
-                                            </div>
-                                            <div className="flex items-end">
+                            ) : (
+                                <div className="space-y-4">
+                                    {data.boxes.map((box, index) => (
+                                        <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Caja #{index + 1}</span>
                                                 <Button
                                                     type="button"
-                                                    variant="destructive"
+                                                    onClick={() => removeBox(index)}
                                                     size="sm"
-                                                    onClick={() => removeService(index)}
-                                                    className="w-full"
+                                                    variant="ghost"
+                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
-                                        </div>
-                                    </div>
-                                ))}
-                                {errors.services && <p className="mt-1 text-sm text-red-500">{errors.services}</p>}
-                            </CardContent>
-                        </Card>
 
-                        {/* Totales */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>Totales</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Subtotal de servicios:</span>
-                                        <span className="font-medium">
-                                            {new Intl.NumberFormat('es-AR', {
-                                                style: 'currency',
-                                                currency: 'ARS',
-                                            }).format(totals.servicesSubtotal)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">
-                                            Incremento por componentes (
-                                            {currentIncrement ? (currentIncrement.percentage * 100).toFixed(0) : 0}%):
-                                        </span>
-                                        <span className="font-medium">
-                                            {new Intl.NumberFormat('es-AR', {
-                                                style: 'currency',
-                                                currency: 'ARS',
-                                            }).format(totals.incrementAmount)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Caja:</span>
-                                        <span className="font-medium">
-                                            {new Intl.NumberFormat('es-AR', {
-                                                style: 'currency',
-                                                currency: 'ARS',
-                                            }).format(totals.boxCost)}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between border-t pt-2 text-lg font-bold">
-                                        <span>Total:</span>
-                                        <span>
-                                            {new Intl.NumberFormat('es-AR', {
-                                                style: 'currency',
-                                                currency: 'ARS',
-                                            }).format(totals.total)}
-                                        </span>
+                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_select`}>
+                                                        Seleccionar Caja <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Select
+                                                        value={box.box_id.toString()}
+                                                        onValueChange={(value) => updateBox(index, 'box_id', value)}
+                                                    >
+                                                        <SelectTrigger id={`box_${index}_select`}>
+                                                            <SelectValue placeholder="Elegir caja..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {boxes.map((b) => {
+                                                                // Deshabilitar cajas ya seleccionadas
+                                                                const isAlreadySelected = data.boxes.some(
+                                                                    (selectedBox, i) => i !== index && selectedBox.box_id === b.id.toString(),
+                                                                );
+
+                                                                return (
+                                                                    <SelectItem key={b.id} value={b.id.toString()} disabled={isAlreadySelected}>
+                                                                        {b.dimensions} - ${b.cost}
+                                                                        {isAlreadySelected && ' (Ya agregada)'}
+                                                                    </SelectItem>
+                                                                );
+                                                            })}
+                                                        </SelectContent>
+                                                    </Select>
+                                                    {errors[`boxes.${index}.box_id`] && (
+                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.box_id`]}</p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_dimensions`}>Dimensiones</Label>
+                                                    <Input
+                                                        id={`box_${index}_dimensions`}
+                                                        value={box.box_dimensions}
+                                                        readOnly
+                                                        className="bg-gray-100"
+                                                        placeholder="Auto"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_cost`}>Costo Unitario</Label>
+                                                    <Input
+                                                        id={`box_${index}_cost`}
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={box.box_unit_cost}
+                                                        onChange={(e) => updateBox(index, 'box_unit_cost', e.target.value)}
+                                                        placeholder="0.00"
+                                                    />
+                                                    {errors[`boxes.${index}.box_unit_cost`] && (
+                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.box_unit_cost`]}</p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_quantity`}>
+                                                        Cantidad <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Input
+                                                        id={`box_${index}_quantity`}
+                                                        type="number"
+                                                        min="1"
+                                                        value={box.quantity}
+                                                        onChange={(e) => updateBox(index, 'quantity', e.target.value)}
+                                                        placeholder="1"
+                                                    />
+                                                    {errors[`boxes.${index}.quantity`] && (
+                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.quantity`]}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {box.box_unit_cost && box.quantity && (
+                                                <div className="mt-2 text-right text-sm text-gray-600">
+                                                    Subtotal:{' '}
+                                                    <span className="font-medium text-gray-900">
+                                                        {formatCurrency(parseFloat(box.box_unit_cost) * parseInt(box.quantity || 0))}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {errors.boxes && <p className="text-sm text-red-600">{errors.boxes}</p>}
+
+                                    <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                        <span className="text-sm font-medium text-blue-900">Total Cajas:</span>
+                                        <span className="text-lg font-bold text-blue-600">{formatCurrency(totals.boxTotal)}</span>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                        {/* Notas */}
-                        <Card className="mb-6">
-                            <CardHeader>
-                                <CardTitle>Notas (Opcional)</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <Textarea
-                                    value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
-                                    placeholder="Notas adicionales sobre el presupuesto..."
-                                    rows={4}
-                                />
-                            </CardContent>
-                        </Card>
-                    </form>
-                </div>
+                    {/* Servicios */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Servicios</CardTitle>
+                            <Button type="button" onClick={addService} size="sm" variant="outline">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar Servicio
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {data.services.length === 0 ? (
+                                <div className="py-8 text-center text-gray-500">
+                                    <p>No hay servicios agregados.</p>
+                                    <p className="mt-1 text-sm">Haz clic en "Agregar Servicio" para añadir servicios al presupuesto.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {data.services.map((service, index) => (
+                                        <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Servicio #{index + 1}</span>
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => removeService(index)}
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                                                <div>
+                                                    <Label htmlFor={`service_${index}_type`}>Tipo</Label>
+                                                    <Input
+                                                        id={`service_${index}_type`}
+                                                        value={service.service_type}
+                                                        onChange={(e) => updateService(index, 'service_type', e.target.value)}
+                                                        placeholder="assembly"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`service_${index}_desc`}>Descripción</Label>
+                                                    <Input
+                                                        id={`service_${index}_desc`}
+                                                        value={service.service_description}
+                                                        onChange={(e) => updateService(index, 'service_description', e.target.value)}
+                                                        placeholder="Con armado"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`service_${index}_cost`}>Costo Unitario</Label>
+                                                    <Input
+                                                        id={`service_${index}_cost`}
+                                                        type="number"
+                                                        step="0.01"
+                                                        value={service.unit_cost}
+                                                        onChange={(e) => updateService(index, 'unit_cost', e.target.value)}
+                                                        placeholder="120.00"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`service_${index}_qty`}>Cantidad</Label>
+                                                    <Input
+                                                        id={`service_${index}_qty`}
+                                                        type="number"
+                                                        min="1"
+                                                        value={service.quantity}
+                                                        onChange={(e) => updateService(index, 'quantity', e.target.value)}
+                                                        placeholder="100"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {service.unit_cost && service.quantity && (
+                                                <div className="mt-2 text-right text-sm text-gray-600">
+                                                    Subtotal:{' '}
+                                                    <span className="font-medium text-gray-900">
+                                                        {formatCurrency(parseFloat(service.unit_cost) * parseInt(service.quantity || 0))}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {errors.services && <p className="text-sm text-red-600">{errors.services}</p>}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    {/* Totales */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Totales del Presupuesto</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between py-2">
+                                    <span className="text-sm text-gray-600">Subtotal servicios</span>
+                                    <span className="text-base font-medium">{formatCurrency(totals.servicesSubtotal)}</span>
+                                </div>
+                                {totals.incrementAmount > 0 && (
+                                    <div className="flex items-center justify-between border-t py-2">
+                                        <span className="text-sm text-gray-600">
+                                            Incremento por componentes ({currentIncrement ? (currentIncrement.percentage * 100).toFixed(0) : 0}
+                                            %)
+                                        </span>
+                                        <span className="text-base font-medium">{formatCurrency(totals.incrementAmount)}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between border-t py-2">
+                                    <span className="text-sm text-gray-600">Subtotal con incremento</span>
+                                    <span className="text-base font-medium">{formatCurrency(totals.subtotalWithIncrement)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t py-2">
+                                    <span className="text-sm text-gray-600">Total cajas</span>
+                                    <span className="text-base font-medium">{formatCurrency(totals.boxTotal)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
+                                    <span className="text-lg font-bold text-gray-900">TOTAL</span>
+                                    <span className="text-2xl font-bold text-blue-600">{formatCurrency(totals.total)}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                                    <span className="text-sm font-medium text-green-900">Precio unitario por kit</span>
+                                    <span className="text-lg font-bold text-green-600">{formatCurrency(totals.unitPricePerKit)}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Notas */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notas (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Textarea
+                                value={data.notes}
+                                onChange={(e) => setData('notes', e.target.value)}
+                                placeholder="Notas adicionales sobre el presupuesto..."
+                                rows={4}
+                            />
+                            {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes}</p>}
+                        </CardContent>
+                    </Card>
+
+                    {/* Botón de guardar al final */}
+                    <div className="flex justify-end gap-3">
+                        <Button type="button" variant="outline" onClick={() => router.visit(route('dashboard.picking.budgets.index'))}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={processing}>
+                            <Save className="mr-2 h-4 w-4" />
+                            {processing ? 'Guardando...' : 'Guardar Presupuesto'}
+                        </Button>
+                    </div>
+                </form>
             </div>
         </AppLayout>
     );

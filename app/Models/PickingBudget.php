@@ -20,8 +20,6 @@ class PickingBudget extends Model
         'client_phone',
         'total_kits',
         'total_components_per_kit',
-        'box_dimensions',
-        'box_cost',
         'scale_quantity_from',
         'scale_quantity_to',
         'production_time',
@@ -30,8 +28,9 @@ class PickingBudget extends Model
         'services_subtotal',
         'component_increment_amount',
         'subtotal_with_increment',
-        'box_total',
+        'box_total', // es la suma de todas las cajas
         'total',
+        'unit_price_per_kit',
         'status',
         'valid_until',
         'notes',
@@ -43,13 +42,13 @@ class PickingBudget extends Model
         'total_components_per_kit' => 'integer',
         'scale_quantity_from' => 'integer',
         'scale_quantity_to' => 'integer',
-        'box_cost' => 'decimal:2',
         'component_increment_percentage' => 'decimal:2',
         'services_subtotal' => 'decimal:2',
         'component_increment_amount' => 'decimal:2',
         'subtotal_with_increment' => 'decimal:2',
         'box_total' => 'decimal:2',
         'total' => 'decimal:2',
+        'unit_price_per_kit' => 'decimal:2',
         'status' => PickingBudgetStatus::class,
         'valid_until' => 'date',
     ];
@@ -68,6 +67,14 @@ class PickingBudget extends Model
     public function services(): HasMany
     {
         return $this->hasMany(PickingBudgetService::class);
+    }
+
+    /**
+     * Relación con las cajas del presupuesto
+     */
+    public function boxes(): HasMany
+    {
+        return $this->hasMany(PickingBudgetBox::class);
     }
 
     /**
@@ -100,7 +107,7 @@ class PickingBudget extends Model
      */
     public function isExpired(): bool
     {
-        return $this->valid_until < now() 
+        return $this->valid_until < now()
             && !in_array($this->status, [PickingBudgetStatus::APPROVED, PickingBudgetStatus::REJECTED]);
     }
 
@@ -121,13 +128,28 @@ class PickingBudget extends Model
 
     /**
      * Calcular totales del presupuesto
+     * soporte para múltiples cajas y unit_price_per_kit
      */
     public function calculateTotals(): void
     {
+        // Subtotal de servicios
         $this->services_subtotal = $this->services()->sum('subtotal');
+
+        // Incremento por componentes
         $this->component_increment_amount = $this->services_subtotal * $this->component_increment_percentage;
+
+        // Subtotal con incremento
         $this->subtotal_with_increment = $this->services_subtotal + $this->component_increment_amount;
-        $this->box_total = $this->box_cost;
+
+        // Total de cajas (suma de todas las cajas)
+        $this->box_total = $this->boxes()->sum('subtotal');
+
+        // Total general
         $this->total = $this->subtotal_with_increment + $this->box_total;
+
+        // Precio unitario por kit
+        $this->unit_price_per_kit = $this->total_kits > 0
+            ? round($this->total / $this->total_kits, 2)
+            : 0;
     }
 }

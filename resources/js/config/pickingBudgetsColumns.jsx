@@ -1,6 +1,5 @@
 // resources/js/config/pickingBudgetsColumns.jsx
 
-import { Badge } from '@/components/ui/badge';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -30,29 +29,17 @@ const PickingBudgetStatusBadge = ({ status, label }) => {
 const ActionsDropdown = ({ row, actions, isDeleting }) => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
-            <button className="h-8 w-8 p-0 hover:bg-gray-100 rounded-md transition-colors">
+            <button className="h-8 w-8 rounded-md p-0 transition-colors hover:bg-gray-100">
                 <span className="sr-only">Abrir menú</span>
-                <MoreHorizontal className="h-4 w-4 mx-auto" />
+                <MoreHorizontal className="mx-auto h-4 w-4" />
             </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {actions.view && (
-                <DropdownMenuItem onClick={() => actions.view(row.id)}>
-                    Ver detalles
-                </DropdownMenuItem>
-            )}
-            {actions.edit && row.status === 'draft' && (
-                <DropdownMenuItem onClick={() => actions.edit(row.id)}>
-                    Editar
-                </DropdownMenuItem>
-            )}
-            {actions.duplicate && (
-                <DropdownMenuItem onClick={() => actions.duplicate(row.id)}>
-                    Duplicar
-                </DropdownMenuItem>
-            )}
+            {actions.view && <DropdownMenuItem onClick={() => actions.view(row.id)}>Ver detalles</DropdownMenuItem>}
+            {actions.edit && row.status === 'draft' && <DropdownMenuItem onClick={() => actions.edit(row.id)}>Editar</DropdownMenuItem>}
+            {actions.duplicate && <DropdownMenuItem onClick={() => actions.duplicate(row.id)}>Duplicar</DropdownMenuItem>}
             <DropdownMenuSeparator />
             {actions.delete && row.status === 'draft' && (
                 <DropdownMenuItem
@@ -72,9 +59,7 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
         key: 'budget_number',
         label: 'Nº Presupuesto',
         sortable: true,
-        render: (value) => (
-            <span className="font-medium text-blue-600">{value}</span>
-        ),
+        render: (value) => <span className="font-medium text-blue-600">{value}</span>,
     },
     {
         key: 'client_name',
@@ -93,9 +78,19 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
         label: 'Kits',
         sortable: true,
         hideOnMobile: true,
-        render: (value) => (
-            <div className="text-center">{value.toLocaleString('es-AR')}</div>
-        ),
+        render: (value) => <div className="text-center">{value.toLocaleString('es-AR')}</div>,
+    },
+    {
+        key: 'unit_price_per_kit',
+        label: 'Precio/Kit',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value) => {
+            return new Intl.NumberFormat('es-AR', {
+                style: 'currency',
+                currency: 'ARS',
+            }).format(value);
+        },
     },
     {
         key: 'total',
@@ -140,7 +135,7 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
                 rejected: 'Rechazado',
                 expired: 'Vencido',
             };
-            
+
             return (
                 <div className="text-center">
                     <PickingBudgetStatusBadge status={value} label={labels[value] || value} />

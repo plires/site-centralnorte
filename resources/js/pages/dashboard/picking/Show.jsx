@@ -1,9 +1,5 @@
 // resources/js/pages/dashboard/picking/Show.jsx
-
 import ButtonCustom from '@/components/ButtonCustom';
-import PageHeader from '@/components/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,109 +10,65 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, usePage } from '@inertiajs/react';
-import { 
-    FileText, 
-    Mail, 
-    Download, 
-    Copy, 
-    Edit, 
-    Trash2,
-    Package,
-    User,
-    Calendar,
-    DollarSign,
-    Clock,
-    Box
-} from 'lucide-react';
+import { Head, router } from '@inertiajs/react';
+import { Box, Calendar, Copy, DollarSign, Download, Edit, Mail, Package, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-const breadcrumbs = [
-    {
-        title: 'Presupuestos de Picking',
-        href: '/dashboard/picking',
-    },
-    {
-        title: 'Detalles del Presupuesto',
-        href: '#',
-    },
-];
-
-// Badge de estado
-const StatusBadge = ({ status }) => {
-    const variants = {
-        draft: { label: 'Borrador', class: 'bg-gray-100 text-gray-800' },
-        sent: { label: 'Enviado', class: 'bg-blue-100 text-blue-800' },
-        approved: { label: 'Aprobado', class: 'bg-green-100 text-green-800' },
-        rejected: { label: 'Rechazado', class: 'bg-red-100 text-red-800' },
-        expired: { label: 'Vencido', class: 'bg-orange-100 text-orange-800' },
-    };
-
-    const variant = variants[status] || variants.draft;
-
-    return (
-        <span className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${variant.class}`}>
-            {variant.label}
-        </span>
-    );
-};
-
 export default function Show({ auth, budget }) {
-    const { props } = usePage();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showSendDialog, setShowSendDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
+    // Mostrar toast si hay mensaje flash
     useEffect(() => {
-        if (props.flash?.success) {
-            toast.success(props.flash.success);
+        if (window.history.state?.flash?.success) {
+            toast.success(window.history.state.flash.success);
         }
-        if (props.flash?.error) {
-            toast.error(props.flash.error);
+        if (window.history.state?.flash?.error) {
+            toast.error(window.history.state.flash.error);
         }
-    }, [props.flash]);
+    }, []);
 
     const handleDelete = () => {
         setIsDeleting(true);
         router.delete(route('dashboard.picking.budgets.destroy', budget.id), {
             onSuccess: () => {
                 toast.success('Presupuesto eliminado correctamente');
-                router.visit(route('dashboard.picking.budgets.index'));
             },
             onError: () => {
                 toast.error('Error al eliminar el presupuesto');
                 setIsDeleting(false);
             },
-            onFinish: () => {
-                setShowDeleteDialog(false);
-                setIsDeleting(false);
-            },
         });
     };
 
-    const handleSend = () => {
-        if (!budget.client_email) {
-            toast.error('El presupuesto no tiene un email de cliente asociado');
-            setShowSendDialog(false);
-            return;
-        }
-
+    const handleSendEmail = () => {
         setIsSending(true);
-        router.post(route('dashboard.picking.budgets.send', budget.id), {}, {
-            onSuccess: () => {
-                toast.success('Presupuesto enviado correctamente');
+        router.post(
+            route('dashboard.picking.budgets.send', budget.id),
+            {},
+            {
+                onSuccess: () => {
+                    toast.success('Presupuesto enviado por email correctamente');
+                    setShowSendDialog(false);
+                    setIsSending(false);
+                },
+                onError: () => {
+                    toast.error('Error al enviar el presupuesto');
+                    setIsSending(false);
+                },
             },
-            onError: () => {
-                toast.error('Error al enviar el presupuesto');
-            },
-            onFinish: () => {
-                setShowSendDialog(false);
-                setIsSending(false);
-            },
-        });
+        );
+    };
+
+    const handleDownloadPdf = () => {
+        window.open(route('dashboard.picking.budgets.pdf', budget.id), '_blank');
     };
 
     const handleDownload = () => {
@@ -127,11 +79,59 @@ export default function Show({ auth, budget }) {
         router.post(route('dashboard.picking.budgets.duplicate', budget.id));
     };
 
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+        }).format(value);
+    };
+
+    const formatDate = (date) => {
+        return new Date(date).toLocaleDateString('es-AR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            timeZone: 'America/Argentina/Buenos_Aires',
+        });
+    };
+
+    const StatusBadge = ({ status }) => {
+        const variants = {
+            draft: 'bg-gray-100 text-gray-800',
+            sent: 'bg-blue-100 text-blue-800',
+            approved: 'bg-green-100 text-green-800',
+            rejected: 'bg-red-100 text-red-800',
+            expired: 'bg-orange-100 text-orange-800',
+        };
+
+        const labels = {
+            draft: 'Borrador',
+            sent: 'Enviado',
+            approved: 'Aprobado',
+            rejected: 'Rechazado',
+            expired: 'Vencido',
+        };
+
+        return <Badge className={variants[status] || variants.draft}>{labels[status] || status}</Badge>;
+    };
+
+    const breadcrumbs = [
+        {
+            title: 'Presupuestos de Picking',
+            href: '/dashboard/picking',
+        },
+        {
+            title: 'Detalles del Presupuesto',
+            href: '#',
+        },
+    ];
+
     const canEdit = budget.status === 'draft';
     const canDelete = budget.status === 'draft';
+    const canSendEmail = budget.client_email;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>
+        <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
             <Head title={`Presupuesto ${budget.budget_number}`} />
 
             <div className="py-12">
@@ -139,12 +139,8 @@ export default function Show({ auth, budget }) {
                     {/* Header con acciones */}
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">
-                                Presupuesto {budget.budget_number}
-                            </h2>
-                            <p className="mt-1 text-sm text-gray-600">
-                                Detalles del presupuesto de picking / armado de kits
-                            </p>
+                            <h2 className="text-2xl font-bold text-gray-900">Presupuesto {budget.budget_number}</h2>
+                            <p className="mt-1 text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
                         </div>
                         <StatusBadge status={budget.status} />
                     </div>
@@ -161,7 +157,7 @@ export default function Show({ auth, budget }) {
                                 Editar
                             </ButtonCustom>
                         )}
-                        
+
                         <Button variant="outline" size="sm" onClick={handleDownload}>
                             <Download className="mr-2 h-4 w-4" />
                             Descargar PDF
@@ -180,282 +176,284 @@ export default function Show({ auth, budget }) {
                         </Button>
 
                         {canDelete && (
-                            <Button 
-                                variant="destructive" 
-                                size="sm" 
-                                onClick={() => setShowDeleteDialog(true)}
-                            >
+                            <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
                                 Eliminar
                             </Button>
                         )}
                     </div>
 
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        {/* Información del cliente */}
+                    {/* Grid de información */}
+                    <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                        {/* Información del Cliente */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center text-lg">
-                                    <User className="mr-2 h-5 w-5 text-gray-500" />
+                                <CardTitle className="flex items-center gap-2">
+                                    <User className="h-5 w-5" />
                                     Información del Cliente
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Nombre</p>
-                                    <p className="text-gray-900">{budget.client_name}</p>
+                                    <p className="text-base text-gray-900">{budget.client_name}</p>
                                 </div>
                                 {budget.client_email && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Email</p>
-                                        <p className="text-gray-900">{budget.client_email}</p>
+                                        <p className="text-base text-gray-900">{budget.client_email}</p>
                                     </div>
                                 )}
                                 {budget.client_phone && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Teléfono</p>
-                                        <p className="text-gray-900">{budget.client_phone}</p>
+                                        <p className="text-base text-gray-900">{budget.client_phone}</p>
                                     </div>
                                 )}
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Vendedor</p>
-                                    <p className="text-gray-900">{budget.vendor.name}</p>
+                                    <p className="text-base text-gray-900">{budget.vendor.name}</p>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Información del presupuesto */}
+                        {/* Información del Presupuesto */}
                         <Card>
                             <CardHeader>
-                                <CardTitle className="flex items-center text-lg">
-                                    <FileText className="mr-2 h-5 w-5 text-gray-500" />
+                                <CardTitle className="flex items-center gap-2">
+                                    <Calendar className="h-5 w-5" />
                                     Información del Presupuesto
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Fecha de creación</p>
-                                    <p className="text-gray-900">
-                                        {new Date(budget.created_at).toLocaleDateString('es-AR')}
-                                    </p>
+                                    <p className="text-base text-gray-900">{formatDate(budget.created_at)}</p>
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Válido hasta</p>
-                                    <p className="text-gray-900">
-                                        {new Date(budget.valid_until).toLocaleDateString('es-AR')}
-                                    </p>
+                                    <p className="text-base text-gray-900">{formatDate(budget.valid_until)}</p>
                                 </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Tiempo de producción</p>
-                                    <p className="text-gray-900">{budget.production_time}</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Cantidades */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center text-lg">
-                                    <Package className="mr-2 h-5 w-5 text-gray-500" />
-                                    Cantidades
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Total de kits</p>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {budget.total_kits.toLocaleString('es-AR')}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Componentes por kit</p>
-                                    <p className="text-2xl font-bold text-gray-900">
-                                        {budget.total_components_per_kit}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Incremento por componentes</p>
-                                    <p className="text-gray-900">
-                                        {budget.component_increment_description} - {' '}
-                                        {(budget.component_increment_percentage * 100).toFixed(0)}%
-                                    </p>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Caja seleccionada */}
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center text-lg">
-                                    <Box className="mr-2 h-5 w-5 text-gray-500" />
-                                    Caja Seleccionada
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Dimensiones</p>
-                                    <p className="text-gray-900">{budget.box_dimensions}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Costo unitario</p>
-                                    <p className="text-xl font-bold text-gray-900">
-                                        {new Intl.NumberFormat('es-AR', {
-                                            style: 'currency',
-                                            currency: 'ARS',
-                                        }).format(budget.box_cost)}
-                                    </p>
-                                </div>
+                                {budget.production_time && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Tiempo de producción</p>
+                                        <p className="text-base text-gray-900">{budget.production_time}</p>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Servicios */}
-                    <Card className="mt-6">
+                    {/* Cantidades */}
+                    <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle>Servicios Incluidos</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <Package className="h-5 w-5" />
+                                Cantidades
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="border-b bg-gray-50 text-xs uppercase text-gray-700">
-                                        <tr>
-                                            <th className="px-4 py-3">Servicio</th>
-                                            <th className="px-4 py-3 text-right">Cant.</th>
-                                            <th className="px-4 py-3 text-right">Costo Unit.</th>
-                                            <th className="px-4 py-3 text-right">Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {budget.services.map((service, index) => (
-                                            <tr key={index} className="border-b hover:bg-gray-50">
-                                                <td className="px-4 py-3">{service.service_description}</td>
-                                                <td className="px-4 py-3 text-right">{service.quantity}</td>
-                                                <td className="px-4 py-3 text-right">
-                                                    {new Intl.NumberFormat('es-AR', {
-                                                        style: 'currency',
-                                                        currency: 'ARS',
-                                                    }).format(service.unit_cost)}
-                                                </td>
-                                                <td className="px-4 py-3 text-right font-medium">
-                                                    {new Intl.NumberFormat('es-AR', {
-                                                        style: 'currency',
-                                                        currency: 'ARS',
-                                                    }).format(service.subtotal)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div className="rounded-lg bg-blue-50 p-4">
+                                    <p className="text-sm font-medium text-blue-900">Total de Kits</p>
+                                    <p className="mt-1 text-2xl font-bold text-blue-600">{budget.total_kits.toLocaleString('es-AR')}</p>
+                                </div>
+                                <div className="rounded-lg bg-purple-50 p-4">
+                                    <p className="text-sm font-medium text-purple-900">Componentes por Kit</p>
+                                    <p className="mt-1 text-2xl font-bold text-purple-600">{budget.total_components_per_kit}</p>
+                                </div>
+                                <div className="rounded-lg bg-green-50 p-4">
+                                    <p className="text-sm font-medium text-green-900">Precio Unitario por Kit</p>
+                                    <p className="mt-1 text-2xl font-bold text-green-600">{formatCurrency(budget.unit_price_per_kit)}</p>
+                                </div>
                             </div>
+                            {budget.component_increment_description && (
+                                <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                    <p className="text-sm text-amber-900">
+                                        <span className="font-medium">Incremento por componentes:</span> {budget.component_increment_description} (
+                                        {(budget.component_increment_percentage * 100).toFixed(0)}%)
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
+                    {/* Cajas Seleccionadas */}
+                    {budget.boxes && budget.boxes.length > 0 && (
+                        <Card className="mb-6">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Box className="h-5 w-5" />
+                                    Cajas Seleccionadas
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Dimensiones</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Cantidad</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Costo Unitario</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {budget.boxes.map((box, index) => (
+                                                <tr key={index} className="border-b last:border-0">
+                                                    <td className="px-3 py-3 text-sm text-gray-900">{box.box_dimensions}</td>
+                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
+                                                        {box.quantity.toLocaleString('es-AR')}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
+                                                        {formatCurrency(box.box_unit_cost)}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right text-sm font-medium text-gray-900">
+                                                        {formatCurrency(box.subtotal)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            <tr className="bg-gray-50">
+                                                <td colSpan="3" className="px-3 py-3 text-right text-sm font-medium text-gray-700">
+                                                    Total Cajas:
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-sm font-bold text-gray-900">
+                                                    {formatCurrency(budget.box_total)}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Servicios Incluidos */}
+                    {budget.services && budget.services.length > 0 && (
+                        <Card className="mb-6">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <DollarSign className="h-5 w-5" />
+                                    Servicios Incluidos
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b">
+                                                <th className="px-3 py-2 text-left text-sm font-medium text-gray-700">Servicio</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Cantidad</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Costo Unitario</th>
+                                                <th className="px-3 py-2 text-right text-sm font-medium text-gray-700">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {budget.services.map((service, index) => (
+                                                <tr key={index} className="border-b last:border-0">
+                                                    <td className="px-3 py-3 text-sm text-gray-900">{service.service_description}</td>
+                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
+                                                        {service.quantity.toLocaleString('es-AR')}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
+                                                        {formatCurrency(service.unit_cost)}
+                                                    </td>
+                                                    <td className="px-3 py-3 text-right text-sm font-medium text-gray-900">
+                                                        {formatCurrency(service.subtotal)}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
                     {/* Totales */}
-                    <Card className="mt-6">
+                    <Card className="mb-6">
                         <CardHeader>
-                            <CardTitle className="flex items-center text-lg">
-                                <DollarSign className="mr-2 h-5 w-5 text-gray-500" />
-                                Totales
-                            </CardTitle>
+                            <CardTitle>Totales del Presupuesto</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            <div className="flex justify-between">
-                                <p className="text-gray-600">Subtotal de servicios:</p>
-                                <p className="font-medium">
-                                    {new Intl.NumberFormat('es-AR', {
-                                        style: 'currency',
-                                        currency: 'ARS',
-                                    }).format(budget.services_subtotal)}
-                                </p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-gray-600">
-                                    Incremento por componentes ({(budget.component_increment_percentage * 100).toFixed(0)}%):
-                                </p>
-                                <p className="font-medium">
-                                    {new Intl.NumberFormat('es-AR', {
-                                        style: 'currency',
-                                        currency: 'ARS',
-                                    }).format(budget.component_increment_amount)}
-                                </p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-gray-600">Subtotal con incremento:</p>
-                                <p className="font-medium">
-                                    {new Intl.NumberFormat('es-AR', {
-                                        style: 'currency',
-                                        currency: 'ARS',
-                                    }).format(budget.subtotal_with_increment)}
-                                </p>
-                            </div>
-                            <div className="flex justify-between">
-                                <p className="text-gray-600">Caja:</p>
-                                <p className="font-medium">
-                                    {new Intl.NumberFormat('es-AR', {
-                                        style: 'currency',
-                                        currency: 'ARS',
-                                    }).format(budget.box_total)}
-                                </p>
-                            </div>
-                            <div className="flex justify-between border-t pt-3">
-                                <p className="text-xl font-bold text-gray-900">Total:</p>
-                                <p className="text-xl font-bold text-gray-900">
-                                    {new Intl.NumberFormat('es-AR', {
-                                        style: 'currency',
-                                        currency: 'ARS',
-                                    }).format(budget.total)}
-                                </p>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between py-2">
+                                    <span className="text-sm text-gray-600">Subtotal servicios</span>
+                                    <span className="text-base font-medium">{formatCurrency(budget.services_subtotal)}</span>
+                                </div>
+                                {budget.component_increment_amount > 0 && (
+                                    <div className="flex items-center justify-between border-t py-2">
+                                        <span className="text-sm text-gray-600">
+                                            Incremento por componentes ({(budget.component_increment_percentage * 100).toFixed(0)}%)
+                                        </span>
+                                        <span className="text-base font-medium">{formatCurrency(budget.component_increment_amount)}</span>
+                                    </div>
+                                )}
+                                <div className="flex items-center justify-between border-t py-2">
+                                    <span className="text-sm text-gray-600">Subtotal con incremento</span>
+                                    <span className="text-base font-medium">{formatCurrency(budget.subtotal_with_increment)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t py-2">
+                                    <span className="text-sm text-gray-600">Total cajas</span>
+                                    <span className="text-base font-medium">{formatCurrency(budget.box_total)}</span>
+                                </div>
+                                <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
+                                    <span className="text-lg font-bold text-gray-900">TOTAL</span>
+                                    <span className="text-2xl font-bold text-blue-600">{formatCurrency(budget.total)}</span>
+                                </div>
+                                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                                    <span className="text-sm font-medium text-green-900">Precio unitario por kit</span>
+                                    <span className="text-lg font-bold text-green-600">{formatCurrency(budget.unit_price_per_kit)}</span>
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
 
                     {/* Notas */}
                     {budget.notes && (
-                        <Card className="mt-6">
+                        <Card>
                             <CardHeader>
                                 <CardTitle>Notas</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="whitespace-pre-wrap text-gray-700">{budget.notes}</p>
+                                <p className="text-sm whitespace-pre-wrap text-gray-700">{budget.notes}</p>
                             </CardContent>
                         </Card>
                     )}
                 </div>
             </div>
 
-            {/* Dialog de confirmación de envío */}
-            <AlertDialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+            {/* Dialog de confirmación de eliminación */}
+            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Enviar presupuesto por email</AlertDialogTitle>
+                        <AlertDialogTitle>¿Eliminar presupuesto?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Se enviará el presupuesto a <strong>{budget.client_email}</strong> con un PDF adjunto.
-                            ¿Deseas continuar?
+                            Esta acción eliminará el presupuesto {budget.budget_number} de forma permanente. Esta acción no se puede deshacer.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isSending}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSend} disabled={isSending}>
-                            {isSending ? 'Enviando...' : 'Enviar'}
+                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700" disabled={isDeleting}>
+                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Dialog de confirmación de eliminación */}
-            <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            {/* Dialog de confirmación de envío de email */}
+            <AlertDialog open={showSendDialog} onOpenChange={setShowSendDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                        <AlertDialogTitle>¿Enviar presupuesto por email?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción no se puede deshacer. El presupuesto {budget.budget_number} será eliminado
-                            permanentemente del sistema.
+                            Se enviará el presupuesto {budget.budget_number} a {budget.client_email}. El presupuesto se marcará como enviado.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-red-600">
-                            {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                        <AlertDialogCancel disabled={isSending}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleSendEmail} disabled={isSending}>
+                            {isSending ? 'Enviando...' : 'Enviar'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

@@ -2,23 +2,26 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use App\Http\Controllers\Controller;
-use App\Models\PickingBudget;
-use App\Models\PickingBudgetService;
-use App\Models\PickingBox;
-use App\Models\PickingCostScale;
-use App\Models\PickingComponentIncrement;
 use App\Models\User;
-use App\Http\Requests\Picking\StorePickingBudgetRequest;
-use App\Http\Requests\Picking\UpdatePickingBudgetRequest;
-use App\Mail\PickingBudgetSent;
-use App\Enums\PickingBudgetStatus;
+use Inertia\Inertia;
+use App\Models\Client;
+use App\Models\PickingBox;
 use Illuminate\Http\Request;
+use App\Models\PickingBudget;
+use App\Mail\PickingBudgetSent;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\PickingBudgetBox;
+use App\Models\PickingCostScale;
+use App\Enums\PickingBudgetStatus;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use App\Models\PickingBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\PickingComponentIncrement;
+use App\Http\Requests\Picking\StorePickingBudgetRequest;
+use App\Http\Requests\Picking\UpdatePickingBudgetRequest;
+
 
 class PickingBudgetController extends Controller
 {
@@ -27,7 +30,6 @@ class PickingBudgetController extends Controller
      */
     public function index(Request $request)
     {
-
         $user = Auth::user();
 
         $query = PickingBudget::with('vendor:id,name')
@@ -39,6 +41,7 @@ class PickingBudgetController extends Controller
                 'total_kits',
                 'total_components_per_kit',
                 'total',
+                'unit_price_per_kit',
                 'status',
                 'valid_until',
                 'created_at'
@@ -93,7 +96,19 @@ class PickingBudgetController extends Controller
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
+        $clients = Client::orderBy('name')
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'value' => $client->id,
+                    'label' => $client->company
+                        ? "{$client->name} ({$client->company})"
+                        : $client->name,
+                ];
+            });
+
         return Inertia::render('dashboard/picking/Create', [
+            'clients' => $clients,
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
@@ -109,9 +124,6 @@ class PickingBudgetController extends Controller
 
         try {
             $validated = $request->validated();
-
-            // Obtener la caja seleccionada
-            $box = PickingBox::findOrFail($validated['box_id']);
 
             // Obtener la escala de costos según cantidad de kits
             $scale = PickingCostScale::findForQuantity($validated['total_kits']);
@@ -134,9 +146,6 @@ class PickingBudgetController extends Controller
                 'client_phone' => $validated['client_phone'] ?? null,
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
-                // Snapshot de la caja
-                'box_dimensions' => $box->dimensions,
-                'box_cost' => $box->cost,
                 // Snapshot de la escala
                 'scale_quantity_from' => $scale->quantity_from,
                 'scale_quantity_to' => $scale->quantity_to,
@@ -144,16 +153,30 @@ class PickingBudgetController extends Controller
                 // Snapshot del incremento
                 'component_increment_description' => $increment->description,
                 'component_increment_percentage' => $increment->percentage,
-                // Totales (se calcularán después de agregar servicios)
+                // Totales (se calcularán después)
                 'services_subtotal' => 0,
                 'component_increment_amount' => 0,
                 'subtotal_with_increment' => 0,
-                'box_total' => $box->cost,
+                'box_total' => 0,
                 'total' => 0,
+                'unit_price_per_kit' => 0,
                 'status' => PickingBudgetStatus::DRAFT,
                 'valid_until' => now()->addDays(30),
                 'notes' => $validated['notes'] ?? null,
             ]);
+
+            // Crear las cajas seleccionadas (soporte múltiples cajas)
+            if (!empty($validated['boxes'])) {
+                foreach ($validated['boxes'] as $boxData) {
+                    PickingBudgetBox::create([
+                        'picking_budget_id' => $budget->id,
+                        'box_dimensions' => $boxData['box_dimensions'],
+                        'box_unit_cost' => $boxData['box_unit_cost'],
+                        'quantity' => $boxData['quantity'],
+                        'subtotal' => $boxData['box_unit_cost'] * $boxData['quantity'],
+                    ]);
+                }
+            }
 
             // Crear los servicios seleccionados
             if (!empty($validated['services'])) {
@@ -169,14 +192,14 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Calcular y actualizar totales
+            // Calcular y actualizar totales (incluye unit_price_per_kit)
             $budget->calculateTotals();
             $budget->save();
 
             DB::commit();
 
             return redirect()
-                ->route('picking.budgets.show', $budget)
+                ->route('dashboard.picking.budgets.show', $budget)
                 ->with('success', 'Presupuesto de picking creado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -196,7 +219,7 @@ class PickingBudgetController extends Controller
             abort(403, 'No tienes permiso para ver este presupuesto.');
         }
 
-        $pickingBudget->load(['vendor:id,name,email', 'services']);
+        $pickingBudget->load(['vendor:id,name,email', 'services', 'boxes']); // Agregar 'boxes'
 
         return Inertia::render('dashboard/picking/Show', [
             'budget' => $pickingBudget,
@@ -239,7 +262,6 @@ class PickingBudgetController extends Controller
      */
     public function update(UpdatePickingBudgetRequest $request, PickingBudget $pickingBudget)
     {
-
         $user = Auth::user();
 
         // Verificar permiso
@@ -256,9 +278,6 @@ class PickingBudgetController extends Controller
 
         try {
             $validated = $request->validated();
-
-            // Obtener la caja seleccionada
-            $box = PickingBox::findOrFail($validated['box_id']);
 
             // Obtener la escala de costos según cantidad de kits
             $scale = PickingCostScale::findForQuantity($validated['total_kits']);
@@ -279,9 +298,6 @@ class PickingBudgetController extends Controller
                 'client_phone' => $validated['client_phone'] ?? null,
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
-                // Actualizar snapshot de la caja
-                'box_dimensions' => $box->dimensions,
-                'box_cost' => $box->cost,
                 // Actualizar snapshot de la escala
                 'scale_quantity_from' => $scale->quantity_from,
                 'scale_quantity_to' => $scale->quantity_to,
@@ -289,9 +305,23 @@ class PickingBudgetController extends Controller
                 // Actualizar snapshot del incremento
                 'component_increment_description' => $increment->description,
                 'component_increment_percentage' => $increment->percentage,
-                'box_total' => $box->cost,
                 'notes' => $validated['notes'] ?? null,
             ]);
+
+            // Eliminar cajas anteriores y crear las nuevas
+            $pickingBudget->boxes()->delete();
+
+            if (!empty($validated['boxes'])) {
+                foreach ($validated['boxes'] as $boxData) {
+                    PickingBudgetBox::create([
+                        'picking_budget_id' => $pickingBudget->id,
+                        'box_dimensions' => $boxData['box_dimensions'],
+                        'box_unit_cost' => $boxData['box_unit_cost'],
+                        'quantity' => $boxData['quantity'],
+                        'subtotal' => $boxData['box_unit_cost'] * $boxData['quantity'],
+                    ]);
+                }
+            }
 
             // Eliminar servicios anteriores y crear los nuevos
             $pickingBudget->services()->delete();
@@ -309,14 +339,14 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Recalcular totales
+            // Recalcular totales (incluye unit_price_per_kit)
             $pickingBudget->calculateTotals();
             $pickingBudget->save();
 
             DB::commit();
 
             return redirect()
-                ->route('picking.budgets.show', $pickingBudget)
+                ->route('dashboard.picking.budgets.show', $pickingBudget)
                 ->with('success', 'Presupuesto actualizado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();

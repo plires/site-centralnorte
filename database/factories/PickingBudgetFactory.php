@@ -21,15 +21,19 @@ class PickingBudgetFactory extends Factory
      */
     public function definition(): array
     {
-        $totalKits = fake()->numberBetween(25, 1000);
-        $componentsPerKit = fake()->numberBetween(1, 20);
-        
+        $totalKits = fake()->numberBetween(50, 500);
+        $componentsPerKit = fake()->numberBetween(3, 15);
+
         $servicesSubtotal = fake()->randomFloat(2, 500, 5000);
         $componentIncrementPercentage = fake()->randomElement([0.00, 0.10, 0.20, 0.30, 0.40]);
         $componentIncrementAmount = $servicesSubtotal * $componentIncrementPercentage;
         $subtotalWithIncrement = $servicesSubtotal + $componentIncrementAmount;
         $boxTotal = fake()->randomFloat(2, 50, 350);
-        
+        $total = $subtotalWithIncrement + $boxTotal;
+
+        // Calcular precio unitario por kit
+        $unitPricePerKit = $totalKits > 0 ? round($total / $totalKits, 2) : 0;
+
         return [
             'budget_number' => PickingBudget::generateBudgetNumber(),
             'vendor_id' => User::factory(),
@@ -38,13 +42,6 @@ class PickingBudgetFactory extends Factory
             'client_phone' => fake()->phoneNumber(),
             'total_kits' => $totalKits,
             'total_components_per_kit' => $componentsPerKit,
-            'box_dimensions' => fake()->randomElement([
-                '200 x 200 x 100',
-                '300 x 300 x 200',
-                '400 x 400 x 300',
-                '500 x 400 x 400',
-            ]),
-            'box_cost' => $boxTotal,
             'scale_quantity_from' => 100,
             'scale_quantity_to' => 500,
             'production_time' => fake()->randomElement(['24 hs', '48 hs', '3 dias', '5 dias']),
@@ -60,7 +57,8 @@ class PickingBudgetFactory extends Factory
             'component_increment_amount' => $componentIncrementAmount,
             'subtotal_with_increment' => $subtotalWithIncrement,
             'box_total' => $boxTotal,
-            'total' => $subtotalWithIncrement + $boxTotal,
+            'total' => $total,
+            'unit_price_per_kit' => $unitPricePerKit,
             'status' => fake()->randomElement(PickingBudgetStatus::cases()),
             'valid_until' => fake()->dateTimeBetween('now', '+60 days'),
             'notes' => fake()->optional(0.3)->sentence(),
@@ -72,7 +70,7 @@ class PickingBudgetFactory extends Factory
      */
     public function draft(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => PickingBudgetStatus::DRAFT,
         ]);
     }
@@ -82,7 +80,7 @@ class PickingBudgetFactory extends Factory
      */
     public function sent(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => PickingBudgetStatus::SENT,
         ]);
     }
@@ -92,7 +90,7 @@ class PickingBudgetFactory extends Factory
      */
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => PickingBudgetStatus::APPROVED,
         ]);
     }
@@ -102,7 +100,7 @@ class PickingBudgetFactory extends Factory
      */
     public function expired(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => PickingBudgetStatus::EXPIRED,
             'valid_until' => fake()->dateTimeBetween('-30 days', '-1 day'),
         ]);
@@ -113,7 +111,7 @@ class PickingBudgetFactory extends Factory
      */
     public function forVendor(User $vendor): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'vendor_id' => $vendor->id,
         ]);
     }
