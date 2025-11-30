@@ -196,20 +196,21 @@ export default function Show({ auth, budget }) {
                             <CardContent className="space-y-3">
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Nombre</p>
-                                    <p className="text-base text-gray-900">{budget.client_name}</p>
+                                    <p className="text-base text-gray-900">{budget.client.name}</p>
                                 </div>
-                                {budget.client_email && (
+                                {budget.client.company && (
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-500">Empresa</p>
+                                        <p className="text-base text-gray-900">{budget.client.company}</p>
+                                    </div>
+                                )}
+                                {budget.client.email && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Email</p>
-                                        <p className="text-base text-gray-900">{budget.client_email}</p>
+                                        <p className="text-base text-gray-900">{budget.client.email}</p>
                                     </div>
                                 )}
-                                {budget.client_phone && (
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Teléfono</p>
-                                        <p className="text-base text-gray-900">{budget.client_phone}</p>
-                                    </div>
-                                )}
+
                                 <div>
                                     <p className="text-sm font-medium text-gray-500">Vendedor</p>
                                     <p className="text-base text-gray-900">{budget.vendor.name}</p>

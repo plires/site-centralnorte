@@ -2,8 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\PickingBudget;
 use App\Models\User;
+use App\Models\Client;
+use App\Models\PickingBudget;
 use App\Enums\PickingBudgetStatus;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -37,9 +38,7 @@ class PickingBudgetFactory extends Factory
         return [
             'budget_number' => PickingBudget::generateBudgetNumber(),
             'vendor_id' => User::factory(),
-            'client_name' => fake()->company(),
-            'client_email' => fake()->companyEmail(),
-            'client_phone' => fake()->phoneNumber(),
+            'client_id' => Client::factory(),
             'total_kits' => $totalKits,
             'total_components_per_kit' => $componentsPerKit,
             'scale_quantity_from' => 100,

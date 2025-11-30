@@ -18,10 +18,9 @@ return new class extends Migration
             $table->string('budget_number')->unique(); // PK-2025-0001
             $table->foreignId('vendor_id')->constrained('users')->onDelete('restrict');
 
+
             // Datos del cliente
-            $table->string('client_name');
-            $table->string('client_email')->nullable();
-            $table->string('client_phone')->nullable();
+            $table->foreignId('client_id')->constrained('clients')->onDelete('restrict');
 
             // CANTIDADES BASE
             $table->integer('total_kits'); // Cantidad de kits a armar
@@ -58,6 +57,7 @@ return new class extends Migration
             // Índices
             $table->index('budget_number');
             $table->index('vendor_id');
+            $table->index('client_id');
             $table->index('status');
             $table->index('created_at');
         });

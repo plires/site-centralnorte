@@ -37,7 +37,6 @@ class PickingBudgetController extends Controller
                 'id',
                 'budget_number',
                 'vendor_id',
-                'client_name',
                 'total_kits',
                 'total_components_per_kit',
                 'total',
@@ -46,6 +45,8 @@ class PickingBudgetController extends Controller
                 'valid_until',
                 'created_at'
             ]);
+
+        $query = PickingBudget::with(['vendor:id,name', 'client:id,name,company']);
 
         // Filtro por vendedor (si no es admin, solo ve sus presupuestos)
         if (!$user->role->name === 'admin') {
@@ -71,7 +72,9 @@ class PickingBudgetController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('client_name', 'like', "%{$search}%")
+                $q->whereHas('client', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%");
+                })
                     ->orWhere('budget_number', 'like', "%{$search}%");
             });
         }
@@ -141,9 +144,7 @@ class PickingBudgetController extends Controller
             $budget = PickingBudget::create([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
                 'vendor_id' => Auth::id(),
-                'client_name' => $validated['client_name'],
-                'client_email' => $validated['client_email'] ?? null,
-                'client_phone' => $validated['client_phone'] ?? null,
+                'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
                 // Snapshot de la escala
@@ -219,7 +220,7 @@ class PickingBudgetController extends Controller
             abort(403, 'No tienes permiso para ver este presupuesto.');
         }
 
-        $pickingBudget->load(['vendor:id,name,email', 'services', 'boxes']); // Agregar 'boxes'
+        $pickingBudget->load(['vendor:id,name,email', 'client:id,name,email,phone,company,address', 'services', 'boxes']);
 
         return Inertia::render('dashboard/picking/Show', [
             'budget' => $pickingBudget,
@@ -244,16 +245,28 @@ class PickingBudgetController extends Controller
             return back()->withErrors(['error' => 'Solo se pueden editar presupuestos en estado borrador.']);
         }
 
-        $pickingBudget->load('services');
+        $pickingBudget->load(['services', 'boxes', 'client:id,name,email,phone,company']);
         $boxes = PickingBox::active()->orderBy('cost')->get();
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
+
+        $clients = Client::orderBy('name')
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'value' => $client->id,
+                    'label' => $client->company
+                        ? "{$client->name} ({$client->company})"
+                        : $client->name,
+                ];
+            });
 
         return Inertia::render('dashboard/picking/Edit', [
             'budget' => $pickingBudget,
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
+            'clients' => $clients,
         ]);
     }
 
@@ -293,9 +306,7 @@ class PickingBudgetController extends Controller
 
             // Actualizar el presupuesto
             $pickingBudget->update([
-                'client_name' => $validated['client_name'],
-                'client_email' => $validated['client_email'] ?? null,
-                'client_phone' => $validated['client_phone'] ?? null,
+                'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
                 // Actualizar snapshot de la escala
@@ -428,8 +439,10 @@ class PickingBudgetController extends Controller
         }
 
         // Validar que tenga email
-        if (!$pickingBudget->client_email) {
-            return back()->withErrors(['error' => 'El presupuesto no tiene un email de cliente asociado.']);
+        $pickingBudget->load('client');
+
+        if (!$pickingBudget->client || !$pickingBudget->client->email) {
+            return back()->withErrors(['error' => 'El cliente no tiene un email asociado.']);
         }
 
         try {
@@ -437,13 +450,13 @@ class PickingBudgetController extends Controller
             $pdf = $this->generatePdf($pickingBudget);
 
             // Enviar email
-            Mail::to($pickingBudget->client_email)
+            Mail::to($pickingBudget->client->email)
                 ->send(new PickingBudgetSent($pickingBudget, $pdf));
 
             // Actualizar estado
             $pickingBudget->update(['status' => PickingBudgetStatus::SENT]);
 
-            return back()->with('success', 'Presupuesto enviado correctamente a ' . $pickingBudget->client_email);
+            return back()->with('success', 'Presupuesto enviado correctamente a ' . $pickingBudget->client->email);
         } catch (\Exception $e) {
             return back()->withErrors(['error' => 'Error al enviar el presupuesto: ' . $e->getMessage()]);
         }
@@ -455,6 +468,8 @@ class PickingBudgetController extends Controller
     public function downloadPdf(PickingBudget $pickingBudget)
     {
         $user = Auth::user();
+
+        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
 
         // Verificar permiso
         if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
@@ -471,7 +486,7 @@ class PickingBudgetController extends Controller
      */
     private function generatePdf(PickingBudget $pickingBudget)
     {
-        $pickingBudget->load(['vendor', 'services']);
+        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
 
         $pdf = Pdf::loadView('pdf.picking-budget', [
             'budget' => $pickingBudget

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Client;
 use App\Enums\PickingBudgetStatus;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PickingBudget extends Model
 {
@@ -15,9 +16,7 @@ class PickingBudget extends Model
     protected $fillable = [
         'budget_number',
         'vendor_id',
-        'client_name',
-        'client_email',
-        'client_phone',
+        'client_id',
         'total_kits',
         'total_components_per_kit',
         'scale_quantity_from',
@@ -38,6 +37,7 @@ class PickingBudget extends Model
 
     protected $casts = [
         'vendor_id' => 'integer',
+        'client_id' => 'integer',
         'total_kits' => 'integer',
         'total_components_per_kit' => 'integer',
         'scale_quantity_from' => 'integer',
@@ -62,6 +62,14 @@ class PickingBudget extends Model
     }
 
     /**
+     * Relación con el cliente
+     */
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    /**
      * Relación con los servicios del presupuesto
      */
     public function services(): HasMany
@@ -83,6 +91,14 @@ class PickingBudget extends Model
     public function scopeForVendor($query, int $vendorId)
     {
         return $query->where('vendor_id', $vendorId);
+    }
+
+    /**
+     * Scope para filtrar por cliente
+     */
+    public function scopeForClient($query, int $clientId)
+    {
+        return $query->where('client_id', $clientId);
     }
 
     /**

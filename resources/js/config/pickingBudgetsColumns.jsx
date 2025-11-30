@@ -62,7 +62,7 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
         render: (value) => <span className="font-medium text-blue-600">{value}</span>,
     },
     {
-        key: 'client_name',
+        key: 'client.name',
         label: 'Cliente',
         sortable: true,
     },

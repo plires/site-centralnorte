@@ -2,12 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\PickingBudget;
-use App\Models\PickingBudgetService;
-use App\Models\PickingBudgetBox;
 use App\Models\User;
-use App\Enums\PickingBudgetStatus;
+use App\Models\Client;
+use App\Models\PickingBudget;
 use Illuminate\Database\Seeder;
+use App\Models\PickingBudgetBox;
+use App\Enums\PickingBudgetStatus;
+use App\Models\PickingBudgetService;
 
 /**
  * Seeder simple para crear algunos presupuestos de picking rápidamente
@@ -80,9 +81,7 @@ class SimplePickingBudgetSeeder extends Seeder
         $budget = PickingBudget::create([
             'budget_number' => PickingBudget::generateBudgetNumber(),
             'vendor_id' => $vendor->id,
-            'client_name' => $config['client'],
-            'client_email' => fake()->companyEmail(),
-            'client_phone' => fake()->phoneNumber(),
+            'client_id' => Client::inRandomOrder()->first()->id,
             'total_kits' => $config['total_kits'],
             'total_components_per_kit' => $config['components'],
             'scale_quantity_from' => 100,

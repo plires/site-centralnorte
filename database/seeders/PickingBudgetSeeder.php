@@ -2,11 +2,12 @@
 
 namespace Database\Seeders;
 
-use App\Models\PickingBudget;
-use App\Models\PickingBudgetService;
 use App\Models\User;
-use App\Enums\PickingBudgetStatus;
+use App\Models\Client;
+use App\Models\PickingBudget;
 use Illuminate\Database\Seeder;
+use App\Enums\PickingBudgetStatus;
+use App\Models\PickingBudgetService;
 
 class PickingBudgetSeeder extends Seeder
 {
@@ -121,7 +122,7 @@ class PickingBudgetSeeder extends Seeder
         };
 
         // Fechas
-        $createdAt = $expired 
+        $createdAt = $expired
             ? fake()->dateTimeBetween('-60 days', '-31 days')
             : fake()->dateTimeBetween('-30 days', 'now');
 
@@ -129,26 +130,10 @@ class PickingBudgetSeeder extends Seeder
             ? fake()->dateTimeBetween('-30 days', '-1 day')
             : fake()->dateTimeBetween('now', '+60 days');
 
-        // Datos del cliente
-        $clientNames = [
-            'Industrias ACME S.A.',
-            'Distribuidora La Universal',
-            'Comercial Del Centro',
-            'Grupo Empresarial Norte',
-            'Logística y Servicios SA',
-            'TechnoMark Argentina',
-            'Mundo Promocional',
-            'Regalo Corporativo SRL',
-            'Marketing Plus',
-            'Eventos & Promociones'
-        ];
-
         return PickingBudget::create([
             'budget_number' => PickingBudget::generateBudgetNumber(),
             'vendor_id' => $vendor->id,
-            'client_name' => fake()->randomElement($clientNames),
-            'client_email' => fake()->optional(0.8)->companyEmail(),
-            'client_phone' => fake()->optional(0.7)->phoneNumber(),
+            'client_id' => Client::inRandomOrder()->first()->id,
             'total_kits' => $totalKits,
             'total_components_per_kit' => $componentsPerKit,
             'box_dimensions' => $boxDimensions,
@@ -194,7 +179,7 @@ class PickingBudgetSeeder extends Seeder
             ];
 
             // Filtrar servicios no usados
-            $availableServices = array_filter($services, function($s) use ($usedTypes) {
+            $availableServices = array_filter($services, function ($s) use ($usedTypes) {
                 return !in_array($s['type'], $usedTypes);
             });
 
