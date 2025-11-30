@@ -337,14 +337,15 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </Button>
                     </div>
 
-                    {/* Información del Cliente */}
+                    {/* Información del Cliente y Cantidades */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Información del Cliente</CardTitle>
+                            <CardTitle>Información del Cliente y Cantidades</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4">
-                                <div>
+                                {/* Cliente */}
+                                <div className="mb-3">
                                     <Label htmlFor="client_id">Cliente *</Label>
                                     <ClientCombobox
                                         clients={clients}
@@ -356,16 +357,27 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                {/* Producto Madre */}
+                                <div>
+                                    <Label htmlFor="assembly_type">Producto madre del kit *</Label>
+                                    <Select value={assemblyType} onValueChange={setAssemblyType}>
+                                        <SelectTrigger id="assembly_type">
+                                            <SelectValue placeholder="Seleccionar tipo de armado" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="cost_without_assembly">Bolsa o caja que no requiera su armado</SelectItem>
+                                            <SelectItem value="cost_with_assembly">Caja para armar o mochila con cierre</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {currentScale && assemblyType && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Costo: <span className="font-medium">{formatCurrency(currentScale[assemblyType])}</span> por kit
+                                        </p>
+                                    )}
+                                </div>
 
-                    {/* Cantidades */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Cantidades</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                {/* Total de Kits */}
                                 <div>
                                     <Label htmlFor="total_kits">Total de Kits *</Label>
                                     <Input
@@ -379,7 +391,7 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     {errors.total_kits && <p className="mt-1 text-sm text-red-600">{errors.total_kits}</p>}
                                 </div>
                                 <div>
-                                    <Label htmlFor="total_components_per_kit">Componentes por Kit *</Label>
+                                    <Label htmlFor="total_components_per_kit">Cantidad de componentes *</Label>
                                     <Input
                                         id="total_components_per_kit"
                                         type="number"
@@ -413,141 +425,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     </p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Cajas */}
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Cajas (Opcional)</CardTitle>
-                            <Button type="button" onClick={addBox} size="sm" variant="outline">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Agregar Caja
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            {data.boxes.length === 0 ? (
-                                <div className="py-8 text-center text-gray-500">
-                                    <Box className="mx-auto mb-3 h-12 w-12 opacity-30" />
-                                    <p>No hay cajas agregadas.</p>
-                                    <p className="mt-1 text-sm">Haz clic en "Agregar Caja" para añadir una o más cajas.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {data.boxes.map((box, index) => (
-                                        <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                            <div className="mb-2 flex items-center justify-between">
-                                                <span className="text-sm font-medium text-gray-700">Caja #{index + 1}</span>
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => removeBox(index)}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                                                <div>
-                                                    <Label htmlFor={`box_${index}_select`}>
-                                                        Seleccionar Caja <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Select
-                                                        value={box.box_id.toString()}
-                                                        onValueChange={(value) => updateBox(index, 'box_id', value)}
-                                                    >
-                                                        <SelectTrigger id={`box_${index}_select`}>
-                                                            <SelectValue placeholder="Elegir caja..." />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {boxes.map((b) => {
-                                                                // Deshabilitar cajas ya seleccionadas
-                                                                const isAlreadySelected = data.boxes.some(
-                                                                    (selectedBox, i) => i !== index && selectedBox.box_id === b.id.toString(),
-                                                                );
-
-                                                                return (
-                                                                    <SelectItem key={b.id} value={b.id.toString()} disabled={isAlreadySelected}>
-                                                                        {b.dimensions} - ${b.cost}
-                                                                        {isAlreadySelected && ' (Ya agregada)'}
-                                                                    </SelectItem>
-                                                                );
-                                                            })}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`box_${index}_dimensions`}>Dimensiones</Label>
-                                                    <Input id={`box_${index}_dimensions`} value={box.box_dimensions} disabled placeholder="Auto" />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`box_${index}_cost`}>Costo Unitario</Label>
-                                                    <Input id={`box_${index}_cost`} value={box.box_unit_cost} disabled placeholder="Auto" />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`box_${index}_quantity`}>
-                                                        Cantidad <span className="text-red-500">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id={`box_${index}_quantity`}
-                                                        type="number"
-                                                        min="1"
-                                                        value={box.quantity}
-                                                        onChange={(e) => updateBox(index, 'quantity', e.target.value)}
-                                                        placeholder="1"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {box.quantity && box.box_unit_cost && (
-                                                <div className="mt-2 text-right text-sm text-gray-600">
-                                                    Subtotal:{' '}
-                                                    <span className="font-medium text-gray-900">
-                                                        {formatCurrency(parseFloat(box.box_unit_cost) * parseInt(box.quantity || 0))}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-
-                                    {errors.boxes && <p className="text-sm text-red-600">{errors.boxes}</p>}
-
-                                    <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
-                                        <span className="text-sm font-medium text-blue-900">Total Cajas:</span>
-                                        <span className="text-lg font-bold text-blue-600">{formatCurrency(totals.boxTotal)}</span>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* SERVICIOS - REORGANIZADOS */}
-
-                    {/* Card 1: Tipo de Armado */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tipo de Armado</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div>
-                                <Label htmlFor="assembly_type">Seleccione el tipo de armado *</Label>
-                                <Select value={assemblyType} onValueChange={setAssemblyType}>
-                                    <SelectTrigger id="assembly_type">
-                                        <SelectValue placeholder="Seleccionar tipo de armado" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="cost_without_assembly">Bolsa o caja que no requiera su armado</SelectItem>
-                                        <SelectItem value="cost_with_assembly">Caja para armar o mochila con cierre</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {currentScale && assemblyType && (
-                                    <p className="mt-2 text-sm text-gray-600">
-                                        Costo: <span className="font-medium">{formatCurrency(currentScale[assemblyType])}</span> por kit
-                                    </p>
-                                )}
-                            </div>
                         </CardContent>
                     </Card>
 
@@ -773,6 +650,113 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     </p>
                                 )}
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Cajas */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Cajas (Opcional)</CardTitle>
+                            <Button type="button" onClick={addBox} size="sm" variant="outline">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar Caja
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            {data.boxes.length === 0 ? (
+                                <div className="py-8 text-center text-gray-500">
+                                    <Box className="mx-auto mb-3 h-12 w-12 opacity-30" />
+                                    <p>No hay cajas agregadas.</p>
+                                    <p className="mt-1 text-sm">Haz clic en "Agregar Caja" para añadir una o más cajas.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {data.boxes.map((box, index) => (
+                                        <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <span className="text-sm font-medium text-gray-700">Caja #{index + 1}</span>
+                                                <Button
+                                                    type="button"
+                                                    onClick={() => removeBox(index)}
+                                                    size="sm"
+                                                    variant="ghost"
+                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+
+                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_select`}>
+                                                        Seleccionar Caja <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Select
+                                                        value={box.box_id.toString()}
+                                                        onValueChange={(value) => updateBox(index, 'box_id', value)}
+                                                    >
+                                                        <SelectTrigger id={`box_${index}_select`}>
+                                                            <SelectValue placeholder="Elegir caja..." />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {boxes.map((b) => {
+                                                                // Deshabilitar cajas ya seleccionadas
+                                                                const isAlreadySelected = data.boxes.some(
+                                                                    (selectedBox, i) => i !== index && selectedBox.box_id === b.id.toString(),
+                                                                );
+
+                                                                return (
+                                                                    <SelectItem key={b.id} value={b.id.toString()} disabled={isAlreadySelected}>
+                                                                        {b.dimensions} - ${b.cost}
+                                                                        {isAlreadySelected && ' (Ya agregada)'}
+                                                                    </SelectItem>
+                                                                );
+                                                            })}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_dimensions`}>Dimensiones</Label>
+                                                    <Input id={`box_${index}_dimensions`} value={box.box_dimensions} disabled placeholder="Auto" />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_cost`}>Costo Unitario</Label>
+                                                    <Input id={`box_${index}_cost`} value={box.box_unit_cost} disabled placeholder="Auto" />
+                                                </div>
+                                                <div>
+                                                    <Label htmlFor={`box_${index}_quantity`}>
+                                                        Cantidad <span className="text-red-500">*</span>
+                                                    </Label>
+                                                    <Input
+                                                        id={`box_${index}_quantity`}
+                                                        type="number"
+                                                        min="1"
+                                                        value={box.quantity}
+                                                        onChange={(e) => updateBox(index, 'quantity', e.target.value)}
+                                                        placeholder="1"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {box.quantity && box.box_unit_cost && (
+                                                <div className="mt-2 text-right text-sm text-gray-600">
+                                                    Subtotal:{' '}
+                                                    <span className="font-medium text-gray-900">
+                                                        {formatCurrency(parseFloat(box.box_unit_cost) * parseInt(box.quantity || 0))}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {errors.boxes && <p className="text-sm text-red-600">{errors.boxes}</p>}
+
+                                    <div className="flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                        <span className="text-sm font-medium text-blue-900">Total Cajas:</span>
+                                        <span className="text-lg font-bold text-blue-600">{formatCurrency(totals.boxTotal)}</span>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
