@@ -337,15 +337,14 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </Button>
                     </div>
 
-                    {/* Información del Cliente y Cantidades */}
+                    {/* Información del Cliente */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Información del Cliente y Cantidades</CardTitle>
+                            <CardTitle>Información del Cliente</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4">
-                                {/* Cliente */}
-                                <div className="mb-3">
+                                <div>
                                     <Label htmlFor="client_id">Cliente *</Label>
                                     <ClientCombobox
                                         clients={clients}
@@ -357,8 +356,17 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
                                 </div>
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Cantidades */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Cantidades</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                {/* Producto Madre */}
+                                {/* Producto madre */}
                                 <div>
                                     <Label htmlFor="assembly_type">Producto madre del kit *</Label>
                                     <Select value={assemblyType} onValueChange={setAssemblyType}>
@@ -377,9 +385,9 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     )}
                                 </div>
 
-                                {/* Total de Kits */}
+                                {/* Kits Totales */}
                                 <div>
-                                    <Label htmlFor="total_kits">Total de Kits *</Label>
+                                    <Label htmlFor="total_kits">Kits Totales *</Label>
                                     <Input
                                         id="total_kits"
                                         type="number"
@@ -390,8 +398,10 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     />
                                     {errors.total_kits && <p className="mt-1 text-sm text-red-600">{errors.total_kits}</p>}
                                 </div>
+
+                                {/* Cantidad de componentes */}
                                 <div>
-                                    <Label htmlFor="total_components_per_kit">Cantidad de componentes *</Label>
+                                    <Label htmlFor="total_components_per_kit">Cantidad de componentes por kit *</Label>
                                     <Input
                                         id="total_components_per_kit"
                                         type="number"
@@ -428,230 +438,250 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </CardContent>
                     </Card>
 
-                    {/* Card 2: Servicios Adicionales */}
+                    {/* Tipo de Armado */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Servicios Adicionales (Opcional)</CardTitle>
+                            <CardTitle>Tipo de Armado</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="dome_sticking" checked={domeSticking} onCheckedChange={setDomeSticking} />
-                                    <Label htmlFor="dome_sticking" className="cursor-pointer text-sm font-normal">
-                                        Pegado de domes
-                                        {currentScale?.dome_sticking_unit && (
-                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.dome_sticking_unit)} por kit)</span>
-                                        )}
-                                    </Label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="additional_assembly" checked={additionalAssembly} onCheckedChange={setAdditionalAssembly} />
-                                    <Label htmlFor="additional_assembly" className="cursor-pointer text-sm font-normal">
-                                        Ensamble adicional
-                                        {currentScale?.additional_assembly && (
-                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.additional_assembly)} por kit)</span>
-                                        )}
-                                    </Label>
-                                </div>
-
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox id="quality_control" checked={qualityControl} onCheckedChange={setQualityControl} />
-                                    <Label htmlFor="quality_control" className="cursor-pointer text-sm font-normal">
-                                        Control de calidad
-                                        {currentScale?.quality_control && (
-                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.quality_control)} por kit)</span>
-                                        )}
-                                    </Label>
-                                </div>
-                            </div>
-                        </CardContent>
+                        <CardContent></CardContent>
                     </Card>
 
-                    {/* Card 3: Relleno - Viruta */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Relleno - Viruta (Opcional)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div>
-                                <Label htmlFor="shavings_type">Tipo de viruta</Label>
-                                <Select value={shavingsType} onValueChange={setShavingsType}>
-                                    <SelectTrigger id="shavings_type">
-                                        <SelectValue placeholder="Sin Viruta" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">Sin Viruta</SelectItem>
-                                        <SelectItem value="shavings_50g_unit">
-                                            Viruta de madera x 50 grs (espacio de caja hasta 10x15cm aprox.)
-                                        </SelectItem>
-                                        <SelectItem value="shavings_100g_unit">Viruta de madera x 100 grs (espacio de caja hasta 20x15cm)</SelectItem>
-                                        <SelectItem value="shavings_200g_unit">Viruta de madera x 200 grs (espacio de caja hasta 40x30cm)</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {currentScale && shavingsType && shavingsType !== 'none' && (
-                                    <p className="mt-2 text-sm text-gray-600">
-                                        Costo: <span className="font-medium">{formatCurrency(currentScale[shavingsType])}</span> por kit
-                                    </p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {/* Servicios Adicionales */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Servicios Adicionales (Opcional)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="dome_sticking" checked={domeSticking} onCheckedChange={setDomeSticking} />
+                                        <Label htmlFor="dome_sticking" className="cursor-pointer text-sm font-normal">
+                                            Pegado de domes
+                                            {currentScale?.dome_sticking_unit && (
+                                                <span className="ml-2 text-gray-600">
+                                                    ({formatCurrency(currentScale.dome_sticking_unit)} por kit)
+                                                </span>
+                                            )}
+                                        </Label>
+                                    </div>
 
-                    {/* Card 4: Empaque - Bolsitas */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Empaque - Bolsitas Transparentes (Opcional)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="additional_assembly" checked={additionalAssembly} onCheckedChange={setAdditionalAssembly} />
+                                        <Label htmlFor="additional_assembly" className="cursor-pointer text-sm font-normal">
+                                            Ensamble adicional
+                                            {currentScale?.additional_assembly && (
+                                                <span className="ml-2 text-gray-600">
+                                                    ({formatCurrency(currentScale.additional_assembly)} por kit)
+                                                </span>
+                                            )}
+                                        </Label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="quality_control" checked={qualityControl} onCheckedChange={setQualityControl} />
+                                        <Label htmlFor="quality_control" className="cursor-pointer text-sm font-normal">
+                                            Control de calidad
+                                            {currentScale?.quality_control && (
+                                                <span className="ml-2 text-gray-600">({formatCurrency(currentScale.quality_control)} por kit)</span>
+                                            )}
+                                        </Label>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Relleno - Viruta */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Relleno - Viruta (Opcional)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <div>
-                                    <Label htmlFor="bag_type">Tipo de bolsita</Label>
-                                    <Select
-                                        value={bagType}
-                                        onValueChange={(value) => {
-                                            setBagType(value);
-                                            if (value === 'none') setBagQuantity('');
-                                        }}
-                                    >
-                                        <SelectTrigger id="bag_type">
-                                            <SelectValue placeholder="Sin Bolsita" />
+                                    <Label htmlFor="shavings_type">Tipo de viruta</Label>
+                                    <Select value={shavingsType} onValueChange={setShavingsType}>
+                                        <SelectTrigger id="shavings_type">
+                                            <SelectValue placeholder="Sin Viruta" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">Sin Bolsita</SelectItem>
-                                            <SelectItem value="bag_10x15_unit">Bolsitas transparentes con cinta bifaz de 10x15cm</SelectItem>
-                                            <SelectItem value="bag_20x30_unit">Bolsitas transparentes con cinta bifaz de 20x30cm</SelectItem>
-                                            <SelectItem value="bag_35x45_unit">Bolsitas transparentes con cinta bifaz de 35x45cm</SelectItem>
+                                            <SelectItem value="none">Sin Viruta</SelectItem>
+                                            <SelectItem value="shavings_50g_unit">
+                                                Viruta de madera x 50 grs (espacio de caja hasta 10x15cm aprox.)
+                                            </SelectItem>
+                                            <SelectItem value="shavings_100g_unit">
+                                                Viruta de madera x 100 grs (espacio de caja hasta 20x15cm)
+                                            </SelectItem>
+                                            <SelectItem value="shavings_200g_unit">
+                                                Viruta de madera x 200 grs (espacio de caja hasta 40x30cm)
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {currentScale && bagType && bagType !== 'none' && (
+                                    {currentScale && shavingsType && shavingsType !== 'none' && (
                                         <p className="mt-2 text-sm text-gray-600">
-                                            Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bagType])}</span>
+                                            Costo: <span className="font-medium">{formatCurrency(currentScale[shavingsType])}</span> por kit
                                         </p>
                                     )}
                                 </div>
+                            </CardContent>
+                        </Card>
 
-                                {bagType && bagType !== 'none' && (
+                        {/* Empaque - Bolsitas */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Empaque - Bolsitas (Opcional)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
                                     <div>
-                                        <Label htmlFor="bag_quantity">Cantidad de bolsitas *</Label>
-                                        <Input
-                                            id="bag_quantity"
-                                            type="number"
-                                            min="1"
-                                            value={bagQuantity}
-                                            onChange={(e) => setBagQuantity(e.target.value)}
-                                            placeholder="Ingrese la cantidad"
-                                        />
+                                        <Label htmlFor="bag_type">Tipo de bolsita</Label>
+                                        <Select
+                                            value={bagType}
+                                            onValueChange={(value) => {
+                                                setBagType(value);
+                                                if (value === 'none') setBagQuantity('');
+                                            }}
+                                        >
+                                            <SelectTrigger id="bag_type">
+                                                <SelectValue placeholder="Sin Bolsita" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Sin Bolsita</SelectItem>
+                                                <SelectItem value="bag_10x15_unit">Bolsitas transparentes con cinta bifaz de 10x15cm</SelectItem>
+                                                <SelectItem value="bag_20x30_unit">Bolsitas transparentes con cinta bifaz de 20x30cm</SelectItem>
+                                                <SelectItem value="bag_35x45_unit">Bolsitas transparentes con cinta bifaz de 35x45cm</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {currentScale && bagType && bagType !== 'none' && (
+                                            <p className="mt-2 text-sm text-gray-600">
+                                                Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bagType])}</span>
+                                            </p>
+                                        )}
                                     </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
 
-                    {/* Card 5: Protección - Pluribol */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Protección - Pluribol (Opcional)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
+                                    {bagType && bagType !== 'none' && (
+                                        <div>
+                                            <Label htmlFor="bag_quantity">Cantidad de bolsitas *</Label>
+                                            <Input
+                                                id="bag_quantity"
+                                                type="number"
+                                                min="1"
+                                                value={bagQuantity}
+                                                onChange={(e) => setBagQuantity(e.target.value)}
+                                                placeholder="Ingrese la cantidad"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Protección - Pluribol */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Protección - Pluribol (Opcional)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="bubble_wrap_type">Tipo de pluribol</Label>
+                                        <Select
+                                            value={bubbleWrapType}
+                                            onValueChange={(value) => {
+                                                setBubbleWrapType(value);
+                                                if (value === 'none') setBubbleWrapQuantity('');
+                                            }}
+                                        >
+                                            <SelectTrigger id="bubble_wrap_type">
+                                                <SelectValue placeholder="Sin Pluribol" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="none">Sin Pluribol</SelectItem>
+                                                <SelectItem value="bubble_wrap_5x10_unit">Pluribol cuadrado de 5x10cm</SelectItem>
+                                                <SelectItem value="bubble_wrap_10x15_unit">Pluribol cuadrado de 10x15cm</SelectItem>
+                                                <SelectItem value="bubble_wrap_20x30_unit">Pluribol cuadrado de 20x30cm</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        {currentScale && bubbleWrapType && bubbleWrapType !== 'none' && (
+                                            <p className="mt-2 text-sm text-gray-600">
+                                                Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bubbleWrapType])}</span>
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {bubbleWrapType && bubbleWrapType !== 'none' && (
+                                        <div>
+                                            <Label htmlFor="bubble_wrap_quantity">Cantidad de pluriboles *</Label>
+                                            <Input
+                                                id="bubble_wrap_quantity"
+                                                type="number"
+                                                min="1"
+                                                value={bubbleWrapQuantity}
+                                                onChange={(e) => setBubbleWrapQuantity(e.target.value)}
+                                                placeholder="Ingrese la cantidad"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Logística - Palletizado */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Logística - Palletizado (Opcional)</CardTitle>
+                            </CardHeader>
+                            <CardContent>
                                 <div>
-                                    <Label htmlFor="bubble_wrap_type">Tipo de pluribol</Label>
-                                    <Select
-                                        value={bubbleWrapType}
-                                        onValueChange={(value) => {
-                                            setBubbleWrapType(value);
-                                            if (value === 'none') setBubbleWrapQuantity('');
-                                        }}
-                                    >
-                                        <SelectTrigger id="bubble_wrap_type">
-                                            <SelectValue placeholder="Sin Pluribol" />
+                                    <Label htmlFor="palletizing_type">Tipo de palletizado</Label>
+                                    <Select value={palletizingType} onValueChange={setPalletizingType}>
+                                        <SelectTrigger id="palletizing_type">
+                                            <SelectValue placeholder="En bultos sueltos" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="none">Sin Pluribol</SelectItem>
-                                            <SelectItem value="bubble_wrap_5x10_unit">Pluribol cuadrado de 5x10cm</SelectItem>
-                                            <SelectItem value="bubble_wrap_10x15_unit">Pluribol cuadrado de 10x15cm</SelectItem>
-                                            <SelectItem value="bubble_wrap_20x30_unit">Pluribol cuadrado de 20x30cm</SelectItem>
+                                            <SelectItem value="none">En bultos sueltos</SelectItem>
+                                            <SelectItem value="palletizing_without_pallet">
+                                                Con palletizado sin pallet incluidos (con film strech)
+                                            </SelectItem>
+                                            <SelectItem value="palletizing_with_pallet">
+                                                Con palletizado con pallet incluidos + film strech
+                                            </SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {currentScale && bubbleWrapType && bubbleWrapType !== 'none' && (
+                                    {currentScale && palletizingType && palletizingType !== 'none' && (
                                         <p className="mt-2 text-sm text-gray-600">
-                                            Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bubbleWrapType])}</span>
+                                            Costo: <span className="font-medium">{formatCurrency(currentScale[palletizingType])}</span> por kit
                                         </p>
                                     )}
                                 </div>
+                            </CardContent>
+                        </Card>
 
-                                {bubbleWrapType && bubbleWrapType !== 'none' && (
-                                    <div>
-                                        <Label htmlFor="bubble_wrap_quantity">Cantidad de pluriboles *</Label>
-                                        <Input
-                                            id="bubble_wrap_quantity"
-                                            type="number"
-                                            min="1"
-                                            value={bubbleWrapQuantity}
-                                            onChange={(e) => setBubbleWrapQuantity(e.target.value)}
-                                            placeholder="Ingrese la cantidad"
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Card 6: Logística - Palletizado */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Logística - Palletizado (Opcional)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div>
-                                <Label htmlFor="palletizing_type">Tipo de palletizado</Label>
-                                <Select value={palletizingType} onValueChange={setPalletizingType}>
-                                    <SelectTrigger id="palletizing_type">
-                                        <SelectValue placeholder="En bultos sueltos" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="none">En bultos sueltos</SelectItem>
-                                        <SelectItem value="palletizing_without_pallet">
-                                            Con palletizado sin pallet incluidos (con film strech)
-                                        </SelectItem>
-                                        <SelectItem value="palletizing_with_pallet">Con palletizado con pallet incluidos + film strech</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {currentScale && palletizingType && palletizingType !== 'none' && (
-                                    <p className="mt-2 text-sm text-gray-600">
-                                        Costo: <span className="font-medium">{formatCurrency(currentScale[palletizingType])}</span> por kit
-                                    </p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Card 7: Rotulado */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Rotulado</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div>
-                                <Label htmlFor="labeling_type">Tipo de rotulado</Label>
-                                <Select value={labelingType} onValueChange={setLabelingType}>
-                                    <SelectTrigger id="labeling_type">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="cost_without_labeling">Sin rotulado especial</SelectItem>
-                                        <SelectItem value="cost_with_labeling">Con rotulado especial</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                {currentScale && labelingType && (
-                                    <p className="mt-2 text-sm text-gray-600">
-                                        Costo: <span className="font-medium">{formatCurrency(currentScale[labelingType])}</span> por kit
-                                    </p>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                        {/* Rotulado */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-base">Rotulado</CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div>
+                                    <Label htmlFor="labeling_type">Tipo de rotulado</Label>
+                                    <Select value={labelingType} onValueChange={setLabelingType}>
+                                        <SelectTrigger id="labeling_type">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="cost_without_labeling">Sin rotulado especial</SelectItem>
+                                            <SelectItem value="cost_with_labeling">Con rotulado especial</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {currentScale && labelingType && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Costo: <span className="font-medium">{formatCurrency(currentScale[labelingType])}</span> por kit
+                                        </p>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
                     {/* Cajas */}
                     <Card>
@@ -760,6 +790,22 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </CardContent>
                     </Card>
 
+                    {/* Notas */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Notas (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Textarea
+                                value={data.notes}
+                                onChange={(e) => setData('notes', e.target.value)}
+                                placeholder="Notas adicionales sobre el presupuesto..."
+                                rows={4}
+                            />
+                            {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes}</p>}
+                        </CardContent>
+                    </Card>
+
                     {/* Resumen de Totales */}
                     <Card>
                         <CardHeader>
@@ -796,22 +842,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     <span className="text-lg font-bold text-green-600">{formatCurrency(totals.unitPricePerKit)}</span>
                                 </div>
                             </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Notas */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Notas (Opcional)</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Textarea
-                                value={data.notes}
-                                onChange={(e) => setData('notes', e.target.value)}
-                                placeholder="Notas adicionales sobre el presupuesto..."
-                                rows={4}
-                            />
-                            {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes}</p>}
                         </CardContent>
                     </Card>
 
