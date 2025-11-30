@@ -1,15 +1,15 @@
 // resources/js/pages/dashboard/picking/Create.jsx
-// EJEMPLO BÁSICO - Expandir según necesidades
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox';
-import { useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { Box, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -18,13 +18,12 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
     const handleClientSelect = (clientId) => {
         setData('client_id', clientId);
     };
+
     const { data, setData, post, processing, errors } = useForm({
-        client_name: '',
-        client_email: '',
-        client_phone: '',
+        client_id: '',
         total_kits: '',
         total_components_per_kit: '',
-        boxes: [], // Array de cajas
+        boxes: [],
         services: [],
         notes: '',
     });
@@ -39,6 +38,19 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
         total: 0,
         unitPricePerKit: 0,
     });
+
+    // Estados locales para los servicios
+    const [assemblyType, setAssemblyType] = useState('');
+    const [domeSticking, setDomeSticking] = useState(false);
+    const [additionalAssembly, setAdditionalAssembly] = useState(false);
+    const [qualityControl, setQualityControl] = useState(false);
+    const [shavingsType, setShavingsType] = useState('');
+    const [bagType, setBagType] = useState('');
+    const [bagQuantity, setBagQuantity] = useState('');
+    const [bubbleWrapType, setBubbleWrapType] = useState('');
+    const [bubbleWrapQuantity, setBubbleWrapQuantity] = useState('');
+    const [palletizingType, setPalletizingType] = useState('');
+    const [labelingType, setLabelingType] = useState('cost_without_labeling');
 
     // Buscar escala según total_kits
     useEffect(() => {
@@ -56,7 +68,7 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
         if (data.total_components_per_kit && componentIncrements) {
             const components = parseInt(data.total_components_per_kit);
             const increment = componentIncrements.find(
-                (i) => i.components_from <= components && (i.components_to === null || i.components_to >= components),
+                (inc) => inc.components_from <= components && (inc.components_to === null || inc.components_to >= components),
             );
             setCurrentIncrement(increment || null);
         } else {
@@ -64,30 +76,164 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
         }
     }, [data.total_components_per_kit, componentIncrements]);
 
-    // Calcular totales en tiempo real
+    // Actualizar servicios cuando cambian las selecciones
     useEffect(() => {
-        // Subtotal de servicios
+        if (!currentScale) return;
+
+        const newServices = [];
+
+        // 1. Tipo de armado
+        if (assemblyType) {
+            const description =
+                assemblyType === 'cost_without_assembly' ? 'Bolsa o caja que no requiera su armado' : 'Caja para armar o mochila con cierre';
+            newServices.push({
+                service_type: 'assembly',
+                service_description: description,
+                unit_cost: currentScale[assemblyType] || 0,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        // 2. Checkboxes opcionales
+        if (domeSticking && currentScale.dome_sticking_unit) {
+            newServices.push({
+                service_type: 'dome_sticking',
+                service_description: 'Pegado de domes',
+                unit_cost: currentScale.dome_sticking_unit,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        if (additionalAssembly && currentScale.additional_assembly) {
+            newServices.push({
+                service_type: 'additional_assembly',
+                service_description: 'Ensamble adicional',
+                unit_cost: currentScale.additional_assembly,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        if (qualityControl && currentScale.quality_control) {
+            newServices.push({
+                service_type: 'quality_control',
+                service_description: 'Control de calidad',
+                unit_cost: currentScale.quality_control,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        // 3. Viruta
+        if (shavingsType && shavingsType !== 'none') {
+            const shavingsMap = {
+                shavings_50g_unit: 'Viruta de madera x 50 grs (espacio de caja hasta 10x15cm aprox.)',
+                shavings_100g_unit: 'Viruta de madera x 100 grs (espacio de caja hasta 20x15cm)',
+                shavings_200g_unit: 'Viruta de madera x 200 grs (espacio de caja hasta 40x30cm)',
+            };
+            newServices.push({
+                service_type: 'shavings',
+                service_description: shavingsMap[shavingsType],
+                unit_cost: currentScale[shavingsType] || 0,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        // 4. Bolsitas
+        if (bagType && bagType !== 'none' && bagQuantity) {
+            const bagMap = {
+                bag_10x15_unit: 'Bolsitas transparentes con cinta bifaz de 10x15cm',
+                bag_20x30_unit: 'Bolsitas transparentes con cinta bifaz de 20x30cm',
+                bag_35x45_unit: 'Bolsitas transparentes con cinta bifaz de 35x45cm',
+            };
+            newServices.push({
+                service_type: 'bag',
+                service_description: bagMap[bagType],
+                unit_cost: currentScale[bagType] || 0,
+                quantity: parseInt(bagQuantity) || 1,
+            });
+        }
+
+        // 5. Pluribol
+        if (bubbleWrapType && bubbleWrapType !== 'none' && bubbleWrapQuantity) {
+            const bubbleMap = {
+                bubble_wrap_5x10_unit: 'Pluribol cuadrado de 5x10cm',
+                bubble_wrap_10x15_unit: 'Pluribol cuadrado de 10x15cm',
+                bubble_wrap_20x30_unit: 'Pluribol cuadrado de 20x30cm',
+            };
+            newServices.push({
+                service_type: 'bubble_wrap',
+                service_description: bubbleMap[bubbleWrapType],
+                unit_cost: currentScale[bubbleWrapType] || 0,
+                quantity: parseInt(bubbleWrapQuantity) || 1,
+            });
+        }
+
+        // 6. Palletizado
+        if (palletizingType && palletizingType !== 'none') {
+            const palletMap = {
+                palletizing_without_pallet: 'Con palletizado sin pallet incluidos (con film strech)',
+                palletizing_with_pallet: 'Con palletizado con pallet incluidos + film strech',
+            };
+            newServices.push({
+                service_type: 'palletizing',
+                service_description: palletMap[palletizingType],
+                unit_cost: currentScale[palletizingType] || 0,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        // 7. Rotulado
+        if (labelingType) {
+            const labelMap = {
+                cost_with_labeling: 'Con rotulado especial',
+                cost_without_labeling: 'Sin rotulado especial',
+            };
+            newServices.push({
+                service_type: 'labeling',
+                service_description: labelMap[labelingType],
+                unit_cost: currentScale[labelingType] || 0,
+                quantity: parseInt(data.total_kits) || 1,
+            });
+        }
+
+        setData('services', newServices);
+    }, [
+        assemblyType,
+        domeSticking,
+        additionalAssembly,
+        qualityControl,
+        shavingsType,
+        bagType,
+        bagQuantity,
+        bubbleWrapType,
+        bubbleWrapQuantity,
+        palletizingType,
+        labelingType,
+        currentScale,
+        data.total_kits,
+    ]);
+
+    // Calcular totales
+    useEffect(() => {
+        // Calcular subtotal de servicios
         const servicesSubtotal = data.services.reduce((sum, service) => {
             const unitCost = parseFloat(service.unit_cost) || 0;
             const quantity = parseInt(service.quantity) || 0;
             return sum + unitCost * quantity;
         }, 0);
 
-        // Incremento por componentes
-        const incrementPercentage = currentIncrement ? currentIncrement.percentage : 0;
+        // Calcular incremento por componentes
+        const incrementPercentage = currentIncrement ? parseFloat(currentIncrement.percentage) : 0;
         const incrementAmount = servicesSubtotal * incrementPercentage;
-
-        // Subtotal con incremento
         const subtotalWithIncrement = servicesSubtotal + incrementAmount;
 
-        // Total de cajas (suma de todas las cajas)
+        // Calcular total de cajas
         const boxTotal = data.boxes.reduce((sum, box) => {
             const unitCost = parseFloat(box.box_unit_cost) || 0;
             const quantity = parseInt(box.quantity) || 0;
             return sum + unitCost * quantity;
         }, 0);
 
-        // Total general
+        // Total final
         const total = subtotalWithIncrement + boxTotal;
 
         // Precio unitario por kit
@@ -130,12 +276,12 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
 
         // Si se selecciona una caja del select, autocompletar dimensiones y costo
         if (field === 'box_id' && value) {
-            // VALIDACIÓN: Verificar si la caja ya existe
+            // Verificar si la caja ya existe
             const isDuplicate = newBoxes.some((box, i) => i !== index && box.box_id === value);
 
             if (isDuplicate) {
                 toast.error('Esta caja ya fue agregada al presupuesto');
-                return; // No permitir la selección
+                return;
             }
 
             const selectedBox = boxes.find((b) => b.id === parseInt(value));
@@ -146,32 +292,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
         }
 
         setData('boxes', newBoxes);
-    };
-
-    // Agregar servicio
-    const addService = () => {
-        setData('services', [
-            ...data.services,
-            {
-                service_type: '',
-                service_description: '',
-                unit_cost: '',
-                quantity: '',
-            },
-        ]);
-    };
-
-    // Eliminar servicio
-    const removeService = (index) => {
-        const newServices = data.services.filter((_, i) => i !== index);
-        setData('services', newServices);
-    };
-
-    // Actualizar servicio
-    const updateService = (index, field, value) => {
-        const newServices = [...data.services];
-        newServices[index][field] = value;
-        setData('services', newServices);
     };
 
     const handleSubmit = (e) => {
@@ -207,7 +327,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
     return (
         <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
             <div className="p-6">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8"></div>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Header */}
                     <div className="flex items-center justify-between">
@@ -248,56 +367,59 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         <CardContent className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
-                                    <Label htmlFor="total_kits">
-                                        Total de Kits <span className="text-red-500">*</span>
-                                    </Label>
+                                    <Label htmlFor="total_kits">Total de Kits *</Label>
                                     <Input
                                         id="total_kits"
                                         type="number"
                                         min="1"
                                         value={data.total_kits}
                                         onChange={(e) => setData('total_kits', e.target.value)}
-                                        placeholder="100"
+                                        placeholder="Ej: 100"
                                     />
                                     {errors.total_kits && <p className="mt-1 text-sm text-red-600">{errors.total_kits}</p>}
-                                    {currentScale && (
-                                        <p className="mt-1 text-sm text-green-600">
-                                            ✓ Escala encontrada: {currentScale.quantity_from} - {currentScale.quantity_to || 'más'} kits
-                                        </p>
-                                    )}
                                 </div>
                                 <div>
-                                    <Label htmlFor="total_components_per_kit">
-                                        Componentes por Kit <span className="text-red-500">*</span>
-                                    </Label>
+                                    <Label htmlFor="total_components_per_kit">Componentes por Kit *</Label>
                                     <Input
                                         id="total_components_per_kit"
                                         type="number"
                                         min="1"
                                         value={data.total_components_per_kit}
                                         onChange={(e) => setData('total_components_per_kit', e.target.value)}
-                                        placeholder="5"
+                                        placeholder="Ej: 5"
                                     />
                                     {errors.total_components_per_kit && (
                                         <p className="mt-1 text-sm text-red-600">{errors.total_components_per_kit}</p>
                                     )}
-                                    {currentIncrement && (
-                                        <p className="mt-1 text-sm text-green-600">
-                                            ✓ Incremento: {currentIncrement.description} ({(currentIncrement.percentage * 100).toFixed(0)}%)
-                                        </p>
-                                    )}
                                 </div>
                             </div>
+
+                            {/* Información de la escala actual */}
+                            {currentScale && (
+                                <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                                    <p className="text-sm text-blue-900">
+                                        <span className="font-medium">Escala aplicada:</span> {currentScale.quantity_from} -{' '}
+                                        {currentScale.quantity_to || 'o más'} kits | Tiempo de producción: {currentScale.production_time}
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Información del incremento */}
+                            {currentIncrement && (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                    <p className="text-sm text-amber-900">
+                                        <span className="font-medium">Incremento por componentes:</span> {currentIncrement.description} (
+                                        {(currentIncrement.percentage * 100).toFixed(0)}%)
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
-                    {/* Selección de Cajas */}
+                    {/* Cajas */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle className="flex items-center gap-2">
-                                <Box className="h-5 w-5" />
-                                Selección de Cajas
-                            </CardTitle>
+                            <CardTitle>Cajas (Opcional)</CardTitle>
                             <Button type="button" onClick={addBox} size="sm" variant="outline">
                                 <Plus className="mr-2 h-4 w-4" />
                                 Agregar Caja
@@ -355,37 +477,15 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                                             })}
                                                         </SelectContent>
                                                     </Select>
-                                                    {errors[`boxes.${index}.box_id`] && (
-                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.box_id`]}</p>
-                                                    )}
                                                 </div>
-
                                                 <div>
                                                     <Label htmlFor={`box_${index}_dimensions`}>Dimensiones</Label>
-                                                    <Input
-                                                        id={`box_${index}_dimensions`}
-                                                        value={box.box_dimensions}
-                                                        readOnly
-                                                        className="bg-gray-100"
-                                                        placeholder="Auto"
-                                                    />
+                                                    <Input id={`box_${index}_dimensions`} value={box.box_dimensions} disabled placeholder="Auto" />
                                                 </div>
-
                                                 <div>
                                                     <Label htmlFor={`box_${index}_cost`}>Costo Unitario</Label>
-                                                    <Input
-                                                        id={`box_${index}_cost`}
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={box.box_unit_cost}
-                                                        onChange={(e) => updateBox(index, 'box_unit_cost', e.target.value)}
-                                                        placeholder="0.00"
-                                                    />
-                                                    {errors[`boxes.${index}.box_unit_cost`] && (
-                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.box_unit_cost`]}</p>
-                                                    )}
+                                                    <Input id={`box_${index}_cost`} value={box.box_unit_cost} disabled placeholder="Auto" />
                                                 </div>
-
                                                 <div>
                                                     <Label htmlFor={`box_${index}_quantity`}>
                                                         Cantidad <span className="text-red-500">*</span>
@@ -398,13 +498,10 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                                         onChange={(e) => updateBox(index, 'quantity', e.target.value)}
                                                         placeholder="1"
                                                     />
-                                                    {errors[`boxes.${index}.quantity`] && (
-                                                        <p className="mt-1 text-sm text-red-600">{errors[`boxes.${index}.quantity`]}</p>
-                                                    )}
                                                 </div>
                                             </div>
 
-                                            {box.box_unit_cost && box.quantity && (
+                                            {box.quantity && box.box_unit_cost && (
                                                 <div className="mt-2 text-right text-sm text-gray-600">
                                                     Subtotal:{' '}
                                                     <span className="font-medium text-gray-900">
@@ -426,125 +523,285 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </CardContent>
                     </Card>
 
-                    {/* Servicios */}
+                    {/* SERVICIOS - REORGANIZADOS */}
+
+                    {/* Card 1: Tipo de Armado */}
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Servicios</CardTitle>
-                            <Button type="button" onClick={addService} size="sm" variant="outline">
-                                <Plus className="mr-2 h-4 w-4" />
-                                Agregar Servicio
-                            </Button>
+                        <CardHeader>
+                            <CardTitle>Tipo de Armado</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            {data.services.length === 0 ? (
-                                <div className="py-8 text-center text-gray-500">
-                                    <p>No hay servicios agregados.</p>
-                                    <p className="mt-1 text-sm">Haz clic en "Agregar Servicio" para añadir servicios al presupuesto.</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    {data.services.map((service, index) => (
-                                        <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                                            <div className="mb-2 flex items-center justify-between">
-                                                <span className="text-sm font-medium text-gray-700">Servicio #{index + 1}</span>
-                                                <Button
-                                                    type="button"
-                                                    onClick={() => removeService(index)}
-                                                    size="sm"
-                                                    variant="ghost"
-                                                    className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-
-                                            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-                                                <div>
-                                                    <Label htmlFor={`service_${index}_type`}>Tipo</Label>
-                                                    <Input
-                                                        id={`service_${index}_type`}
-                                                        value={service.service_type}
-                                                        onChange={(e) => updateService(index, 'service_type', e.target.value)}
-                                                        placeholder="assembly"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`service_${index}_desc`}>Descripción</Label>
-                                                    <Input
-                                                        id={`service_${index}_desc`}
-                                                        value={service.service_description}
-                                                        onChange={(e) => updateService(index, 'service_description', e.target.value)}
-                                                        placeholder="Con armado"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`service_${index}_cost`}>Costo Unitario</Label>
-                                                    <Input
-                                                        id={`service_${index}_cost`}
-                                                        type="number"
-                                                        step="0.01"
-                                                        value={service.unit_cost}
-                                                        onChange={(e) => updateService(index, 'unit_cost', e.target.value)}
-                                                        placeholder="120.00"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <Label htmlFor={`service_${index}_qty`}>Cantidad</Label>
-                                                    <Input
-                                                        id={`service_${index}_qty`}
-                                                        type="number"
-                                                        min="1"
-                                                        value={service.quantity}
-                                                        onChange={(e) => updateService(index, 'quantity', e.target.value)}
-                                                        placeholder="100"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            {service.unit_cost && service.quantity && (
-                                                <div className="mt-2 text-right text-sm text-gray-600">
-                                                    Subtotal:{' '}
-                                                    <span className="font-medium text-gray-900">
-                                                        {formatCurrency(parseFloat(service.unit_cost) * parseInt(service.quantity || 0))}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-
-                                    {errors.services && <p className="text-sm text-red-600">{errors.services}</p>}
-                                </div>
-                            )}
+                            <div>
+                                <Label htmlFor="assembly_type">Seleccione el tipo de armado *</Label>
+                                <Select value={assemblyType} onValueChange={setAssemblyType}>
+                                    <SelectTrigger id="assembly_type">
+                                        <SelectValue placeholder="Seleccionar tipo de armado" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cost_without_assembly">Bolsa o caja que no requiera su armado</SelectItem>
+                                        <SelectItem value="cost_with_assembly">Caja para armar o mochila con cierre</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {currentScale && assemblyType && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Costo: <span className="font-medium">{formatCurrency(currentScale[assemblyType])}</span> por kit
+                                    </p>
+                                )}
+                            </div>
                         </CardContent>
                     </Card>
 
-                    {/* Totales */}
+                    {/* Card 2: Servicios Adicionales */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Totales del Presupuesto</CardTitle>
+                            <CardTitle>Servicios Adicionales (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="dome_sticking" checked={domeSticking} onCheckedChange={setDomeSticking} />
+                                    <Label htmlFor="dome_sticking" className="cursor-pointer text-sm font-normal">
+                                        Pegado de domes
+                                        {currentScale?.dome_sticking_unit && (
+                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.dome_sticking_unit)} por kit)</span>
+                                        )}
+                                    </Label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="additional_assembly" checked={additionalAssembly} onCheckedChange={setAdditionalAssembly} />
+                                    <Label htmlFor="additional_assembly" className="cursor-pointer text-sm font-normal">
+                                        Ensamble adicional
+                                        {currentScale?.additional_assembly && (
+                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.additional_assembly)} por kit)</span>
+                                        )}
+                                    </Label>
+                                </div>
+
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="quality_control" checked={qualityControl} onCheckedChange={setQualityControl} />
+                                    <Label htmlFor="quality_control" className="cursor-pointer text-sm font-normal">
+                                        Control de calidad
+                                        {currentScale?.quality_control && (
+                                            <span className="ml-2 text-gray-600">({formatCurrency(currentScale.quality_control)} por kit)</span>
+                                        )}
+                                    </Label>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 3: Relleno - Viruta */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Relleno - Viruta (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div>
+                                <Label htmlFor="shavings_type">Tipo de viruta</Label>
+                                <Select value={shavingsType} onValueChange={setShavingsType}>
+                                    <SelectTrigger id="shavings_type">
+                                        <SelectValue placeholder="Sin Viruta" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Sin Viruta</SelectItem>
+                                        <SelectItem value="shavings_50g_unit">
+                                            Viruta de madera x 50 grs (espacio de caja hasta 10x15cm aprox.)
+                                        </SelectItem>
+                                        <SelectItem value="shavings_100g_unit">Viruta de madera x 100 grs (espacio de caja hasta 20x15cm)</SelectItem>
+                                        <SelectItem value="shavings_200g_unit">Viruta de madera x 200 grs (espacio de caja hasta 40x30cm)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {currentScale && shavingsType && shavingsType !== 'none' && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Costo: <span className="font-medium">{formatCurrency(currentScale[shavingsType])}</span> por kit
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 4: Empaque - Bolsitas */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Empaque - Bolsitas Transparentes (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="bag_type">Tipo de bolsita</Label>
+                                    <Select
+                                        value={bagType}
+                                        onValueChange={(value) => {
+                                            setBagType(value);
+                                            if (value === 'none') setBagQuantity('');
+                                        }}
+                                    >
+                                        <SelectTrigger id="bag_type">
+                                            <SelectValue placeholder="Sin Bolsita" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin Bolsita</SelectItem>
+                                            <SelectItem value="bag_10x15_unit">Bolsitas transparentes con cinta bifaz de 10x15cm</SelectItem>
+                                            <SelectItem value="bag_20x30_unit">Bolsitas transparentes con cinta bifaz de 20x30cm</SelectItem>
+                                            <SelectItem value="bag_35x45_unit">Bolsitas transparentes con cinta bifaz de 35x45cm</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {currentScale && bagType && bagType !== 'none' && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bagType])}</span>
+                                        </p>
+                                    )}
+                                </div>
+
+                                {bagType && bagType !== 'none' && (
+                                    <div>
+                                        <Label htmlFor="bag_quantity">Cantidad de bolsitas *</Label>
+                                        <Input
+                                            id="bag_quantity"
+                                            type="number"
+                                            min="1"
+                                            value={bagQuantity}
+                                            onChange={(e) => setBagQuantity(e.target.value)}
+                                            placeholder="Ingrese la cantidad"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 5: Protección - Pluribol */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Protección - Pluribol (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div>
+                                    <Label htmlFor="bubble_wrap_type">Tipo de pluribol</Label>
+                                    <Select
+                                        value={bubbleWrapType}
+                                        onValueChange={(value) => {
+                                            setBubbleWrapType(value);
+                                            if (value === 'none') setBubbleWrapQuantity('');
+                                        }}
+                                    >
+                                        <SelectTrigger id="bubble_wrap_type">
+                                            <SelectValue placeholder="Sin Pluribol" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none">Sin Pluribol</SelectItem>
+                                            <SelectItem value="bubble_wrap_5x10_unit">Pluribol cuadrado de 5x10cm</SelectItem>
+                                            <SelectItem value="bubble_wrap_10x15_unit">Pluribol cuadrado de 10x15cm</SelectItem>
+                                            <SelectItem value="bubble_wrap_20x30_unit">Pluribol cuadrado de 20x30cm</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    {currentScale && bubbleWrapType && bubbleWrapType !== 'none' && (
+                                        <p className="mt-2 text-sm text-gray-600">
+                                            Costo unitario: <span className="font-medium">{formatCurrency(currentScale[bubbleWrapType])}</span>
+                                        </p>
+                                    )}
+                                </div>
+
+                                {bubbleWrapType && bubbleWrapType !== 'none' && (
+                                    <div>
+                                        <Label htmlFor="bubble_wrap_quantity">Cantidad de pluriboles *</Label>
+                                        <Input
+                                            id="bubble_wrap_quantity"
+                                            type="number"
+                                            min="1"
+                                            value={bubbleWrapQuantity}
+                                            onChange={(e) => setBubbleWrapQuantity(e.target.value)}
+                                            placeholder="Ingrese la cantidad"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 6: Logística - Palletizado */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Logística - Palletizado (Opcional)</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div>
+                                <Label htmlFor="palletizing_type">Tipo de palletizado</Label>
+                                <Select value={palletizingType} onValueChange={setPalletizingType}>
+                                    <SelectTrigger id="palletizing_type">
+                                        <SelectValue placeholder="En bultos sueltos" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">En bultos sueltos</SelectItem>
+                                        <SelectItem value="palletizing_without_pallet">
+                                            Con palletizado sin pallet incluidos (con film strech)
+                                        </SelectItem>
+                                        <SelectItem value="palletizing_with_pallet">Con palletizado con pallet incluidos + film strech</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {currentScale && palletizingType && palletizingType !== 'none' && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Costo: <span className="font-medium">{formatCurrency(currentScale[palletizingType])}</span> por kit
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Card 7: Rotulado */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Rotulado</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div>
+                                <Label htmlFor="labeling_type">Tipo de rotulado</Label>
+                                <Select value={labelingType} onValueChange={setLabelingType}>
+                                    <SelectTrigger id="labeling_type">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cost_without_labeling">Sin rotulado especial</SelectItem>
+                                        <SelectItem value="cost_with_labeling">Con rotulado especial</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                {currentScale && labelingType && (
+                                    <p className="mt-2 text-sm text-gray-600">
+                                        Costo: <span className="font-medium">{formatCurrency(currentScale[labelingType])}</span> por kit
+                                    </p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Resumen de Totales */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Resumen de Totales</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
-                                <div className="flex items-center justify-between py-2">
-                                    <span className="text-sm text-gray-600">Subtotal servicios</span>
-                                    <span className="text-base font-medium">{formatCurrency(totals.servicesSubtotal)}</span>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Subtotal Servicios:</span>
+                                    <span className="font-medium">{formatCurrency(totals.servicesSubtotal)}</span>
                                 </div>
-                                {totals.incrementAmount > 0 && (
-                                    <div className="flex items-center justify-between border-t py-2">
-                                        <span className="text-sm text-gray-600">
-                                            Incremento por componentes ({currentIncrement ? (currentIncrement.percentage * 100).toFixed(0) : 0}
-                                            %)
+                                {currentIncrement && (
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span className="text-gray-600">
+                                            Incremento por componentes ({(currentIncrement.percentage * 100).toFixed(0)}%):
                                         </span>
-                                        <span className="text-base font-medium">{formatCurrency(totals.incrementAmount)}</span>
+                                        <span className="font-medium">{formatCurrency(totals.incrementAmount)}</span>
                                     </div>
                                 )}
-                                <div className="flex items-center justify-between border-t py-2">
-                                    <span className="text-sm text-gray-600">Subtotal con incremento</span>
-                                    <span className="text-base font-medium">{formatCurrency(totals.subtotalWithIncrement)}</span>
+                                <div className="flex items-center justify-between border-t pt-2 text-sm">
+                                    <span className="text-gray-600">Subtotal con Incremento:</span>
+                                    <span className="font-medium">{formatCurrency(totals.subtotalWithIncrement)}</span>
                                 </div>
-                                <div className="flex items-center justify-between border-t py-2">
-                                    <span className="text-sm text-gray-600">Total cajas</span>
-                                    <span className="text-base font-medium">{formatCurrency(totals.boxTotal)}</span>
+                                <div className="flex items-center justify-between text-sm">
+                                    <span className="text-gray-600">Total Cajas:</span>
+                                    <span className="font-medium">{formatCurrency(totals.boxTotal)}</span>
                                 </div>
                                 <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
                                     <span className="text-lg font-bold text-gray-900">TOTAL</span>
