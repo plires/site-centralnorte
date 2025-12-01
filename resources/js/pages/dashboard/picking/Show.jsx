@@ -234,7 +234,7 @@ export default function Show({ auth, budget, businessConfig }) {
                             Descargar PDF
                         </Button>
 
-                        {budget.client_email && (
+                        {budget.client.email && (
                             <Button variant="outline" size="sm" onClick={() => setShowSendDialog(true)}>
                                 <Mail className="mr-2 h-4 w-4" />
                                 Enviar por Email
