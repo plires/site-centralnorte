@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Box, Calendar, Copy, DollarSign, Download, Edit, Mail, Package, Trash2, User } from 'lucide-react';
+import { Box, Calendar, Copy, Download, Edit, Mail, Package, PackagePlus, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -271,8 +271,8 @@ export default function Show({ auth, budget }) {
                             {budget.component_increment_description && (
                                 <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
                                     <p className="text-sm text-amber-900">
-                                        <span className="font-medium">Incremento por componentes:</span> {budget.component_increment_description} (
-                                        {(budget.component_increment_percentage * 100).toFixed(0)}%)
+                                        <span className="font-medium">Incremento por cantidad de componentes:</span>{' '}
+                                        {budget.component_increment_description} ({(budget.component_increment_percentage * 100).toFixed(0)}%)
                                     </p>
                                 </div>
                             )}
@@ -334,7 +334,7 @@ export default function Show({ auth, budget }) {
                         <Card className="mb-6">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <DollarSign className="h-5 w-5" />
+                                    <PackagePlus className="h-5 w-5" />
                                     Servicios Incluidos
                                 </CardTitle>
                             </CardHeader>
@@ -364,6 +364,14 @@ export default function Show({ auth, budget }) {
                                                     </td>
                                                 </tr>
                                             ))}
+                                            <tr className="bg-gray-50">
+                                                <td colSpan="3" className="px-3 py-3 text-right text-sm font-medium text-gray-700">
+                                                    Total Servicios:
+                                                </td>
+                                                <td className="px-3 py-3 text-right text-sm font-bold text-gray-900">
+                                                    {formatCurrency(budget.services_subtotal)}
+                                                </td>
+                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -385,7 +393,7 @@ export default function Show({ auth, budget }) {
                                 {budget.component_increment_amount > 0 && (
                                     <div className="flex items-center justify-between border-t py-2">
                                         <span className="text-sm text-gray-600">
-                                            Incremento por componentes ({(budget.component_increment_percentage * 100).toFixed(0)}%)
+                                            Incremento por cantidad de componentes ({(budget.component_increment_percentage * 100).toFixed(0)}%)
                                         </span>
                                         <span className="text-base font-medium">{formatCurrency(budget.component_increment_amount)}</span>
                                     </div>
@@ -395,7 +403,7 @@ export default function Show({ auth, budget }) {
                                     <span className="text-base font-medium">{formatCurrency(budget.subtotal_with_increment)}</span>
                                 </div>
                                 <div className="flex items-center justify-between border-t py-2">
-                                    <span className="text-sm text-gray-600">Total cajas</span>
+                                    <span className="text-sm text-gray-600">Subtotal cajas</span>
                                     <span className="text-base font-medium">{formatCurrency(budget.box_total)}</span>
                                 </div>
                                 <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
