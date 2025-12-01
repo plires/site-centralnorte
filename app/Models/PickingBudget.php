@@ -28,6 +28,10 @@ class PickingBudget extends Model
         'component_increment_amount',
         'subtotal_with_increment',
         'box_total', // es la suma de todas las cajas
+        'picking_payment_condition_id',
+        'payment_condition_description',
+        'payment_condition_percentage',
+        'payment_condition_amount',
         'total',
         'unit_price_per_kit',
         'status',
@@ -51,6 +55,8 @@ class PickingBudget extends Model
         'unit_price_per_kit' => 'decimal:2',
         'status' => PickingBudgetStatus::class,
         'valid_until' => 'date',
+        'payment_condition_percentage' => 'decimal:2',
+        'payment_condition_amount' => 'decimal:2',
     ];
 
     /**
@@ -83,6 +89,14 @@ class PickingBudget extends Model
     public function boxes(): HasMany
     {
         return $this->hasMany(PickingBudgetBox::class);
+    }
+
+    /**
+     * Relación con la condición de pago
+     */
+    public function paymentCondition(): BelongsTo
+    {
+        return $this->belongsTo(PickingPaymentCondition::class, 'picking_payment_condition_id');
     }
 
     /**
@@ -119,6 +133,14 @@ class PickingBudget extends Model
     }
 
     /**
+     * Obtener subtotal con el ajuste de condición de pago aplicado
+     */
+    public function getSubtotalWithPaymentCondition()
+    {
+        return ($this->subtotal_with_increment + $this->box_total) + $this->payment_condition_amount;
+    }
+
+    /**
      * Verificar si el presupuesto está vencido
      */
     public function isExpired(): bool
@@ -152,16 +174,37 @@ class PickingBudget extends Model
         $this->services_subtotal = $this->services()->sum('subtotal');
 
         // Incremento por componentes
-        $this->component_increment_amount = $this->services_subtotal * $this->component_increment_percentage;
+        $this->component_increment_amount = $this->services_subtotal * ($this->component_increment_percentage / 100);
 
         // Subtotal con incremento
         $this->subtotal_with_increment = $this->services_subtotal + $this->component_increment_amount;
 
-        // Total de cajas (suma de todas las cajas)
+        // Total de cajas
         $this->box_total = $this->boxes()->sum('subtotal');
 
-        // Total general
-        $this->total = $this->subtotal_with_increment + $this->box_total;
+        // Subtotal antes de payment condition e IVA
+        $subtotal = $this->subtotal_with_increment + $this->box_total;
+
+        // Calcular ajuste por condición de pago
+        $paymentConditionAmount = 0;
+        if ($this->payment_condition_percentage) {
+            $paymentConditionAmount = $subtotal * ($this->payment_condition_percentage / 100);
+        }
+        $this->payment_condition_amount = $paymentConditionAmount;
+
+        // Subtotal con ajuste de condición de pago
+        $subtotalWithPayment = $subtotal + $paymentConditionAmount;
+
+        // Aplicar IVA
+        $ivaRate = config('business.tax.iva_rate', 0.21);
+        $applyIva = config('business.tax.apply_iva', true);
+
+        // Total final
+        $total = $subtotalWithPayment;
+        if ($applyIva) {
+            $total = $subtotalWithPayment * (1 + $ivaRate);
+        }
+        $this->total = $total;
 
         // Precio unitario por kit
         $this->unit_price_per_kit = $this->total_kits > 0

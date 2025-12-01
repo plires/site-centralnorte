@@ -43,6 +43,9 @@ class StorePickingBudgetRequest extends FormRequest
             'services.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'services.*.quantity' => ['required', 'integer', 'min:1'],
 
+            // Condición de pago - Opcional
+            'picking_payment_condition_id' => ['nullable', 'exists:picking_payment_conditions,id'],
+
             // Notas opcionales
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
@@ -67,6 +70,7 @@ class StorePickingBudgetRequest extends FormRequest
             'services.*.service_description' => 'descripción del servicio',
             'services.*.unit_cost' => 'costo unitario del servicio',
             'services.*.quantity' => 'cantidad del servicio',
+            'picking_payment_condition_id' => 'condición de pago',
             'notes' => 'notas',
         ];
     }
@@ -109,6 +113,8 @@ class StorePickingBudgetRequest extends FormRequest
             'services.*.quantity.required' => 'La cantidad del servicio es obligatoria.',
             'services.*.quantity.integer' => 'La cantidad del servicio debe ser un número entero.',
             'services.*.quantity.min' => 'La cantidad del servicio debe ser al menos 1.',
+
+            'picking_payment_condition_id.exists' => 'La condición de pago seleccionada no existe.',
 
             'notes.string' => 'Las notas deben ser texto válido.',
             'notes.max' => 'Las notas no pueden superar los 1000 caracteres.',

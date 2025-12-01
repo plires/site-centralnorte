@@ -9,18 +9,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/app-layout';
 import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox';
+import PaymentConditionSelector from '@/pages/dashboard/budgets/components/PaymentConditionSelector';
 import { router, useForm } from '@inertiajs/react';
 import { Box, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
 
-export default function Create({ auth, boxes, costScales, clients, componentIncrements }) {
+export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, businessConfig }) {
     const handleClientSelect = (clientId) => {
         setData('client_id', clientId);
     };
 
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
+        picking_payment_condition_id: '',
         total_kits: '',
         total_components_per_kit: '',
         boxes: [],
@@ -51,6 +54,9 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
     const [bubbleWrapQuantity, setBubbleWrapQuantity] = useState('');
     const [palletizingType, setPalletizingType] = useState('');
     const [labelingType, setLabelingType] = useState('cost_without_labeling');
+
+    // Estado para payment condition seleccionada:
+    const [selectedPaymentCondition, setSelectedPaymentCondition] = useState(null);
 
     // Buscar escala según total_kits
     useEffect(() => {
@@ -233,22 +239,47 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
             return sum + unitCost * quantity;
         }, 0);
 
-        // Total final
-        const total = subtotalWithIncrement + boxTotal;
+        const subtotal = subtotalWithIncrement + boxTotal;
 
-        // Precio unitario por kit
-        const kits = parseInt(data.total_kits) || 0;
-        const unitPricePerKit = kits > 0 ? total / kits : 0;
+        // Calcular ajuste por condición de pago
+        let paymentConditionAmount = 0;
+        if (selectedPaymentCondition) {
+            paymentConditionAmount = subtotal * (parseFloat(selectedPaymentCondition.percentage) / 100);
+        }
+
+        const subtotalWithPayment = subtotal + paymentConditionAmount;
+
+        // Aplicar IVA
+        const ivaRate = businessConfig?.iva_rate ?? 0.21;
+        const applyIva = businessConfig?.apply_iva ?? true;
+        const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+
+        const total = subtotalWithPayment + ivaAmount;
+        const unitPricePerKit = data.total_kits > 0 ? total / data.total_kits : 0;
 
         setTotals({
             servicesSubtotal,
             incrementAmount,
             subtotalWithIncrement,
             boxTotal,
+            paymentConditionAmount,
+            subtotalWithPayment,
+            iva: ivaAmount,
             total,
             unitPricePerKit,
         });
-    }, [data.services, data.boxes, data.total_kits, currentIncrement]);
+    }, [data.services, data.boxes, data.total_kits, currentIncrement, selectedPaymentCondition, businessConfig]);
+
+    const handlePaymentConditionChange = (conditionId) => {
+        setData('picking_payment_condition_id', conditionId);
+
+        if (conditionId) {
+            const condition = paymentConditions.find((c) => c.id === parseInt(conditionId));
+            setSelectedPaymentCondition(condition || null);
+        } else {
+            setSelectedPaymentCondition(null);
+        }
+    };
 
     // Agregar caja
     const addBox = () => {
@@ -336,14 +367,13 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             {processing ? 'Guardando...' : 'Guardar Presupuesto'}
                         </Button>
                     </div>
-
                     {/* Información del Cliente */}
                     <Card>
                         <CardHeader>
                             <CardTitle>Información del Cliente</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div>
                                     <Label htmlFor="client_id">Cliente *</Label>
                                     <ClientCombobox
@@ -355,10 +385,23 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                     />
                                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
                                 </div>
+                                <div>
+                                    <Label htmlFor="client_id">Condición de pago *</Label>
+                                    {/* Selector de Condición de Pago */}
+                                    <PaymentConditionSelector
+                                        value={data.picking_payment_condition_id}
+                                        onChange={handlePaymentConditionChange}
+                                        paymentConditions={paymentConditions}
+                                        disabled={processing}
+                                        showInfo={true}
+                                    />
+                                    {errors.picking_payment_condition_id && (
+                                        <p className="mt-1 text-sm text-red-600">{errors.picking_payment_condition_id}</p>
+                                    )}
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
-
                     {/* Cantidades */}
                     <Card>
                         <CardHeader>
@@ -437,7 +480,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             )}
                         </CardContent>
                     </Card>
-
                     {/* Tipo de Armado */}
                     <Card>
                         <CardHeader>
@@ -445,7 +487,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                         </CardHeader>
                         <CardContent></CardContent>
                     </Card>
-
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                         {/* Servicios Adicionales */}
                         <Card>
@@ -682,7 +723,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             </CardContent>
                         </Card>
                     </div>
-
                     {/* Cajas */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
@@ -789,7 +829,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             )}
                         </CardContent>
                     </Card>
-
                     {/* Notas */}
                     <Card>
                         <CardHeader>
@@ -805,46 +844,15 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             {errors.notes && <p className="mt-1 text-sm text-red-600">{errors.notes}</p>}
                         </CardContent>
                     </Card>
-
                     {/* Resumen de Totales */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Resumen de Totales</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">Subtotal Servicios:</span>
-                                    <span className="font-medium">{formatCurrency(totals.servicesSubtotal)}</span>
-                                </div>
-                                {currentIncrement && (
-                                    <div className="flex items-center justify-between text-sm">
-                                        <span className="text-gray-600">
-                                            Incremento por componentes ({(currentIncrement.percentage * 100).toFixed(0)}%):
-                                        </span>
-                                        <span className="font-medium">{formatCurrency(totals.incrementAmount)}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between border-t pt-2 text-sm">
-                                    <span className="text-gray-600">Subtotal con Incremento:</span>
-                                    <span className="font-medium">{formatCurrency(totals.subtotalWithIncrement)}</span>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">Total Cajas:</span>
-                                    <span className="font-medium">{formatCurrency(totals.boxTotal)}</span>
-                                </div>
-                                <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
-                                    <span className="text-lg font-bold text-gray-900">TOTAL</span>
-                                    <span className="text-2xl font-bold text-blue-600">{formatCurrency(totals.total)}</span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                                    <span className="text-sm font-medium text-green-900">Precio unitario por kit</span>
-                                    <span className="text-lg font-bold text-green-600">{formatCurrency(totals.unitPricePerKit)}</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
+                    <PickingBudgetTotalsSection
+                        totals={totals}
+                        incrementInfo={currentIncrement}
+                        paymentCondition={selectedPaymentCondition}
+                        totalKits={data.total_kits}
+                        ivaRate={businessConfig?.iva_rate ?? 0.21}
+                        showIva={businessConfig?.apply_iva ?? true}
+                    />
                     {/* Botón de guardar al final */}
                     <div className="flex justify-end gap-3">
                         <Button type="button" variant="outline" onClick={() => router.visit(route('dashboard.picking.budgets.index'))}>

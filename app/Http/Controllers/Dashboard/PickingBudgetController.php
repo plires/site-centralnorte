@@ -18,6 +18,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PickingBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Models\PickingPaymentCondition;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\StorePickingBudgetRequest;
 use App\Http\Requests\Picking\UpdatePickingBudgetRequest;
@@ -110,11 +111,21 @@ class PickingBudgetController extends Controller
                 ];
             });
 
+        // Cargar condiciones de pago activas
+        $paymentConditions = PickingPaymentCondition::active()
+            ->orderBy('description')
+            ->get();
+
         return Inertia::render('dashboard/picking/Create', [
             'clients' => $clients,
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
+            'paymentConditions' => $paymentConditions,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ],
         ]);
     }
 
@@ -123,6 +134,21 @@ class PickingBudgetController extends Controller
      */
     public function store(StorePickingBudgetRequest $request)
     {
+
+
+        // Obtener snapshot de la condición de pago si fue seleccionada
+        $paymentConditionData = [];
+        if (!empty($request['picking_payment_condition_id'])) {
+            $paymentCondition = PickingPaymentCondition::find($request['picking_payment_condition_id']);
+            if ($paymentCondition) {
+                $paymentConditionData = [
+                    'picking_payment_condition_id' => $paymentCondition->id,
+                    'payment_condition_description' => $paymentCondition->description,
+                    'payment_condition_percentage' => $paymentCondition->percentage,
+                ];
+            }
+        }
+
         DB::beginTransaction();
 
         try {
@@ -141,7 +167,7 @@ class PickingBudgetController extends Controller
             }
 
             // Crear el presupuesto con snapshots
-            $budget = PickingBudget::create([
+            $budget = PickingBudget::create(array_merge([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
                 'vendor_id' => Auth::id(),
                 'client_id' => $validated['client_id'],
@@ -164,7 +190,7 @@ class PickingBudgetController extends Controller
                 'status' => PickingBudgetStatus::DRAFT,
                 'valid_until' => now()->addDays(30),
                 'notes' => $validated['notes'] ?? null,
-            ]);
+            ], $paymentConditionData));
 
             // Crear las cajas seleccionadas (soporte múltiples cajas)
             if (!empty($validated['boxes'])) {
@@ -222,15 +248,24 @@ class PickingBudgetController extends Controller
     {
         $user = Auth::user();
 
-        // Verificar permiso (admin o propietario)
         if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para ver este presupuesto.');
         }
 
-        $pickingBudget->load(['vendor:id,name,email', 'client:id,name,email,phone,company,address', 'services', 'boxes']);
+        $pickingBudget->load([
+            'vendor:id,name,email',
+            'client:id,name,email,phone,company,address',
+            'services',
+            'boxes',
+            'paymentCondition'
+        ]);
 
         return Inertia::render('dashboard/picking/Show', [
             'budget' => $pickingBudget,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ],
         ]);
     }
 

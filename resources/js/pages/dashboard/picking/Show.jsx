@@ -15,15 +15,47 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Box, Calendar, Copy, Download, Edit, Mail, Package, PackagePlus, Trash2, User } from 'lucide-react';
+import { Box, Calendar, Copy, DollarSign, Download, Edit, Mail, Package, PackagePlus, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
 
-export default function Show({ auth, budget }) {
+export default function Show({ auth, budget, businessConfig }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showSendDialog, setShowSendDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    // Estado para totales calculados
+    const [calculatedTotals, setCalculatedTotals] = useState({
+        servicesSubtotal: 0,
+        incrementAmount: 0,
+        subtotalWithIncrement: 0,
+        boxTotal: 0,
+        paymentConditionAmount: 0,
+        iva: 0,
+        total: 0,
+        unitPricePerKit: 0,
+    });
+
+    // Obtener configuración de IVA
+    const ivaRate = businessConfig?.iva_rate ?? 0.21;
+    const applyIva = businessConfig?.apply_iva ?? true;
+
+    // Preparar información de incremento para el componente
+    const incrementInfo = budget.component_increment_description
+        ? {
+              description: budget.component_increment_description,
+              percentage: parseFloat(budget.component_increment_percentage) || 0,
+          }
+        : null;
+
+    // Preparar información de payment condition para el componente
+    const paymentConditionInfo = budget.payment_condition_description
+        ? {
+              description: budget.payment_condition_description,
+              percentage: parseFloat(budget.payment_condition_percentage) || 0,
+          }
+        : null;
 
     // Mostrar toast si hay mensaje flash
     useEffect(() => {
@@ -34,6 +66,45 @@ export default function Show({ auth, budget }) {
             toast.error(window.history.state.flash.error);
         }
     }, []);
+
+    // Calcular totales (incluye IVA y payment condition)
+    useEffect(() => {
+        // Calcular incremento por componentes
+        const servicesSubtotal = parseFloat(budget.services_subtotal) || 0;
+        const incrementAmount = parseFloat(budget.component_increment_amount * 100) || 0;
+        const subtotalWithIncrement = servicesSubtotal + incrementAmount;
+
+        const boxTotal = parseFloat(budget.box_total) || 0;
+
+        // Subtotal base (antes de payment condition e IVA)
+        const subtotalBase = subtotalWithIncrement + boxTotal;
+
+        // Calcular ajuste por condición de pago
+        let paymentConditionAmount = 0;
+        if (budget.payment_condition_percentage) {
+            paymentConditionAmount = subtotalBase * (parseFloat(budget.payment_condition_percentage) / 100);
+        }
+
+        const subtotalWithPayment = subtotalBase + paymentConditionAmount;
+
+        // Calcular IVA
+        const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+        const total = subtotalWithPayment + ivaAmount;
+
+        // Precio unitario por kit
+        const unitPricePerKit = parseFloat(budget.unit_price_per_kit) || 0;
+
+        setCalculatedTotals({
+            servicesSubtotal,
+            incrementAmount,
+            subtotalWithIncrement,
+            boxTotal,
+            paymentConditionAmount,
+            iva: ivaAmount,
+            total,
+            unitPricePerKit,
+        });
+    }, [budget, ivaRate, applyIva]);
 
     const handleDelete = () => {
         setIsDeleting(true);
@@ -235,6 +306,25 @@ export default function Show({ auth, budget }) {
                                     <p className="text-sm font-medium text-gray-500">Válido hasta</p>
                                     <p className="text-base text-gray-900">{formatDate(budget.valid_until)}</p>
                                 </div>
+
+                                {/* Condición de Pago */}
+                                {budget.payment_condition_description && (
+                                    <div className="flex items-start justify-between border-t pt-3">
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign className="h-4 w-4 text-gray-500" />
+                                            <span className="text-sm text-gray-600">Condición de Pago:</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="font-medium">{budget.payment_condition_description}</span>
+                                            <span
+                                                className={`ml-2 text-sm ${parseFloat(budget.payment_condition_percentage) >= 0 ? 'text-red-600' : 'text-green-600'}`}
+                                            >
+                                                ({parseFloat(budget.payment_condition_percentage) > 0 ? '+' : ''}
+                                                {parseFloat(budget.payment_condition_percentage).toFixed(2)}%)
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                                 {budget.production_time && (
                                     <div>
                                         <p className="text-sm font-medium text-gray-500">Tiempo de producción</p>
@@ -379,44 +469,15 @@ export default function Show({ auth, budget }) {
                         </Card>
                     )}
 
-                    {/* Totales */}
-                    <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle>Totales del Presupuesto</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between py-2">
-                                    <span className="text-sm text-gray-600">Subtotal servicios</span>
-                                    <span className="text-base font-medium">{formatCurrency(budget.services_subtotal)}</span>
-                                </div>
-                                {budget.component_increment_amount > 0 && (
-                                    <div className="flex items-center justify-between border-t py-2">
-                                        <span className="text-sm text-gray-600">
-                                            Incremento por cantidad de componentes ({(budget.component_increment_percentage * 100).toFixed(0)}%)
-                                        </span>
-                                        <span className="text-base font-medium">{formatCurrency(budget.component_increment_amount)}</span>
-                                    </div>
-                                )}
-                                <div className="flex items-center justify-between border-t py-2">
-                                    <span className="text-sm text-gray-600">Subtotal con incremento</span>
-                                    <span className="text-base font-medium">{formatCurrency(budget.subtotal_with_increment)}</span>
-                                </div>
-                                <div className="flex items-center justify-between border-t py-2">
-                                    <span className="text-sm text-gray-600">Subtotal cajas</span>
-                                    <span className="text-base font-medium">{formatCurrency(budget.box_total)}</span>
-                                </div>
-                                <div className="flex items-center justify-between border-t-2 border-gray-300 py-3">
-                                    <span className="text-lg font-bold text-gray-900">TOTAL</span>
-                                    <span className="text-2xl font-bold text-blue-600">{formatCurrency(budget.total)}</span>
-                                </div>
-                                <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                                    <span className="text-sm font-medium text-green-900">Precio unitario por kit</span>
-                                    <span className="text-lg font-bold text-green-600">{formatCurrency(budget.unit_price_per_kit)}</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Totales con IVA y Payment Condition */}
+                    <PickingBudgetTotalsSection
+                        totals={calculatedTotals}
+                        incrementInfo={incrementInfo}
+                        paymentCondition={paymentConditionInfo}
+                        totalKits={budget.total_kits}
+                        ivaRate={ivaRate}
+                        showIva={applyIva}
+                    />
 
                     {/* Notas */}
                     {budget.notes && (
