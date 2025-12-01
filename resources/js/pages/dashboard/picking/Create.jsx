@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox';
 import PaymentConditionSelector from '@/pages/dashboard/budgets/components/PaymentConditionSelector';
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
 
 export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, businessConfig }) {
+    const { handleResponse } = useInertiaResponse();
     const handleClientSelect = (clientId) => {
         setData('client_id', clientId);
     };
@@ -374,7 +376,7 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             <CardTitle>Información del Cliente</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <div className="grid grid-cols-1 gap-4">
                                 <div>
                                     <Label htmlFor="client_id">Cliente *</Label>
                                     <ClientCombobox
@@ -385,20 +387,6 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                         placeholder="Seleccionar cliente..."
                                     />
                                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
-                                </div>
-                                <div>
-                                    <Label htmlFor="client_id">Condición de pago *</Label>
-                                    {/* Selector de Condición de Pago */}
-                                    <PaymentConditionSelector
-                                        value={data.picking_payment_condition_id}
-                                        onChange={handlePaymentConditionChange}
-                                        paymentConditions={paymentConditions}
-                                        disabled={processing}
-                                        showInfo={true}
-                                    />
-                                    {errors.picking_payment_condition_id && (
-                                        <p className="mt-1 text-sm text-red-600">{errors.picking_payment_condition_id}</p>
-                                    )}
                                 </div>
                             </div>
                         </CardContent>
@@ -830,6 +818,19 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             )}
                         </CardContent>
                     </Card>
+
+                    {/* Selector de Condición de Pago */}
+                    <div>
+                        <Label htmlFor="client_id">Condición de pago *</Label>
+                        <PaymentConditionSelector
+                            value={data.picking_payment_condition_id}
+                            onChange={handlePaymentConditionChange}
+                            paymentConditions={paymentConditions}
+                            disabled={processing}
+                            showInfo={true}
+                        />
+                        {errors.picking_payment_condition_id && <p className="mt-1 text-sm text-red-600">{errors.picking_payment_condition_id}</p>}
+                    </div>
                     {/* Notas */}
                     <Card>
                         <CardHeader>
