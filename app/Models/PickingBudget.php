@@ -174,7 +174,7 @@ class PickingBudget extends Model
         $this->services_subtotal = $this->services()->sum('subtotal');
 
         // Incremento por componentes
-        $this->component_increment_amount = $this->services_subtotal * ($this->component_increment_percentage / 100);
+        $this->component_increment_amount = $this->services_subtotal * $this->component_increment_percentage;
 
         // Subtotal con incremento
         $this->subtotal_with_increment = $this->services_subtotal + $this->component_increment_amount;
