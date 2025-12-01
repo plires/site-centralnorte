@@ -65,7 +65,7 @@ export default function PickingBudgetTotalsSection({
                     {/* Subtotal Base (antes de payment condition e IVA) */}
                     <div className="flex items-center justify-between border-t pt-2 font-medium">
                         <span className="text-gray-700">Subtotal:</span>
-                        <span className="text-gray-900">{formatCurrency(totals.subtotal || totals.subtotalWithIncrement + totals.boxTotal)}</span>
+                        <span className="text-gray-900">{formatCurrency(totals.subtotal)}</span>
                     </div>
 
                     {/* Ajuste por Condición de Pago */}

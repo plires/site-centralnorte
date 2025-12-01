@@ -71,7 +71,7 @@ export default function Show({ auth, budget, businessConfig }) {
     useEffect(() => {
         // Calcular incremento por componentes
         const servicesSubtotal = parseFloat(budget.services_subtotal) || 0;
-        const incrementAmount = parseFloat(budget.component_increment_amount * 100) || 0;
+        const incrementAmount = parseFloat(budget.component_increment_amount) || 0;
         const subtotalWithIncrement = servicesSubtotal + incrementAmount;
 
         const boxTotal = parseFloat(budget.box_total) || 0;

@@ -262,6 +262,7 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
             incrementAmount,
             subtotalWithIncrement,
             boxTotal,
+            subtotal,
             paymentConditionAmount,
             subtotalWithPayment,
             iva: ivaAmount,
