@@ -23,8 +23,8 @@ return new class extends Migration
             $table->decimal('cost_with_assembly', 10, 2);
             $table->decimal('palletizing_without_pallet', 10, 2);
             $table->decimal('palletizing_with_pallet', 10, 2);
-            $table->decimal('cost_with_labeling', 10, 2);
             $table->decimal('cost_without_labeling', 10, 2);
+            $table->decimal('cost_with_labeling', 10, 2);
             $table->decimal('additional_assembly', 10, 2);
             $table->decimal('quality_control', 10, 2);
 
