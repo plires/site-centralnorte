@@ -136,12 +136,47 @@
             width: 30%;
         }
 
+        .totals-separator {
+            border-top: 1px solid #d1d5db;
+            margin: 10px 0;
+        }
+
+        /* Estilos para payment condition */
+        .payment-condition-positive {
+            color: #dc2626;
+        }
+
+        .payment-condition-negative {
+            color: #16a34a;
+        }
+
+        .payment-condition-note {
+            font-size: 9px;
+            font-style: italic;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .subtotal-base {
+            border-top: 1px solid #9ca3af;
+            padding-top: 8px;
+            margin-top: 5px;
+        }
+
         .total-final {
             border-top: 2px solid #2563eb;
             padding-top: 10px;
             margin-top: 10px;
             font-size: 16px;
             color: #2563eb;
+        }
+
+        .price-per-kit {
+            background-color: #dcfce7;
+            border: 1px solid #86efac;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
         }
 
         .notes-box {
@@ -190,16 +225,16 @@
                     <div class="info-label">Cliente:</div>
                     <div class="info-value">{{ $budget->client->name }}</div>
                 </div>
-                @if ($budget->client . email)
+                @if ($budget->client->email)
                     <div class="info-row">
                         <div class="info-label">Email:</div>
-                        <div class="info-value">{{ $budget->client . email }}</div>
+                        <div class="info-value">{{ $budget->client->email }}</div>
                     </div>
                 @endif
-                @if ($budget->client . phone)
+                @if ($budget->client->phone)
                     <div class="info-row">
                         <div class="info-label">Teléfono:</div>
-                        <div class="info-value">{{ $budget->client . phone }}</div>
+                        <div class="info-value">{{ $budget->client->phone }}</div>
                     </div>
                 @endif
                 <div class="info-row">
@@ -221,14 +256,35 @@
                     <div class="info-label">Componentes por kit:</div>
                     <div class="info-value">{{ $budget->total_components_per_kit }} componentes</div>
                 </div>
-                <div class="info-row">
-                    <div class="info-label">Caja a utilizar:</div>
-                    <div class="info-value">{{ $budget->box_dimensions }}</div>
-                </div>
+                @if ($budget->boxes && $budget->boxes->count() > 0)
+                    <div class="info-row">
+                        <div class="info-label">Caja/s a utilizar:</div>
+                        <div class="info-value">
+                            {{ $budget->boxes->pluck('box_dimensions')->join(', ') }}
+                        </div>
+                    </div>
+                @endif
                 <div class="info-row">
                     <div class="info-label">Tiempo de producción:</div>
                     <div class="info-value"><strong>{{ $budget->production_time }}</strong></div>
                 </div>
+                @if ($budget->payment_condition_description)
+                    <div class="info-row">
+                        <div class="info-label">Condición de Pago:</div>
+                        <div class="info-value">
+                            <strong>{{ $budget->payment_condition_description }}</strong>
+                            @if ($budget->payment_condition_percentage)
+                                @php
+                                    $percentage = $budget->payment_condition_percentage;
+                                    $isPositive = $percentage > 0;
+                                @endphp
+                                <span style="color: {{ $isPositive ? '#dc2626' : '#16a34a' }};">
+                                    ({{ $isPositive ? '+' : '' }}{{ number_format($percentage, 2, ',', '.') }}%)
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -239,55 +295,142 @@
                 <thead>
                     <tr>
                         <th style="width: 40%;">Servicio</th>
-                        <th style="width: 15%;" class="text-right">Cantidad</th>
-                        <th style="width: 20%;" class="text-right">Costo Unitario</th>
-                        <th style="width: 25%;" class="text-right">Subtotal</th>
+                        <th style="width: 15%;" class="text-left">Cantidad</th>
+                        <th style="width: 20%;" class="text-left">Costo Unitario</th>
+                        <th style="width: 25%;" class="text-left">Subtotal</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($budget->services as $service)
                         <tr>
                             <td>{{ $service->service_description }}</td>
-                            <td class="text-right">
+                            <td class="text-left">
                                 {{ $service->quantity > 1 ? number_format($service->quantity, 0, ',', '.') : '-' }}
                             </td>
-                            <td class="text-right">${{ number_format($service->unit_cost, 2, ',', '.') }}</td>
-                            <td class="text-right">${{ number_format($service->subtotal, 2, ',', '.') }}</td>
+                            <td class="text-left">${{ number_format($service->unit_cost, 2, ',', '.') }}
+                            </td>
+                            <td class="text-left">${{ number_format($service->subtotal, 2, ',', '.') }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
 
-        <!-- TOTALES -->
+        <!-- TOTALES CON PAYMENT CONDITION E IVA -->
         <div class="totals-box">
+            <!-- Subtotal servicios -->
             <div class="totals-row">
                 <div class="totals-label">Subtotal servicios:</div>
                 <div class="totals-value">${{ number_format($budget->services_subtotal, 2, ',', '.') }}</div>
             </div>
 
-            <div class="totals-row">
-                <div class="totals-label">
-                    Incremento por componentes ({{ $budget->component_increment_description }}):
+            <!-- Incremento por componentes -->
+            @if ($budget->component_increment_amount > 0)
+                <div class="totals-row">
+                    <div class="totals-label">
+                        Incremento por componentes ({{ $budget->component_increment_description }}):
+                    </div>
+                    <div class="totals-value">${{ number_format($budget->component_increment_amount, 2, ',', '.') }}
+                    </div>
                 </div>
-                <div class="totals-value">${{ number_format($budget->component_increment_amount, 2, ',', '.') }}</div>
+            @endif
+
+            <!-- Total cajas -->
+            @if ($budget->box_total > 0)
+                <div class="totals-row">
+                    <div class="totals-label">
+                        Costo de caja/s
+                        @if ($budget->boxes && $budget->boxes->count() > 0)
+                            ({{ $budget->boxes->pluck('box_dimensions')->join(', ') }})
+                        @endif:
+                    </div>
+                    <div class="totals-value">${{ number_format($budget->box_total, 2, ',', '.') }}</div>
+                </div>
+            @endif
+
+            <!-- Subtotal base (antes de payment condition e IVA) -->
+            <div class="totals-row subtotal-base">
+                <div class="totals-label">Subtotal:</div>
+                <div class="totals-value">
+                    ${{ number_format($budget->subtotal_with_increment + $budget->box_total, 2, ',', '.') }}
+                </div>
             </div>
 
-            <div class="totals-row">
-                <div class="totals-label">Subtotal con incremento:</div>
-                <div class="totals-value">${{ number_format($budget->subtotal_with_increment, 2, ',', '.') }}</div>
-            </div>
+            <!-- Payment Condition -->
+            @if ($budget->payment_condition_percentage && $budget->payment_condition_amount != 0)
+                @php
+                    $isPositive = $budget->payment_condition_percentage > 0;
+                    $colorClass = $isPositive ? 'payment-condition-positive' : 'payment-condition-negative';
+                @endphp
+                <div class="totals-row" style="margin-top: 10px;">
+                    <div class="totals-label">
+                        Condición de Pago ({{ $budget->payment_condition_description }})
+                        <span class="{{ $colorClass }}">
+                            ({{ $isPositive ? '+' : '' }}{{ number_format($budget->payment_condition_percentage, 2, ',', '.') }}%)
+                        </span>:
+                        <div class="payment-condition-note">
+                            @if ($isPositive)
+                                Se aplicó un recargo del
+                                {{ number_format($budget->payment_condition_percentage, 2, ',', '.') }}% sobre el
+                                subtotal
+                            @else
+                                Se aplicó un descuento del
+                                {{ number_format(abs($budget->payment_condition_percentage), 2, ',', '.') }}% sobre el
+                                subtotal
+                            @endif
+                        </div>
+                    </div>
+                    <div class="totals-value {{ $colorClass }}">
+                        {{ $isPositive ? '+' : '-' }}
+                        ${{ number_format(abs($budget->payment_condition_amount), 2, ',', '.') }}
+                    </div>
+                </div>
+            @endif
 
-            <div class="totals-row">
-                <div class="totals-label">Costo de caja ({{ $budget->box_dimensions }}):</div>
-                <div class="totals-value">${{ number_format($budget->box_total, 2, ',', '.') }}</div>
-            </div>
+            <!-- IVA -->
+            @php
+                $ivaRate = config('business.tax.iva_rate', 0.21);
+                $applyIva = config('business.tax.apply_iva', true);
 
+                // Calcular subtotal con payment condition
+                $subtotalBase = $budget->subtotal_with_increment + $budget->box_total;
+                $subtotalWithPayment = $subtotalBase + ($budget->payment_condition_amount ?? 0);
+
+                // Calcular IVA
+                $ivaAmount = $applyIva ? $subtotalWithPayment * $ivaRate : 0;
+            @endphp
+
+            @if ($applyIva && $ivaAmount > 0)
+                <div class="totals-row" style="margin-top: 5px;">
+                    <div class="totals-label">IVA ({{ number_format($ivaRate * 100, 0) }}%):</div>
+                    <div class="totals-value" style="color: #6b7280;">
+                        ${{ number_format($ivaAmount, 2, ',', '.') }}
+                    </div>
+                </div>
+            @endif
+
+            <!-- Total Final -->
             <div class="totals-row total-final">
                 <div class="totals-label" style="font-size: 16px;">TOTAL:</div>
-                <div class="totals-value" style="font-size: 18px;">${{ number_format($budget->total, 2, ',', '.') }}
+                <div class="totals-value" style="font-size: 18px;">
+                    ${{ number_format($budget->total, 2, ',', '.') }}
                 </div>
             </div>
+
+            <!-- Precio por Kit -->
+            @if ($budget->unit_price_per_kit > 0)
+                <div class="price-per-kit">
+                    <div class="totals-row" style="margin: 0;">
+                        <div class="totals-label" style="color: #166534; font-weight: bold;">
+                            Precio unitario por kit ({{ number_format($budget->total_kits, 0, ',', '.') }} kits):
+                        </div>
+                        <div class="totals-value" style="color: #166534; font-size: 14px;">
+                            ${{ number_format($budget->unit_price_per_kit, 2, ',', '.') }}
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
 
         <!-- NOTAS -->
@@ -306,6 +449,9 @@
                 <li>Los tiempos de producción son estimativos y pueden variar según disponibilidad.</li>
                 <li>Los precios están sujetos a cambios sin previo aviso una vez vencido el presupuesto.</li>
                 <li>Se requiere confirmación por escrito para iniciar la producción.</li>
+                @if ($applyIva)
+                    <li>Todos los precios incluyen IVA ({{ number_format($ivaRate * 100, 0) }}%).</li>
+                @endif
             </ul>
         </div>
     </div>
