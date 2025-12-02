@@ -26,6 +26,7 @@ export default function Show({ auth, budget, businessConfig }) {
     const [showSendDialog, setShowSendDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    
     // Estado para totales calculados
     const [calculatedTotals, setCalculatedTotals] = useState({
         servicesSubtotal: 0,
@@ -40,7 +41,7 @@ export default function Show({ auth, budget, businessConfig }) {
 
     // Hook para manejar respuestas de Inertia
     const { handleCrudResponse } = useInertiaResponse();
-
+    
     // Obtener props.flash para los mensajes
     const { props } = usePage();
 
@@ -123,7 +124,10 @@ export default function Show({ auth, budget, businessConfig }) {
 
     const handleDelete = () => {
         setIsDeleting(true);
-        router.delete(route('dashboard.picking.budgets.destroy', budget.id), handleCrudResponse(setIsDeleting));
+        router.delete(
+            route('dashboard.picking.budgets.destroy', budget.id),
+            handleCrudResponse(setIsDeleting)
+        );
     };
 
     const handleSendEmail = () => {
@@ -133,7 +137,7 @@ export default function Show({ auth, budget, businessConfig }) {
             {},
             handleCrudResponse(setIsSending, () => {
                 setShowSendDialog(false);
-            }),
+            })
         );
     };
 
@@ -156,33 +160,32 @@ export default function Show({ auth, budget, businessConfig }) {
         }).format(value);
     };
 
-    const formatDate = (date) => {
-        return new Date(date).toLocaleDateString('es-AR', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            timeZone: 'America/Argentina/Buenos_Aires',
-        });
-    };
+    // Determinar permisos
+    const canEdit = auth.user?.role === 'admin' || budget.user_id === auth.user?.id;
+    const canDelete = auth.user?.role === 'admin' || budget.user_id === auth.user?.id;
 
     const StatusBadge = ({ status }) => {
-        const variants = {
+        const statusColors = {
             draft: 'bg-gray-100 text-gray-800',
+            pending: 'bg-yellow-100 text-yellow-800',
             sent: 'bg-blue-100 text-blue-800',
             approved: 'bg-green-100 text-green-800',
             rejected: 'bg-red-100 text-red-800',
-            expired: 'bg-orange-100 text-orange-800',
         };
 
-        const labels = {
+        const statusLabels = {
             draft: 'Borrador',
+            pending: 'Pendiente',
             sent: 'Enviado',
             approved: 'Aprobado',
             rejected: 'Rechazado',
-            expired: 'Vencido',
         };
 
-        return <Badge className={variants[status] || variants.draft}>{labels[status] || status}</Badge>;
+        return (
+            <Badge className={`${statusColors[status] || statusColors.draft} rounded-full px-3 py-1`}>
+                {statusLabels[status] || status}
+            </Badge>
+        );
     };
 
     const breadcrumbs = [
@@ -191,26 +194,22 @@ export default function Show({ auth, budget, businessConfig }) {
             href: '/dashboard/picking',
         },
         {
-            title: 'Detalles del Presupuesto',
+            title: `Presupuesto ${budget.budget_number}`,
             href: '#',
         },
     ];
-
-    const canEdit = budget.status === 'draft';
-    const canDelete = budget.status === 'draft';
-    const canSendEmail = budget.client.email;
 
     return (
         <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
             <Head title={`Presupuesto ${budget.budget_number}`} />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    {/* Header con acciones */}
+            <div className="p-6">
+                <div className="mx-auto max-w-7xl">
+                    {/* Header con título y estado */}
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">Presupuesto {budget.budget_number}</h2>
-                            <p className="mt-1 text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
+                            <h1 className="text-2xl font-bold text-gray-900">Presupuesto {budget.budget_number}</h1>
+                            <p className="text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
                         </div>
                         <StatusBadge status={budget.status} />
                     </div>
@@ -233,7 +232,7 @@ export default function Show({ auth, budget, businessConfig }) {
                             Descargar PDF
                         </Button>
 
-                        {canSendEmail && (
+                        {budget.client.email && (
                             <Button variant="outline" size="sm" onClick={() => setShowSendDialog(true)}>
                                 <Mail className="mr-2 h-4 w-4" />
                                 Enviar por Email
@@ -254,107 +253,72 @@ export default function Show({ auth, budget, businessConfig }) {
                     </div>
 
                     {/* Grid de información */}
-                    <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Información del Cliente */}
+                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <User className="h-5 w-5" />
-                                    Información del Cliente
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Nombre</p>
-                                    <p className="text-base text-gray-900">{budget.client.name}</p>
-                                </div>
-                                {budget.client.company && (
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-500">Empresa</p>
-                                        <p className="text-base text-gray-900">{budget.client.company}</p>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                                        <User className="h-5 w-5 text-blue-600" />
                                     </div>
-                                )}
-                                {budget.client.email && (
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500">Email</p>
-                                        <p className="text-base text-gray-900">{budget.client.email}</p>
+                                        <p className="text-sm text-gray-600">Cliente</p>
+                                        <p className="font-semibold">{budget.client.name}</p>
                                     </div>
-                                )}
-
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Vendedor</p>
-                                    <p className="text-base text-gray-900">{budget.vendor.name}</p>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        {/* Información del Presupuesto */}
                         <Card>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Calendar className="h-5 w-5" />
-                                    Información del Presupuesto
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-3">
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Fecha de creación</p>
-                                    <p className="text-base text-gray-900">{formatDate(budget.created_at)}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium text-gray-500">Válido hasta</p>
-                                    <p className="text-base text-gray-900">{formatDate(budget.valid_until)}</p>
-                                </div>
-
-                                {/* Condición de Pago */}
-                                {budget.payment_condition_description && (
-                                    <div className="flex items-start justify-between border-t pt-3">
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign className="h-4 w-4 text-gray-500" />
-                                            <span className="text-sm text-gray-600">Condición de Pago:</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <span className="font-medium">{budget.payment_condition_description}</span>
-                                            <span
-                                                className={`ml-2 text-sm ${parseFloat(budget.payment_condition_percentage) >= 0 ? 'text-red-600' : 'text-green-600'}`}
-                                            >
-                                                ({parseFloat(budget.payment_condition_percentage) > 0 ? '+' : ''}
-                                                {parseFloat(budget.payment_condition_percentage).toFixed(2)}%)
-                                            </span>
-                                        </div>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                                        <Package className="h-5 w-5 text-green-600" />
                                     </div>
-                                )}
-                                {budget.production_time && (
                                     <div>
-                                        <p className="text-sm font-medium text-gray-500">Tiempo de producción</p>
-                                        <p className="text-base text-gray-900">{budget.production_time}</p>
+                                        <p className="text-sm text-gray-600">Total de Kits</p>
+                                        <p className="font-semibold">{budget.total_kits.toLocaleString('es-AR')}</p>
                                     </div>
-                                )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                                        <PackagePlus className="h-5 w-5 text-purple-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Componentes por Kit</p>
+                                        <p className="font-semibold">{budget.total_components_per_kit}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                                        <Calendar className="h-5 w-5 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Fecha</p>
+                                        <p className="font-semibold">{new Date(budget.created_at).toLocaleDateString('es-AR')}</p>
+                                    </div>
+                                </div>
                             </CardContent>
                         </Card>
                     </div>
 
-                    {/* Cantidades */}
+                    {/* Información de precio unitario */}
                     <Card className="mb-6">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Package className="h-5 w-5" />
-                                Cantidades
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                                <div className="rounded-lg bg-blue-50 p-4">
-                                    <p className="text-sm font-medium text-blue-900">Total de Kits</p>
-                                    <p className="mt-1 text-2xl font-bold text-blue-600">{budget.total_kits.toLocaleString('es-AR')}</p>
-                                </div>
-                                <div className="rounded-lg bg-purple-50 p-4">
-                                    <p className="text-sm font-medium text-purple-900">Componentes por Kit</p>
-                                    <p className="mt-1 text-2xl font-bold text-purple-600">{budget.total_components_per_kit}</p>
-                                </div>
-                                <div className="rounded-lg bg-green-50 p-4">
-                                    <p className="text-sm font-medium text-green-900">Precio Unitario por Kit</p>
-                                    <p className="mt-1 text-2xl font-bold text-green-600">{formatCurrency(budget.unit_price_per_kit)}</p>
+                        <CardContent className="pt-6">
+                            <div className="flex items-center gap-4">
+                                <DollarSign className="h-8 w-8 text-green-600" />
+                                <div className="flex-1">
+                                    <p className="text-sm text-gray-600">Precio Unitario por Kit</p>
+                                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(budget.unit_price_per_kit)}</p>
                                 </div>
                             </div>
                             {budget.component_increment_description && (
@@ -403,14 +367,6 @@ export default function Show({ auth, budget, businessConfig }) {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            <tr className="bg-gray-50">
-                                                <td colSpan="3" className="px-3 py-3 text-right text-sm font-medium text-gray-700">
-                                                    Total Cajas:
-                                                </td>
-                                                <td className="px-3 py-3 text-right text-sm font-bold text-gray-900">
-                                                    {formatCurrency(budget.box_total)}
-                                                </td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -423,7 +379,7 @@ export default function Show({ auth, budget, businessConfig }) {
                         <Card className="mb-6">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <PackagePlus className="h-5 w-5" />
+                                    <Package className="h-5 w-5" />
                                     Servicios Incluidos
                                 </CardTitle>
                             </CardHeader>
@@ -453,14 +409,6 @@ export default function Show({ auth, budget, businessConfig }) {
                                                     </td>
                                                 </tr>
                                             ))}
-                                            <tr className="bg-gray-50">
-                                                <td colSpan="3" className="px-3 py-3 text-right text-sm font-medium text-gray-700">
-                                                    Total Servicios:
-                                                </td>
-                                                <td className="px-3 py-3 text-right text-sm font-bold text-gray-900">
-                                                    {formatCurrency(budget.services_subtotal)}
-                                                </td>
-                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -468,7 +416,7 @@ export default function Show({ auth, budget, businessConfig }) {
                         </Card>
                     )}
 
-                    {/* Totales con IVA y Payment Condition */}
+                    {/* Resumen de Totales */}
                     <PickingBudgetTotalsSection
                         totals={calculatedTotals}
                         incrementInfo={incrementInfo}
@@ -480,12 +428,12 @@ export default function Show({ auth, budget, businessConfig }) {
 
                     {/* Notas */}
                     {budget.notes && (
-                        <Card>
+                        <Card className="mb-6">
                             <CardHeader>
                                 <CardTitle>Notas</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm whitespace-pre-wrap text-gray-700">{budget.notes}</p>
+                                <p className="whitespace-pre-wrap text-gray-700">{budget.notes}</p>
                             </CardContent>
                         </Card>
                     )}
@@ -496,9 +444,9 @@ export default function Show({ auth, budget, businessConfig }) {
             <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar presupuesto?</AlertDialogTitle>
+                        <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Esta acción eliminará el presupuesto {budget.budget_number} de forma permanente. Esta acción no se puede deshacer.
+                            Esta acción eliminará permanentemente el presupuesto {budget.budget_number}. Esta acción no se puede deshacer.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -516,7 +464,7 @@ export default function Show({ auth, budget, businessConfig }) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Enviar presupuesto por email?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Se enviará el presupuesto {budget.budget_number} a {budget.client_email}. El presupuesto se marcará como enviado.
+                            Se enviará el presupuesto {budget.budget_number} a {budget.client.email}. El presupuesto se marcará como enviado.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
