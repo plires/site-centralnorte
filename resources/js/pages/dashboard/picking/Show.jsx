@@ -13,8 +13,9 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Box, Calendar, Copy, DollarSign, Download, Edit, Mail, Package, PackagePlus, Trash2, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -37,6 +38,12 @@ export default function Show({ auth, budget, businessConfig }) {
         unitPricePerKit: 0,
     });
 
+    // Hook para manejar respuestas de Inertia
+    const { handleCrudResponse } = useInertiaResponse();
+
+    // Obtener props.flash para los mensajes
+    const { props } = usePage();
+
     // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
     const applyIva = businessConfig?.apply_iva ?? true;
@@ -57,15 +64,23 @@ export default function Show({ auth, budget, businessConfig }) {
           }
         : null;
 
-    // Mostrar toast si hay mensaje flash
+    // Interceptar flash messages en el destino de la navegación
     useEffect(() => {
-        if (window.history.state?.flash?.success) {
-            toast.success(window.history.state.flash.success);
+        const flashSuccess = props.flash?.success;
+        const flashError = props.flash?.error;
+        const flashWarning = props.flash?.warning;
+        const flashInfo = props.flash?.info;
+
+        if (flashSuccess) {
+            toast.success(flashSuccess);
+        } else if (flashError) {
+            toast.error(flashError);
+        } else if (flashWarning) {
+            toast.warning(flashWarning);
+        } else if (flashInfo) {
+            toast.info(flashInfo);
         }
-        if (window.history.state?.flash?.error) {
-            toast.error(window.history.state.flash.error);
-        }
-    }, []);
+    }, [props.flash]);
 
     // Calcular totales (incluye IVA y payment condition)
     useEffect(() => {
@@ -108,15 +123,7 @@ export default function Show({ auth, budget, businessConfig }) {
 
     const handleDelete = () => {
         setIsDeleting(true);
-        router.delete(route('dashboard.picking.budgets.destroy', budget.id), {
-            onSuccess: () => {
-                toast.success('Presupuesto eliminado correctamente');
-            },
-            onError: () => {
-                toast.error('Error al eliminar el presupuesto');
-                setIsDeleting(false);
-            },
-        });
+        router.delete(route('dashboard.picking.budgets.destroy', budget.id), handleCrudResponse(setIsDeleting));
     };
 
     const handleSendEmail = () => {
@@ -124,17 +131,9 @@ export default function Show({ auth, budget, businessConfig }) {
         router.post(
             route('dashboard.picking.budgets.send', budget.id),
             {},
-            {
-                onSuccess: () => {
-                    toast.success('Presupuesto enviado por email correctamente');
-                    setShowSendDialog(false);
-                    setIsSending(false);
-                },
-                onError: () => {
-                    toast.error('Error al enviar el presupuesto');
-                    setIsSending(false);
-                },
-            },
+            handleCrudResponse(setIsSending, () => {
+                setShowSendDialog(false);
+            }),
         );
     };
 
@@ -199,7 +198,7 @@ export default function Show({ auth, budget, businessConfig }) {
 
     const canEdit = budget.status === 'draft';
     const canDelete = budget.status === 'draft';
-    const canSendEmail = budget.client_email;
+    const canSendEmail = budget.client.email;
 
     return (
         <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
@@ -234,7 +233,7 @@ export default function Show({ auth, budget, businessConfig }) {
                             Descargar PDF
                         </Button>
 
-                        {budget.client.email && (
+                        {canSendEmail && (
                             <Button variant="outline" size="sm" onClick={() => setShowSendDialog(true)}>
                                 <Mail className="mr-2 h-4 w-4" />
                                 Enviar por Email

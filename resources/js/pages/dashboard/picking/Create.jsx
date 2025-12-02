@@ -328,16 +328,21 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
         setData('boxes', newBoxes);
     };
 
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+    //     post(route('dashboard.picking.budgets.store'), {
+    //         onSuccess: () => {
+    //             toast.success('Presupuesto creado correctamente');
+    //         },
+    //         onError: () => {
+    //             toast.error('Error al crear el presupuesto. Verifica los datos.');
+    //         },
+    //     });
+    // };
+
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('dashboard.picking.budgets.store'), {
-            onSuccess: () => {
-                toast.success('Presupuesto creado correctamente');
-            },
-            onError: () => {
-                toast.error('Error al crear el presupuesto. Verifica los datos.');
-            },
-        });
+        post(route('dashboard.picking.budgets.store'), handleResponse());
     };
 
     const formatCurrency = (value) => {
