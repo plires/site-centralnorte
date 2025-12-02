@@ -80,7 +80,7 @@ export default function PickingBudgetForm({
         costScales,
         componentIncrements,
         data.picking_payment_condition_id,
-        paymentConditions
+        paymentConditions,
     );
 
     /**
@@ -184,9 +184,7 @@ export default function PickingBudgetForm({
         // 1. Tipo de armado (OBLIGATORIO)
         if (assemblyType) {
             const description =
-                assemblyType === 'cost_without_assembly'
-                    ? 'Bolsa o caja que no requiera su armado'
-                    : 'Caja para armar o mochila con cierre';
+                assemblyType === 'cost_without_assembly' ? 'Bolsa o caja que no requiera su armado' : 'Caja para armar o mochila con cierre';
 
             newServices.push({
                 service_type: 'assembly',
@@ -246,11 +244,15 @@ export default function PickingBudgetForm({
             else if (bagType.includes('20x30')) size = '20x30';
             else if (bagType.includes('35x45')) size = '35x45';
 
+            const totalKits = parseInt(data.total_kits) || 1;
+            const bagsPerKit = parseInt(bagQuantity) || 1;
+            const totalBags = totalKits * bagsPerKit;
+
             newServices.push({
                 service_type: 'bag',
-                service_description: `Bolsita ${size}`,
+                service_description: `Bolsita ${size} (${bagsPerKit} por kit)`,
                 unit_cost: currentScale[bagType],
-                quantity: parseInt(bagQuantity) || 1,
+                quantity: totalBags, // total de kits * bolsas por kit
             });
         }
 
@@ -261,18 +263,21 @@ export default function PickingBudgetForm({
             else if (bubbleWrapType.includes('10x15')) size = '10x15';
             else if (bubbleWrapType.includes('20x30')) size = '20x30';
 
+            const totalKits = parseInt(data.total_kits) || 1;
+            const wrapsPerKit = parseInt(bubbleWrapQuantity) || 1;
+            const totalWraps = totalKits * wrapsPerKit;
+
             newServices.push({
                 service_type: 'bubble_wrap',
-                service_description: `Pluribol ${size}`,
+                service_description: `Pluribol ${size} (${wrapsPerKit} por kit)`,
                 unit_cost: currentScale[bubbleWrapType],
-                quantity: parseInt(bubbleWrapQuantity) || 1,
+                quantity: totalWraps, // total de kits * pluriboles por kit
             });
         }
 
         // 6. Palletizado (select)
         if (palletizingType && currentScale[palletizingType]) {
-            const description =
-                palletizingType === 'palletizing_without_pallet' ? 'Palletizado sin pallet' : 'Palletizado con pallet';
+            const description = palletizingType === 'palletizing_without_pallet' ? 'Palletizado sin pallet' : 'Palletizado con pallet';
 
             newServices.push({
                 service_type: 'palletizing',
@@ -457,8 +462,7 @@ export default function PickingBudgetForm({
                             ¿Salir sin guardar?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Has realizado cambios en el presupuesto que no se han guardado. Si sales ahora, perderás todos los cambios
-                            realizados.
+                            Has realizado cambios en el presupuesto que no se han guardado. Si sales ahora, perderás todos los cambios realizados.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

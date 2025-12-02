@@ -20,7 +20,13 @@ export default function Edit({ auth, budget, boxes, costScales, clients, compone
         picking_payment_condition_id: budget.picking_payment_condition_id || '',
         total_kits: budget.total_kits,
         total_components_per_kit: budget.total_components_per_kit,
-        boxes: budget.boxes || [],
+        boxes:
+            budget.boxes?.map((box) => ({
+                box_id: box.picking_box_id?.toString() || '',
+                box_dimensions: box.box_dimensions || '',
+                box_unit_cost: box.box_unit_cost || '',
+                quantity: box.quantity?.toString() || '1',
+            })) || [],
         services: budget.services || [],
         notes: budget.notes || '',
     });

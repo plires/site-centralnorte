@@ -208,20 +208,13 @@ class PickingBudgetController extends Controller
             // Crear los servicios seleccionados
             if (!empty($validated['services'])) {
                 foreach ($validated['services'] as $serviceData) {
-                    $quantity = $serviceData['quantity'];
-
-                    // Multiplicar cantidad por total_kits para bags y bubble_wrap
-                    if (in_array($serviceData['service_type'], ['bag', 'bubble_wrap'])) {
-                        $quantity = $serviceData['quantity'] * $validated['total_kits'];
-                    }
-
                     PickingBudgetService::create([
                         'picking_budget_id' => $budget->id,
                         'service_type' => $serviceData['service_type'],
                         'service_description' => $serviceData['service_description'],
                         'unit_cost' => $serviceData['unit_cost'],
-                        'quantity' => $quantity,
-                        'subtotal' => $serviceData['unit_cost'] * $quantity,
+                        'quantity' => $serviceData['quantity'],
+                        'subtotal' => $serviceData['unit_cost'] * $serviceData['quantity'],
                     ]);
                 }
             }
@@ -379,22 +372,16 @@ class PickingBudgetController extends Controller
             // Eliminar servicios anteriores y crear los nuevos
             $pickingBudget->services()->delete();
 
+            // Crear los servicios seleccionados
             if (!empty($validated['services'])) {
                 foreach ($validated['services'] as $serviceData) {
-                    $quantity = $serviceData['quantity'];
-
-                    // Multiplicar cantidad por total_kits para bags y bubble_wrap
-                    if (in_array($serviceData['service_type'], ['bag', 'bubble_wrap'])) {
-                        $quantity = $serviceData['quantity'] * $validated['total_kits'];
-                    }
-
                     PickingBudgetService::create([
                         'picking_budget_id' => $pickingBudget->id,
                         'service_type' => $serviceData['service_type'],
                         'service_description' => $serviceData['service_description'],
                         'unit_cost' => $serviceData['unit_cost'],
-                        'quantity' => $quantity,
-                        'subtotal' => $serviceData['unit_cost'] * $quantity,
+                        'quantity' => $serviceData['quantity'],
+                        'subtotal' => $serviceData['unit_cost'] * $serviceData['quantity'],
                     ]);
                 }
             }

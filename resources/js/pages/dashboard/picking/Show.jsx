@@ -26,7 +26,7 @@ export default function Show({ auth, budget, businessConfig }) {
     const [showSendDialog, setShowSendDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSending, setIsSending] = useState(false);
-    
+
     // Estado para totales calculados
     const [calculatedTotals, setCalculatedTotals] = useState({
         servicesSubtotal: 0,
@@ -41,7 +41,7 @@ export default function Show({ auth, budget, businessConfig }) {
 
     // Hook para manejar respuestas de Inertia
     const { handleCrudResponse } = useInertiaResponse();
-    
+
     // Obtener props.flash para los mensajes
     const { props } = usePage();
 
@@ -83,38 +83,49 @@ export default function Show({ auth, budget, businessConfig }) {
         }
     }, [props.flash]);
 
-    // Calcular totales (incluye IVA y payment condition)
+    // Calcular totales desde los servicios y cajas
     useEffect(() => {
-        // Calcular incremento por componentes
-        const servicesSubtotal = parseFloat(budget.services_subtotal) || 0;
-        const incrementAmount = parseFloat(budget.component_increment_amount) || 0;
+        // 1. Calcular subtotal de servicios desde el array
+        const servicesSubtotal =
+            budget.services?.reduce((sum, service) => {
+                return sum + (parseFloat(service.subtotal) || 0);
+            }, 0) || 0;
+
+        // 2. Incremento por componentes
+        const incrementPercentage = parseFloat(budget.component_increment_percentage) || 0;
+        const incrementAmount = servicesSubtotal * incrementPercentage;
         const subtotalWithIncrement = servicesSubtotal + incrementAmount;
 
-        const boxTotal = parseFloat(budget.box_total) || 0;
+        // 3. Total de cajas
+        const boxTotal =
+            budget.boxes?.reduce((sum, box) => {
+                return sum + (parseFloat(box.subtotal) || 0);
+            }, 0) || 0;
 
-        // Subtotal base (antes de payment condition e IVA)
-        const subtotalBase = subtotalWithIncrement + boxTotal;
+        // 4. Subtotal base (antes de payment condition e IVA)
+        const subtotal = subtotalWithIncrement + boxTotal;
 
-        // Calcular ajuste por condición de pago
+        // 5. Calcular ajuste por condición de pago
         let paymentConditionAmount = 0;
         if (budget.payment_condition_percentage) {
-            paymentConditionAmount = subtotalBase * (parseFloat(budget.payment_condition_percentage) / 100);
+            paymentConditionAmount = subtotal * (parseFloat(budget.payment_condition_percentage) / 100);
         }
 
-        const subtotalWithPayment = subtotalBase + paymentConditionAmount;
+        const subtotalWithPayment = subtotal + paymentConditionAmount;
 
-        // Calcular IVA
+        // 6. Calcular IVA
         const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
         const total = subtotalWithPayment + ivaAmount;
 
-        // Precio unitario por kit
-        const unitPricePerKit = parseFloat(budget.unit_price_per_kit) || 0;
+        // 7. Precio unitario por kit
+        const unitPricePerKit = budget.total_kits > 0 ? total / budget.total_kits : 0;
 
         setCalculatedTotals({
             servicesSubtotal,
             incrementAmount,
             subtotalWithIncrement,
             boxTotal,
+            subtotal, // ← FALTABA ESTE
             paymentConditionAmount,
             iva: ivaAmount,
             total,
@@ -124,10 +135,7 @@ export default function Show({ auth, budget, businessConfig }) {
 
     const handleDelete = () => {
         setIsDeleting(true);
-        router.delete(
-            route('dashboard.picking.budgets.destroy', budget.id),
-            handleCrudResponse(setIsDeleting)
-        );
+        router.delete(route('dashboard.picking.budgets.destroy', budget.id), handleCrudResponse(setIsDeleting));
     };
 
     const handleSendEmail = () => {
@@ -137,7 +145,7 @@ export default function Show({ auth, budget, businessConfig }) {
             {},
             handleCrudResponse(setIsSending, () => {
                 setShowSendDialog(false);
-            })
+            }),
         );
     };
 
@@ -181,11 +189,7 @@ export default function Show({ auth, budget, businessConfig }) {
             rejected: 'Rechazado',
         };
 
-        return (
-            <Badge className={`${statusColors[status] || statusColors.draft} rounded-full px-3 py-1`}>
-                {statusLabels[status] || status}
-            </Badge>
-        );
+        return <Badge className={`${statusColors[status] || statusColors.draft} rounded-full px-3 py-1`}>{statusLabels[status] || status}</Badge>;
     };
 
     const breadcrumbs = [

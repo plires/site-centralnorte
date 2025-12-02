@@ -47,9 +47,7 @@ export default function PickingServicesSection({
                 <CardContent>
                     <div className="flex items-center gap-2 rounded-lg bg-amber-50 p-4 text-amber-900">
                         <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                        <p className="text-sm">
-                            Primero debes seleccionar la cantidad de kits para ver los servicios disponibles y sus costos.
-                        </p>
+                        <p className="text-sm">Primero debes seleccionar la cantidad de kits para ver los servicios disponibles y sus costos.</p>
                     </div>
                 </CardContent>
             </Card>
@@ -82,17 +80,16 @@ export default function PickingServicesSection({
                                 disabled={processing || !currentScale.dome_sticking_unit}
                             />
                             <div className="flex-1">
-                                <Label htmlFor="dome_sticking" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                <Label
+                                    htmlFor="dome_sticking"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
                                     Pegado de Domes
                                 </Label>
                                 {currentScale.dome_sticking_unit && (
-                                    <p className="mt-1 text-xs text-gray-600">
-                                        {formatCurrency(currentScale.dome_sticking_unit)} por unidad
-                                    </p>
+                                    <p className="mt-1 text-xs text-gray-600">{formatCurrency(currentScale.dome_sticking_unit)} por unidad</p>
                                 )}
-                                {!currentScale.dome_sticking_unit && (
-                                    <p className="mt-1 text-xs text-gray-400">No disponible</p>
-                                )}
+                                {!currentScale.dome_sticking_unit && <p className="mt-1 text-xs text-gray-400">No disponible</p>}
                             </div>
                         </div>
 
@@ -105,17 +102,16 @@ export default function PickingServicesSection({
                                 disabled={processing || !currentScale.additional_assembly}
                             />
                             <div className="flex-1">
-                                <Label htmlFor="additional_assembly" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                <Label
+                                    htmlFor="additional_assembly"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
                                     Ensamble Adicional
                                 </Label>
                                 {currentScale.additional_assembly && (
-                                    <p className="mt-1 text-xs text-gray-600">
-                                        {formatCurrency(currentScale.additional_assembly)} por kit
-                                    </p>
+                                    <p className="mt-1 text-xs text-gray-600">{formatCurrency(currentScale.additional_assembly)} por kit</p>
                                 )}
-                                {!currentScale.additional_assembly && (
-                                    <p className="mt-1 text-xs text-gray-400">No disponible</p>
-                                )}
+                                {!currentScale.additional_assembly && <p className="mt-1 text-xs text-gray-400">No disponible</p>}
                             </div>
                         </div>
 
@@ -128,17 +124,16 @@ export default function PickingServicesSection({
                                 disabled={processing || !currentScale.quality_control}
                             />
                             <div className="flex-1">
-                                <Label htmlFor="quality_control" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                <Label
+                                    htmlFor="quality_control"
+                                    className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                >
                                     Control de Calidad
                                 </Label>
                                 {currentScale.quality_control && (
-                                    <p className="mt-1 text-xs text-gray-600">
-                                        {formatCurrency(currentScale.quality_control)} por kit
-                                    </p>
+                                    <p className="mt-1 text-xs text-gray-600">{formatCurrency(currentScale.quality_control)} por kit</p>
                                 )}
-                                {!currentScale.quality_control && (
-                                    <p className="mt-1 text-xs text-gray-400">No disponible</p>
-                                )}
+                                {!currentScale.quality_control && <p className="mt-1 text-xs text-gray-400">No disponible</p>}
                             </div>
                         </div>
                     </CardContent>
@@ -157,7 +152,7 @@ export default function PickingServicesSection({
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin viruta</SelectItem>
+                                    <SelectItem value={undefined}>Sin viruta</SelectItem>
                                     {currentScale.shavings_50g_unit && (
                                         <SelectItem value="shavings_50g_unit">
                                             50g - {formatCurrency(currentScale.shavings_50g_unit)} por unidad
@@ -175,11 +170,7 @@ export default function PickingServicesSection({
                                     )}
                                 </SelectContent>
                             </Select>
-                            {shavingsType && (
-                                <p className="mt-2 text-xs text-gray-600">
-                                    Se aplicará a cada kit automáticamente
-                                </p>
-                            )}
+                            {shavingsType && <p className="mt-2 text-xs text-gray-600">Se aplicará a cada kit automáticamente</p>}
                         </div>
                     </CardContent>
                 </Card>
@@ -197,7 +188,7 @@ export default function PickingServicesSection({
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin bolsita</SelectItem>
+                                    <SelectItem value={undefined}>Sin bolsita</SelectItem>
                                     {currentScale.bag_10x15_unit && (
                                         <SelectItem value="bag_10x15_unit">
                                             10x15 - {formatCurrency(currentScale.bag_10x15_unit)} por unidad
@@ -229,9 +220,7 @@ export default function PickingServicesSection({
                                     placeholder="Cantidad"
                                     disabled={processing}
                                 />
-                                <p className="mt-1 text-xs text-gray-600">
-                                    Total por kit: {parseInt(bagQuantity) || 0} bolsitas
-                                </p>
+                                <p className="mt-1 text-xs text-gray-600">Total por kit: {parseInt(bagQuantity) || 0} bolsitas</p>
                             </div>
                         )}
                     </CardContent>
@@ -250,7 +239,7 @@ export default function PickingServicesSection({
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin pluribol</SelectItem>
+                                    <SelectItem value={undefined}>Sin pluribol</SelectItem>
                                     {currentScale.bubble_wrap_5x10_unit && (
                                         <SelectItem value="bubble_wrap_5x10_unit">
                                             5x10 - {formatCurrency(currentScale.bubble_wrap_5x10_unit)} por unidad
@@ -282,9 +271,7 @@ export default function PickingServicesSection({
                                     placeholder="Cantidad"
                                     disabled={processing}
                                 />
-                                <p className="mt-1 text-xs text-gray-600">
-                                    Total por kit: {parseInt(bubbleWrapQuantity) || 0} unidades
-                                </p>
+                                <p className="mt-1 text-xs text-gray-600">Total por kit: {parseInt(bubbleWrapQuantity) || 0} unidades</p>
                             </div>
                         )}
                     </CardContent>
@@ -306,7 +293,7 @@ export default function PickingServicesSection({
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Sin palletizado</SelectItem>
+                                    <SelectItem value={undefined}>Sin palletizado</SelectItem>
                                     {currentScale.palletizing_without_pallet && (
                                         <SelectItem value="palletizing_without_pallet">
                                             Sin pallet - {formatCurrency(currentScale.palletizing_without_pallet)} por kit
@@ -319,11 +306,7 @@ export default function PickingServicesSection({
                                     )}
                                 </SelectContent>
                             </Select>
-                            {palletizingType && (
-                                <p className="mt-2 text-xs text-gray-600">
-                                    Se aplicará a todos los kits
-                                </p>
-                            )}
+                            {palletizingType && <p className="mt-2 text-xs text-gray-600">Se aplicará a todos los kits</p>}
                         </div>
                     </CardContent>
                 </Card>
@@ -356,11 +339,7 @@ export default function PickingServicesSection({
                                     )}
                                 </SelectContent>
                             </Select>
-                            {labelingType && (
-                                <p className="mt-2 text-xs text-gray-600">
-                                    Se aplicará a todos los kits
-                                </p>
-                            )}
+                            {labelingType && <p className="mt-2 text-xs text-gray-600">Se aplicará a todos los kits</p>}
                         </div>
                     </CardContent>
                 </Card>
@@ -374,8 +353,8 @@ export default function PickingServicesSection({
                         <div className="flex-1 text-sm text-amber-900">
                             <p className="font-medium">Producto madre requerido</p>
                             <p className="mt-1">
-                                Debes seleccionar el tipo de producto madre del kit en la sección de "Cantidades" antes de continuar. Este
-                                es un campo obligatorio.
+                                Debes seleccionar el tipo de producto madre del kit en la sección de "Cantidades" antes de continuar. Este es un campo
+                                obligatorio.
                             </p>
                         </div>
                     </div>
