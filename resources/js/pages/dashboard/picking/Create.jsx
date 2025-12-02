@@ -420,6 +420,7 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                                             Costo: <span className="font-medium">{formatCurrency(currentScale[assemblyType])}</span> por kit
                                         </p>
                                     )}
+                                    {errors.services && <p className="mt-1 text-sm text-red-600">{errors.services}</p>}
                                 </div>
 
                                 {/* Kits Totales */}
@@ -474,15 +475,9 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                             )}
                         </CardContent>
                     </Card>
-                    {/* Tipo de Armado */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Tipo de Armado</CardTitle>
-                        </CardHeader>
-                        <CardContent></CardContent>
-                    </Card>
+
+                    {/* Servicios Adicionales */}
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {/* Servicios Adicionales */}
                         <Card>
                             <CardHeader>
                                 <CardTitle className="text-base">Servicios Adicionales (Opcional)</CardTitle>

@@ -97,9 +97,9 @@ class UpdatePickingBudgetRequest extends FormRequest
             'boxes.*.quantity.integer' => 'La cantidad de cajas debe ser un número entero.',
             'boxes.*.quantity.min' => 'Debe haber al menos 1 caja.',
 
-            'services.required' => 'Debe seleccionar al menos un servicio.',
+            'services.required' => 'Debe seleccionar al menos este servicio.',
             'services.array' => 'Los servicios deben ser un listado válido.',
-            'services.min' => 'Debe seleccionar al menos un servicio.',
+            'services.min' => 'Debe seleccionar al menos este servicio.',
             'services.*.service_type.required' => 'El tipo de servicio es obligatorio.',
             'services.*.service_type.in' => 'El tipo de servicio no es válido.',
             'services.*.service_description.required' => 'La descripción del servicio es obligatoria.',
@@ -122,6 +122,7 @@ class UpdatePickingBudgetRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $boxes = $this->input('boxes', []);
+            $services = $this->input('services', []);
 
             // Solo validar duplicados si hay cajas (ya que ahora son opcionales)
             if (!empty($boxes)) {
@@ -134,6 +135,22 @@ class UpdatePickingBudgetRequest extends FormRequest
                         'No se pueden agregar cajas duplicadas al presupuesto.'
                     );
                 }
+            }
+
+            // Verificar que exista al menos un servicio de tipo "assembly"
+            $hasAssemblyService = false;
+            foreach ($services as $service) {
+                if (isset($service['service_type']) && $service['service_type'] === 'assembly') {
+                    $hasAssemblyService = true;
+                    break;
+                }
+            }
+
+            if (!$hasAssemblyService) {
+                $validator->errors()->add(
+                    'services',
+                    'Debe seleccionar el tipo de producto madre del kit (con o sin armado).'
+                );
             }
         });
     }
