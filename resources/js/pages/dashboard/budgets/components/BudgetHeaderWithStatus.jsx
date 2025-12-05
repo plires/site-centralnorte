@@ -24,7 +24,7 @@ export default function BudgetHeaderWithStatus({ budget }) {
                 );
             } else {
                 return (
-                    <Badge variant="destructive" className="flex items-center gap-1">
+                    <Badge variant="destructive" className="flex items-center gap-1 text-white">
                         <AlertTriangle className="h-3 w-3" />
                         Vencido
                     </Badge>
