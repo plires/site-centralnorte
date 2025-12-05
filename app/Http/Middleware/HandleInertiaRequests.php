@@ -56,6 +56,9 @@ class HandleInertiaRequests extends Middleware
                 'warning' => fn() => $request->session()->get('warning'),
                 'info' => fn() => $request->session()->get('info'),
             ],
+            'product' => [
+                'placeholder_image' => config('business.product.placeholder_image'),
+            ],
         ];
     }
 }

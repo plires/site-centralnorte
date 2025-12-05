@@ -4,7 +4,7 @@ import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { productColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SyncAllProductsButton } from './components/SyncAllProductsButton';
@@ -17,6 +17,7 @@ const breadcrumbs = [
 ];
 
 export default function Index({ auth, products, filters = {}, last_sync_info }) {
+    const { product } = usePage().props;
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
     const [isDeleting, setIsDeleting] = useState(false);
 
@@ -45,7 +46,7 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
     };
 
     const actions = { view: handleView, edit: handleEdit, delete: handleDelete };
-    const columns = productColumns(actions, isDeleting);
+    const columns = productColumns(actions, isDeleting, product.placeholder_image);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>

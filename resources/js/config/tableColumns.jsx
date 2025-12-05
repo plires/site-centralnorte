@@ -251,13 +251,13 @@ export const rolesColumns = (actions, isDeleting = false) => [
     },
 ];
 
-export const productColumns = (actions, isDeleting = false) => [
+export const productColumns = (actions, isDeleting = false, placeholderImage) => [
     {
         key: 'featured_image',
         label: 'Imagen',
         sortable: false,
         render: (value, row) => {
-            const imageUrl = row.featured_image?.full_url || '/images/product-placeholder.jpg';
+            const imageUrl = row.featured_image?.full_url || placeholderImage;
             return (
                 <div className="flex justify-center">
                     <img
@@ -265,7 +265,7 @@ export const productColumns = (actions, isDeleting = false) => [
                         alt={row.name}
                         className="h-12 w-12 rounded-md object-cover"
                         onError={(e) => {
-                            e.target.src = '/images/product-placeholder.jpg';
+                            e.target.src = placeholderImage;
                         }}
                     />
                 </div>
