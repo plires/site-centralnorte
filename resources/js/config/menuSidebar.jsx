@@ -1,7 +1,6 @@
 import {
     BookOpen,
     BookText,
-    CalendarDays,
     ChartBarStacked,
     ChartColumnStacked,
     Contact,
@@ -61,6 +60,12 @@ export const mainNavItems = () => [
         permission: 'gestionar_presupuestos_merch',
     },
     {
+        title: 'Presupuestos de Picking',
+        url: '/dashboard/picking',
+        icon: BookText,
+        permission: 'gestionar_presupuestos_pick',
+    },
+    {
         title: 'Configuración Costos Picking',
         icon: Settings,
         permission: 'gestionar_costos_pick',
@@ -88,22 +93,10 @@ export const mainNavItems = () => [
         ],
     },
     {
-        title: 'Presupuestos de Picking',
-        url: '/dashboard/picking',
-        icon: BookText,
-        permission: 'gestionar_presupuestos_pick',
-    },
-    {
         title: 'Gestionar Slides',
         url: '/dashboard/slides',
         icon: SlidersHorizontal,
         permission: 'gestionar_slides',
-    },
-    {
-        title: 'Gestionar Blog',
-        url: '/dashboard/blog',
-        icon: CalendarDays,
-        permission: 'gestionar_blog',
     },
 ];
 
