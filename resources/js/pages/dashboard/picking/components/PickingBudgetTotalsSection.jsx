@@ -34,7 +34,7 @@ export default function PickingBudgetTotalsSection({
     const adjustmentColor = isPositiveAdjustment ? 'text-red-600' : 'text-green-600';
 
     return (
-        <Card>
+        <Card className="mb-5">
             <CardHeader>
                 <CardTitle>Resumen de Totales</CardTitle>
             </CardHeader>
