@@ -1,11 +1,9 @@
 import {
-    BookOpen,
     BookText,
     ChartBarStacked,
     ChartColumnStacked,
     Contact,
     DollarSign,
-    Folder,
     Layers,
     LayoutGrid,
     NotebookText,
@@ -100,15 +98,4 @@ export const mainNavItems = () => [
     },
 ];
 
-export const footerNavItems = () => [
-    {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
+export const footerNavItems = () => [{}];
