@@ -13,101 +13,178 @@
             color: #333;
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+
+        .email-container {
+            background-color: #ffffff;
+            margin: 20px auto;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .header {
-            background-color: {{ $isResend ? '#fff3cd' : '#f8f9fa' }};
-            padding: 20px;
+            background: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            padding: 30px 20px;
             text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            {{ $isResend ? 'border: 1px solid #ffeaa7;' : '' }}
+            color: white;
+        }
+
+        .logo {
+            max-width: 230px;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .resend-badge {
+            display: inline-block;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
+            font-size: 14px;
         }
 
         .content {
-            background-color: #fff;
-            padding: 20px;
-            border: 1px solid #e9ecef;
-            border-radius: 8px;
+            padding: 30px;
+        }
+
+        .greeting {
+            font-size: 18px;
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            margin-bottom: 20px;
         }
 
         .button {
             display: inline-block;
-            background-color: #007bff;
-            color: white;
-            padding: 12px 24px;
+            background-color: {{ env('SECONDARY_COLOR', '#19ac90') }};
+            color: white !important;
+            padding: 14px 32px;
             text-decoration: none;
-            border-radius: 5px;
-            margin: 20px 0;
+            border-radius: 6px;
+            margin: 25px 0;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+
+        .button:hover {
+            background-color: {{ env('PRIMARY_COLOR', '#3d5095') }};
         }
 
         .budget-details {
             background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid {{ env('PRIMARY_COLOR', '#3d5095') }};
+            margin: 20px 0;
+        }
+
+        .budget-details h3 {
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            margin-top: 0;
+        }
+
+        .budget-details p {
+            margin: 10px 0;
+        }
+
+        .total-amount {
+            font-size: 20px;
+            color: {{ env('SECONDARY_COLOR', '#19ac90') }};
+            font-weight: bold;
+        }
+
+        .info-list {
+            background-color: #f8f9fa;
+            padding: 15px 15px 15px 35px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .info-list li {
+            margin: 8px 0;
         }
 
         .footer {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e9ecef;
-            font-size: 14px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            font-size: 13px;
             color: #666;
+            border-top: 1px solid #e9ecef;
         }
 
-        .resend-notice {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            color: #856404;
+        .footer p {
+            margin: 5px 0;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #e9ecef;
+            margin: 25px 0;
         }
     </style>
 </head>
 
 <body>
-    <div class="header">
-        <h1>{{ $isResend ? '📤 Te reenviamos tu presupuesto' : '🎉 ¡Tienes un nuevo presupuesto!' }}</h1>
-    </div>
-
-    <div class="content">
-        <h2>Estimado/a {{ $client->name }},</h2>
-
-        <p>{{ $isResend ? 'Te reenviamos el presupuesto solicitado.' : 'Te enviamos el presupuesto que solicitaste.' }}
-            A continuación encontrarás los detalles:</p>
-
-        <div class="budget-details">
-            <h3>{{ $budget->title }}</h3>
-            <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date->format('d/m/Y') }}</p>
-            <p><strong>Válido hasta:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
-            <p><strong>Total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
-            <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+    <div class="email-container">
+        <div class="header">
+            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte" class="logo">
+            <h1>{{ $isResend ? '📤 Te reenviamos tu presupuesto' : '🎉 ¡Tienes un nuevo presupuesto!' }}</h1>
+            @if ($isResend)
+                <div class="resend-badge">Reenvío de presupuesto</div>
+            @endif
         </div>
 
-        <p>Para ver los detalles completos del presupuesto, hacer clic en el siguiente enlace:</p>
+        <div class="content">
+            <p class="greeting">Estimado/a {{ $client->name }},</p>
 
-        <div style="text-align: center;">
-            <a href="{{ $publicUrl }}" class="button">Ver Presupuesto Completo</a>
+            <p>{{ $isResend ? 'Te reenviamos el presupuesto solicitado.' : 'Te enviamos el presupuesto que solicitaste.' }}
+                A continuación encontrarás los detalles:</p>
+
+            <div class="budget-details">
+                <h3>{{ $budget->title }}</h3>
+                <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date->format('d/m/Y') }}</p>
+                <p><strong>Válido hasta:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
+                <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
+                <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+            </div>
+
+            <p>Para ver los detalles completos del presupuesto, hacé clic en el siguiente enlace:</p>
+
+            <div style="text-align: center;">
+                <a href="{{ $publicUrl }}" class="button">Ver Presupuesto Completo</a>
+            </div>
+
+            <p>En la página del presupuesto podrás:</p>
+            <ul class="info-list">
+                <li>Ver todos los productos incluidos con sus imágenes</li>
+                <li>Seleccionar entre las diferentes opciones disponibles (si existen)</li>
+                <li>Descargar una versión en PDF</li>
+            </ul>
+
+            <div class="divider"></div>
+
+            <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
+
+            <p><strong>¡Gracias por confiar en nosotros!</strong></p>
         </div>
 
-        <p>En la página del presupuesto podrás:</p>
-        <ul>
-            <li>Ver todos los productos incluidos con sus imágenes</li>
-            <li>Seleccionar entre las diferentes opciones disponibles (si existen)</li>
-            <li>Descargar una versión en PDF</li>
-        </ul>
-
-        <p>Si tienes alguna consulta o necesitas modificaciones, no dudes en contactarnos.</p>
-
-        <p>¡Gracias por confiar en nosotros!</p>
-    </div>
-
-    <div class="footer">
-        <p>Este es un email automático, por favor no responder a esta dirección.</p>
-        <p>Para consultas, contacta directamente con {{ $vendedor->name }}.</p>
+        <div class="footer">
+            <p><strong>Central Norte</strong></p>
+            <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
+            </p>
+            <p style="margin-top: 15px;">Este es un email automático. Para consultas, contactá directamente con
+                {{ $vendedor->name }}.</p>
+        </div>
     </div>
 </body>
 
