@@ -7,7 +7,8 @@ import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const breadcrumbs = [
     {
@@ -17,10 +18,28 @@ const breadcrumbs = [
 ];
 
 export default function Index({ auth, slides, filters = {}, stats }) {
-    const { slide } = usePage().props;
+    const { props } = usePage();
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
     const [isDeleting, setIsDeleting] = useState(false);
     const { handleCrudResponse } = useInertiaResponse();
+
+    // useEffect para interceptar flash messages
+    useEffect(() => {
+        const flashSuccess = props.flash?.success;
+        const flashError = props.flash?.error;
+        const flashWarning = props.flash?.warning;
+        const flashInfo = props.flash?.info;
+
+        if (flashSuccess) {
+            toast.success(flashSuccess);
+        } else if (flashError) {
+            toast.error(flashError);
+        } else if (flashWarning) {
+            toast.warning(flashWarning);
+        } else if (flashInfo) {
+            toast.info(flashInfo);
+        }
+    }, [props.flash]);
 
     const handleView = (slideId) => {
         router.get(route('dashboard.slides.show', slideId));
