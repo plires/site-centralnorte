@@ -1,6 +1,6 @@
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, router, useForm } from '@inertiajs/react';
 import SlideForm from './components/SlideForm';
 
 const breadcrumbs = [
@@ -28,19 +28,28 @@ export default function Edit({ slide, canActivate, activeCount, maxActive }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        
-        // Usar router.post con _method: 'PUT' para soportar archivos
-        router.post(
-            route('dashboard.slides.update', slide.id),
-            {
-                _method: 'PUT',
-                ...data,
-            },
-            {
-                forceFormData: true,
-                ...handleResponse(),
-            }
-        );
+
+        // Preparar datos para enviar (excluir imágenes null)
+        const formData = {
+            _method: 'PUT',
+            title: data.title,
+            link: data.link || '',
+            is_active: data.is_active ? '1' : '0', // Convertir a string que Laravel entiende
+            sort_order: data.sort_order,
+        };
+
+        // Solo incluir imágenes si se seleccionaron nuevas
+        if (data.image_desktop) {
+            formData.image_desktop = data.image_desktop;
+        }
+        if (data.image_mobile) {
+            formData.image_mobile = data.image_mobile;
+        }
+
+        router.post(route('dashboard.slides.update', slide.id), formData, {
+            forceFormData: true,
+            ...handleResponse(),
+        });
     };
 
     return (

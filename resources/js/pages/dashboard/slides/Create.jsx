@@ -28,7 +28,18 @@ export default function Create({ canActivate, activeCount, maxActive, nextSortOr
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        post(route('dashboard.slides.store'), handleResponse());
+
+        // Preparar datos con is_active como string para FormData
+        const formData = {
+            ...data,
+            is_active: data.is_active ? '1' : '0',
+        };
+
+        post(route('dashboard.slides.store'), {
+            ...handleResponse(),
+            data: formData,
+            forceFormData: true,
+        });
     };
 
     return (
