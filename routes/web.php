@@ -13,6 +13,7 @@ use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Public\PublicBudgetController;
 use App\Http\Controllers\Dashboard\ProductImageController;
+use App\Http\Controllers\Dashboard\SlideController;
 
 Route::get('/', [HomeController::class, 'index'])
     ->name('public.home');
@@ -129,6 +130,46 @@ Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(func
     // Vendedores (solo para admins)
     Route::get('/vendedores/search', [ApiController::class, 'getVendedores'])->name('vendedores.search');
 });
+
+// ============================================================================
+// SLIDES DEL CARRUSEL
+// ============================================================================
+// Agregar después de las otras rutas del dashboard
+
+Route::middleware(['auth', 'verified', 'permission:gestionar_slides'])
+    ->prefix('dashboard')
+    ->name('dashboard.')
+    ->group(function () {
+
+        // CRUD básico de slides
+        Route::get('/slides', [SlideController::class, 'index'])
+            ->name('slides.index');
+
+        Route::get('/slides/create', [SlideController::class, 'create'])
+            ->name('slides.create');
+
+        Route::post('/slides', [SlideController::class, 'store'])
+            ->name('slides.store');
+
+        Route::get('/slides/{slide}', [SlideController::class, 'show'])
+            ->name('slides.show');
+
+        Route::get('/slides/{slide}/edit', [SlideController::class, 'edit'])
+            ->name('slides.edit');
+
+        Route::put('/slides/{slide}', [SlideController::class, 'update'])
+            ->name('slides.update');
+
+        Route::delete('/slides/{slide}', [SlideController::class, 'destroy'])
+            ->name('slides.destroy');
+
+        // Acciones especiales
+        Route::patch('/slides/{slide}/toggle-status', [SlideController::class, 'toggleStatus'])
+            ->name('slides.toggle-status');
+
+        Route::post('/slides/update-order', [SlideController::class, 'updateOrder'])
+            ->name('slides.update-order');
+    });
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { timeAgo } from '@/utils/date';
-import { Edit, Eye, EyeOff, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Edit, Eye, EyeOff, Images, MoreHorizontal, Trash2 } from 'lucide-react';
 
 // Componente reutilizable para acciones
 const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false }) => (
@@ -135,6 +135,61 @@ export const budgetsColumns = (actions, isDeleting = false) => [
                 <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />
             </div>
         ),
+    },
+    {
+        key: 'actions',
+        label: 'Acciones',
+        render: (value, row) => (
+            <div className="text-center">
+                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+            </div>
+        ),
+    },
+];
+
+export const slidesColumns = (actions, isDeleting = false, stats = {}) => [
+    {
+        key: 'sort_order',
+        label: 'Orden',
+        sortable: true,
+        render: (value) => <span className="font-mono text-sm text-gray-500">#{value}</span>,
+    },
+    {
+        key: 'image_desktop_url',
+        label: 'Preview',
+        render: (value, row) => (
+            <div className="flex items-center gap-2">
+                {value ? (
+                    <img src={value} alt={row.title} className="h-12 w-20 rounded border object-cover" />
+                ) : (
+                    <div className="flex h-12 w-20 items-center justify-center rounded border bg-gray-100">
+                        <Images className="h-5 w-5 text-gray-400" />
+                    </div>
+                )}
+            </div>
+        ),
+    },
+    {
+        key: 'title',
+        label: 'Título',
+        sortable: true,
+        render: (value) => <span className="font-medium">{value}</span>,
+    },
+    {
+        key: 'link',
+        label: 'Enlace',
+        render: (value) =>
+            value ? (
+                <span className="max-w-[200px] truncate text-sm text-blue-600">{value}</span>
+            ) : (
+                <span className="text-sm text-gray-400">Sin enlace</span>
+            ),
+    },
+    {
+        key: 'is_active',
+        label: 'Estado',
+        sortable: true,
+        render: (value) => <Badge variant={value ? 'success' : 'secondary'}>{value ? 'Activo' : 'Inactivo'}</Badge>,
     },
     {
         key: 'actions',

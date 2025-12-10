@@ -5,6 +5,7 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\SlideSeeder;
 use Database\Seeders\BudgetSeeder;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\AdminUserSeeder;
@@ -46,6 +47,7 @@ class DatabaseSeeder extends Seeder
             PickingComponentIncrementSeeder::class,
             PickingPaymentConditionSeeder::class,
             SimplePickingBudgetSeeder::class,
+            SlideSeeder::class,
         ]);
     }
 }
