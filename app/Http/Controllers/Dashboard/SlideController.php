@@ -69,7 +69,6 @@ class SlideController extends Controller
             'canActivate' => Slide::canActivateMore(),
             'activeCount' => Slide::activeCount(),
             'maxActive' => Slide::MAX_ACTIVE_SLIDES,
-            'nextSortOrder' => Slide::getNextSortOrder(),
         ]);
     }
 
@@ -101,10 +100,8 @@ class SlideController extends Controller
                 );
             }
 
-            // Establecer sort_order si no se proporciona
-            if (empty($validated['sort_order'])) {
-                $validated['sort_order'] = Slide::getNextSortOrder();
-            }
+            // Siempre asignar sort_order automáticamente (al final)
+            $validated['sort_order'] = Slide::getNextSortOrder();
 
             // Establecer is_active por defecto
             $validated['is_active'] = $validated['is_active'] ?? false;

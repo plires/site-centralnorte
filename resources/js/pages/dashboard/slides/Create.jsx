@@ -14,14 +14,13 @@ const breadcrumbs = [
     },
 ];
 
-export default function Create({ canActivate, activeCount, maxActive, nextSortOrder }) {
+export default function Create({ canActivate, activeCount, maxActive }) {
     const { data, setData, post, processing, errors, progress } = useForm({
         title: '',
         image_desktop: null,
         image_mobile: null,
         link: '',
         is_active: canActivate,
-        sort_order: nextSortOrder,
     });
 
     const { handleResponse } = useInertiaResponse();

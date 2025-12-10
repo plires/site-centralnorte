@@ -28,8 +28,7 @@ class StoreSlideRequest extends FormRequest
             'image_desktop' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // máx 10MB
             'image_mobile' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // máx 10MB
             'link' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['nullable'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'is_active' => ['nullable'], // Se prepara en prepareForValidation
         ];
     }
 
@@ -73,7 +72,6 @@ class StoreSlideRequest extends FormRequest
             'image_mobile' => 'imagen mobile',
             'link' => 'enlace',
             'is_active' => 'estado activo',
-            'sort_order' => 'orden',
         ];
     }
 

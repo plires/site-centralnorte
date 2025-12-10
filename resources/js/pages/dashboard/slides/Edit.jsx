@@ -21,7 +21,6 @@ export default function Edit({ slide, canActivate, activeCount, maxActive }) {
         image_mobile: null, // Solo se envía si hay nueva imagen
         link: slide.link || '',
         is_active: slide.is_active ?? false,
-        sort_order: slide.sort_order ?? 0,
     });
 
     const { handleResponse } = useInertiaResponse();
@@ -35,7 +34,6 @@ export default function Edit({ slide, canActivate, activeCount, maxActive }) {
             title: data.title,
             link: data.link || '',
             is_active: data.is_active ? '1' : '0', // Convertir a string que Laravel entiende
-            sort_order: data.sort_order,
         };
 
         // Solo incluir imágenes si se seleccionaron nuevas

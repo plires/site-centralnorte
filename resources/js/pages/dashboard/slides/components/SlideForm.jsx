@@ -121,20 +121,6 @@ export default function SlideForm({
                                         {errors.link && <span className="text-xs text-red-500">{errors.link}</span>}
                                     </div>
 
-                                    {/* Orden */}
-                                    <div>
-                                        <Label htmlFor="sort_order">Orden de aparición</Label>
-                                        <Input
-                                            id="sort_order"
-                                            type="number"
-                                            min="0"
-                                            value={data.sort_order}
-                                            onChange={(e) => setData('sort_order', parseInt(e.target.value) || 0)}
-                                            className="mt-1 w-32"
-                                        />
-                                        {errors.sort_order && <span className="text-xs text-red-500">{errors.sort_order}</span>}
-                                    </div>
-
                                     {/* Estado activo */}
                                     <div className="flex items-center justify-between rounded-lg border p-4">
                                         <div className="space-y-0.5">
