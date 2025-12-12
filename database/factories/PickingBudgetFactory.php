@@ -5,7 +5,8 @@ namespace Database\Factories;
 use App\Models\User;
 use App\Models\Client;
 use App\Models\PickingBudget;
-use App\Enums\PickingBudgetStatus;
+use App\Enums\BudgetStatus;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,11 +16,6 @@ class PickingBudgetFactory extends Factory
 {
     protected $model = PickingBudget::class;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         $totalKits = fake()->numberBetween(50, 500);
@@ -31,12 +27,11 @@ class PickingBudgetFactory extends Factory
         $subtotalWithIncrement = $servicesSubtotal + $componentIncrementAmount;
         $boxTotal = fake()->randomFloat(2, 50, 350);
         $total = $subtotalWithIncrement + $boxTotal;
-
-        // Calcular precio unitario por kit
         $unitPricePerKit = $totalKits > 0 ? round($total / $totalKits, 2) : 0;
 
         return [
             'budget_number' => PickingBudget::generateBudgetNumber(),
+            'token' => Str::random(32),
             'vendor_id' => User::factory(),
             'client_id' => Client::factory(),
             'total_kits' => $totalKits,
@@ -58,60 +53,118 @@ class PickingBudgetFactory extends Factory
             'box_total' => $boxTotal,
             'total' => $total,
             'unit_price_per_kit' => $unitPricePerKit,
-            'status' => fake()->randomElement(PickingBudgetStatus::cases()),
+            'status' => BudgetStatus::UNSENT,
+            'email_sent' => false,
+            'email_sent_at' => null,
             'valid_until' => fake()->dateTimeBetween('now', '+60 days'),
             'notes' => fake()->optional(0.3)->sentence(),
         ];
     }
 
     /**
-     * Indicate that the budget is a draft.
+     * Estado: Sin enviar (nuevo)
+     */
+    public function unsent(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => BudgetStatus::UNSENT,
+            'email_sent' => false,
+            'email_sent_at' => null,
+        ]);
+    }
+
+    /**
+     * Estado: Borrador (clonado)
      */
     public function draft(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => PickingBudgetStatus::DRAFT,
+            'status' => BudgetStatus::DRAFT,
+            'email_sent' => false,
+            'email_sent_at' => null,
         ]);
     }
 
     /**
-     * Indicate that the budget has been sent.
+     * Estado: Enviado
      */
     public function sent(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => PickingBudgetStatus::SENT,
+            'status' => BudgetStatus::SENT,
+            'email_sent' => true,
+            'email_sent_at' => fake()->dateTimeBetween('-30 days', 'now'),
         ]);
     }
 
     /**
-     * Indicate that the budget is approved.
+     * Estado: Aprobado
      */
     public function approved(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => PickingBudgetStatus::APPROVED,
+            'status' => BudgetStatus::APPROVED,
+            'email_sent' => true,
+            'email_sent_at' => fake()->dateTimeBetween('-30 days', 'now'),
         ]);
     }
 
     /**
-     * Indicate that the budget is expired.
+     * Estado: Rechazado
+     */
+    public function rejected(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => BudgetStatus::REJECTED,
+            'email_sent' => true,
+            'email_sent_at' => fake()->dateTimeBetween('-30 days', 'now'),
+        ]);
+    }
+
+    /**
+     * Estado: Vencido
      */
     public function expired(): static
     {
         return $this->state(fn(array $attributes) => [
-            'status' => PickingBudgetStatus::EXPIRED,
+            'status' => BudgetStatus::EXPIRED,
             'valid_until' => fake()->dateTimeBetween('-30 days', '-1 day'),
         ]);
     }
 
     /**
-     * Indicate that the budget is for a specific vendor.
+     * Vence pronto
+     */
+    public function expiringSoon(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'status' => BudgetStatus::SENT,
+            'valid_until' => fake()->dateTimeBetween('now', '+3 days'),
+            'email_sent' => true,
+            'email_sent_at' => fake()->dateTimeBetween('-10 days', 'now'),
+        ]);
+    }
+
+    /**
+     * Para vendedor específico
      */
     public function forVendor(User $vendor): static
     {
         return $this->state(fn(array $attributes) => [
             'vendor_id' => $vendor->id,
+        ]);
+    }
+
+    /**
+     * Para datos existentes
+     */
+    public function forExistingData(): static
+    {
+        return $this->state(fn(array $attributes) => [
+            'client_id' => Client::inRandomOrder()->first()?->id ?? Client::factory(),
+            'vendor_id' => User::whereHas('role', function ($q) {
+                $q->whereIn('name', ['admin', 'vendedor']);
+            })->inRandomOrder()->first()?->id ?? User::factory(),
         ]);
     }
 }

@@ -3,7 +3,8 @@
 namespace App\Models;
 
 use App\Models\Client;
-use App\Enums\PickingBudgetStatus;
+use App\Enums\BudgetStatus;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,6 +16,7 @@ class PickingBudget extends Model
 
     protected $fillable = [
         'budget_number',
+        'token',
         'vendor_id',
         'client_id',
         'total_kits',
@@ -27,7 +29,7 @@ class PickingBudget extends Model
         'services_subtotal',
         'component_increment_amount',
         'subtotal_with_increment',
-        'box_total', // es la suma de todas las cajas
+        'box_total',
         'picking_payment_condition_id',
         'payment_condition_description',
         'payment_condition_percentage',
@@ -35,6 +37,8 @@ class PickingBudget extends Model
         'total',
         'unit_price_per_kit',
         'status',
+        'email_sent',
+        'email_sent_at',
         'valid_until',
         'notes',
     ];
@@ -53,105 +57,276 @@ class PickingBudget extends Model
         'box_total' => 'decimal:2',
         'total' => 'decimal:2',
         'unit_price_per_kit' => 'decimal:2',
-        'status' => PickingBudgetStatus::class,
+        'status' => BudgetStatus::class,
+        'email_sent' => 'boolean',
+        'email_sent_at' => 'datetime',
         'valid_until' => 'date',
         'payment_condition_percentage' => 'decimal:2',
         'payment_condition_amount' => 'decimal:2',
     ];
 
-    /**
-     * Relación con el vendedor
-     */
+    protected $appends = [
+        'status_label',
+        'status_color',
+        'status_badge_class',
+        'valid_until_formatted',
+        'valid_until_short',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($budget) {
+            // Generar token automáticamente
+            if (empty($budget->token)) {
+                $budget->token = Str::random(32);
+            }
+            // Por defecto, estado 'unsent' al crear
+            if (empty($budget->status)) {
+                $budget->status = BudgetStatus::UNSENT;
+            }
+        });
+    }
+
+    // =========================================================================
+    // ACCESSORS
+    // =========================================================================
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status?->label() ?? 'Sin estado';
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return $this->status?->color() ?? 'gray';
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return $this->status?->badgeClass() ?? 'bg-gray-100 text-gray-800';
+    }
+
+    public function getValidUntilFormattedAttribute()
+    {
+        return $this->valid_until ? $this->valid_until->locale('es')->isoFormat('D [de] MMMM [de] YYYY') : null;
+    }
+
+    public function getValidUntilShortAttribute()
+    {
+        return $this->valid_until ? $this->valid_until->format('d/m/Y') : null;
+    }
+
+    public function getEmailSentAtFormattedAttribute()
+    {
+        return $this->email_sent_at 
+            ? $this->email_sent_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY [a las] HH:mm') 
+            : null;
+    }
+
+    // =========================================================================
+    // RELACIONES
+    // =========================================================================
+
     public function vendor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'vendor_id');
     }
 
-    /**
-     * Relación con el cliente
-     */
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
     }
 
-    /**
-     * Relación con los servicios del presupuesto
-     */
     public function services(): HasMany
     {
         return $this->hasMany(PickingBudgetService::class);
     }
 
-    /**
-     * Relación con las cajas del presupuesto
-     */
     public function boxes(): HasMany
     {
         return $this->hasMany(PickingBudgetBox::class);
     }
 
-    /**
-     * Relación con la condición de pago
-     */
     public function paymentCondition(): BelongsTo
     {
         return $this->belongsTo(PickingPaymentCondition::class, 'picking_payment_condition_id');
     }
 
-    /**
-     * Scope para filtrar por vendedor
-     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(PickingBudgetNotification::class);
+    }
+
+    // =========================================================================
+    // SCOPES
+    // =========================================================================
+
     public function scopeForVendor($query, int $vendorId)
     {
         return $query->where('vendor_id', $vendorId);
     }
 
-    /**
-     * Scope para filtrar por cliente
-     */
     public function scopeForClient($query, int $clientId)
     {
         return $query->where('client_id', $clientId);
     }
 
-    /**
-     * Scope para filtrar por estado
-     */
-    public function scopeWithStatus($query, PickingBudgetStatus $status)
+    public function scopeWithStatus($query, BudgetStatus $status)
     {
         return $query->where('status', $status);
     }
 
-    /**
-     * Scope para presupuestos vencidos
-     */
-    public function scopeExpired($query)
+    public function scopePubliclyVisible($query)
     {
-        return $query->where('valid_until', '<', now())
-            ->whereNotIn('status', [PickingBudgetStatus::APPROVED, PickingBudgetStatus::REJECTED]);
+        return $query->where('status', BudgetStatus::SENT);
+    }
+
+    public function scopeEditable($query)
+    {
+        return $query->whereIn('status', [BudgetStatus::UNSENT, BudgetStatus::DRAFT]);
+    }
+
+    public function scopeCanExpire($query)
+    {
+        return $query->whereIn('status', [
+            BudgetStatus::UNSENT,
+            BudgetStatus::DRAFT,
+            BudgetStatus::SENT,
+        ]);
+    }
+
+    public function scopeExpiredByDate($query)
+    {
+        return $query->where('valid_until', '<', now()->startOfDay())
+            ->canExpire();
+    }
+
+    public function scopeExpiringSoon($query, $days = 3)
+    {
+        return $query->where('valid_until', '<=', now()->addDays($days))
+            ->where('valid_until', '>=', now())
+            ->canExpire();
+    }
+
+    // =========================================================================
+    // MÉTODOS DE ESTADO
+    // =========================================================================
+
+    public function isExpiredByDate(): bool
+    {
+        return $this->valid_until < now()->startOfDay();
+    }
+
+    public function isPubliclyVisible(): bool
+    {
+        return $this->status === BudgetStatus::SENT;
+    }
+
+    public function allowsClientAction(): bool
+    {
+        return $this->status?->allowsClientAction() ?? false;
+    }
+
+    public function isEditable(): bool
+    {
+        return $this->status?->isEditable() ?? false;
+    }
+
+    public function canBeSent(): bool
+    {
+        return $this->status?->canBeSent() ?? false;
+    }
+
+    public function markAsSent(): void
+    {
+        $this->update([
+            'status' => BudgetStatus::SENT,
+            'email_sent' => true,
+            'email_sent_at' => now(),
+        ]);
+    }
+
+    public function markAsApproved(): void
+    {
+        $this->update(['status' => BudgetStatus::APPROVED]);
+    }
+
+    public function markAsRejected(): void
+    {
+        $this->update(['status' => BudgetStatus::REJECTED]);
+    }
+
+    public function markAsExpired(): void
+    {
+        if ($this->status?->canExpire()) {
+            $this->update(['status' => BudgetStatus::EXPIRED]);
+        }
     }
 
     /**
-     * Obtener subtotal con el ajuste de condición de pago aplicado
+     * Obtener datos de estado (similar a Budget)
      */
+    public function getStatusData(): array
+    {
+        $now = now()->startOfDay();
+        $validUntil = $this->valid_until->startOfDay();
+
+        $isExpiredByDate = $validUntil < $now;
+        $isExpiringToday = $validUntil->isSameDay($now);
+
+        if ($isExpiringToday) {
+            $daysUntilExpiry = 0;
+        } elseif ($isExpiredByDate) {
+            $daysUntilExpiry = -$validUntil->diffInDays($now);
+        } else {
+            $daysUntilExpiry = $now->diffInDays($validUntil);
+        }
+
+        $isExpired = $this->status === BudgetStatus::EXPIRED || 
+                     ($isExpiredByDate && $this->status?->canExpire());
+
+        if ($this->status === BudgetStatus::EXPIRED || $isExpiredByDate) {
+            $expiryStatus = 'expired';
+            $statusText = 'Vencido';
+        } elseif ($isExpiringToday) {
+            $expiryStatus = 'expiring_soon';
+            $statusText = 'Vence Hoy';
+        } elseif ($daysUntilExpiry <= 3 && $daysUntilExpiry > 0) {
+            $expiryStatus = 'expiring_soon';
+            $statusText = $daysUntilExpiry === 1 ?
+                'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
+        } else {
+            $expiryStatus = 'valid';
+            $statusText = 'Válido';
+        }
+
+        return [
+            'status' => $this->status?->value ?? 'unsent',
+            'status_label' => $this->status?->label() ?? 'Sin enviar',
+            'status_color' => $this->status?->color() ?? 'slate',
+            'expiry_status' => $expiryStatus,
+            'expiry_status_text' => $statusText,
+            'days_until_expiry' => $daysUntilExpiry,
+            'is_expired' => $isExpired,
+            'is_expiring_today' => $isExpiringToday,
+            'is_publicly_visible' => $this->isPubliclyVisible(),
+            'allows_client_action' => $this->allowsClientAction(),
+            'is_editable' => $this->isEditable(),
+            'can_be_sent' => $this->canBeSent(),
+        ];
+    }
+
+    // =========================================================================
+    // MÉTODOS DE NEGOCIO
+    // =========================================================================
+
     public function getSubtotalWithPaymentCondition()
     {
         return ($this->subtotal_with_increment + $this->box_total) + $this->payment_condition_amount;
     }
 
-    /**
-     * Verificar si el presupuesto está vencido
-     */
-    public function isExpired(): bool
-    {
-        return $this->valid_until < now()
-            && !in_array($this->status, [PickingBudgetStatus::APPROVED, PickingBudgetStatus::REJECTED]);
-    }
-
-    /**
-     * Generar el siguiente número de presupuesto
-     */
     public static function generateBudgetNumber(): string
     {
         $year = now()->year;
@@ -159,15 +334,12 @@ class PickingBudget extends Model
             ->orderBy('id', 'desc')
             ->first();
 
-        $nextNumber = $lastBudget ? (int) substr($lastBudget->budget_number, -4) + 1 : 1;
+        $nextNumber = $lastBudget ?
+            (int) substr($lastBudget->budget_number, -4) + 1 : 1;
 
         return sprintf('PK-%d-%04d', $year, $nextNumber);
     }
 
-    /**
-     * Calcular totales del presupuesto
-     * soporte para múltiples cajas y unit_price_per_kit
-     */
     public function calculateTotals(): void
     {
         // Subtotal de servicios

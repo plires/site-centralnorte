@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use Inertia\Inertia;
 use App\Models\Budget;
+use App\Enums\BudgetStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -26,29 +27,26 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
-            // Verificar si el presupuesto está activo
-            if (!$budget->is_active) {
+            // Verificar si el presupuesto es visible públicamente
+            if (!$budget->isPubliclyVisible()) {
+                return $this->renderNotFound($budget);
+            }
+
+            // Verificar si está vencido por fecha
+            if ($budget->isExpiredByDate()) {
                 return Inertia::render('public/budgets/BudgetNotFound', [
-                    'message' => 'Este presupuesto ha sido desactivado temporalmente y no está disponible para visualización.',
-                    'reason' => 'inactive'
+                    'message' => 'Este presupuesto está vencido y no está disponible para visualización.',
+                    'reason' => 'expired'
                 ]);
             }
 
             // Obtener datos de estado usando el método del modelo
             $statusData = $budget->getStatusData();
 
-            // Verificar si el presupuesto está vigente
-            if ($statusData['is_expired']) {
-                return Inertia::render('public/budgets/BudgetNotFound', [
-                    'message' => 'Este presupuesto esta vencido y no está disponible para visualización.',
-                    'reason' => 'expired'
-                ]);
-            }
-
             // Agrupar items por variantes para facilitar el manejo en el frontend
             $groupedItems = $this->groupItemsByVariants($budget->items);
 
-            // Obtener configuración de IVA (igual que en DashboardBudgetController)
+            // Obtener configuración de IVA
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
@@ -59,12 +57,12 @@ class PublicBudgetController extends Controller
                     'id' => $budget->id,
                     'title' => $budget->title,
                     'token' => $budget->token,
-                    'is_active' => $budget->is_active,
-
+                    'status' => $budget->status?->value,
+                    'status_label' => $budget->status_label,
+                    'status_color' => $budget->status_color,
                     'picking_payment_condition_id' => $budget->picking_payment_condition_id,
                     'payment_condition_description' => $budget->payment_condition_description,
                     'payment_condition_percentage' => $budget->payment_condition_percentage,
-
                     'issue_date_formatted' => $budget->issue_date_formatted,
                     'expiry_date_formatted' => $budget->expiry_date_formatted,
                     'issue_date_short' => $budget->issue_date_short,
@@ -96,19 +94,86 @@ class PublicBudgetController extends Controller
     }
 
     /**
+     * Cliente aprueba el presupuesto
+     */
+    public function approve($token)
+    {
+        try {
+            $budget = Budget::where('token', $token)->firstOrFail();
+
+            if (!$budget->allowsClientAction()) {
+                return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
+            }
+
+            if ($budget->isExpiredByDate()) {
+                return back()->with('error', 'Este presupuesto está vencido.');
+            }
+
+            $budget->markAsApproved();
+
+            Log::info('Presupuesto aprobado por cliente', [
+                'budget_id' => $budget->id,
+                'title' => $budget->title,
+            ]);
+
+            return back()->with('success', '¡Presupuesto aprobado correctamente! Nos pondremos en contacto contigo pronto.');
+        } catch (\Exception $e) {
+            Log::error('Error al aprobar presupuesto: ' . $e->getMessage());
+            return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
+        }
+    }
+
+    /**
+     * Cliente rechaza el presupuesto
+     */
+    public function reject($token, Request $request)
+    {
+        try {
+            $budget = Budget::where('token', $token)->firstOrFail();
+
+            if (!$budget->allowsClientAction()) {
+                return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
+            }
+
+            if ($budget->isExpiredByDate()) {
+                return back()->with('error', 'Este presupuesto está vencido.');
+            }
+
+            $budget->markAsRejected();
+
+            // Opcionalmente guardar el motivo de rechazo en footer_comments
+            if ($request->has('reason')) {
+                $budget->update([
+                    'footer_comments' => ($budget->footer_comments ? $budget->footer_comments . "\n\n" : '') .
+                        'Motivo de rechazo del cliente: ' . $request->reason
+                ]);
+            }
+
+            Log::info('Presupuesto rechazado por cliente', [
+                'budget_id' => $budget->id,
+                'title' => $budget->title,
+                'reason' => $request->reason ?? 'No especificado',
+            ]);
+
+            return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
+        } catch (\Exception $e) {
+            Log::error('Error al rechazar presupuesto: ' . $e->getMessage());
+            return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
+        }
+    }
+
+    /**
      * Generar PDF con variantes seleccionadas por el usuario
      */
     public function downloadPdf($token, Request $request)
     {
         try {
-            // Una sola query con las relaciones necesarias
             $budget = Budget::where('token', $token)
                 ->with([
                     'client:id,name,company,email,phone',
                     'user:id,name,email',
                     'paymentCondition:id,description,percentage',
                     'items' => function ($query) {
-                        // Cargar TODOS los items (sin filtrar por is_selected aquí)
                         $query->with([
                             'product:id,name',
                             'product.categories:id,name',
@@ -118,8 +183,12 @@ class PublicBudgetController extends Controller
                 ])
                 ->firstOrFail();
 
-            if (!$budget->is_active) {
+            if (!$budget->isPubliclyVisible()) {
                 abort(404, 'Presupuesto no disponible');
+            }
+
+            if ($budget->isExpiredByDate()) {
+                abort(404, 'Presupuesto vencido');
             }
 
             // Obtener variantes seleccionadas desde la request
@@ -141,7 +210,7 @@ class PublicBudgetController extends Controller
             $calculatedTotals = $this->calculateFilteredTotals(
                 $filteredItems,
                 $businessConfig,
-                $budget  // NUEVO: Pasar el budget para acceder a payment_condition_percentage
+                $budget
             );
 
             $budgetData = array_merge([
@@ -157,36 +226,56 @@ class PublicBudgetController extends Controller
                 'payment_condition' => $budget->paymentCondition ? [
                     'description' => $budget->payment_condition_description,
                     'percentage' => $budget->payment_condition_percentage,
+                    'amount' => $calculatedTotals['payment_condition_amount'],
                 ] : null,
-                'payment_condition_amount' => $calculatedTotals['payment_condition_amount'],
+                'iva_amount' => $calculatedTotals['iva_amount'],
                 'total' => $calculatedTotals['total'],
                 'client' => [
                     'name' => $budget->client->name,
-                    'company' => $budget->client->company ?? '',
-                    'email' => $budget->client->email ?? '',
-                    'phone' => $budget->client->phone ?? '',
+                    'company' => $budget->client->company,
                 ],
                 'user' => [
                     'name' => $budget->user->name,
-                    'email' => $budget->user->email ?? '',
                 ],
                 'grouped_items' => $groupedItems,
             ], $statusData);
 
-            // CONFIGURACIÓN MÍNIMA DEL PDF
             $pdf = Pdf::loadView('pdf.budget', [
                 'budget' => $budgetData,
                 'businessConfig' => $businessConfig,
             ]);
 
-            $pdf->setPaper('A4', 'portrait');
+            $pdf->setPaper('a4', 'portrait');
 
-            $filename = 'Presupuesto_' . str_replace(' ', '_', $budget->title) . '.pdf';
+            $safeTitle = Str::slug($budget->title, '-');
+            $filename = "presupuesto-{$safeTitle}-{$budget->id}.pdf";
+
             return $pdf->download($filename);
         } catch (\Exception $e) {
-            Log::error('Error al generar PDF: ' . $e->getMessage());
-            abort(500, 'Error al generar el PDF');
+            Log::error('Error al generar PDF público: ' . $e->getMessage());
+            abort(404, 'Error al generar el PDF');
         }
+    }
+
+    /**
+     * Renderizar vista de presupuesto no encontrado según el estado
+     */
+    private function renderNotFound(Budget $budget): \Inertia\Response
+    {
+        $messages = [
+            BudgetStatus::UNSENT->value => 'Este presupuesto aún no ha sido enviado.',
+            BudgetStatus::DRAFT->value => 'Este presupuesto está en borrador y no está disponible.',
+            BudgetStatus::APPROVED->value => 'Este presupuesto ya fue aprobado.',
+            BudgetStatus::REJECTED->value => 'Este presupuesto fue rechazado.',
+            BudgetStatus::EXPIRED->value => 'Este presupuesto está vencido.',
+        ];
+
+        $message = $messages[$budget->status?->value] ?? 'Este presupuesto no está disponible.';
+
+        return Inertia::render('public/budgets/BudgetNotFound', [
+            'message' => $message,
+            'reason' => $budget->status?->value ?? 'unknown',
+        ]);
     }
 
     /**
@@ -209,7 +298,7 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * Filtrar items basado en las variantes seleccionadas por el usuario
+     * Filtrar items basado en variantes seleccionadas
      */
     private function filterItemsBySelectedVariants($allItems, $selectedVariants)
     {
@@ -242,7 +331,7 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * Agrupa items incluyendo imágenes destacadas para el PDF
+     * Agrupar items con imágenes procesadas
      */
     private function groupItemsWithImages($items)
     {
@@ -292,7 +381,7 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * Procesa la imagen para el PDF (maneja URLs absolutas y relativas)
+     * Procesa la imagen para el PDF
      */
     private function processImage($imageModel)
     {
@@ -354,13 +443,11 @@ class PublicBudgetController extends Controller
     {
         $subtotal = $filteredItems->sum('line_total');
 
-        // Calcular ajuste por condición de pago
         $paymentConditionAmount = 0;
         if ($budget && $budget->payment_condition_percentage) {
             $paymentConditionAmount = $subtotal * ($budget->payment_condition_percentage / 100);
         }
 
-        // Aplicar ajuste de pago al subtotal antes del IVA
         $subtotalWithPayment = $subtotal + $paymentConditionAmount;
 
         $ivaAmount = $businessConfig['apply_iva']
@@ -372,7 +459,7 @@ class PublicBudgetController extends Controller
         return [
             'subtotal' => $subtotal,
             'payment_condition_amount' => $paymentConditionAmount,
-            'iva' => $ivaAmount,
+            'iva_amount' => $ivaAmount,
             'total' => $total,
         ];
     }

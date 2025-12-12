@@ -42,7 +42,7 @@ export default function BudgetForm({
 
     console.log(data);
 
-    // MODIFICADO: Pasar paymentConditionId y paymentConditions al hook
+    // Pasar paymentConditionId y paymentConditions al hook
     const { totals, selectedVariants, selectedPaymentCondition, handleVariantChange, calculateTotals, getItemsWithUpdatedSelection } = useBudgetLogic(
         data.items,
         businessConfig,

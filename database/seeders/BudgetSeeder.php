@@ -5,17 +5,13 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Budget;
 use App\Models\Client;
+use App\Enums\BudgetStatus;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class BudgetSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Verificar que existan usuarios vendedores/admin y clientes
         $users = User::whereHas('role', function ($q) {
             $q->whereIn('name', ['admin', 'vendedor']);
         })->get();
@@ -23,38 +19,56 @@ class BudgetSeeder extends Seeder
         $clients = Client::all();
 
         if ($users->isEmpty() || $clients->isEmpty()) {
-            $this->command->warn('No hay suficientes usuarios (admin/vendedores) o clientes para crear presupuestos.');
-            $this->command->info('Asegúrate de ejecutar primero los seeders de usuarios y clientes.');
+            $this->command->warn('No hay suficientes usuarios o clientes.');
             return;
         }
 
-        $this->command->info('Creando presupuestos...');
+        $this->command->info('Creando presupuestos de merch...');
 
-        // Crear diferentes tipos de presupuestos
-        $this->createActiveBudgets($users, $clients, 15);
-        $this->createInactiveBudgets($users, $clients, 5);
-        $this->createExpiredBudgets($users, $clients, 8);
-        $this->createExpiringSoonBudgets($users, $clients, 4);
-        $this->createPendingEmailBudgets($users, $clients, 3);
+        // Sin enviar (5)
+        $this->command->info('📝 Creando presupuestos SIN ENVIAR...');
+        $this->createBudgets($users, $clients, 5, BudgetStatus::UNSENT);
 
-        $this->command->info('Se crearon 35 presupuestos con diferentes estados.');
+        // Borradores (3)
+        $this->command->info('📄 Creando presupuestos BORRADOR...');
+        $this->createBudgets($users, $clients, 3, BudgetStatus::DRAFT);
+
+        // Enviados (10)
+        $this->command->info('📧 Creando presupuestos ENVIADOS...');
+        $this->createBudgets($users, $clients, 10, BudgetStatus::SENT);
+
+        // Aprobados (5)
+        $this->command->info('✅ Creando presupuestos APROBADOS...');
+        $this->createBudgets($users, $clients, 5, BudgetStatus::APPROVED);
+
+        // Rechazados (3)
+        $this->command->info('❌ Creando presupuestos RECHAZADOS...');
+        $this->createBudgets($users, $clients, 3, BudgetStatus::REJECTED);
+
+        // Vencidos (4)
+        $this->command->info('⏰ Creando presupuestos VENCIDOS...');
+        $this->createExpiredBudgets($users, $clients, 4);
+
+        // Por vencer (3)
+        $this->command->info('⚠️ Creando presupuestos POR VENCER...');
+        $this->createExpiringSoonBudgets($users, $clients, 3);
+
+        $total = Budget::count();
+        $this->command->info("✨ Se crearon {$total} presupuestos de merch.");
     }
 
-    /**
-     * Crear presupuestos activos
-     */
-    private function createActiveBudgets($users, $clients, int $count): void
+    private function createBudgets($users, $clients, int $count, BudgetStatus $status): void
     {
         for ($i = 0; $i < $count; $i++) {
             $budget = Budget::factory()
-                ->active()
+                ->state(['status' => $status])
                 ->create([
                     'user_id' => $users->random()->id,
                     'client_id' => $clients->random()->id,
                 ]);
 
-            // 70% probabilidad de tener email enviado
-            if (fake()->boolean(70)) {
+            // Actualizar tracking de email según estado
+            if (in_array($status, [BudgetStatus::SENT, BudgetStatus::APPROVED, BudgetStatus::REJECTED])) {
                 $budget->update([
                     'send_email_to_client' => true,
                     'email_sent' => true,
@@ -62,7 +76,7 @@ class BudgetSeeder extends Seeder
                 ]);
             }
 
-            // Simular algunos totales (esto se haría normalmente con BudgetItems)
+            // Simular totales
             $subtotal = fake()->randomFloat(2, 5000, 150000);
             $budget->update([
                 'subtotal' => $subtotal,
@@ -71,30 +85,6 @@ class BudgetSeeder extends Seeder
         }
     }
 
-    /**
-     * Crear presupuestos inactivos
-     */
-    private function createInactiveBudgets($users, $clients, int $count): void
-    {
-        for ($i = 0; $i < $count; $i++) {
-            $budget = Budget::factory()
-                ->inactive()
-                ->create([
-                    'user_id' => $users->random()->id,
-                    'client_id' => $clients->random()->id,
-                ]);
-
-            $subtotal = fake()->randomFloat(2, 3000, 80000);
-            $budget->update([
-                'subtotal' => $subtotal,
-                'total' => $subtotal,
-            ]);
-        }
-    }
-
-    /**
-     * Crear presupuestos expirados
-     */
     private function createExpiredBudgets($users, $clients, int $count): void
     {
         for ($i = 0; $i < $count; $i++) {
@@ -105,7 +95,6 @@ class BudgetSeeder extends Seeder
                     'client_id' => $clients->random()->id,
                 ]);
 
-            // Los expirados pueden haber tenido email enviado
             if (fake()->boolean(80)) {
                 $budget->update([
                     'send_email_to_client' => true,
@@ -122,42 +111,17 @@ class BudgetSeeder extends Seeder
         }
     }
 
-    /**
-     * Crear presupuestos que expiran pronto
-     */
     private function createExpiringSoonBudgets($users, $clients, int $count): void
     {
         for ($i = 0; $i < $count; $i++) {
             $budget = Budget::factory()
                 ->expiringSoon()
-                ->emailSent() // Estos probablemente ya tienen email enviado
                 ->create([
                     'user_id' => $users->random()->id,
                     'client_id' => $clients->random()->id,
                 ]);
 
             $subtotal = fake()->randomFloat(2, 15000, 300000);
-            $budget->update([
-                'subtotal' => $subtotal,
-                'total' => $subtotal,
-            ]);
-        }
-    }
-
-    /**
-     * Crear presupuestos con email pendiente de envío
-     */
-    private function createPendingEmailBudgets($users, $clients, int $count): void
-    {
-        for ($i = 0; $i < $count; $i++) {
-            $budget = Budget::factory()
-                ->pendingEmail()
-                ->create([
-                    'user_id' => $users->random()->id,
-                    'client_id' => $clients->random()->id,
-                ]);
-
-            $subtotal = fake()->randomFloat(2, 12000, 180000);
             $budget->update([
                 'subtotal' => $subtotal,
                 'total' => $subtotal,

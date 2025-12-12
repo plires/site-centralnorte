@@ -7,60 +7,60 @@ use App\Models\Client;
 use App\Models\PickingBudget;
 use Illuminate\Database\Seeder;
 use App\Models\PickingBudgetBox;
-use App\Enums\PickingBudgetStatus;
+use App\Enums\BudgetStatus;
 use App\Models\PickingBudgetService;
 
-/**
- * Seeder simple para crear algunos presupuestos de picking rápidamente
- */
 class SimplePickingBudgetSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $this->command->info('🚀 Creando presupuestos de picking (versión simple - ACTUALIZADA)...');
+        $this->command->info('🚀 Creando presupuestos de picking...');
 
-        // Obtener un vendedor
         $vendor = User::whereHas('role', function ($q) {
             $q->whereIn('name', ['admin', 'vendedor']);
         })->first();
 
         if (!$vendor) {
-            $this->command->error('❌ No se encontró ningún vendedor. Ejecuta UserSeeder primero.');
+            $this->command->error('❌ No se encontró ningún vendedor.');
             return;
         }
 
-        // 1. Presupuesto DRAFT simple con 1 caja
-        $this->command->info('📝 Creando presupuesto DRAFT (1 caja)...');
-        $draft = $this->createSimpleBudget($vendor, PickingBudgetStatus::DRAFT, [
+        // 1. Sin enviar
+        $this->command->info('📝 Creando presupuesto SIN ENVIAR...');
+        $this->createSimpleBudget($vendor, BudgetStatus::UNSENT, [
             'total_kits' => 100,
             'components' => 5,
-            'client' => 'Empresa Demo S.A.',
             'boxes' => [
                 ['dimensions' => '300 x 200 x 150', 'unit_cost' => 250.00, 'quantity' => 100],
             ]
         ]);
 
-        // 2. Presupuesto SENT con 2 cajas diferentes
-        $this->command->info('📧 Creando presupuesto SENT (2 cajas)...');
-        $sent = $this->createSimpleBudget($vendor, PickingBudgetStatus::SENT, [
+        // 2. Borrador
+        $this->command->info('📄 Creando presupuesto BORRADOR...');
+        $this->createSimpleBudget($vendor, BudgetStatus::DRAFT, [
+            'total_kits' => 150,
+            'components' => 6,
+            'boxes' => [
+                ['dimensions' => '300 x 200 x 150', 'unit_cost' => 250.00, 'quantity' => 150],
+            ]
+        ]);
+
+        // 3. Enviado
+        $this->command->info('📧 Creando presupuesto ENVIADO...');
+        $this->createSimpleBudget($vendor, BudgetStatus::SENT, [
             'total_kits' => 250,
             'components' => 8,
-            'client' => 'Comercial del Norte',
             'boxes' => [
                 ['dimensions' => '400 x 300 x 200', 'unit_cost' => 320.00, 'quantity' => 150],
                 ['dimensions' => '300 x 200 x 150', 'unit_cost' => 250.00, 'quantity' => 100],
             ]
         ]);
 
-        // 3. Presupuesto APPROVED con 3 cajas
-        $this->command->info('✅ Creando presupuesto APPROVED (3 cajas)...');
-        $approved = $this->createSimpleBudget($vendor, PickingBudgetStatus::APPROVED, [
+        // 4. Aprobado
+        $this->command->info('✅ Creando presupuesto APROBADO...');
+        $this->createSimpleBudget($vendor, BudgetStatus::APPROVED, [
             'total_kits' => 500,
             'components' => 12,
-            'client' => 'Marketing Plus SRL',
             'boxes' => [
                 ['dimensions' => '500 x 400 x 300', 'unit_cost' => 420.00, 'quantity' => 200],
                 ['dimensions' => '400 x 300 x 200', 'unit_cost' => 320.00, 'quantity' => 200],
@@ -68,16 +68,37 @@ class SimplePickingBudgetSeeder extends Seeder
             ]
         ]);
 
-        $this->command->info('✨ ¡3 presupuestos de picking creados exitosamente!');
-        $this->command->info('💡 Nota: Presupuestos incluyen múltiples cajas y precio unitario por kit');
+        // 5. Rechazado
+        $this->command->info('❌ Creando presupuesto RECHAZADO...');
+        $this->createSimpleBudget($vendor, BudgetStatus::REJECTED, [
+            'total_kits' => 200,
+            'components' => 7,
+            'boxes' => [
+                ['dimensions' => '300 x 200 x 150', 'unit_cost' => 250.00, 'quantity' => 200],
+            ]
+        ]);
+
+        // 6. Vencido
+        $this->command->info('⏰ Creando presupuesto VENCIDO...');
+        $this->createSimpleBudget($vendor, BudgetStatus::EXPIRED, [
+            'total_kits' => 100,
+            'components' => 4,
+            'boxes' => [
+                ['dimensions' => '300 x 200 x 150', 'unit_cost' => 250.00, 'quantity' => 100],
+            ],
+            'valid_until' => now()->subDays(5),
+        ]);
+
+        $this->command->info('✨ ¡6 presupuestos de picking creados exitosamente!');
     }
 
-    /**
-     * Crear un presupuesto simple
-     */
-    private function createSimpleBudget(User $vendor, PickingBudgetStatus $status, array $config): PickingBudget
+    private function createSimpleBudget(User $vendor, BudgetStatus $status, array $config): PickingBudget
     {
-        // Crear presupuesto
+        $validUntil = $config['valid_until'] ?? now()->addDays(30);
+        
+        // Determinar si tiene email enviado según el estado
+        $emailSent = in_array($status, [BudgetStatus::SENT, BudgetStatus::APPROVED, BudgetStatus::REJECTED]);
+
         $budget = PickingBudget::create([
             'budget_number' => PickingBudget::generateBudgetNumber(),
             'vendor_id' => $vendor->id,
@@ -96,11 +117,13 @@ class SimplePickingBudgetSeeder extends Seeder
             'total' => 0,
             'unit_price_per_kit' => 0,
             'status' => $status,
-            'valid_until' => now()->addDays(30),
+            'email_sent' => $emailSent,
+            'email_sent_at' => $emailSent ? now()->subDays(rand(1, 10)) : null,
+            'valid_until' => $validUntil,
             'notes' => 'Presupuesto de prueba generado automáticamente',
         ]);
 
-        // Agregar cajas (soporte múltiples cajas)
+        // Agregar cajas
         foreach ($config['boxes'] as $boxData) {
             PickingBudgetBox::create([
                 'picking_budget_id' => $budget->id,
@@ -139,7 +162,7 @@ class SimplePickingBudgetSeeder extends Seeder
             'subtotal' => 45.00 * $config['total_kits'],
         ]);
 
-        // Recalcular totales 
+        // Recalcular totales
         $budget->calculateTotals();
         $budget->save();
 

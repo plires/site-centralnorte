@@ -12,23 +12,49 @@ use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Public\PublicBudgetController;
+use App\Http\Controllers\Public\PublicPickingBudgetController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 use App\Http\Controllers\Dashboard\SlideController;
 
+// ===========================================================================
+// RUTAS PÚBLICAS (sin autenticación)
+// ===========================================================================
+
 Route::get('/', [HomeController::class, 'index'])
     ->name('public.home');
+
 Route::get('/nosotros', [NosotrosController::class, 'index'])
     ->name('public.nosotros');
-// Vista pública del presupuesto (sin auth)
-Route::get('presupuesto/{token}', [PublicBudgetController::class, 'show'])
-    ->name('public.budget.show');
-Route::get('presupuesto/{token}/pdf', [PublicBudgetController::class, 'downloadPdf'])
-    ->name('public.budget.pdf');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard.home');
+// Vista pública del presupuesto de Merch
+Route::prefix('presupuesto')->name('public.budget.')->group(function () {
+    Route::get('/{token}', [PublicBudgetController::class, 'show'])
+        ->name('show');
+    Route::get('/{token}/pdf', [PublicBudgetController::class, 'downloadPdf'])
+        ->name('pdf');
+    // Acciones del cliente (aprobar/rechazar)
+    Route::post('/{token}/aprobar', [PublicBudgetController::class, 'approve'])
+        ->name('approve');
+    Route::post('/{token}/rechazar', [PublicBudgetController::class, 'reject'])
+        ->name('reject');
 });
+
+// Vista pública del presupuesto de Picking
+Route::prefix('presupuesto-picking')->name('public.picking.budget.')->group(function () {
+    Route::get('/{token}', [PublicPickingBudgetController::class, 'show'])
+        ->name('show');
+    Route::get('/{token}/pdf', [PublicPickingBudgetController::class, 'downloadPdf'])
+        ->name('pdf');
+    // Acciones del cliente (aprobar/rechazar)
+    Route::post('/{token}/aprobar', [PublicPickingBudgetController::class, 'approve'])
+        ->name('approve');
+    Route::post('/{token}/rechazar', [PublicPickingBudgetController::class, 'reject'])
+        ->name('reject');
+});
+
+// ===========================================================================
+// DASHBOARD - Rutas autenticadas
+// ===========================================================================
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -114,62 +140,26 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_merch'
     // Acciones especiales
     Route::get('/budgets/{budget}/duplicate', [BudgetController::class, 'duplicate'])->name('budgets.duplicate');
     Route::post('/budgets/{budget}/send-email', [BudgetController::class, 'sendEmail'])->name('budgets.send-email');
-    Route::patch('/budgets/{budget}/toggle-status', [BudgetController::class, 'toggleStatus'])->name('budgets.toggle-status');
+    Route::patch('/budgets/{budget}/status', [BudgetController::class, 'updateStatus'])->name('budgets.update-status');
+});
+
+// Slides (carrusel)
+Route::middleware(['auth', 'verified', 'permission:gestionar_slides'])->prefix('dashboard')->name('dashboard.')->group(function () {
+    Route::get('/slides', [SlideController::class, 'index'])->name('slides.index');
+    Route::get('/slides/create', [SlideController::class, 'create'])->name('slides.create');
+    Route::post('/slides', [SlideController::class, 'store'])->name('slides.store');
+    Route::get('/slides/{slide}', [SlideController::class, 'show'])->name('slides.show');
+    Route::get('/slides/{slide}/edit', [SlideController::class, 'edit'])->name('slides.edit');
+    Route::put('/slides/{slide}', [SlideController::class, 'update'])->name('slides.update');
+    Route::delete('/slides/{slide}', [SlideController::class, 'destroy'])->name('slides.destroy');
+    Route::post('/slides/reorder', [SlideController::class, 'reorder'])->name('slides.reorder');
 });
 
 // API para selects dinámicos (requiere autenticación)
 Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(function () {
-    // Búsqueda de clientes
-    Route::get('/clients/search', [ApiController::class, 'searchClients'])->name('clients.search');
-    Route::get('/clients/{id}', [ApiController::class, 'getClient'])->name('clients.show');
-
-    // Búsqueda de productos
     Route::get('/products/search', [ApiController::class, 'searchProducts'])->name('products.search');
-    Route::get('/products/{id}', [ApiController::class, 'getProduct'])->name('products.show');
-
-    // Vendedores (solo para admins)
-    Route::get('/vendedores/search', [ApiController::class, 'getVendedores'])->name('vendedores.search');
+    Route::get('/clients/search', [ApiController::class, 'searchClients'])->name('clients.search');
 });
-
-// ============================================================================
-// SLIDES DEL CARRUSEL
-// ============================================================================
-// Agregar después de las otras rutas del dashboard
-
-Route::middleware(['auth', 'verified', 'permission:gestionar_slides'])
-    ->prefix('dashboard')
-    ->name('dashboard.')
-    ->group(function () {
-
-        // CRUD básico de slides
-        Route::get('/slides', [SlideController::class, 'index'])
-            ->name('slides.index');
-
-        Route::get('/slides/create', [SlideController::class, 'create'])
-            ->name('slides.create');
-
-        Route::post('/slides', [SlideController::class, 'store'])
-            ->name('slides.store');
-
-        Route::get('/slides/{slide}', [SlideController::class, 'show'])
-            ->name('slides.show');
-
-        Route::get('/slides/{slide}/edit', [SlideController::class, 'edit'])
-            ->name('slides.edit');
-
-        Route::put('/slides/{slide}', [SlideController::class, 'update'])
-            ->name('slides.update');
-
-        Route::delete('/slides/{slide}', [SlideController::class, 'destroy'])
-            ->name('slides.destroy');
-
-        // Acciones especiales
-        Route::patch('/slides/{slide}/toggle-status', [SlideController::class, 'toggleStatus'])
-            ->name('slides.toggle-status');
-
-        Route::post('/slides/update-order', [SlideController::class, 'updateOrder'])
-            ->name('slides.update-order');
-    });
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';

@@ -8,49 +8,32 @@ use App\Models\Client;
 use App\Models\PickingBox;
 use Illuminate\Http\Request;
 use App\Models\PickingBudget;
+use App\Enums\BudgetStatus;
 use App\Mail\PickingBudgetSent;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\PickingBudgetBox;
 use App\Models\PickingCostScale;
-use App\Enums\PickingBudgetStatus;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\PickingBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use App\Models\PickingPaymentCondition;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\StorePickingBudgetRequest;
 use App\Http\Requests\Picking\UpdatePickingBudgetRequest;
 
-
 class PickingBudgetController extends Controller
 {
-    /**
-     * Display a listing of picking budgets
-     */
     public function index(Request $request)
     {
         $user = Auth::user();
 
-        $query = PickingBudget::with('vendor:id,name')
-            ->select([
-                'id',
-                'budget_number',
-                'vendor_id',
-                'total_kits',
-                'total_components_per_kit',
-                'total',
-                'unit_price_per_kit',
-                'status',
-                'valid_until',
-                'created_at'
-            ]);
-
         $query = PickingBudget::with(['vendor:id,name', 'client:id,name,company']);
 
-        // Filtro por vendedor (si no es admin, solo ve sus presupuestos)
-        if (!$user->role->name === 'admin') {
+        // Filtro por vendedor
+        if ($user->role->name !== 'admin') {
             $query->where('vendor_id', Auth::id());
         } elseif ($request->filled('vendor_id')) {
             $query->where('vendor_id', $request->vendor_id);
@@ -69,47 +52,51 @@ class PickingBudgetController extends Controller
             $query->whereDate('created_at', '<=', $request->to_date);
         }
 
-        // Búsqueda por cliente o número de presupuesto
+        // Búsqueda
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->whereHas('client', function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%");
-                })
-                    ->orWhere('budget_number', 'like', "%{$search}%");
+                $q->whereHas('client', function ($cq) use ($search) {
+                    $cq->where('name', 'like', "%{$search}%")
+                        ->orWhere('company', 'like', "%{$search}%");
+                })->orWhere('budget_number', 'like', "%{$search}%");
             });
         }
 
-        // Ordenar por fecha de creación descendente
-        $query->orderBy('created_at', 'desc');
+        $budgets = $query->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString();
 
-        $budgets = $query->paginate(15)->withQueryString();
+        $budgets->getCollection()->transform(function ($budget) {
+            $statusData = $budget->getStatusData();
+            return array_merge($budget->toArray(), $statusData);
+        });
+
+        $vendors = [];
+        if ($user->role->name === 'admin') {
+            $vendors = User::whereHas('role', function ($q) {
+                $q->whereIn('name', ['admin', 'vendedor']);
+            })->select('id', 'name')->get();
+        }
 
         return Inertia::render('dashboard/picking/Index', [
             'budgets' => $budgets,
-            'filters' => $request->only(['status', 'vendor_id', 'from_date', 'to_date', 'search']),
+            'vendors' => $vendors,
+            'filters' => $request->only(['search', 'status', 'vendor_id', 'from_date', 'to_date']),
+            'statuses' => BudgetStatus::toSelectArray(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new picking budget
-     */
     public function create()
     {
         $boxes = PickingBox::active()->orderBy('cost')->get();
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        $clients = Client::orderBy('name')
-            ->get()
-            ->map(function ($client) {
-                return [
-                    'value' => $client->id,
-                    'label' => $client->company
-                        ? "{$client->name} ({$client->company})"
-                        : $client->name,
-                ];
-            });
+        $clients = Client::orderBy('name')->get()->map(fn($client) => [
+            'value' => $client->id,
+            'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+        ]);
 
         // Cargar condiciones de pago activas
         $paymentConditions = PickingPaymentCondition::active()
@@ -117,10 +104,10 @@ class PickingBudgetController extends Controller
             ->get();
 
         return Inertia::render('dashboard/picking/Create', [
-            'clients' => $clients,
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
+            'clients' => $clients,
             'paymentConditions' => $paymentConditions,
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
@@ -129,70 +116,64 @@ class PickingBudgetController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created picking budget
-     */
     public function store(StorePickingBudgetRequest $request)
     {
-
-
-        // Obtener snapshot de la condición de pago si fue seleccionada
-        $paymentConditionData = [];
-        if (!empty($request['picking_payment_condition_id'])) {
-            $paymentCondition = PickingPaymentCondition::find($request['picking_payment_condition_id']);
-            if ($paymentCondition) {
-                $paymentConditionData = [
-                    'picking_payment_condition_id' => $paymentCondition->id,
-                    'payment_condition_description' => $paymentCondition->description,
-                    'payment_condition_percentage' => $paymentCondition->percentage,
-                ];
-            }
-        }
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
         try {
-            $validated = $request->validated();
-
-            // Obtener la escala de costos según cantidad de kits
             $scale = PickingCostScale::findForQuantity($validated['total_kits']);
             if (!$scale) {
-                return back()->withErrors(['total_kits' => 'No se encontró una escala de costos para esta cantidad de kits.']);
+                return back()->withErrors(['total_kits' => 'No se encontró una escala de costos para esta cantidad.']);
             }
 
-            // Obtener el incremento según componentes
             $increment = PickingComponentIncrement::findForComponents($validated['total_components_per_kit']);
             if (!$increment) {
                 return back()->withErrors(['total_components_per_kit' => 'No se encontró un incremento para esta cantidad de componentes.']);
             }
 
-            // Crear el presupuesto con snapshots
+            $paymentConditionData = [
+                'picking_payment_condition_id' => null,
+                'payment_condition_description' => null,
+                'payment_condition_percentage' => null,
+            ];
+
+            if (!empty($validated['picking_payment_condition_id'])) {
+                $paymentCondition = PickingPaymentCondition::find($validated['picking_payment_condition_id']);
+                if ($paymentCondition) {
+                    $paymentConditionData = [
+                        'picking_payment_condition_id' => $paymentCondition->id,
+                        'payment_condition_description' => $paymentCondition->description,
+                        'payment_condition_percentage' => $paymentCondition->percentage,
+                    ];
+                }
+            }
+
+            // Crear con estado UNSENT (sin enviar)
             $budget = PickingBudget::create(array_merge([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
                 'vendor_id' => Auth::id(),
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
-                // Snapshot de la escala
                 'scale_quantity_from' => $scale->quantity_from,
                 'scale_quantity_to' => $scale->quantity_to,
                 'production_time' => $scale->production_time,
-                // Snapshot del incremento
                 'component_increment_description' => $increment->description,
                 'component_increment_percentage' => $increment->percentage,
-                // Totales (se calcularán después)
                 'services_subtotal' => 0,
                 'component_increment_amount' => 0,
                 'subtotal_with_increment' => 0,
                 'box_total' => 0,
                 'total' => 0,
                 'unit_price_per_kit' => 0,
-                'status' => PickingBudgetStatus::DRAFT,
+                'status' => BudgetStatus::UNSENT,
                 'valid_until' => now()->addDays(30),
                 'notes' => $validated['notes'] ?? null,
             ], $paymentConditionData));
 
-            // Crear las cajas seleccionadas (soporte múltiples cajas)
+            // Crear cajas
             if (!empty($validated['boxes'])) {
                 foreach ($validated['boxes'] as $boxData) {
                     PickingBudgetBox::create([
@@ -205,7 +186,7 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Crear los servicios seleccionados
+            // Crear servicios
             if (!empty($validated['services'])) {
                 foreach ($validated['services'] as $serviceData) {
                     PickingBudgetService::create([
@@ -219,29 +200,25 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Calcular y actualizar totales (incluye unit_price_per_kit)
             $budget->calculateTotals();
             $budget->save();
 
             DB::commit();
 
-            return redirect()
-                ->route('dashboard.picking.budgets.show', $budget)
+            return redirect()->route('dashboard.picking.budgets.show', $budget)
                 ->with('success', 'Presupuesto de picking creado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error al crear presupuesto de picking: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Error al crear el presupuesto: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Display the specified picking budget
-     */
     public function show(PickingBudget $pickingBudget)
     {
         $user = Auth::user();
 
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para ver este presupuesto.');
         }
 
@@ -253,48 +230,49 @@ class PickingBudgetController extends Controller
             'paymentCondition'
         ]);
 
+        $statusData = $pickingBudget->getStatusData();
+
         return Inertia::render('dashboard/picking/Show', [
-            'budget' => $pickingBudget,
+            'budget' => array_merge($pickingBudget->toArray(), $statusData),
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
             ],
+            'statuses' => BudgetStatus::toSelectArray(),
         ]);
     }
 
-    /**
-     * Show the form for editing the specified picking budget
-     */
     public function edit(PickingBudget $pickingBudget)
     {
-
         $user = Auth::user();
 
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para editar este presupuesto.');
         }
 
-        // Solo se puede editar si está en draft
-        if ($pickingBudget->status !== PickingBudgetStatus::DRAFT) {
-            return back()->withErrors(['error' => 'Solo se pueden editar presupuestos en estado borrador.']);
+        // Solo se puede editar si es editable
+        if (!$pickingBudget->isEditable()) {
+            return back()->withErrors(['error' => 'Solo se pueden editar presupuestos sin enviar o en borrador.']);
         }
 
         $pickingBudget->load(['services', 'boxes', 'client:id,name,email,phone,company']);
+
         $boxes = PickingBox::active()->orderBy('cost')->get();
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        $clients = Client::orderBy('name')
-            ->get()
-            ->map(function ($client) {
-                return [
-                    'value' => $client->id,
-                    'label' => $client->company
-                        ? "{$client->name} ({$client->company})"
-                        : $client->name,
-                ];
-            });
+        $clients = Client::orderBy('name')->get()->map(fn($client) => [
+            'value' => $client->id,
+            'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+        ]);
+
+        $paymentConditions = PickingPaymentCondition::where('is_active', true)
+            ->orderBy('description')->get()
+            ->map(fn($c) => [
+                'value' => $c->id,
+                'label' => "{$c->description} ({$c->percentage}%)",
+                'percentage' => $c->percentage,
+            ]);
 
         return Inertia::render('dashboard/picking/Edit', [
             'budget' => $pickingBudget,
@@ -302,61 +280,62 @@ class PickingBudgetController extends Controller
             'costScales' => $scales,
             'componentIncrements' => $increments,
             'clients' => $clients,
+            'paymentConditions' => $paymentConditions,
         ]);
     }
 
-    /**
-     * Update the specified picking budget
-     */
     public function update(UpdatePickingBudgetRequest $request, PickingBudget $pickingBudget)
     {
         $user = Auth::user();
 
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para actualizar este presupuesto.');
         }
 
-        // Solo se puede editar si está en draft
-        if ($pickingBudget->status !== PickingBudgetStatus::DRAFT) {
-            return back()->withErrors(['error' => 'Solo se pueden editar presupuestos en estado borrador.']);
+        if (!$pickingBudget->isEditable()) {
+            return back()->withErrors(['error' => 'Solo se pueden editar presupuestos sin enviar o en borrador.']);
         }
+
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
         try {
-            $validated = $request->validated();
-
-            // Obtener la escala de costos según cantidad de kits
             $scale = PickingCostScale::findForQuantity($validated['total_kits']);
-            if (!$scale) {
-                return back()->withErrors(['total_kits' => 'No se encontró una escala de costos para esta cantidad de kits.']);
-            }
-
-            // Obtener el incremento según componentes
             $increment = PickingComponentIncrement::findForComponents($validated['total_components_per_kit']);
-            if (!$increment) {
-                return back()->withErrors(['total_components_per_kit' => 'No se encontró un incremento para esta cantidad de componentes.']);
+
+            $paymentConditionData = [
+                'picking_payment_condition_id' => null,
+                'payment_condition_description' => null,
+                'payment_condition_percentage' => null,
+            ];
+
+            if (!empty($validated['picking_payment_condition_id'])) {
+                $paymentCondition = PickingPaymentCondition::find($validated['picking_payment_condition_id']);
+                if ($paymentCondition) {
+                    $paymentConditionData = [
+                        'picking_payment_condition_id' => $paymentCondition->id,
+                        'payment_condition_description' => $paymentCondition->description,
+                        'payment_condition_percentage' => $paymentCondition->percentage,
+                    ];
+                }
             }
 
-            // Actualizar el presupuesto
-            $pickingBudget->update([
+            $pickingBudget->update(array_merge([
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
-                // Actualizar snapshot de la escala
                 'scale_quantity_from' => $scale->quantity_from,
                 'scale_quantity_to' => $scale->quantity_to,
                 'production_time' => $scale->production_time,
-                // Actualizar snapshot del incremento
                 'component_increment_description' => $increment->description,
                 'component_increment_percentage' => $increment->percentage,
+                'valid_until' => $validated['valid_until'] ?? $pickingBudget->valid_until,
                 'notes' => $validated['notes'] ?? null,
-            ]);
+            ], $paymentConditionData));
 
-            // Eliminar cajas anteriores y crear las nuevas
+            // Actualizar cajas
             $pickingBudget->boxes()->delete();
-
             if (!empty($validated['boxes'])) {
                 foreach ($validated['boxes'] as $boxData) {
                     PickingBudgetBox::create([
@@ -369,10 +348,8 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Eliminar servicios anteriores y crear los nuevos
+            // Actualizar servicios
             $pickingBudget->services()->delete();
-
-            // Crear los servicios seleccionados
             if (!empty($validated['services'])) {
                 foreach ($validated['services'] as $serviceData) {
                     PickingBudgetService::create([
@@ -386,95 +363,95 @@ class PickingBudgetController extends Controller
                 }
             }
 
-            // Recalcular totales (incluye unit_price_per_kit)
             $pickingBudget->calculateTotals();
             $pickingBudget->save();
 
             DB::commit();
 
-            return redirect()
-                ->route('dashboard.picking.budgets.show', $pickingBudget)
+            return redirect()->route('dashboard.picking.budgets.show', $pickingBudget)
                 ->with('success', 'Presupuesto actualizado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Error al actualizar el presupuesto: ' . $e->getMessage()]);
+            Log::error('Error al actualizar presupuesto de picking: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al actualizar: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Remove the specified picking budget (soft delete)
-     */
     public function destroy(PickingBudget $pickingBudget)
     {
-
         $user = Auth::user();
 
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para eliminar este presupuesto.');
         }
 
         $pickingBudget->delete();
 
-        return redirect()
-            ->route('picking.budgets.index')
+        return redirect()->route('dashboard.picking.budgets.index')
             ->with('success', 'Presupuesto eliminado correctamente.');
     }
 
-    /**
-     * Duplicate an existing picking budget
-     */
     public function duplicate(PickingBudget $pickingBudget)
     {
         $user = Auth::user();
 
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para duplicar este presupuesto.');
         }
 
         DB::beginTransaction();
 
         try {
-            // Clonar el presupuesto
-            $newBudget = $pickingBudget->replicate();
+            // Clonar con estado DRAFT (borrador)
+            $newBudget = $pickingBudget->replicate(['token', 'email_sent', 'email_sent_at']);
             $newBudget->budget_number = PickingBudget::generateBudgetNumber();
-            $newBudget->status = PickingBudgetStatus::DRAFT;
+            $newBudget->status = BudgetStatus::DRAFT;
             $newBudget->valid_until = now()->addDays(30);
             $newBudget->vendor_id = Auth::id();
+            $newBudget->email_sent = false;
+            $newBudget->email_sent_at = null;
             $newBudget->save();
 
-            // Clonar los servicios
+            // Clonar servicios
             foreach ($pickingBudget->services as $service) {
                 $newService = $service->replicate();
                 $newService->picking_budget_id = $newBudget->id;
                 $newService->save();
             }
 
+            // Clonar cajas
+            foreach ($pickingBudget->boxes as $box) {
+                $newBox = $box->replicate();
+                $newBox->picking_budget_id = $newBudget->id;
+                $newBox->save();
+            }
+
+            $newBudget->calculateTotals();
+            $newBudget->save();
+
             DB::commit();
 
-            return redirect()
-                ->route('picking.budgets.edit', $newBudget)
-                ->with('success', 'Presupuesto duplicado correctamente. Puedes editarlo antes de enviarlo.');
+            return redirect()->route('dashboard.picking.budgets.edit', $newBudget)
+                ->with('success', 'Presupuesto duplicado. Puedes editarlo antes de enviarlo.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['error' => 'Error al duplicar el presupuesto: ' . $e->getMessage()]);
+            Log::error('Error al duplicar presupuesto de picking: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al duplicar: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Send picking budget to client via email
-     */
     public function send(PickingBudget $pickingBudget)
     {
         $user = Auth::user();
 
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para enviar este presupuesto.');
         }
 
-        // Validar que tenga email
+        if (!$pickingBudget->canBeSent() && $pickingBudget->status !== BudgetStatus::SENT) {
+            return back()->withErrors(['error' => 'Este presupuesto no puede ser enviado.']);
+        }
+
         $pickingBudget->load('client');
 
         if (!$pickingBudget->client || !$pickingBudget->client->email) {
@@ -482,50 +459,73 @@ class PickingBudgetController extends Controller
         }
 
         try {
-            // Generar PDF
-            $pdf = $this->generatePdf($pickingBudget);
+            $isResend = $pickingBudget->email_sent;
 
-            // Enviar email
+            $pdf = $this->generatePdf($pickingBudget);
             Mail::to($pickingBudget->client->email)
                 ->send(new PickingBudgetSent($pickingBudget, $pdf));
 
-            // Actualizar estado
-            $pickingBudget->update(['status' => PickingBudgetStatus::SENT]);
+            $pickingBudget->markAsSent();
 
-            return back()->with('success', 'Presupuesto enviado correctamente a ' . $pickingBudget->client->email);
+            $message = $isResend ? 'Reenvío exitoso.' : 'Presupuesto enviado correctamente.';
+            return back()->with('success', $message . ' a ' . $pickingBudget->client->email);
         } catch (\Exception $e) {
-            return back()->withErrors(['error' => 'Error al enviar el presupuesto: ' . $e->getMessage()]);
+            Log::error('Error al enviar presupuesto de picking: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Error al enviar: ' . $e->getMessage()]);
         }
     }
 
-    /**
-     * Download picking budget as PDF
-     */
+    public function updateStatus(Request $request, PickingBudget $pickingBudget)
+    {
+        $request->validate([
+            'status' => 'required|in:' . implode(',', array_column(BudgetStatus::cases(), 'value'))
+        ]);
+
+        try {
+            $user = Auth::user();
+
+            if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+                abort(403, 'No tienes permiso para modificar este presupuesto.');
+            }
+
+            $newStatus = BudgetStatus::from($request->status);
+            $pickingBudget->update(['status' => $newStatus]);
+
+            if ($newStatus === BudgetStatus::SENT && !$pickingBudget->email_sent) {
+                $pickingBudget->update(['email_sent' => true, 'email_sent_at' => now()]);
+            }
+
+            return back()->with('success', 'Estado actualizado a: ' . $newStatus->label());
+        } catch (\Exception $e) {
+            Log::error('Error al cambiar estado', ['budget_id' => $pickingBudget->id, 'error' => $e->getMessage()]);
+            return back()->with('error', 'Error al actualizar el estado.');
+        }
+    }
+
     public function downloadPdf(PickingBudget $pickingBudget)
     {
         $user = Auth::user();
 
-        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
-
-        // Verificar permiso
-        if (!$user->role->name === 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
+        if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para descargar este presupuesto.');
         }
 
+        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
         $pdf = $this->generatePdf($pickingBudget);
 
         return $pdf->download("presupuesto-picking-{$pickingBudget->budget_number}.pdf");
     }
 
-    /**
-     * Generate PDF for picking budget
-     */
     private function generatePdf(PickingBudget $pickingBudget)
     {
-        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
+        $pickingBudget->load(['client', 'vendor', 'services', 'boxes', 'paymentCondition']);
 
         $pdf = Pdf::loadView('pdf.picking-budget', [
-            'budget' => $pickingBudget
+            'budget' => $pickingBudget,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+            ],
         ]);
 
         $pdf->setPaper('a4', 'portrait');
@@ -533,9 +533,6 @@ class PickingBudgetController extends Controller
         return $pdf;
     }
 
-    /**
-     * Calculate totals for AJAX requests (real-time calculation)
-     */
     public function calculateTotals(Request $request)
     {
         $validated = $request->validate([
@@ -547,57 +544,27 @@ class PickingBudgetController extends Controller
             'services.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Calcular subtotal de servicios
         $servicesSubtotal = collect($validated['services'])->sum(function ($service) {
             return $service['unit_cost'] * $service['quantity'];
         });
 
-        // Obtener incremento por componentes
         $increment = PickingComponentIncrement::findForComponents($validated['total_components_per_kit']);
         $incrementPercentage = $increment ? $increment->percentage : 0;
-
-        // Calcular incremento
         $incrementAmount = $servicesSubtotal * $incrementPercentage;
 
-        // Calcular totales
         $subtotalWithIncrement = $servicesSubtotal + $incrementAmount;
         $total = $subtotalWithIncrement + $validated['box_cost'];
 
         return response()->json([
             'services_subtotal' => round($servicesSubtotal, 2),
-            'component_increment_percentage' => $incrementPercentage,
-            'component_increment_amount' => round($incrementAmount, 2),
+            'increment_percentage' => $incrementPercentage,
+            'increment_amount' => round($incrementAmount, 2),
             'subtotal_with_increment' => round($subtotalWithIncrement, 2),
-            'box_total' => $validated['box_cost'],
+            'box_cost' => round($validated['box_cost'], 2),
             'total' => round($total, 2),
+            'unit_price_per_kit' => $validated['total_kits'] > 0
+                ? round($total / $validated['total_kits'], 2)
+                : 0,
         ]);
-    }
-
-    /**
-     * Get cost scale for a given quantity (AJAX)
-     */
-    public function getCostScaleForQuantity(int $quantity)
-    {
-        $scale = PickingCostScale::findForQuantity($quantity);
-
-        if (!$scale) {
-            return response()->json(['error' => 'No se encontró una escala de costos para esta cantidad.'], 404);
-        }
-
-        return response()->json($scale);
-    }
-
-    /**
-     * Get component increment for a given number of components (AJAX)
-     */
-    public function getComponentIncrementForQuantity(int $components)
-    {
-        $increment = PickingComponentIncrement::findForComponents($components);
-
-        if (!$increment) {
-            return response()->json(['error' => 'No se encontró un incremento para esta cantidad de componentes.'], 404);
-        }
-
-        return response()->json($increment);
     }
 }

@@ -1,3 +1,5 @@
+// resources/js/config/tableColumns.jsx
+
 import ActionsDropdown from '@/components/ActionsDropdown';
 import BudgetStatusBadge from '@/components/BudgetStatusBadge';
 import { Badge } from '@/components/ui/badge';
@@ -73,92 +75,27 @@ export const budgetsColumns = (actions, isDeleting = false) => [
     },
     {
         key: 'status',
-        label: 'Vigencia',
+        label: 'Estado',
+        sortable: true,
+        render: (value, row) => (
+            <div className="text-center">
+                <BudgetStatusBadge 
+                    status={row.status} 
+                    showIcon={true} 
+                    size="xs" 
+                />
+            </div>
+        ),
+    },
+    {
+        key: 'actions',
+        label: '',
         sortable: false,
-        render: (value, row) => (
-            <div className="text-center">
-                <BudgetStatusBadge status={row.status} statusText={row.status_text} showIcon={true} size="xs" />
-            </div>
-        ),
-    },
-    {
-        key: 'is_active',
-        label: 'Estado',
-        sortable: true,
-        hideOnMobile: true,
-        render: (value, row) => (
-            <div className="text-center">
-                <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />
-            </div>
-        ),
-    },
-    {
-        key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
     },
 ];
 
-export const slidesColumns = (actions, isDeleting = false, stats = {}) => [
-    {
-        key: 'sort_order',
-        label: 'Orden',
-        sortable: true,
-        render: (value) => <span className="font-mono text-sm text-gray-500">#{value}</span>,
-    },
-    {
-        key: 'image_desktop_url',
-        label: 'Preview',
-        render: (value, row) => (
-            <div className="flex items-center gap-2">
-                {value ? (
-                    <img src={value} alt={row.title} className="h-12 w-20 rounded border object-cover" />
-                ) : (
-                    <div className="flex h-12 w-20 items-center justify-center rounded border bg-gray-100">
-                        <Images className="h-5 w-5 text-gray-400" />
-                    </div>
-                )}
-            </div>
-        ),
-    },
-    {
-        key: 'title',
-        label: 'Título',
-        sortable: true,
-        render: (value) => <span className="font-medium">{value}</span>,
-    },
-    {
-        key: 'link',
-        label: 'Enlace',
-        render: (value) =>
-            value ? (
-                <span className="max-w-[200px] truncate text-sm text-blue-600">{value}</span>
-            ) : (
-                <span className="text-sm text-gray-400">Sin enlace</span>
-            ),
-    },
-    {
-        key: 'is_active',
-        label: 'Estado',
-        sortable: true,
-        render: (value) => <Badge variant={value ? 'success' : 'secondary'}>{value ? 'Activo' : 'Inactivo'}</Badge>,
-    },
-    {
-        key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
-    },
-];
-
-export const userColumns = (actions, isDeleting = false) => [
+export const usersColumns = (actions, isDeleting = false) => [
     {
         key: 'name',
         label: 'Nombre',
@@ -169,40 +106,26 @@ export const userColumns = (actions, isDeleting = false) => [
         label: 'Email',
         sortable: true,
         hideOnMobile: true,
-        truncate: true,
-        render: (value, row) => <div className="text-center">{value}</div>,
     },
     {
-        key: 'role',
+        key: 'role.name',
         label: 'Rol',
         sortable: false,
         hideOnMobile: true,
-        render: (value, row) => {
-            const roleName = row.role?.name;
-
-            if (!roleName) {
-                return (
-                    <div className="text-center">
-                        <span className="text-gray-400 italic">Sin rol</span>
-                    </div>
-                );
-            }
-
-            return (
-                <div className="text-center">
-                    <StatusBadge value={roleName} type={roleName} />
-                </div>
-            );
-        },
+        render: (value, row) => <StatusBadge value={row.role?.name || 'Sin rol'} type={row.role?.name || 'default'} />,
+    },
+    {
+        key: 'created_at',
+        label: 'Registrado',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value) => timeAgo(value),
     },
     {
         key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
     },
 ];
 
@@ -216,24 +139,34 @@ export const clientsColumns = (actions, isDeleting = false) => [
         key: 'company',
         label: 'Empresa',
         sortable: true,
-        render: (value) => <div className="text-center">{value}</div>,
+        hideOnMobile: true,
+        render: (value) => value || '-',
+    },
+    {
+        key: 'email',
+        label: 'Email',
+        sortable: true,
+        hideOnMobile: true,
+    },
+    {
+        key: 'phone',
+        label: 'Teléfono',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value) => value || '-',
     },
     {
         key: 'created_at',
-        label: 'Fecha de Creación',
+        label: 'Registrado',
         sortable: true,
         hideOnMobile: true,
-        truncate: true,
-        render: (value) => <div className="text-center">{timeAgo(value)}</div>,
+        render: (value) => timeAgo(value),
     },
     {
         key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
     },
 ];
 
@@ -244,158 +177,192 @@ export const rolesColumns = (actions, isDeleting = false) => [
         sortable: true,
     },
     {
+        key: 'permissions_count',
+        label: 'Permisos',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value, row) => (
+            <Badge variant="outline" className="rounded-full">
+                {row.permissions?.length || 0} permisos
+            </Badge>
+        ),
+    },
+    {
+        key: 'users_count',
+        label: 'Usuarios',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value, row) => (
+            <Badge variant="outline" className="rounded-full">
+                {row.users_count || 0} usuarios
+            </Badge>
+        ),
+    },
+    {
         key: 'created_at',
-        label: 'Fecha de Creación',
+        label: 'Creado',
         sortable: true,
         hideOnMobile: true,
-        truncate: true,
-        render: (value) => <div className="text-center">{timeAgo(value)}</div>,
+        render: (value) => timeAgo(value),
     },
     {
         key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
     },
 ];
 
-export const productColumns = (actions, isDeleting = false, placeholderImage) => [
-    {
-        key: 'featured_image',
-        label: 'Imagen',
-        sortable: false,
-        render: (value, row) => {
-            const imageUrl = row.featured_image?.full_url || placeholderImage;
-            return (
-                <div className="flex justify-center">
-                    <img
-                        src={imageUrl}
-                        alt={row.name}
-                        className="h-12 w-12 rounded-md object-cover"
-                        onError={(e) => {
-                            e.target.src = placeholderImage;
-                        }}
-                    />
-                </div>
-            );
-        },
-    },
+export const categoriesColumns = (actions, isDeleting = false) => [
     {
         key: 'name',
-        label: 'Producto',
+        label: 'Nombre',
         sortable: true,
     },
     {
-        key: 'category.name',
-        label: 'Categoría',
+        key: 'slug',
+        label: 'Slug',
         sortable: true,
         hideOnMobile: true,
-        truncate: true,
-        render: (value, row) => {
-            // Mostrar múltiples categorías
-            if (!row.category_names || row.category_names.length === 0) {
-                return <span className="text-gray-400 italic">Sin categoría</span>;
-            }
-
-            return (
-                <div className="flex flex-wrap gap-1">
-                    {row.category_names.map((categoryName, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                            {categoryName}
-                        </Badge>
-                    ))}
-                </div>
-            );
-        },
     },
     {
-        key: 'origin',
-        label: 'Origen',
-        sortable: true,
-        render: (value, row) => {
-            const { label, className } = row.origin_config;
-
-            return (
-                <div className="text-center">
-                    <Badge variant="outline" className={className}>
-                        {label}
-                    </Badge>
-                </div>
-            );
-        },
-    },
-    {
-        key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => (
-            <div className="text-center">
-                <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
-            </div>
-        ),
-    },
-];
-
-export const categoryColumns = (actions, isDeleting = false) => [
-    {
-        key: 'name',
-        label: 'Categoría',
-        sortable: true,
-    },
-    {
-        key: 'description',
-        label: 'Descripción',
-        sortable: false,
-        hideOnMobile: true,
-        truncate: true,
-    },
-    {
-        key: 'show',
+        key: 'is_visible',
         label: 'Visible',
         sortable: true,
-        render: (value) => (
-            <div className="flex justify-center">
-                {value ? <Eye className="h-4 w-4 text-green-600" /> : <EyeOff className="h-4 w-4 text-gray-400" />}
-            </div>
-        ),
-    },
-    {
-        key: 'origin',
-        label: 'Origen',
-        sortable: true,
-        render: (value, row) => {
-            const { label, className } = row.origin_config;
-
-            return (
-                <div className="text-center">
-                    <Badge variant="outline" className={className}>
-                        {label}
-                    </Badge>
-                </div>
-            );
-        },
+        hideOnMobile: true,
+        render: (value) =>
+            value ? (
+                <span className="flex items-center gap-1 text-green-600">
+                    <Eye className="h-4 w-4" /> Sí
+                </span>
+            ) : (
+                <span className="flex items-center gap-1 text-gray-400">
+                    <EyeOff className="h-4 w-4" /> No
+                </span>
+            ),
     },
     {
         key: 'products_count',
-        label: 'Productos Asociados',
+        label: 'Productos',
         sortable: false,
         hideOnMobile: true,
-        truncate: true,
-        render: (value) => <div className="flex justify-center">{value}</div>,
+        render: (value, row) => row.products_count || 0,
     },
     {
         key: 'actions',
-        label: 'Acciones',
-        render: (value, row) => {
-            const { is_external } = row.origin_config;
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+    },
+];
 
-            return (
-                <div className="text-center">
-                    <ActionsDropdown isExternal={is_external} row={row} actions={actions} isDeleting={isDeleting} />
+export const productsColumns = (actions, isDeleting = false) => [
+    {
+        key: 'featured_image',
+        label: '',
+        sortable: false,
+        render: (value, row) => {
+            const imageUrl = row.featured_image?.thumbnail_url || row.featured_image?.url;
+            return imageUrl ? (
+                <img src={imageUrl} alt={row.name} className="h-10 w-10 rounded object-cover" loading="lazy" />
+            ) : (
+                <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
+                    <Images className="h-5 w-5 text-gray-400" />
                 </div>
             );
         },
+    },
+    {
+        key: 'name',
+        label: 'Nombre',
+        sortable: true,
+        render: (value, row) => (
+            <div>
+                <div className="font-medium">{value}</div>
+                <div className="text-xs text-gray-500">SKU: {row.sku}</div>
+            </div>
+        ),
+    },
+    {
+        key: 'categories',
+        label: 'Categoría',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value, row) => {
+            const cats = row.categories || [];
+            if (cats.length === 0) return '-';
+            return cats.map((c) => c.name).join(', ');
+        },
+    },
+    {
+        key: 'stock',
+        label: 'Stock',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value) => {
+            const stockValue = parseInt(value) || 0;
+            const colorClass = stockValue > 10 ? 'text-green-600' : stockValue > 0 ? 'text-orange-600' : 'text-red-600';
+            return <span className={colorClass}>{stockValue}</span>;
+        },
+    },
+    {
+        key: 'source',
+        label: 'Origen',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value) => (
+            <Badge variant="outline" className="text-xs">
+                {value === 'zecat' ? 'Zecat' : 'Local'}
+            </Badge>
+        ),
+    },
+    {
+        key: 'actions',
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
+    },
+];
+
+export const slidesColumns = (actions, isDeleting = false) => [
+    {
+        key: 'image',
+        label: 'Imagen',
+        sortable: false,
+        render: (value, row) => {
+            const imageUrl = row.image_url || row.image;
+            return imageUrl ? (
+                <img src={imageUrl} alt={row.title || 'Slide'} className="h-12 w-20 rounded object-cover" loading="lazy" />
+            ) : (
+                <div className="flex h-12 w-20 items-center justify-center rounded bg-gray-100">
+                    <Images className="h-5 w-5 text-gray-400" />
+                </div>
+            );
+        },
+    },
+    {
+        key: 'title',
+        label: 'Título',
+        sortable: true,
+        render: (value) => value || 'Sin título',
+    },
+    {
+        key: 'order',
+        label: 'Orden',
+        sortable: true,
+        hideOnMobile: true,
+    },
+    {
+        key: 'is_active',
+        label: 'Activo',
+        sortable: true,
+        hideOnMobile: true,
+        render: (value) => <StatusBadge value={value ? 'Activo' : 'Inactivo'} type={value ? 'active' : 'inactive'} />,
+    },
+    {
+        key: 'actions',
+        label: '',
+        sortable: false,
+        render: (value, row) => <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />,
     },
 ];

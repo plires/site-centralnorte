@@ -57,7 +57,7 @@ export default function PaymentConditionSelector({ value, onChange, paymentCondi
                             <SelectContent>
                                 <SelectItem value="none">Sin condición específica</SelectItem>
                                 {paymentConditions?.map((condition) => (
-                                    <SelectItem key={condition.id} value={condition.id.toString()}>
+                                    <SelectItem key={condition.id} value={condition.id}>
                                         <div className="flex items-center justify-between gap-1">
                                             <span>{condition.description}</span>
                                             <span className={`font-mono text-sm ${getPercentageColor(condition.percentage)}`}>

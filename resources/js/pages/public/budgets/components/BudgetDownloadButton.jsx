@@ -1,8 +1,9 @@
 // resources/js/pages/public/components/BudgetDownloadButton.jsx
 
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { areAllVariantsSelected, generatePdfUrl } from '@/utils/budget/budgetUtils';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, MessageSquare } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -59,20 +60,39 @@ export default function BudgetDownloadButton({ budget, selectedVariants }) {
     };
 
     return (
-        <div className="text-center">
-            <Button onClick={handleDownload} disabled={!allVariantsSelected || isGenerating} className="inline-flex min-w-[140px] items-center gap-2">
-                {isGenerating ? (
-                    <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Generando PDF
-                    </>
-                ) : (
-                    <>
-                        <Download className="h-4 w-4" />
-                        Descargar PDF
-                    </>
-                )}
-            </Button>
-        </div>
+        <Card className="border-2 border-blue-100 bg-blue-50/30">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                    <MessageSquare className="h-5 w-5 text-blue-600" />
+                    ¿Preferís generar tu propio presupuesto?
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="mb-4 text-sm text-gray-600">
+                    Tu vendedor te preparó lineas variables para algunos items de este presupuesto. Si lo preferís podés seleccionar las que mejor se
+                    ajustan, descargar tu PDF y enviarlo a tu vendedor.
+                </p>
+
+                <div className="text-center">
+                    <Button
+                        onClick={handleDownload}
+                        disabled={!allVariantsSelected || isGenerating}
+                        className="inline-flex min-w-[140px] items-center gap-2"
+                    >
+                        {isGenerating ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Generando PDF
+                            </>
+                        ) : (
+                            <>
+                                <Download className="h-4 w-4" />
+                                Descargar PDF
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
     );
 }

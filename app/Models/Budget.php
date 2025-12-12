@@ -1,9 +1,9 @@
 <?php
-// app/Models/Budget.php
 
 namespace App\Models;
 
 use Carbon\Carbon;
+use App\Enums\BudgetStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +23,7 @@ class Budget extends Model
         'payment_condition_percentage',
         'issue_date',
         'expiry_date',
-        'is_active',
+        'status',
         'send_email_to_client',
         'email_sent',
         'email_sent_at',
@@ -36,7 +36,7 @@ class Budget extends Model
     protected $casts = [
         'issue_date' => 'date',
         'expiry_date' => 'date',
-        'is_active' => 'boolean',
+        'status' => BudgetStatus::class,
         'send_email_to_client' => 'boolean',
         'email_sent' => 'boolean',
         'email_sent_at' => 'datetime',
@@ -52,7 +52,10 @@ class Budget extends Model
         'expiry_date_formatted',
         'issue_date_short',
         'expiry_date_short',
-        'email_sent_at_formatted'
+        'email_sent_at_formatted',
+        'status_label',
+        'status_color',
+        'status_badge_class',
     ];
 
     protected static function boot()
@@ -64,10 +67,17 @@ class Budget extends Model
             if (empty($budget->token)) {
                 $budget->token = Str::random(32);
             }
+            // Por defecto, estado 'unsent' al crear
+            if (empty($budget->status)) {
+                $budget->status = BudgetStatus::UNSENT;
+            }
         });
     }
 
-    // Accessors para fechas formateadas
+    // =========================================================================
+    // ACCESSORS PARA FECHAS
+    // =========================================================================
+
     public function getIssueDateFormattedAttribute()
     {
         return $this->issue_date ? $this->issue_date->locale('es')->isoFormat('D [de] MMMM [de] YYYY') : null;
@@ -93,7 +103,6 @@ class Budget extends Model
         return $this->email_sent_at ? $this->email_sent_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY [a las] HH:mm') : null;
     }
 
-    // Accessor para obtener fecha ISO para inputs HTML
     public function getIssueDateIsoAttribute()
     {
         return $this->issue_date ? $this->issue_date->format('Y-m-d') : null;
@@ -104,7 +113,29 @@ class Budget extends Model
         return $this->expiry_date ? $this->expiry_date->format('Y-m-d') : null;
     }
 
-    // Relaciones
+    // =========================================================================
+    // ACCESSORS PARA STATUS
+    // =========================================================================
+
+    public function getStatusLabelAttribute(): string
+    {
+        return $this->status?->label() ?? 'Sin estado';
+    }
+
+    public function getStatusColorAttribute(): string
+    {
+        return $this->status?->color() ?? 'gray';
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return $this->status?->badgeClass() ?? 'bg-gray-100 text-gray-800';
+    }
+
+    // =========================================================================
+    // RELACIONES
+    // =========================================================================
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -130,25 +161,206 @@ class Budget extends Model
         return $this->belongsTo(PickingPaymentCondition::class, 'picking_payment_condition_id');
     }
 
-    // Scopes
-    public function scopeActive($query)
+    // =========================================================================
+    // SCOPES
+    // =========================================================================
+
+    /**
+     * Presupuestos con estado específico
+     */
+    public function scopeWithStatus($query, BudgetStatus $status)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', $status);
     }
 
+    /**
+     * Presupuestos visibles públicamente (solo enviados)
+     */
+    public function scopePubliclyVisible($query)
+    {
+        return $query->where('status', BudgetStatus::SENT);
+    }
+
+    /**
+     * Presupuestos editables (sin enviar o borrador)
+     */
+    public function scopeEditable($query)
+    {
+        return $query->whereIn('status', [BudgetStatus::UNSENT, BudgetStatus::DRAFT]);
+    }
+
+    /**
+     * Presupuestos que pueden vencer (no finales)
+     */
+    public function scopeCanExpire($query)
+    {
+        return $query->whereIn('status', [
+            BudgetStatus::UNSENT,
+            BudgetStatus::DRAFT,
+            BudgetStatus::SENT,
+        ]);
+    }
+
+    /**
+     * Presupuestos vencidos por fecha
+     */
+    public function scopeExpiredByDate($query)
+    {
+        return $query->where('expiry_date', '<', now()->startOfDay())
+            ->canExpire();
+    }
+
+    /**
+     * Presupuestos próximos a vencer
+     */
     public function scopeExpiringSoon($query, $days = 3)
     {
         return $query->where('expiry_date', '<=', now()->addDays($days))
             ->where('expiry_date', '>=', now())
-            ->where('is_active', true);
+            ->canExpire();
     }
 
-    public function scopeExpired($query)
+    // =========================================================================
+    // MÉTODOS DE NEGOCIO
+    // =========================================================================
+
+    /**
+     * ¿El presupuesto está vencido por fecha?
+     */
+    public function isExpiredByDate(): bool
     {
-        return $query->where('expiry_date', '<', now());
+        return $this->expiry_date < now()->startOfDay();
     }
 
-    // Método de negocio actualizado para usar is_selected
+    /**
+     * ¿El presupuesto es visible públicamente?
+     */
+    public function isPubliclyVisible(): bool
+    {
+        return $this->status === BudgetStatus::SENT;
+    }
+
+    /**
+     * ¿El presupuesto permite acciones del cliente?
+     */
+    public function allowsClientAction(): bool
+    {
+        return $this->status?->allowsClientAction() ?? false;
+    }
+
+    /**
+     * ¿El presupuesto es editable?
+     */
+    public function isEditable(): bool
+    {
+        return $this->status?->isEditable() ?? false;
+    }
+
+    /**
+     * ¿El presupuesto puede ser enviado?
+     */
+    public function canBeSent(): bool
+    {
+        return $this->status?->canBeSent() ?? false;
+    }
+
+    /**
+     * Marcar como enviado
+     */
+    public function markAsSent(): void
+    {
+        $this->update([
+            'status' => BudgetStatus::SENT,
+            'email_sent' => true,
+            'email_sent_at' => now(),
+        ]);
+    }
+
+    /**
+     * Marcar como aprobado
+     */
+    public function markAsApproved(): void
+    {
+        $this->update(['status' => BudgetStatus::APPROVED]);
+    }
+
+    /**
+     * Marcar como rechazado
+     */
+    public function markAsRejected(): void
+    {
+        $this->update(['status' => BudgetStatus::REJECTED]);
+    }
+
+    /**
+     * Marcar como vencido
+     */
+    public function markAsExpired(): void
+    {
+        if ($this->status?->canExpire()) {
+            $this->update(['status' => BudgetStatus::EXPIRED]);
+        }
+    }
+
+    /**
+     * Obtener datos de estado (compatibilidad con código existente)
+     */
+    public function getStatusData(): array
+    {
+        $now = now()->startOfDay();
+        $expiryDate = $this->expiry_date->startOfDay();
+
+        $isExpiredByDate = $expiryDate < $now;
+        $isExpiringToday = $expiryDate->isSameDay($now);
+
+        // Calcular días correctamente
+        if ($isExpiringToday) {
+            $daysUntilExpiry = 0;
+        } elseif ($isExpiredByDate) {
+            $daysUntilExpiry = -$expiryDate->diffInDays($now);
+        } else {
+            $daysUntilExpiry = $now->diffInDays($expiryDate);
+        }
+
+        // El estado real viene del campo status
+        $isExpired = $this->status === BudgetStatus::EXPIRED ||
+            ($isExpiredByDate && $this->status?->canExpire());
+
+        // Texto de estado basado en vencimiento
+        if ($this->status === BudgetStatus::EXPIRED || $isExpiredByDate) {
+            $expiryStatus = 'expired';
+            $statusText = 'Vencido';
+        } elseif ($isExpiringToday) {
+            $expiryStatus = 'expiring_soon';
+            $statusText = 'Vence Hoy';
+        } elseif ($daysUntilExpiry <= 3 && $daysUntilExpiry > 0) {
+            $expiryStatus = 'expiring_soon';
+            $statusText = $daysUntilExpiry === 1 ?
+                'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
+        } else {
+            $expiryStatus = 'valid';
+            $statusText = 'Válido';
+        }
+
+        return [
+            'status' => $this->status?->value ?? 'unsent',
+            'status_label' => $this->status?->label() ?? 'Sin enviar',
+            'status_color' => $this->status?->color() ?? 'slate',
+            'expiry_status' => $expiryStatus,
+            'expiry_status_text' => $statusText,
+            'days_until_expiry' => $daysUntilExpiry,
+            'is_expired' => $isExpired,
+            'is_expiring_today' => $isExpiringToday,
+            'is_publicly_visible' => $this->isPubliclyVisible(),
+            'allows_client_action' => $this->allowsClientAction(),
+            'is_editable' => $this->isEditable(),
+            'can_be_sent' => $this->canBeSent(),
+        ];
+    }
+
+    /**
+     * Calcular totales del presupuesto
+     */
     public function calculateTotals()
     {
         $subtotal = 0;
@@ -182,36 +394,21 @@ class Budget extends Model
             $total = $subtotalWithPayment * (1 + $ivaRate);
         }
 
-        $this->update([
-            'subtotal' => $subtotal,
-            'payment_condition_amount' => $paymentConditionAmount,
-            'total' => $total,
-        ]);
-
-        return $this;
+        $this->subtotal = $subtotal;
+        $this->payment_condition_amount = $paymentConditionAmount;
+        $this->total = $total;
+        $this->save();
     }
 
     /**
-     * Obtener subtotal con el ajuste de condición de pago aplicado
+     * Obtener items seleccionados (para cálculos y PDF)
      */
-    public function getSubtotalWithPaymentCondition()
+    public function getSelectedItems()
     {
-        return $this->subtotal + $this->payment_condition_amount;
-    }
+        // Items regulares (sin variant_group)
+        $items = $this->items()->whereNull('variant_group')->get();
 
-    /**
-     * Obtener items que deben incluirse en el total
-     * (items regulares + variantes seleccionadas)
-     */
-    public function getItemsForTotal()
-    {
-        $items = collect();
-
-        // Agregar items regulares
-        $regularItems = $this->items()->whereNull('variant_group')->get();
-        $items = $items->concat($regularItems);
-
-        // Agregar variantes seleccionadas
+        // Variantes seleccionadas
         $selectedVariants = $this->items()
             ->whereNotNull('variant_group')
             ->where('is_selected', true)
@@ -235,50 +432,5 @@ class Budget extends Model
             ->unique()
             ->values()
             ->toArray();
-    }
-
-    // Método para obtener el estado del presupuesto (usado en el controlador)
-    public function getStatusData()
-    {
-        $now = now()->startOfDay();
-        $expiryDate = $this->expiry_date->startOfDay();
-
-        $isExpired = $expiryDate < $now;
-        $isExpiringToday = $expiryDate->isSameDay($now);
-
-        // Calcular días correctamente
-        if ($isExpiringToday) {
-            $daysUntilExpiry = 0;
-        } elseif ($isExpired) {
-            // Para vencidos: calcular días transcurridos desde el vencimiento (positivo)
-            $daysUntilExpiry = -$expiryDate->diffInDays($now);
-        } else {
-            // Para futuros: calcular días restantes hasta el vencimiento (positivo)
-            $daysUntilExpiry = $now->diffInDays($expiryDate);
-        }
-
-        // Determinar el estado
-        if ($isExpired) {
-            $status = 'expired';
-            $statusText = 'Vencido';
-        } elseif ($isExpiringToday) {
-            $status = 'expiring_soon';
-            $statusText = 'Vence Hoy';
-        } elseif ($daysUntilExpiry <= 3) {
-            $status = 'expiring_soon';
-            $statusText = $daysUntilExpiry === 1 ?
-                'Vence en 1 día' : "Vence en {$daysUntilExpiry} días";
-        } else {
-            $status = 'valid';
-            $statusText = 'Válido';
-        }
-
-        return [
-            'status' => $status,
-            'status_text' => $statusText,
-            'days_until_expiry' => $daysUntilExpiry,
-            'is_expired' => $isExpired,
-            'is_expiring_today' => $isExpiringToday,
-        ];
     }
 }

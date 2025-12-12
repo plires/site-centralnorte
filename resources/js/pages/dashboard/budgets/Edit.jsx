@@ -67,27 +67,6 @@ export default function Edit({ budget, clients, products, paymentConditions, use
         );
     };
 
-    const renderInactiveMessage = () => (
-        <div className="mt-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
-            <div className="p-8 text-center">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                    <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                        />
-                    </svg>
-                </div>
-                <h3 className="mb-2 text-lg font-medium text-gray-900">Presupuesto Inactivo</h3>
-                <p className="mx-auto max-w-sm text-sm text-gray-600">
-                    Este presupuesto está desactivado. Para poder editarlo, primero debes activarlo usando el switch superior.
-                </p>
-            </div>
-        </div>
-    );
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Editar Presupuesto - ${budget.title}`} />
@@ -95,27 +74,23 @@ export default function Edit({ budget, clients, products, paymentConditions, use
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     {/* Switch de estado */}
-                    <BudgetStatusSwitch budget={budget} />
+                    <BudgetStatusSwitch className="mb-5" budget={budget} />
 
-                    {/* Formulario o mensaje de inactivo */}
-                    {budget.is_active ? (
-                        <BudgetForm
-                            data={data}
-                            setData={setData}
-                            handleSubmit={handleSubmit}
-                            processing={processing}
-                            errors={errors}
-                            clients={clients}
-                            products={products}
-                            paymentConditions={paymentConditions}
-                            user={user}
-                            businessConfig={businessConfig}
-                            isEditing={true}
-                            originalBudget={budget}
-                        />
-                    ) : (
-                        renderInactiveMessage()
-                    )}
+                    {/* Formulario */}
+                    <BudgetForm
+                        data={data}
+                        setData={setData}
+                        handleSubmit={handleSubmit}
+                        processing={processing}
+                        errors={errors}
+                        clients={clients}
+                        products={products}
+                        paymentConditions={paymentConditions}
+                        user={user}
+                        businessConfig={businessConfig}
+                        isEditing={true}
+                        originalBudget={budget}
+                    />
                 </div>
             </div>
         </AppLayout>
