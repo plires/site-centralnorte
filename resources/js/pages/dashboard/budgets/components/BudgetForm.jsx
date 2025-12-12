@@ -15,13 +15,13 @@ import { router } from '@inertiajs/react';
 import { AlertTriangle, Save } from 'lucide-react';
 import { useState } from 'react';
 
+import PaymentConditionSelector from '@/components/PaymentConditionSelector';
 import { useBudgetLogic } from '../hooks/useBudgetLogic';
 import BudgetBasicInfo from './BudgetBasicInfo';
 import BudgetCommentsSection from './BudgetCommentsSection';
 import BudgetDateSection from './BudgetDateSection';
 import BudgetItemsSection from './BudgetItemsSection';
 import BudgetTotalsSection from './BudgetTotalsSection';
-import PaymentConditionSelector from './PaymentConditionSelector';
 
 export default function BudgetForm({
     data,

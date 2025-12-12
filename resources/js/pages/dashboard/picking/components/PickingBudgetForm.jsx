@@ -1,6 +1,7 @@
 // resources/js/pages/dashboard/picking/components/PickingBudgetForm.jsx
 
 import PageHeader from '@/components/PageHeader';
+import PaymentConditionSelector from '@/components/PaymentConditionSelector';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,7 +13,6 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import PaymentConditionSelector from '@/pages/dashboard/budgets/components/PaymentConditionSelector';
 import { router } from '@inertiajs/react';
 import { AlertTriangle, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
