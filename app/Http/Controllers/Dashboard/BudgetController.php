@@ -273,12 +273,8 @@ class BudgetController extends Controller
         ]);
 
         $paymentConditions = PickingPaymentCondition::where('is_active', true)
-            ->orderBy('description')->get()
-            ->map(fn($c) => [
-                'value' => $c->id,
-                'label' => "{$c->description} ({$c->percentage}%)",
-                'percentage' => $c->percentage,
-            ]);
+            ->orderBy('description')
+            ->get();
 
         return Inertia::render('dashboard/budgets/Edit', [
             'budget' => $budget,
