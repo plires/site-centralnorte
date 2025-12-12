@@ -1,4 +1,4 @@
-// resources/js/pages/dashboard/budgets/components/PaymentConditionSelector.jsx
+// resources/js/components/PaymentConditionSelector.jsx
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Label } from '@/Components/ui/label';
