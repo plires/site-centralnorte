@@ -6,30 +6,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DollarSign, Info, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function PaymentConditionSelector({ value, onChange, paymentConditions, disabled = false, showInfo = true }) {
-    // Convertir null/undefined a string "none" para el Select
-    const selectValue = value ? value.toString() : 'none';
+    // Convertir null/undefined/'' (string vacío) a string "none" para el Select
+    const selectValue = value && value !== '' ? value.toString() : 'none';
 
     // Encontrar la condición seleccionada (solo si no es "none")
     const selectedCondition = selectValue !== 'none' ? paymentConditions?.find((pc) => pc.id === parseInt(selectValue)) : null;
 
     const formatPercentage = (percentage) => {
-        const value = parseFloat(percentage);
-        if (value === 0) return '0%';
-        if (value > 0) return `+${value.toFixed(2)}%`;
-        return `${value.toFixed(2)}%`;
+        const num = parseFloat(percentage);
+        if (num === 0) return '0%';
+        if (num > 0) return `+${num.toFixed(2)}%`;
+        return `${num.toFixed(2)}%`;
     };
 
     const getPercentageColor = (percentage) => {
-        const value = parseFloat(percentage);
-        if (value === 0) return 'text-gray-600';
-        if (value > 0) return 'text-red-600';
+        const num = parseFloat(percentage);
+        if (num === 0) return 'text-gray-600';
+        if (num > 0) return 'text-red-600';
         return 'text-green-600';
     };
 
     const getPercentageIcon = (percentage) => {
-        const value = parseFloat(percentage);
-        if (value === 0) return null;
-        if (value > 0) return <TrendingUp className="inline h-4 w-4" />;
+        const num = parseFloat(percentage);
+        if (num === 0) return null;
+        if (num > 0) return <TrendingUp className="inline h-4 w-4" />;
         return <TrendingDown className="inline h-4 w-4" />;
     };
 
@@ -49,7 +49,7 @@ export default function PaymentConditionSelector({ value, onChange, paymentCondi
             <CardContent className="space-y-3">
                 <div className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="payment-condition">Condición de Pago *</Label>
+                        <Label htmlFor="payment-condition">Condición de Pago</Label>
                         <Select value={selectValue} onValueChange={handleValueChange} disabled={disabled}>
                             <SelectTrigger id="payment-condition">
                                 <SelectValue placeholder="Selecciona una condición de pago" />
@@ -57,7 +57,7 @@ export default function PaymentConditionSelector({ value, onChange, paymentCondi
                             <SelectContent>
                                 <SelectItem value="none">Sin condición específica</SelectItem>
                                 {paymentConditions?.map((condition) => (
-                                    <SelectItem key={condition.id} value={condition.id}>
+                                    <SelectItem key={condition.id} value={condition.id.toString()}>
                                         <div className="flex items-center justify-between gap-1">
                                             <span>{condition.description}</span>
                                             <span className={`font-mono text-sm ${getPercentageColor(condition.percentage)}`}>
@@ -83,17 +83,15 @@ export default function PaymentConditionSelector({ value, onChange, paymentCondi
                                 <CardDescription className="text-sm text-gray-800">
                                     <strong>{selectedCondition.description}:</strong>{' '}
                                     {parseFloat(selectedCondition.percentage) > 0 ? (
-                                        <>
-                                            Se aplicará un <strong>recargo del {formatPercentage(selectedCondition.percentage)}</strong> sobre el
-                                            subtotal del presupuesto.
-                                        </>
+                                        <span className="text-red-600">
+                                            Se aplicará un recargo del {formatPercentage(selectedCondition.percentage)} sobre el subtotal.
+                                        </span>
                                     ) : parseFloat(selectedCondition.percentage) < 0 ? (
-                                        <>
-                                            Se aplicará un <strong>descuento del {formatPercentage(selectedCondition.percentage)}</strong> sobre el
-                                            subtotal del presupuesto.
-                                        </>
+                                        <span className="text-green-600">
+                                            Se aplicará un descuento del {formatPercentage(selectedCondition.percentage)} sobre el subtotal.
+                                        </span>
                                     ) : (
-                                        <>No se aplicará ningún ajuste al presupuesto.</>
+                                        <span className="text-gray-600">Sin ajuste adicional sobre el subtotal.</span>
                                     )}
                                 </CardDescription>
                             </CardContent>
