@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
+use App\Mail\BudgetApprovedVendorMail;
+use App\Mail\BudgetRejectedVendorMail;
+use Illuminate\Support\Facades\Mail;
 
 class PublicBudgetController extends Controller
 {
@@ -116,6 +119,11 @@ class PublicBudgetController extends Controller
                 'title' => $budget->title,
             ]);
 
+            if ($budget->user && $budget->user->email) {
+                $dashboardUrl = route('dashboard.budgets.show', $budget->id);
+                Mail::to($budget->user->email)->send(new BudgetApprovedVendorMail($budget, $dashboardUrl));
+            }
+
             return back()->with('success', '¡Presupuesto aprobado correctamente! Nos pondremos en contacto contigo pronto.');
         } catch (\Exception $e) {
             Log::error('Error al aprobar presupuesto: ' . $e->getMessage());
@@ -142,10 +150,12 @@ class PublicBudgetController extends Controller
             $budget->markAsRejected();
 
             // Opcionalmente guardar el motivo de rechazo en footer_comments
+            $rejectionReason = null;
             if ($request->has('reason')) {
+                $rejectionReason = $request->reason;
                 $budget->update([
                     'footer_comments' => ($budget->footer_comments ? $budget->footer_comments . "\n\n" : '') .
-                        'Motivo de rechazo del cliente: ' . $request->reason
+                        'Motivo de rechazo del cliente: ' . $rejectionReason
                 ]);
             }
 
@@ -154,6 +164,11 @@ class PublicBudgetController extends Controller
                 'title' => $budget->title,
                 'reason' => $request->reason ?? 'No especificado',
             ]);
+
+            if ($budget->user && $budget->user->email) {
+                $dashboardUrl = route('dashboard.budgets.show', $budget->id);
+                Mail::to($budget->user->email)->send(new BudgetRejectedVendorMail($budget, $dashboardUrl, $rejectionReason));
+            }
 
             return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
         } catch (\Exception $e) {

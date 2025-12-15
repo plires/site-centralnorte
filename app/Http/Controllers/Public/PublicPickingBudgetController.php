@@ -9,6 +9,9 @@ use App\Enums\BudgetStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Mail\PickingBudgetApprovedVendorMail;
+use App\Mail\PickingBudgetRejectedVendorMail;
+use Illuminate\Support\Facades\Mail;
 
 class PublicPickingBudgetController extends Controller
 {
@@ -51,7 +54,6 @@ class PublicPickingBudgetController extends Controller
                 'budget' => array_merge($budget->toArray(), $statusData),
                 'businessConfig' => $businessConfig,
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto de picking público: ' . $e->getMessage());
 
@@ -85,8 +87,12 @@ class PublicPickingBudgetController extends Controller
                 'budget_number' => $budget->budget_number,
             ]);
 
-            return back()->with('success', '¡Presupuesto aprobado correctamente! Nos pondremos en contacto contigo pronto.');
+            if ($budget->vendor && $budget->vendor->email) {
+                $dashboardUrl = route('dashboard.picking-budgets.show', $budget->id);
+                Mail::to($budget->vendor->email)->send(new PickingBudgetApprovedVendorMail($budget, $dashboardUrl));
+            }
 
+            return back()->with('success', '¡Presupuesto aprobado correctamente! Nos pondremos en contacto contigo pronto.');
         } catch (\Exception $e) {
             Log::error('Error al aprobar presupuesto de picking: ' . $e->getMessage());
             return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
@@ -111,11 +117,13 @@ class PublicPickingBudgetController extends Controller
 
             $budget->markAsRejected();
 
-            // Opcionalmente guardar el motivo de rechazo
+            // Guardar motivo de rechazo
+            $rejectionReason = null;
             if ($request->has('reason')) {
+                $rejectionReason = $request->reason;
                 $budget->update([
-                    'notes' => ($budget->notes ? $budget->notes . "\n\n" : '') . 
-                              'Motivo de rechazo del cliente: ' . $request->reason
+                    'notes' => ($budget->notes ? $budget->notes . "\n\n" : '') .
+                        'Motivo de rechazo del cliente: ' . $rejectionReason
                 ]);
             }
 
@@ -125,8 +133,12 @@ class PublicPickingBudgetController extends Controller
                 'reason' => $request->reason ?? 'No especificado',
             ]);
 
-            return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
+            if ($budget->vendor && $budget->vendor->email) {
+                $dashboardUrl = route('dashboard.picking-budgets.show', $budget->id);
+                Mail::to($budget->vendor->email)->send(new PickingBudgetRejectedVendorMail($budget, $dashboardUrl, $rejectionReason));
+            }
 
+            return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
         } catch (\Exception $e) {
             Log::error('Error al rechazar presupuesto de picking: ' . $e->getMessage());
             return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
@@ -170,7 +182,6 @@ class PublicPickingBudgetController extends Controller
             $pdf->setPaper('a4', 'portrait');
 
             return $pdf->download("presupuesto-picking-{$budget->budget_number}.pdf");
-
         } catch (\Exception $e) {
             Log::error('Error al generar PDF de picking público: ' . $e->getMessage());
             abort(404, 'Error al generar el PDF');
