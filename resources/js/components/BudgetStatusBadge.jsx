@@ -113,6 +113,6 @@ export const budgetStatusOptions = [
 ];
 
 export const getStatusConfig = (status) => statusConfig[status] || statusConfig.unsent;
-export const isEditableStatus = (status) => ['unsent', 'draft'].includes(status);
-export const canSendStatus = (status) => ['unsent', 'draft', 'rejected'].includes(status);
-export const isPubliclyVisibleStatus = (status) => status === 'sent';
+export const isEditableStatus = (status) => ['unsent', 'draft', 'sent'].includes(status);
+export const canSendStatus = (status) => ['unsent', 'draft'].includes(status);
+export const isPubliclyVisibleStatus = (status) => ['sent', 'approved', 'rejected', 'expired'].includes(status);
