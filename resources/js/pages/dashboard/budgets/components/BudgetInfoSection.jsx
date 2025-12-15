@@ -3,7 +3,6 @@ import { formatDateTime } from '@/utils/dateUtils';
 import { Building2, CalendarDays, User } from 'lucide-react';
 
 export default function BudgetInfoSection({ budget }) {
-    console.log(budget);
     const getExpiryStatus = () => {
         if (budget.is_expiring_today) {
             return <span className="font-medium text-orange-600">Vence Hoy</span>;
