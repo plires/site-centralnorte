@@ -79,11 +79,7 @@ export const budgetsColumns = (actions, isDeleting = false) => [
         sortable: true,
         render: (value, row) => (
             <div className="text-center">
-                <BudgetStatusBadge 
-                    status={row.status} 
-                    showIcon={true} 
-                    size="xs" 
-                />
+                <BudgetStatusBadge status={row.status} showIcon={true} size="xs" />
             </div>
         ),
     },
@@ -95,7 +91,7 @@ export const budgetsColumns = (actions, isDeleting = false) => [
     },
 ];
 
-export const usersColumns = (actions, isDeleting = false) => [
+export const userColumns = (actions, isDeleting = false) => [
     {
         key: 'name',
         label: 'Nombre',
@@ -213,20 +209,14 @@ export const rolesColumns = (actions, isDeleting = false) => [
     },
 ];
 
-export const categoriesColumns = (actions, isDeleting = false) => [
+export const categoryColumns = (actions, isDeleting = false) => [
     {
         key: 'name',
         label: 'Nombre',
         sortable: true,
     },
     {
-        key: 'slug',
-        label: 'Slug',
-        sortable: true,
-        hideOnMobile: true,
-    },
-    {
-        key: 'is_visible',
+        key: 'show',
         label: 'Visible',
         sortable: true,
         hideOnMobile: true,
@@ -256,7 +246,7 @@ export const categoriesColumns = (actions, isDeleting = false) => [
     },
 ];
 
-export const productsColumns = (actions, isDeleting = false) => [
+export const productColumns = (actions, isDeleting = false) => [
     {
         key: 'featured_image',
         label: '',
