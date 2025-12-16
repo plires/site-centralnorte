@@ -169,6 +169,7 @@
                 <li>Ver todos los productos incluidos con sus imágenes</li>
                 <li>Seleccionar entre las diferentes opciones disponibles (si existen)</li>
                 <li>Descargar una versión en PDF</li>
+                <li>Aprobar / rechazar el presupuesto</li>
             </ul>
 
             <div class="divider"></div>
