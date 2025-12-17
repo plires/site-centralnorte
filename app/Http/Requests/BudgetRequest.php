@@ -33,6 +33,7 @@ class BudgetRequest extends FormRequest
             'expiry_date' => $this->getExpiryDateRules($isEditing),
             'send_email_to_client' => 'boolean',
             'footer_comments' => 'nullable|string',
+            'rejection_comments' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -91,7 +92,7 @@ class BudgetRequest extends FormRequest
 
     /**
      * Get validation rules for expiry_date based on operation type
-     * ACTUALIZADO: Flexible, sin validación rígida de días específicos
+     * Flexible, sin validación rígida de días específicos
      */
     private function getExpiryDateRules(bool $isEditing): array
     {
@@ -126,7 +127,7 @@ class BudgetRequest extends FormRequest
 
     /**
      * Prepare the data for validation.
-     * CORREGIDO: No auto-calcular fecha de vencimiento, debe venir del frontend
+     * No auto-calcular fecha de vencimiento, debe venir del frontend
      */
     protected function prepareForValidation()
     {
@@ -165,6 +166,7 @@ class BudgetRequest extends FormRequest
             'send_email_to_client.boolean' => 'El campo de envío automático debe ser verdadero o falso.',
 
             'footer_comments.string' => 'Los comentarios del pie deben ser texto válido.',
+            'rejection_comments.string' => 'Los comentarios de rechazo deben ser texto válido.',
 
             'items.required' => 'Debe agregar al menos un producto al presupuesto.',
             'items.min' => 'Debe agregar al menos un producto al presupuesto.',

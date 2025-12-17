@@ -149,13 +149,13 @@ class PublicBudgetController extends Controller
 
             $budget->markAsRejected();
 
-            // Opcionalmente guardar el motivo de rechazo en footer_comments
+            // Guardar el motivo de rechazo en el nuevo campo rejection_comments
+            // footer_comments permanece inmutable
             $rejectionReason = null;
-            if ($request->has('reason')) {
+            if ($request->has('reason') && !empty($request->reason)) {
                 $rejectionReason = $request->reason;
                 $budget->update([
-                    'footer_comments' => ($budget->footer_comments ? $budget->footer_comments . "\n\n" : '') .
-                        'Motivo de rechazo del cliente: ' . $rejectionReason
+                    'rejection_comments' => $rejectionReason
                 ]);
             }
 

@@ -444,13 +444,41 @@ class BudgetController extends Controller
             if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
                 abort(403, 'No tienes permisos para modificar este presupuesto.');
             }
-
+            $oldStatus = $budget->status;
             $newStatus = BudgetStatus::from($request->status);
-            $budget->update(['status' => $newStatus]);
 
-            if ($newStatus === BudgetStatus::SENT && !$budget->email_sent) {
-                $budget->update(['email_sent' => true, 'email_sent_at' => now()]);
+            // Datos a actualizar
+            $updateData = ['status' => $newStatus];
+
+            // Si un presupuesto esta vencido y se quiere cambiar el estado
+            if ($budget->isExpiredByDate()) {
+                return back()->with(
+                    'error',
+                    'No podés cambiar el estado de un presupuesto vencido. Podés duplicar el presupuesto y volver a enviar.'
+                );
             }
+
+            // Si cambia de REJECTED a otro estado, limpiar rejection_comments
+            if ($oldStatus === BudgetStatus::REJECTED && $newStatus !== BudgetStatus::REJECTED) {
+                $updateData['rejection_comments'] = null;
+            }
+
+            // Si cambia a SENT y no se había enviado antes, marcar como enviado
+            if ($newStatus === BudgetStatus::SENT && !$budget->email_sent) {
+                $updateData['email_sent'] = true;
+                $updateData['email_sent_at'] = now();
+            }
+
+            // Si cambia de SENT a UNSENT o DRAFT, resetear flags de envío
+            if (
+                in_array($oldStatus, [BudgetStatus::SENT, BudgetStatus::APPROVED, BudgetStatus::REJECTED, BudgetStatus::EXPIRED])
+                && in_array($newStatus, [BudgetStatus::UNSENT, BudgetStatus::DRAFT])
+            ) {
+                $updateData['email_sent'] = false;
+                $updateData['email_sent_at'] = null;
+            }
+
+            $budget->update($updateData);
 
             return back()->with('success', 'Estado actualizado a: ' . $newStatus->label());
         } catch (\Exception $e) {

@@ -1,5 +1,6 @@
 // resources/js/pages/dashboard/budgets/components/BudgetActionsSection.jsx
 
+import BudgetStatusBadge, { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,32 +15,11 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { router } from '@inertiajs/react';
-import { 
-    AlertTriangle, 
-    Copy, 
-    Edit, 
-    ExternalLink, 
-    Mail, 
-    Package, 
-    Send,
-    FileEdit,
-    FileText,
-    CheckCircle,
-    XCircle,
-    Clock,
-    Loader2
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Copy, Edit, ExternalLink, FileEdit, FileText, Loader2, Mail, Package, Send, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import BudgetStatusBadge, { budgetStatusOptions, isEditableStatus, canSendStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 
 export default function BudgetActionsSection({ budget, statuses = [] }) {
     const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
@@ -102,7 +82,7 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
 
     // Obtener etiqueta del estado
     const getStatusLabel = (status) => {
-        const option = budgetStatusOptions.find(o => o.value === status);
+        const option = budgetStatusOptions.find((o) => o.value === status);
         return option?.label || status;
     };
 
@@ -119,12 +99,12 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                     {/* Botones de acción principales */}
                     <div className="flex flex-wrap gap-2">
                         {/* Editar - Solo si es editable */}
-                        <Button 
-                            onClick={handleEdit} 
-                            variant={isEditable ? "default" : "outline"} 
+                        <Button
+                            onClick={handleEdit}
+                            variant={isEditable ? 'default' : 'outline'}
                             size="sm"
                             disabled={!isEditable}
-                            title={!isEditable ? "Solo se pueden editar presupuestos sin enviar o en borrador" : ""}
+                            title={!isEditable ? 'Solo se pueden editar presupuestos sin enviar o en borrador' : ''}
                         >
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
@@ -156,9 +136,7 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>
-                                            {budget.email_sent ? 'Reenviar presupuesto' : 'Enviar presupuesto'}
-                                        </AlertDialogTitle>
+                                        <AlertDialogTitle>{budget.email_sent ? 'Reenviar presupuesto' : 'Enviar presupuesto'}</AlertDialogTitle>
                                         <AlertDialogDescription>
                                             {budget.email_sent ? (
                                                 <>
@@ -182,7 +160,7 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                                                     <br />
                                                     El cliente recibirá un link para visualizar el presupuesto online.
                                                     {budget.status !== 'sent' && (
-                                                        <span className="block mt-2 text-blue-600">
+                                                        <span className="mt-2 block text-blue-600">
                                                             El estado del presupuesto cambiará a "Enviado".
                                                         </span>
                                                     )}
@@ -198,10 +176,7 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction 
-                                            onClick={handleSendEmailConfirm}
-                                            disabled={!budget.client?.email}
-                                        >
+                                        <AlertDialogAction onClick={handleSendEmailConfirm} disabled={!budget.client?.email}>
                                             {budget.email_sent ? 'Reenviar' : 'Enviar'}
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -210,12 +185,12 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                         )}
 
                         {/* Ver público - Solo si está enviado */}
-                        <Button 
-                            onClick={handleViewPublic} 
-                            variant="outline" 
+                        <Button
+                            onClick={handleViewPublic}
+                            variant="outline"
                             size="sm"
                             disabled={!isPubliclyVisible}
-                            title={!isPubliclyVisible ? "El presupuesto debe estar enviado para ser visible públicamente" : ""}
+                            title={!isPubliclyVisible ? 'El presupuesto debe estar enviado para ser visible públicamente' : ''}
                         >
                             <ExternalLink className="mr-2 h-4 w-4" />
                             Ver Público
@@ -228,19 +203,11 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
-                                <Label className="text-sm font-medium">
-                                    Estado del Presupuesto
-                                </Label>
-                                <p className="text-muted-foreground text-sm">
-                                    Cambia el estado para controlar la visibilidad y acciones disponibles
-                                </p>
+                                <Label className="text-sm font-medium">Estado del Presupuesto</Label>
+                                <p className="text-muted-foreground text-sm">Cambia el estado para controlar la visibilidad y acciones disponibles</p>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Select
-                                    value={budget.status}
-                                    onValueChange={handleStatusChange}
-                                    disabled={isUpdatingStatus}
-                                >
+                                <Select value={budget.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
                                     <SelectTrigger className="w-[180px]">
                                         {isUpdatingStatus ? (
                                             <div className="flex items-center gap-2">
@@ -268,37 +235,45 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                         <div className="rounded-lg bg-gray-50 p-3 text-sm">
                             {budget.status === 'unsent' && (
                                 <p className="text-gray-600">
-                                    <FileEdit className="inline h-4 w-4 mr-1" />
+                                    <FileEdit className="mr-1 inline h-4 w-4" />
                                     El presupuesto aún no ha sido enviado al cliente. Puedes editarlo libremente.
                                 </p>
                             )}
                             {budget.status === 'draft' && (
                                 <p className="text-gray-600">
-                                    <FileText className="inline h-4 w-4 mr-1" />
+                                    <FileText className="mr-1 inline h-4 w-4" />
                                     Este es un borrador (copia de otro presupuesto). Puedes editarlo antes de enviarlo.
                                 </p>
                             )}
                             {budget.status === 'sent' && (
                                 <p className="text-blue-600">
-                                    <Send className="inline h-4 w-4 mr-1" />
+                                    <Send className="mr-1 inline h-4 w-4" />
                                     El presupuesto está visible para el cliente. Puede aprobarlo o rechazarlo.
                                 </p>
                             )}
                             {budget.status === 'approved' && (
                                 <p className="text-green-600">
-                                    <CheckCircle className="inline h-4 w-4 mr-1" />
+                                    <CheckCircle className="mr-1 inline h-4 w-4" />
                                     ¡El cliente aprobó este presupuesto! Coordina los siguientes pasos.
                                 </p>
                             )}
                             {budget.status === 'rejected' && (
-                                <p className="text-red-600">
-                                    <XCircle className="inline h-4 w-4 mr-1" />
-                                    El cliente rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
-                                </p>
+                                <div className="space-y-2">
+                                    <p className="text-red-600">
+                                        <XCircle className="mr-1 inline h-4 w-4" />
+                                        El cliente rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
+                                    </p>
+                                    {budget.rejection_comments && (
+                                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-4">
+                                            <p className="mb-1 text-sm font-medium text-red-800">Motivo del rechazo:</p>
+                                            <p className="text-sm whitespace-pre-wrap text-red-700">{budget.rejection_comments}</p>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                             {budget.status === 'expired' && (
                                 <p className="text-orange-600">
-                                    <Clock className="inline h-4 w-4 mr-1" />
+                                    <Clock className="mr-1 inline h-4 w-4" />
                                     Este presupuesto venció. Puedes duplicarlo para crear uno nuevo con fechas actualizadas.
                                 </p>
                             )}
@@ -313,32 +288,22 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Cambiar estado del presupuesto?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Estás por cambiar el estado de{' '}
-                            <strong>{getStatusLabel(budget.status)}</strong> a{' '}
+                            Estás por cambiar el estado de <strong>{getStatusLabel(budget.status)}</strong> a{' '}
                             <strong>{getStatusLabel(pendingStatus)}</strong>.
                             {pendingStatus === 'sent' && (
-                                <span className="block mt-2 text-blue-600">
-                                    Esto hará el presupuesto visible para el cliente.
-                                </span>
+                                <span className="mt-2 block text-blue-600">Esto hará el presupuesto visible para el cliente.</span>
                             )}
                             {pendingStatus === 'expired' && (
-                                <span className="block mt-2 text-orange-600">
-                                    El cliente ya no podrá ver el presupuesto.
-                                </span>
+                                <span className="mt-2 block text-orange-600">El cliente ya no podrá ver el presupuesto.</span>
                             )}
                             {pendingStatus === 'approved' && (
-                                <span className="block mt-2 text-green-600">
-                                    Esto marcará el presupuesto como aprobado manualmente.
-                                </span>
+                                <span className="mt-2 block text-green-600">Esto marcará el presupuesto como aprobado manualmente.</span>
                             )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isUpdatingStatus}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={confirmStatusChange}
-                            disabled={isUpdatingStatus}
-                        >
+                        <AlertDialogAction onClick={confirmStatusChange} disabled={isUpdatingStatus}>
                             {isUpdatingStatus ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

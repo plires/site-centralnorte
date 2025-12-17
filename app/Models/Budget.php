@@ -28,6 +28,7 @@ class Budget extends Model
         'email_sent',
         'email_sent_at',
         'footer_comments',
+        'rejection_comments',
         'subtotal',
         'payment_condition_amount',
         'total',
