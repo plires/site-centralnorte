@@ -272,6 +272,10 @@ class BudgetController extends Controller
             'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
         ]);
 
+        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
+            ->orderBy('name')
+            ->get();
+
         $paymentConditions = PickingPaymentCondition::where('is_active', true)
             ->orderBy('description')
             ->get();
@@ -281,6 +285,7 @@ class BudgetController extends Controller
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
             'clients' => $clients,
+            'products' => $products,
             'paymentConditions' => $paymentConditions,
             'businessConfig' => $this->getBusinessConfig(),
         ]);
