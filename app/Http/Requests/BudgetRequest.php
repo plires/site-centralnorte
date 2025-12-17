@@ -51,7 +51,22 @@ class BudgetRequest extends FormRequest
 
         // Si es admin y está editando, permitir cambiar el user_id
         if ($isAdmin && $isEditing) {
-            $rules['user_id'] = 'required|exists:users,id';
+            $rules['user_id'] = [
+                'required',
+                'exists:users,id',
+                function ($attribute, $value, $fail) {
+                    $user = \App\Models\User::with('role')->find($value);
+
+                    if (!$user) {
+                        $fail('El vendedor seleccionado no existe.');
+                        return;
+                    }
+
+                    if (!$user->role || $user->role->name !== 'vendedor') {
+                        $fail('Debe seleccionar un vendedor válido. El usuario seleccionado no tiene el rol de vendedor.');
+                    }
+                }
+            ];
         }
 
         return $rules;
@@ -152,6 +167,9 @@ class BudgetRequest extends FormRequest
             'client_id.exists' => 'El cliente seleccionado no existe.',
 
             'picking_payment_condition_id.exists' => 'La condición de pago seleccionada no existe.',
+
+            'user_id.required' => 'Debe asignar un vendedor al presupuesto.',
+            'user_id.exists' => 'El vendedor seleccionado no existe.',
 
             'user_id.required' => 'Debe seleccionar un vendedor.',
             'user_id.exists' => 'El vendedor seleccionado no existe.',

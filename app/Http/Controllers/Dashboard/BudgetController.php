@@ -280,6 +280,23 @@ class BudgetController extends Controller
             ->orderBy('description')
             ->get();
 
+        // Obtener vendedores disponibles solo si es admin
+        $vendors = [];
+        if (Auth::user()->role->name === 'admin') {
+            $vendors = User::whereHas('role', function ($q) {
+                $q->where('name', 'vendedor');
+            })
+                ->select('id', 'name')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($vendor) {
+                    return [
+                        'value' => $vendor->id,
+                        'label' => $vendor->name,
+                    ];
+                });
+        }
+
         return Inertia::render('dashboard/budgets/Edit', [
             'budget' => $budget,
             'regularItems' => $regularItems,
@@ -287,6 +304,8 @@ class BudgetController extends Controller
             'clients' => $clients,
             'products' => $products,
             'paymentConditions' => $paymentConditions,
+            'user' => $user,
+            'vendors' => $vendors,
             'businessConfig' => $this->getBusinessConfig(),
         ]);
     }
@@ -300,6 +319,11 @@ class BudgetController extends Controller
 
             if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
                 abort(403, 'No tienes permisos para actualizar este presupuesto.');
+            }
+
+            if ($user->role->name === 'admin' && !$request->has('user_id')) {
+                return redirect()->back()->withInput()
+                    ->with('error', 'Debe asignar un vendedor al presupuesto.');
             }
 
             $paymentConditionData = [

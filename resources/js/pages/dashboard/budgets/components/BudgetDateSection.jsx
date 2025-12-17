@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getTodayISO, getTomorrowISO } from '@/utils/dateUtils';
 import { CalendarDays } from 'lucide-react';
-import VendedorCombobox from './VendedorCombobox';
 
-export default function BudgetDateSection({ data, setData, errors, user, isEditing = false }) {
+export default function BudgetDateSection({ data, setData, errors, user, vendors = [], isEditing = false }) {
     // Verificar si el usuario actual es admin
     const isAdmin = user?.role?.name === 'admin';
+    console.log(user);
 
     const getMinIssueDate = () => {
         // Si está editando, no aplicar restricción mínima (aunque no debería ser editable)
@@ -68,7 +69,7 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-                {/* NUEVO: Solo mostrar fecha de emisión si NO está editando */}
+                {/* Solo mostrar fecha de emisión si NO está editando */}
                 {!isEditing && (
                     <div>
                         <Label htmlFor="issue_date">Fecha de Emisión *</Label>
@@ -86,7 +87,7 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                     </div>
                 )}
 
-                {/* NUEVO: Si está editando, mostrar la fecha de emisión como solo lectura */}
+                {/* Si está editando, mostrar la fecha de emisión como solo lectura */}
                 {isEditing && (
                     <div>
                         <Label>Fecha de Emisión</Label>
@@ -123,22 +124,39 @@ export default function BudgetDateSection({ data, setData, errors, user, isEditi
                 </div>
 
                 <div>
-                    <Label>Vendedor</Label>
-                    {/* Si es admin y está editando, mostrar combobox */}
+                    <Label htmlFor="user_id">Vendedor *</Label>
                     {isAdmin && isEditing ? (
+                        // ADMIN: Select editable con vendedores
                         <>
-                            <VendedorCombobox
-                                value={data.user_id}
-                                onChange={(vendedorId) => setData('user_id', parseInt(vendedorId))}
-                                error={errors.user_id}
-                                placeholder="Seleccionar vendedor..."
-                            />
+                            {/* Verificar si el vendedor asignado existe en la lista */}
+                            {data.user_id && !vendors.some((v) => v.value === data.user_id) && (
+                                <div className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-800">
+                                    <strong>Nota:</strong> El vendedor asignado ya no está disponible en el sistema. Por favor seleccione un nuevo
+                                    vendedor.
+                                </div>
+                            )}
+
+                            <Select value={data.user_id?.toString()} onValueChange={(value) => setData('user_id', parseInt(value))}>
+                                <SelectTrigger className={errors.user_id ? 'border-red-500' : ''}>
+                                    <SelectValue placeholder="Seleccionar vendedor..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {vendors.map((vendor) => (
+                                        <SelectItem key={vendor.value} value={vendor.value.toString()}>
+                                            {vendor.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                             {errors.user_id && <p className="mt-1 text-sm text-red-600">{errors.user_id}</p>}
                             <p className="mt-1 text-xs text-gray-500">Como administrador puede cambiar el vendedor asignado</p>
                         </>
                     ) : (
-                        /* Para todos los demás casos, mostrar texto readonly */
-                        <p className="rounded-md bg-gray-50 px-3 py-2 text-sm font-medium">{user?.name || 'Usuario no disponible'}</p>
+                        // VENDEDOR: Input disabled con su nombre
+                        <>
+                            <Input id="user_id" type="text" value={user?.name || ''} disabled className="bg-gray-50" />
+                            <p className="mt-1 text-xs text-gray-500">Este presupuesto está asignado a tu usuario</p>
+                        </>
                     )}
                 </div>
             </CardContent>

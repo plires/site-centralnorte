@@ -87,7 +87,9 @@ export default function BudgetInfoSection({ budget }) {
                 <CardContent>
                     <div>
                         <dt className="text-sm font-medium text-gray-500">Nombre</dt>
-                        <dd className="text-sm text-gray-900">{budget.user.name}</dd>
+                        <dd className="text-sm text-gray-900">
+                            {budget.user?.name || <span className="text-gray-500 italic">Sin vendedor asignado</span>}
+                        </dd>
                     </div>
                 </CardContent>
             </Card>

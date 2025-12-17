@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import BudgetForm from './components/BudgetForm';
 import BudgetStatusSwitch from './components/BudgetStatusSwitch';
 
-export default function Edit({ budget, clients, products, paymentConditions, user, businessConfig }) {
+export default function Edit({ budget, clients, products, paymentConditions, user, vendors = [], businessConfig }) {
     const { flash } = usePage().props;
 
     const breadcrumbs = [
@@ -35,13 +35,14 @@ export default function Edit({ budget, clients, products, paymentConditions, use
         title: budget.title,
         picking_payment_condition: paymentConditionInfo || null,
         client_id: budget.client_id.toString(),
-        issue_date: budget.issue_date_iso, // ← Cambiar de budget.issue_date
-        expiry_date: budget.expiry_date_iso, // ← Cambiar de budget.expiry_date
+        issue_date: budget.issue_date_iso,
+        expiry_date: budget.expiry_date_iso,
         send_email_to_client: budget.send_email_to_client,
         footer_comments: budget.footer_comments || '',
         items: budget.items || [],
         picking_payment_condition_id: budget.picking_payment_condition_id || null,
         user_id: budget.user_id,
+        vendor_name: budget.user?.name || '',
     });
 
     const { handleResponse } = useInertiaResponse();
@@ -87,6 +88,7 @@ export default function Edit({ budget, clients, products, paymentConditions, use
                         products={products}
                         paymentConditions={paymentConditions}
                         user={user}
+                        vendors={vendors}
                         businessConfig={businessConfig}
                         isEditing={true}
                         originalBudget={budget}

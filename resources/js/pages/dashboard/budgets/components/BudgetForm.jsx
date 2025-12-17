@@ -33,6 +33,7 @@ export default function BudgetForm({
     products,
     paymentConditions,
     user,
+    vendors = [],
     businessConfig = null,
     isEditing = false,
     originalBudget = null,
@@ -100,7 +101,7 @@ export default function BudgetForm({
                     <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} user={user} isEditing={isEditing} />
 
                     {/* Fechas del presupuesto */}
-                    <BudgetDateSection data={data} setData={setData} errors={errors} user={user} isEditing={isEditing} />
+                    <BudgetDateSection data={data} setData={setData} errors={errors} user={user} vendors={vendors} isEditing={isEditing} />
 
                     {/* Selector de Condición de Pago */}
                     <PaymentConditionSelector
