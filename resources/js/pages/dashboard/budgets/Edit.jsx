@@ -35,8 +35,8 @@ export default function Edit({ budget, clients, products, paymentConditions, use
         title: budget.title,
         picking_payment_condition: paymentConditionInfo || null,
         client_id: budget.client_id.toString(),
-        issue_date: budget.issue_date, // Ya viene en formato ISO desde el controlador
-        expiry_date: budget.expiry_date, // Ya viene en formato ISO desde el controlador
+        issue_date: budget.issue_date_iso, // ← Cambiar de budget.issue_date
+        expiry_date: budget.expiry_date_iso, // ← Cambiar de budget.expiry_date
         send_email_to_client: budget.send_email_to_client,
         footer_comments: budget.footer_comments || '',
         items: budget.items || [],
