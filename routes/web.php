@@ -152,7 +152,8 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_slides'])->prefix('
     Route::get('/slides/{slide}/edit', [SlideController::class, 'edit'])->name('slides.edit');
     Route::put('/slides/{slide}', [SlideController::class, 'update'])->name('slides.update');
     Route::delete('/slides/{slide}', [SlideController::class, 'destroy'])->name('slides.destroy');
-    Route::post('/slides/reorder', [SlideController::class, 'reorder'])->name('slides.reorder');
+    Route::post('/slides/update-order', [SlideController::class, 'updateOrder'])
+        ->name('slides.update-order');
 });
 
 // API para selects dinámicos (requiere autenticación)
