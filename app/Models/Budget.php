@@ -53,6 +53,8 @@ class Budget extends Model
         'expiry_date_formatted',
         'issue_date_short',
         'expiry_date_short',
+        'issue_date_iso',
+        'expiry_date_iso',
         'email_sent_at_formatted',
         'status_label',
         'status_color',
