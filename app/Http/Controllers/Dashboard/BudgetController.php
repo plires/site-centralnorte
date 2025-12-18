@@ -284,7 +284,7 @@ class BudgetController extends Controller
         $vendors = [];
         if (Auth::user()->role->name === 'admin') {
             $vendors = User::whereHas('role', function ($q) {
-                $q->where('name', 'vendedor');
+                $q->whereIn('name', ['vendedor', 'admin']);
             })
                 ->select('id', 'name')
                 ->orderBy('name')
