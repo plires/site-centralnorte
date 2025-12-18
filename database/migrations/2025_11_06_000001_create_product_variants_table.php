@@ -37,6 +37,7 @@ return new class extends Migration
       $table->enum('variant_type', ['apparel', 'standard'])->default('standard');
 
       $table->timestamps();
+      $table->softDeletes();
 
       // Índices para optimizar búsquedas
       $table->index(['product_id', 'variant_type']);
