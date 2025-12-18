@@ -34,6 +34,7 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2); // unit_cost * quantity
 
             $table->timestamps();
+            $table->softDeletes();
 
             // Índices
             $table->index('picking_budget_id');

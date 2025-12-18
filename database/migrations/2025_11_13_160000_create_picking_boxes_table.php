@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('cost', 10, 2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

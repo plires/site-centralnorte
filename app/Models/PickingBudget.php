@@ -6,13 +6,14 @@ use App\Models\Client;
 use App\Enums\BudgetStatus;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PickingBudget extends Model
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'budget_number',
@@ -120,8 +121,8 @@ class PickingBudget extends Model
 
     public function getEmailSentAtFormattedAttribute()
     {
-        return $this->email_sent_at 
-            ? $this->email_sent_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY [a las] HH:mm') 
+        return $this->email_sent_at
+            ? $this->email_sent_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY [a las] HH:mm')
             : null;
     }
 
@@ -284,8 +285,8 @@ class PickingBudget extends Model
             $daysUntilExpiry = $now->diffInDays($validUntil);
         }
 
-        $isExpired = $this->status === BudgetStatus::EXPIRED || 
-                     ($isExpiredByDate && $this->status?->canExpire());
+        $isExpired = $this->status === BudgetStatus::EXPIRED ||
+            ($isExpiredByDate && $this->status?->canExpire());
 
         if ($this->status === BudgetStatus::EXPIRED || $isExpiredByDate) {
             $expiryStatus = 'expired';

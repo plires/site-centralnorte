@@ -18,6 +18,7 @@ return new class extends Migration
       $table->string('attribute_name'); // "Marca", "Técnica de aplicación", etc.
       $table->string('value'); // "Tahg", "Serigrafía", etc.
       $table->timestamps();
+      $table->softDeletes();
 
       // Índices para optimizar búsquedas
       $table->index(['product_id', 'attribute_name']);

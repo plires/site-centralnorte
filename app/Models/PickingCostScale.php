@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PickingCostScale extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'quantity_from',
         'quantity_to',
@@ -85,7 +89,7 @@ class PickingCostScale extends Model
         if ($this->quantity_to === null) {
             return $this->quantity_from . ' o más';
         }
-        
+
         return $this->quantity_from . ' - ' . $this->quantity_to;
     }
 }

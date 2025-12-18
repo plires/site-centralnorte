@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('percentage', 5, 2); // Puede ser positivo o negativo (-10.00 a 10.00, por ejemplo)
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

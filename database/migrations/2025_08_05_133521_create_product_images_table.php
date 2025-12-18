@@ -18,6 +18,7 @@ return new class extends Migration
             $table->boolean('is_featured')->default(false);
             $table->string('variant')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

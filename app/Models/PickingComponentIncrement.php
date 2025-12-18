@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PickingComponentIncrement extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'components_from',
         'components_to',
@@ -51,7 +55,7 @@ class PickingComponentIncrement extends Model
         if ($this->components_to === null) {
             return $this->components_from . ' o más';
         }
-        
+
         return $this->components_from . ' - ' . $this->components_to;
     }
 

@@ -5,9 +5,13 @@ namespace App\Models;
 use App\Enums\PickingServiceType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PickingBudgetService extends Model
 {
+    use HasFactory, SoftDeletes;
+
     protected $fillable = [
         'picking_budget_id',
         'service_type',

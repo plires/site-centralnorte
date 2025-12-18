@@ -23,6 +23,7 @@ return new class extends Migration
 
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
 
             // Índices para búsqueda eficiente
             $table->index(['components_from', 'components_to']);
