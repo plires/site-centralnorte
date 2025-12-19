@@ -1,215 +1,191 @@
+{{-- resources/views/pdf/budget.blade.php --}}
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title>Presupuesto {{ $budget['title'] }}</title>
+    <title>Presupuesto - {{ $budget['title'] }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+        * {
             margin: 0;
             padding: 0;
-            color: #333;
+            box-sizing: border-box;
         }
 
-        /* Header Institucional */
-        .institutional-header {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-            background-color: #f8f9fa;
-            border: 2px solid #3d5095;
-        }
-
-        .institutional-header td {
-            padding: 15px;
-            vertical-align: top;
-        }
-
-        .company-logo {
-            width: 80px;
-            text-align: center;
-            border-right: 1px solid #ddd;
-            vertical-align: middle;
-            padding: 10px;
-        }
-
-        .company-logo img {
-            display: block;
-            margin: 0 auto;
-            max-width: 60px;
-            max-height: 60px;
-            object-fit: contain;
-        }
-
-        .company-logo-placeholder {
-            width: 60px;
-            height: 60px;
-            background-color: #e9ecef;
-            border: 2px solid #3d5095;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 9px;
-            color: #3d5095;
-            font-weight: bold;
-            text-align: center;
-            margin: 0 auto;
-        }
-
-        .company-info {
-            font-weight: bold;
-        }
-
-        .company-name {
-            font-size: 18px;
-            color: #3d5095;
-            margin-bottom: 8px;
-        }
-
-        .company-tagline {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
-            margin-bottom: 8px;
-        }
-
-        .company-contact {
+        body {
+            font-family: Arial, sans-serif;
             font-size: 10px;
-            color: #555;
+            color: #333;
             line-height: 1.4;
         }
 
-        /* Estilos originales mantenidos */
-        .header {
-            border: 1px solid #ddd;
-            margin-bottom: 20px;
-            padding: 15px;
-        }
-
-        .header-row {
-            display: table;
+        /* HEADER INSTITUCIONAL */
+        .institutional-header {
             width: 100%;
-            margin-bottom: 10px;
+            background: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            padding: 30px 20px;
+            text-align: center;
         }
 
-        .header-col {
-            display: table-cell;
-            width: 33.33%;
-            vertical-align: top;
-            padding: 5px;
+        .company-logo {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .company-logo img {
+            max-width: 320px;
+            height: auto;
+            display: inline-block;
         }
 
         .header-title {
-            text-align: center;
+            background: {{ env('SECONDARY_COLOR', '#3d5095') }};
+            color: white;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 15px;
-            color: #3d5095;
+            margin-bottom: 5px;
+            text-align: center;
+            padding: 5px 2%;
+        }
+
+        .header-subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            background: {{ env('SECONDARY_COLOR', '#3d5095') }};
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* INFO GENERAL */
+        .budget-info-header {
+            width: 100%;
+            margin-bottom: 20px;
+            color: #6b7280;
+            background-color: white;
+            border-bottom: 4px solid {{ env('SECONDARY_COLOR', '#3d5095') }};
+        }
+
+        .budget-info-header td {
+            padding: 10px 15px;
+            vertical-align: top;
+            font-size: 10px;
+        }
+
+        .header-col {
+            width: 50%;
         }
 
         .label {
             font-weight: bold;
-            color: #666;
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
         }
 
+        /* PRODUCTOS */
         .products-table {
-            width: 100%;
+            width: 96%;
+            margin-left: 2%;
+            margin-right: 2%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin-bottom: 15px;
         }
 
         .products-table th {
-            background-color: #f5f5f5;
-            border: 1px solid #ddd;
+            background-color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            color: white;
             padding: 8px;
             text-align: left;
+            font-size: 9px;
             font-weight: bold;
         }
 
         .products-table td {
-            border: 1px solid #ddd;
             padding: 8px;
-            vertical-align: top;
-        }
-
-        .products-table tr:nth-child(even) {
-            background-color: #f9f9f9;
+            border-bottom: 1px solid #ddd;
+            font-size: 9px;
         }
 
         .product-image {
-            width: 60px;
             text-align: center;
+            padding: 2px 0 !important;
         }
 
         .product-image img {
-            max-width: 50px;
-            max-height: 50px;
-            border: 1px solid #ddd;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
         }
 
         .product-image-placeholder {
             width: 50px;
             height: 50px;
             background-color: #f0f0f0;
-            border: 1px solid #ddd;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 9px;
+            font-size: 8px;
             color: #999;
-            text-align: center;
-            margin: 0 auto;
-        }
-
-        .text-right {
-            text-align: right;
         }
 
         .text-center {
             text-align: center;
         }
 
-        .variant-header {
-            background-color: #ffffff;
-            padding: 8px;
-            font-weight: bold;
-            color: #19ac90;
-            border: 1px solid #bbdefb;
-            margin-top: 15px;
+        .text-right {
+            text-align: right;
         }
 
+        /* VARIANTES */
         .variant-header-row {
-            background-color: #ffffff;
+            /* background-color: #ffffff; */
         }
 
         .variant-header-cell {
-            padding: 12px;
-            font-weight: bold;
-            color: #19ac90;
-            border: 1px solid #19ac90;
+            padding-bottom: 0;
+            margin-bottomtom: 0;
+            padding-top: 2px;
+            margin-toptom: 2px;
+            /* font-weight: bold; */
+            /* background-color: {{ env('SECONDARY_COLOR', '#19ac90') }}; */
+            color: {{ env('PRIMARY_COLOR', '#19ac90') }};
             text-align: left;
             font-size: 10px;
         }
 
-        .comments {
-            margin: 20px 0;
+        /* COMENTARIOS Y CONDICIÓN DE PAGO */
+        .info-box {
+            background-color: #f3f4f6;
             padding: 15px;
-            background-color: #f5f5f5;
-            border-left: 4px solid #4caf50;
+            margin: 20px 2%;
+            border-left: 4px solid {{ env('SECONDARY_COLOR', '#19ac90') }};
+            border-radius: 4px;
+        }
+
+        .info-box strong {
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+        }
+
+        .info-box small {
+            color: #6b7280;
+        }
+
+        .comments {
+            margin: 20px 2%;
+            padding: 15px;
+            background-color: #f3f4f6;
+            border-left: 4px solid {{ env('SECONDARY_COLOR', '#19ac90') }};
+            border-radius: 4px;
         }
 
         .comments h4 {
             margin: 0 0 10px 0;
-            color: #388e3c;
+            color: #d97706;
         }
 
+        /* TOTALES */
         .totals {
-            width: 300px;
+            width: 350px;
             float: right;
             margin-top: 20px;
+            margin-right: 2%;
         }
 
         .totals-table {
@@ -218,49 +194,64 @@
         }
 
         .totals-table td {
-            padding: 5px 10px;
-            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            font-size: 10px;
         }
 
-        .totals-table .total-row {
-            background-color: #3d5095;
+        .totals-table tr:first-child td {
+            border-top: 2px solid {{ env('PRIMARY_COLOR', '#3d5095') }};
+        }
+
+        .payment-condition-row.positive {
+            color: #dc2626;
+        }
+
+        .payment-condition-row.negative {
+            color: #16a34a;
+        }
+
+        .total-row {
+            background: {{ env('PRIMARY_COLOR', '#3d5095') }};
             color: white;
             font-weight: bold;
+            font-size: 12px;
         }
 
         .clear {
             clear: both;
         }
 
-        /* Footer Institucional */
+        /* FOOTER INSTITUCIONAL */
         .institutional-footer {
             width: 100%;
             border-collapse: collapse;
             margin-top: 30px;
-            background-color: #f8f9fa;
-            border: 2px solid #3d5095;
+            background: {{ env('SECONDARY_COLOR', '#19ac90') }};
+            color: white;
+            padding: 20px;
         }
 
         .institutional-footer td {
-            padding: 12px;
+            padding: 15px;
             font-size: 10px;
             vertical-align: top;
         }
 
         .footer-company {
             font-weight: bold;
-            color: #3d5095;
-            margin-bottom: 5px;
+            font-size: 14px;
+            margin-bottom: 8px;
         }
 
         .footer-details {
-            color: #555;
-            line-height: 1.4;
+            line-height: 1.6;
+            opacity: 0.95;
         }
 
         .footer-right {
             text-align: right;
-            color: #666;
+            opacity: 0.9;
         }
 
         @page {
@@ -271,67 +262,49 @@
 
 <body>
     <!-- HEADER INSTITUCIONAL -->
-    <table class="institutional-header">
-        <tr>
-            <td class="company-logo">
-                @php
-                    $logoPath = public_path('images/logo-centralnorte.png');
-                    $logoExists = file_exists($logoPath);
-                @endphp
-
-                @if ($logoExists)
-                    <img src="{{ $logoPath }}" alt="Logo {{ env('APP_NAME') }}" />
-                @else
-                    <div class="company-logo-placeholder">
-                        LOGO<br>EMPRESA
-                    </div>
-                @endif
-            </td>
-            <td class="company-info">
-                <div class="company-name">{{ env('APP_NAME', 'Central Norte') }}</div>
-                <div class="company-tagline">Soluciones en Merchandising y Productos Promocionales</div>
-                <div class="company-contact">
-                    <strong>Email:</strong> {{ env('COMPANY_EMAIL', 'info@centralnorte.com') }}<br>
-                    <strong>Teléfono:</strong> {{ env('COMPANY_PHONE', '+54 11 4000-0000') }}<br>
-                    <strong>Web:</strong> {{ env('COMPANY_WEBSITE', 'www.centralnorte.com') }}<br>
-                    <strong>Dirección:</strong> {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}
+    <div class="institutional-header">
+        <div class="company-logo">
+            @php
+                $logoPath = public_path('images/logo-central-norte-header-email.png');
+                $logoExists = file_exists($logoPath);
+            @endphp
+            @if ($logoExists)
+                <img src="{{ $logoPath }}" alt="Logo">
+            @else
+                <div style="font-size: 32px; font-weight: bold; color: white;">
+                    {{ env('APP_NAME', 'Central Norte') }}
                 </div>
+            @endif
+        </div>
+    </div>
+    <div class="header-title">{{ $budget['title'] }}</div>
+    {{-- <div class="header-subtitle">{{ $budget['title'] }}</div> --}}
+
+    <!-- INFO GENERAL DEL PRESUPUESTO -->
+    <table class="budget-info-header">
+        <tr>
+            <td class="header-col">
+                <div><span class="label">Presupuesto N°: </span>#{{ $budget['id'] }}</div>
+                <div><span class="label">Cliente: </span>{{ $budget['client']['name'] }}</div>
+                @if (!empty($budget['client']['company']))
+                    <div><span class="label">Empresa: </span>{{ $budget['client']['company'] }}</div>
+                @endif
+                <div><span class="label">Fecha de emisión: </span>
+                    {{ $budget['issue_date_formatted'] ?? $budget['issue_date_short'] }}</div>
+                <div><span class="label">Válido hasta: </span>
+                    {{ $budget['expiry_date_formatted'] ?? $budget['expiry_date_short'] }}</div>
+            </td>
+
+            <td class="header-col">
+                <div><span class="label">Vendedor: </span>{{ $budget['user']['name'] }}</div>
+                @if (!empty($budget['user']['email']))
+                    <div><span class="label">Email: </span>{{ $budget['user']['email'] }}</div>
+                @endif
+                <div><span class="label">Estado: </span>
+                    {{ $budget['status_text'] ?? ($budget['status_label'] ?? 'Pendiente') }}</div>
             </td>
         </tr>
     </table>
-
-    <!-- HEADER ORIGINAL DEL PRESUPUESTO -->
-    <div class="header">
-        <div class="header-title">PRESUPUESTO - {{ $budget['title'] }}</div>
-
-        <div class="header-row">
-            <div class="header-col">
-                <div><span class="label">Cliente:</span> {{ $budget['client']['name'] }}</div>
-                @if (!empty($budget['client']['company']))
-                    <div><span class="label">Empresa:</span> {{ $budget['client']['company'] }}</div>
-                @endif
-                @if (!empty($budget['client']['email']))
-                    <div><span class="label">Email:</span> {{ $budget['client']['email'] }}</div>
-                @endif
-            </div>
-
-            <div class="header-col">
-                <div><span class="label">Presupuesto:</span> #{{ $budget['id'] }}</div>
-                <div><span class="label">Fecha:</span>
-                    {{ $budget['issue_date_short'] ?? $budget['issue_date_formatted'] }}</div>
-                <div><span class="label">Vencimiento:</span>
-                    {{ $budget['expiry_date_short'] ?? $budget['expiry_date_formatted'] }}</div>
-            </div>
-
-            <div class="header-col">
-                <div><span class="label">Vendedor:</span> {{ $budget['user']['name'] }}</div>
-                @if (!empty($budget['user']['email']))
-                    <div><span class="label">Email:</span> {{ $budget['user']['email'] }}</div>
-                @endif
-                <div><span class="label">Estado:</span> {{ $budget['status_text'] ?? 'Pendiente' }}</div>
-            </div>
-        </div>
-    </div>
 
     <!-- PRODUCTOS REGULARES -->
     @if (!empty($budget['grouped_items']['regular']))
@@ -393,17 +366,10 @@
     @if (!empty($budget['grouped_items']['variants']))
         @foreach ($budget['grouped_items']['variants'] as $groupName => $variantItems)
             @php
-                // Obtener el nombre del producto del primer item del grupo de variantes
                 $productName = $variantItems[0]['product']['name'] ?? 'Producto';
             @endphp
 
             <table class="products-table">
-                <!-- Header de la variante integrado en la tabla -->
-                <tr class="variant-header-row">
-                    <td colspan="7" class="variant-header-cell">
-                        Opción seleccionada para: {{ $productName }}
-                    </td>
-                </tr>
                 <thead>
                     <tr>
                         <th style="width: 60px;">Imagen</th>
@@ -453,6 +419,11 @@
                             <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
                         </tr>
                     @endforeach
+                    <tr class="variant-header-row">
+                        <td colspan="7" class="variant-header-cell">
+                            Opción seleccionada para: {{ $productName }}
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         @endforeach
@@ -460,16 +431,18 @@
 
     {{-- Información de condición de pago --}}
     @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
-        <div style="background-color: #f3f4f6; padding: 15px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+        <div class="info-box">
             <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
             <small style="color: #6b7280;">
                 @php
-                    $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
+                    2 % ($paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0));
                 @endphp
                 @if ($paymentPercentage > 0)
-                    Se ha aplicado un recargo del {{ number_format($paymentPercentage, 2) }}% sobre el subtotal.
+                    Se ha aplicado un <strong style="color: #dc2626;">recargo del
+                        {{ number_format($paymentPercentage, 2) }}%</strong> sobre el subtotal.
                 @elseif ($paymentPercentage < 0)
-                    Se ha aplicado un descuento del {{ number_format(abs($paymentPercentage), 2) }}% sobre el subtotal.
+                    Se ha aplicado un <strong style="color: #16a34a;">descuento del
+                        {{ number_format(abs($paymentPercentage), 2) }}%</strong> sobre el subtotal.
                 @else
                     Sin ajuste adicional.
                 @endif
@@ -480,8 +453,8 @@
     <!-- COMENTARIOS -->
     @if (!empty($budget['footer_comments']))
         <div class="comments">
-            <h4>Comentarios:</h4>
-            <p>{{ $budget['footer_comments'] }}</p>
+            <strong>Comentarios:</strong>
+            <small style="color: #6b7280;">{{ $budget['footer_comments'] }}</small>
         </div>
     @endif
 
@@ -496,28 +469,32 @@
             {{-- Mostrar ajuste de condición de pago si existe --}}
             @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
                 @php
-                    $paymentAmount = floatval($budget['payment_condition_amount'] ?? 0);
-                    $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
+                    // Validar que existan los valores antes de usarlos
+                    $paymentAmount = isset($budget['payment_condition']['amount'])
+                        ? floatval($budget['payment_condition']['amount'])
+                        : 0;
+                    $paymentDescription =
+                        'Modo de pago: ' . $budget['payment_condition']['description'] ?? 'Ajuste de pago';
+                    $isPositive = $paymentAmount > 0;
                 @endphp
 
-                @if ($paymentAmount != 0)
-                    <tr style="color: {{ $paymentAmount > 0 ? '#dc2626' : '#16a34a' }};">
-                        <td>
-                            {{ $budget['payment_condition']['description'] ?? 'Ajuste de pago' }}
-                            ({{ $paymentAmount > 0 ? '+' : '' }}{{ number_format($paymentPercentage, 2) }}%):
-                        </td>
-                        <td class="text-right">
-                            {{ $paymentAmount > 0 ? '+' : '' }}${{ number_format(abs($paymentAmount), 2, ',', '.') }}
-                        </td>
-                    </tr>
-                @endif
+                <tr class="payment-condition-row {{ $isPositive ? 'positive' : 'negative' }}">
+                    <td>
+                        <strong>{{ $paymentDescription }}</strong>
+                        <br><small>{{ number_format($paymentPercentage, 2, ',', '.') }}
+                            %</small>
+                    </td>
+                    <td class="text-right">
+                        <strong>${{ number_format($paymentAmount, 2, ',', '.') }}</strong>
+                    </td>
+                </tr>
             @endif
 
             @if ($businessConfig['apply_iva'])
                 <tr>
                     <td>IVA ({{ $businessConfig['iva_rate'] * 100 }}%):</td>
                     <td class="text-right">
-                        ${{ number_format((($budget['subtotal'] ?? 0) + ($budget['payment_condition_amount'] ?? 0)) * $businessConfig['iva_rate'], 2, ',', '.') }}
+                        ${{ number_format((($budget['subtotal'] ?? 0) + ($paymentAmount ?? 0)) * $businessConfig['iva_rate'], 2, ',', '.') }}
                     </td>
                 </tr>
             @endif
@@ -538,14 +515,17 @@
                 <div class="footer-company">{{ env('APP_NAME', 'Central Norte') }}</div>
                 <div class="footer-details">
                     {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}<br>
-                    Tel: {{ env('COMPANY_PHONE', '+54 11 4000-0000') }} |
-                    Email: {{ env('COMPANY_EMAIL', 'info@centralnorte.com') }}<br>
-                    Web: {{ env('COMPANY_WEBSITE', 'www.centralnorte.com') }}
+                    Tel: {{ env('COMPANY_PHONE', '+54 11 2479-7281') }} |
+                    Email: {{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }}<br>
+                    @if (env('COMPANY_WEBSITE'))
+                        Web: {{ env('COMPANY_WEBSITE') }}
+                    @endif
                 </div>
             </td>
-            <td class="footer-right">
-                <strong>Presupuesto generado el {{ date('d/m/Y H:i') }}</strong><br>
-                <em>Documento generado automáticamente</em>
+            <td class="footer-right" style="width: 40%;">
+                <strong>Presupuesto generado</strong><br>
+                <em>{{ date('d/m/Y H:i') }}</em><br>
+                <small>Documento generado automáticamente</small>
             </td>
         </tr>
     </table>
