@@ -140,14 +140,13 @@ class UserController extends Controller
                 return redirect()->back()->with('error', 'No puedes eliminar tu propia cuenta.');
             }
 
-            // Verificar que no sea un administrador (opcional)
+            // Verificar que no sea el último administrador del sistema
             if ($user->role && $user->role->name === 'admin' && User::whereHas('role', function ($q) {
                 $q->where('name', 'admin');
             })->count() <= 1) {
                 return redirect()->back()->with('error', 'No puedes eliminar el último administrador del sistema.');
             }
 
-            // Opcional: Soft delete en lugar de eliminación completa
             $user->delete();
 
             return redirect()->back()->with('success', "Usuario '{$user->name}' eliminado correctamente.");
