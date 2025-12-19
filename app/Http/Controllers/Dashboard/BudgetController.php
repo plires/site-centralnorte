@@ -7,6 +7,7 @@ use App\Models\Budget;
 use App\Models\Client;
 use App\Models\Product;
 use App\Models\BudgetItem;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\BudgetStatus;
 use Illuminate\Http\Request;
 use App\Mail\BudgetCreatedMail;
@@ -698,9 +699,12 @@ class BudgetController extends Controller
                 return false;
             }
 
+            // Generar PDF
+            $pdf = $this->generatePdf($budget);
+
             $publicUrl = route('public.budget.show', $budget->token);
             Mail::to($budget->client->email)->send(
-                new BudgetCreatedMail($budget, Auth::user(), $publicUrl, $isResend)
+                new BudgetCreatedMail($budget, Auth::user(), $publicUrl, $isResend, $pdf)
             );
 
             $budget->update(['email_sent' => true, 'email_sent_at' => now()]);
@@ -708,10 +712,202 @@ class BudgetController extends Controller
             return true;
         } catch (\Exception $e) {
             $action = $isResend ? 'reenviar' : 'enviar';
-            Log::error("Error al {$action} email: " . $e->getMessage(), ['budget_id' => $budget->id]);
+            Log::error("Error al {$action} email: " . $e->getMessage());
+
             if ($throwOnError) throw $e;
             return false;
         }
+    }
+
+    /**
+     * Generar PDF del presupuesto
+     */
+    private function generatePdf(Budget $budget)
+    {
+        // Cargar relaciones necesarias
+        $budget->load([
+            'client',
+            'user',
+            'items.product.featuredImage',
+            'items.product.categories',
+            'items.product.variants',
+            'items.productVariant',
+            'paymentCondition'
+        ]);
+
+        // Procesar items con el mismo formato que PublicBudgetController
+        $groupedItems = $this->processItemsForPdf($budget->items);
+
+        $businessConfig = [
+            'iva_rate' => config('business.tax.iva_rate', 0.21),
+            'apply_iva' => config('business.tax.apply_iva', true),
+        ];
+
+        $statusData = $budget->getStatusData();
+
+        // Preparar datos del presupuesto con la estructura correcta
+        $budgetData = array_merge([
+            'id' => $budget->id,
+            'title' => $budget->title,
+            'token' => $budget->token,
+            'status' => $budget->status?->value,
+            'status_label' => $budget->status_label,
+            'status_color' => $budget->status_color,
+            'status_text' => $budget->status_label,
+            'picking_payment_condition_id' => $budget->picking_payment_condition_id,
+            'payment_condition_description' => $budget->payment_condition_description,
+            'payment_condition_percentage' => $budget->payment_condition_percentage,
+            'issue_date_formatted' => $budget->issue_date_formatted,
+            'expiry_date_formatted' => $budget->expiry_date_formatted,
+            'issue_date_short' => $budget->issue_date_short,
+            'expiry_date_short' => $budget->expiry_date_short,
+            'footer_comments' => $budget->footer_comments,
+            'subtotal' => $budget->subtotal,
+            'total' => $budget->total,
+            'payment_condition' => $budget->paymentCondition ? [
+                'description' => $budget->payment_condition_description,
+                'percentage' => $budget->payment_condition_percentage,
+            ] : null,
+            'client' => [
+                'name' => $budget->client->name,
+                'company' => $budget->client->company,
+            ],
+            'user' => [
+                'name' => $budget->user?->name ?? 'Central Norte',
+                'email' => $budget->user?->email ?? null,
+            ],
+            'grouped_items' => $groupedItems,
+        ], $statusData);
+
+        $pdf = Pdf::loadView('pdf.budget', [
+            'budget' => $budgetData,
+            'businessConfig' => $businessConfig,
+        ]);
+
+        $pdf->setPaper('a4', 'portrait');
+
+        return $pdf;
+    }
+
+    /**
+     * Procesar items para el PDF con imágenes y categorías
+     * Solo incluye variantes seleccionadas (is_selected = true)
+     */
+    private function processItemsForPdf($items)
+    {
+        $grouped = [
+            'regular' => [],
+            'variants' => []
+        ];
+
+        foreach ($items as $item) {
+            // Si es una variante, solo incluir si está seleccionada
+            if ($item->variant_group && !$item->is_selected) {
+                continue; // ← ESTA ES LA LÍNEA CLAVE: Saltar variantes no seleccionadas
+            }
+
+            // Procesar imagen destacada
+            $featuredImage = null;
+            if ($item->product && $item->product->featuredImage) {
+                $featuredImage = $this->processImageForPdf($item->product->featuredImage);
+            }
+
+            // Procesar categorías
+            $categoryNames = [];
+            if ($item->product && $item->product->categories) {
+                $categoryNames = $item->product->categories->pluck('name')->toArray();
+            }
+
+            // Construir item formateado
+            $itemData = [
+                'id' => $item->id,
+                'product_id' => $item->product_id,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'line_total' => $item->line_total,
+                'production_time_days' => $item->production_time_days,
+                'logo_printing' => $item->logo_printing,
+                'variant_group' => $item->variant_group,
+                'is_variant' => $item->is_variant,
+                'is_selected' => $item->is_selected,
+                'product' => [
+                    'id' => $item->product->id ?? null,
+                    'name' => $item->product->name ?? 'Producto',
+                    'sku' => $item->product->sku ?? null,
+                    'categories' => $categoryNames,
+                    'category_display' => !empty($categoryNames)
+                        ? implode(', ', $categoryNames)
+                        : 'Sin categoría'
+                ],
+                'featured_image' => $featuredImage
+            ];
+
+            // Agrupar por regular o variantes
+            if ($item->variant_group) {
+                $grouped['variants'][$item->variant_group][] = $itemData;
+            } else {
+                $grouped['regular'][] = $itemData;
+            }
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * Procesar imagen para el PDF
+     */
+    private function processImageForPdf($imageModel)
+    {
+        if (!$imageModel || !$imageModel->url) {
+            return null;
+        }
+
+        $rawUrl = $imageModel->url;
+
+        // Si es una URL externa (absoluta)
+        if (\Illuminate\Support\Str::startsWith($rawUrl, ['http://', 'https://'])) {
+            return [
+                'url' => $rawUrl,
+                'file_path' => $rawUrl,
+                'is_external' => true
+            ];
+        }
+
+        // Si es una ruta local/relativa
+        $publicPath = storage_path('app/public/' . $rawUrl);
+        $webUrl = asset('storage/' . $rawUrl);
+
+        return [
+            'url' => $rawUrl,
+            'file_path' => file_exists($publicPath) ? $publicPath : $webUrl,
+            'web_url' => $webUrl,
+            'is_external' => false
+        ];
+    }
+
+    /**
+     * Agrupar items por variantes
+     */
+    private function groupItemsByVariants($items)
+    {
+        $regular = [];
+        $variants = [];
+
+        foreach ($items as $item) {
+            if ($item->variant_group) {
+                if (!isset($variants[$item->variant_group])) {
+                    $variants[$item->variant_group] = [];
+                }
+                $variants[$item->variant_group][] = $item;
+            } else {
+                $regular[] = $item;
+            }
+        }
+
+        return [
+            'regular' => $regular,
+            'variants' => $variants,
+        ];
     }
 
     private function getBusinessConfig(): array

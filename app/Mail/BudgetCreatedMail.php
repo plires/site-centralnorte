@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
@@ -17,17 +18,19 @@ class BudgetCreatedMail extends Mailable
     public Budget $budget;
     public User $user;
     public string $publicUrl;
-    public bool $isResend; // AGREGADO: para detectar si es reenvío
+    public bool $isResend;
+    public $pdf;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Budget $budget, User $user, string $publicUrl, bool $isResend = false)
+    public function __construct(Budget $budget, User $user, string $publicUrl, bool $isResend = false, $pdf = null)
     {
         $this->budget = $budget;
         $this->user = $user;
         $this->publicUrl = $publicUrl;
-        $this->isResend = $isResend; // AGREGADO
+        $this->isResend = $isResend;
+        $this->pdf = $pdf;
     }
 
     /**
@@ -67,6 +70,16 @@ class BudgetCreatedMail extends Mailable
      */
     public function attachments(): array
     {
+        // Si hay PDF, adjuntarlo
+        if ($this->pdf) {
+            return [
+                Attachment::fromData(
+                    fn() => $this->pdf->output(),
+                    "presupuesto-{$this->budget->id}.pdf"
+                )->withMime('application/pdf'),
+            ];
+        }
+
         return [];
     }
 }
