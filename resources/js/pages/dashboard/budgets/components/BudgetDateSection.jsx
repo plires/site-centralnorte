@@ -6,6 +6,8 @@ import { getTodayISO, getTomorrowISO } from '@/utils/dateUtils';
 import { CalendarDays } from 'lucide-react';
 
 export default function BudgetDateSection({ data, setData, errors, user, vendors = [], isEditing = false }) {
+    const selectedVendor = vendors.find((vendor) => vendor.value.toString() === data.user_id?.toString());
+
     // Verificar si el usuario actual es admin
     const isAdmin = user?.role?.name === 'admin';
     console.log(user);
@@ -128,21 +130,19 @@ export default function BudgetDateSection({ data, setData, errors, user, vendors
                     {isAdmin && isEditing ? (
                         // ADMIN: Select editable con vendedores
                         <>
-                            {/* Verificar si el vendedor asignado existe en la lista */}
-                            {data.user_id && !vendors.some((v) => v.value === data.user_id) && (
-                                <div className="mb-2 rounded-md bg-yellow-50 p-2 text-xs text-yellow-800">
-                                    <strong>Nota:</strong> El vendedor asignado ya no está disponible en el sistema. Por favor seleccione un nuevo
-                                    vendedor.
-                                </div>
-                            )}
-
                             <Select value={data.user_id?.toString()} onValueChange={(value) => setData('user_id', parseInt(value))}>
-                                <SelectTrigger className={errors.user_id ? 'border-red-500' : ''}>
+                                <SelectTrigger
+                                    className={` ${errors.user_id ? 'border-red-500' : ''} ${selectedVendor?.vendor_deletd ? 'bg-red-50 text-orange-800' : ''} `}
+                                >
                                     <SelectValue placeholder="Seleccionar vendedor..." />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {vendors.map((vendor) => (
-                                        <SelectItem key={vendor.value} value={vendor.value.toString()}>
+                                        <SelectItem
+                                            className={vendor.vendor_deletd ? 'bg-red-500' : ''}
+                                            key={vendor.value}
+                                            value={vendor.value.toString()}
+                                        >
                                             {vendor.label}
                                         </SelectItem>
                                     ))}

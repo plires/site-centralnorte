@@ -3,7 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Info, TrendingDown, TrendingUp } from 'lucide-react';
 
-export default function BudgetTotalsSection({ totals, ivaRate = 0.21, showIva = true, paymentCondition = null }) {
+export default function BudgetTotalsSection({ totals, ivaRate = 0.21, showIva = true, warnings, paymentCondition = null }) {
+    console.log(warnings);
+    const hasConditionWarning = warnings?.some((warning) => warning.type === 'condition');
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -51,6 +54,12 @@ export default function BudgetTotalsSection({ totals, ivaRate = 0.21, showIva = 
                     <div className={`rounded-md border p-3 ${adjustmentBorderColor} `}>
                         <div className="space-y-2">
                             {/* Línea de ajuste */}
+                            {hasConditionWarning && (
+                                <div className="border-l-4 border-red-500 bg-red-50 p-4 text-sm font-medium text-orange-800">
+                                    {/* Podés usar el mensaje específico si querés */}
+                                    {warnings.find((warning) => warning.type === 'condition')?.message}
+                                </div>
+                            )}
                             <div className={`flex items-center justify-between ${adjustmentColor}`}>
                                 <span className="flex items-center gap-2 font-medium">
                                     <span className={`${adjustmentColor}`}>Condición de pago:</span>

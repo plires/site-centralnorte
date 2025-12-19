@@ -21,7 +21,7 @@ import { router } from '@inertiajs/react';
 import { AlertTriangle, CheckCircle, Clock, Copy, Edit, ExternalLink, FileEdit, FileText, Loader2, Mail, Package, Send, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
-export default function BudgetActionsSection({ budget, statuses = [] }) {
+export default function BudgetActionsSection({ budget, statuses = [], warnings = [] }) {
     const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [showStatusConfirm, setShowStatusConfirm] = useState(false);
@@ -101,7 +101,7 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                         {/* Editar - Solo si es editable */}
                         <Button
                             onClick={handleEdit}
-                            variant={isEditable ? 'default' : 'outline'}
+                            variant={!isEditable ? 'outline' : warnings.length > 0 ? 'destructive' : 'default'}
                             size="sm"
                             disabled={!isEditable}
                             title={!isEditable ? 'Solo se pueden editar presupuestos sin enviar o en borrador' : ''}
@@ -110,14 +110,16 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                             Editar
                         </Button>
 
-                        {/* Duplicar - Siempre disponible */}
-                        <Button onClick={handleDuplicate} variant="outline" size="sm">
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicar
-                        </Button>
+                        {/* Duplicar */}
+                        {warnings.length === 0 && (
+                            <Button onClick={handleDuplicate} variant="outline" size="sm">
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicar
+                            </Button>
+                        )}
 
                         {/* Enviar/Reenviar Email */}
-                        {canSendEmail && (
+                        {canSendEmail && warnings.length === 0 && (
                             <AlertDialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="outline" size="sm">
@@ -196,6 +198,15 @@ export default function BudgetActionsSection({ budget, statuses = [] }) {
                             Ver Público
                         </Button>
                     </div>
+
+                    {warnings.length > 0 && (
+                        <div className="border-l-4 border-red-500 bg-red-50 p-4">
+                            <span className="text-sm font-medium text-orange-800">
+                                Si el presupuesto se encuentra vigente, te recomendamos editar los registros que ya no estan disponibles marcados en
+                                rojo y enviar el presupuesto nuevamente.
+                            </span>
+                        </div>
+                    )}
 
                     <Separator />
 

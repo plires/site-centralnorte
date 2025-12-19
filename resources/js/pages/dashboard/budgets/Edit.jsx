@@ -1,5 +1,6 @@
 // resources/js/pages/dashboard/budgets/Edit.jsx
 
+import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -8,7 +9,7 @@ import { toast } from 'sonner';
 import BudgetForm from './components/BudgetForm';
 import BudgetStatusSwitch from './components/BudgetStatusSwitch';
 
-export default function Edit({ budget, clients, products, paymentConditions, user, vendors = [], businessConfig }) {
+export default function Edit({ budget, warnings, clients, products, paymentConditions, user, vendors = [], businessConfig }) {
     const { flash } = usePage().props;
 
     const breadcrumbs = [
@@ -74,6 +75,15 @@ export default function Edit({ budget, clients, products, paymentConditions, use
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+                    {/* Banner de Advertencias Globales */}
+                    {warnings.length > 0 && (
+                        <GlobalWarningsBanner
+                            warnings={warnings}
+                            title="Atención: Existen registros históricos eliminados."
+                            subtitle="Te recomendamos editar los registros que ya no estan disponibles marcados en rojo y enviar el presupuesto
+                            nuevamente."
+                        />
+                    )}
                     {/* Switch de estado */}
                     <BudgetStatusSwitch className="mb-5" budget={budget} />
 
@@ -92,6 +102,7 @@ export default function Edit({ budget, clients, products, paymentConditions, use
                         businessConfig={businessConfig}
                         isEditing={true}
                         originalBudget={budget}
+                        warnings={warnings}
                     />
                 </div>
             </div>

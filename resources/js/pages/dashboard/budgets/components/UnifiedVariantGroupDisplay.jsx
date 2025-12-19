@@ -11,11 +11,11 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
     };
 
     const firstVariant = items[0];
-    const productImage = items[0].product.featured_image;
+    const productImage = items[0].product?.featured_image;
 
     return (
         <div className="mt-6">
-            <Card className="p-4 shadow-none">
+            <Card className={`p-4 shadow-none ${items[0].is_product_deleted ? 'bg-red-50' : ''}`}>
                 <CardHeader className="p-0 pb-3">
                     <CardTitle className="flex items-center gap-3 text-lg">
                         {/* Imagen del producto */}
@@ -34,7 +34,10 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
                         <div className="flex-1">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <div className="font-medium text-gray-900">{firstVariant.product.name}</div>
+                                    {items[0].is_product_deleted && (
+                                        <span className="block text-xs font-medium text-orange-800">Producto no disponible en catálogo actual</span>
+                                    )}
+                                    <div className="font-medium text-gray-900">{firstVariant.product?.name}</div>
                                     <div className="text-sm font-normal text-gray-500">
                                         {showActions ? `Grupo de variantes (${items.length} opciones)` : 'Selecciona una opción'}
                                     </div>
@@ -43,15 +46,17 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
                                 {/* Botones de acción - solo en vistas edit/create */}
                                 {showActions && (
                                     <div className="flex gap-2">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={onEdit}
-                                            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                                        >
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
+                                        {!items[0].is_product_deleted && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={onEdit}
+                                                className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                         <Button
                                             type="button"
                                             variant="ghost"

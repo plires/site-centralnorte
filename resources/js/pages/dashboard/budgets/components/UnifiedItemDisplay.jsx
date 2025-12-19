@@ -1,8 +1,11 @@
 // resources/js/pages/dashboard/budgets/components/UnifiedItemDisplay.jsx
 import { Button } from '@/components/ui/button';
+import { usePage } from '@inertiajs/react';
 import { Edit, Package, Trash2 } from 'lucide-react';
 
 export default function UnifiedItemDisplay({ item, showActions = false, onEdit, onRemove }) {
+    const { errors } = usePage().props;
+
     const formatCurrency = (amount) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -11,12 +14,12 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
     };
 
     return (
-        <div className="rounded-lg border p-4">
+        <div className={`rounded-lg border p-4 ${item.is_product_deleted ? 'bg-red-50' : ''}`}>
             <div className="flex justify-between">
                 {/* Lado izquierdo: Imagen + Contenido */}
                 <div className="flex flex-1 gap-4">
                     {/* Imagen del producto */}
-                    {item.product.featured_image.full_url ? (
+                    {item.product?.featured_image.full_url ? (
                         <img src={item.product.featured_image.full_url} alt={item.product.name} className="h-16 w-16 rounded object-cover" />
                     ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded border bg-gray-100">
@@ -24,8 +27,11 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
                         </div>
                     )}
                     <div className="flex-1">
+                        {item.is_product_deleted && (
+                            <span className="block text-xs font-medium text-orange-800">Producto no disponible en catálogo actual</span>
+                        )}
                         <div>
-                            <h5 className="font-medium text-gray-900">{item.product.name}</h5>
+                            <h5 className="font-medium text-gray-900">{item.product?.name}</h5>
                         </div>
 
                         {/* Información del item en una sola línea */}
@@ -55,15 +61,18 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
                     <div className="flex gap-2">
                         {showActions && (
                             <>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={onEdit}
-                                    className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-                                >
-                                    <Edit className="h-4 w-4" />
-                                </Button>
+                                {!item.is_product_deleted && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={onEdit}
+                                        className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
+                                    >
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                )}
+
                                 <Button
                                     type="button"
                                     variant="ghost"

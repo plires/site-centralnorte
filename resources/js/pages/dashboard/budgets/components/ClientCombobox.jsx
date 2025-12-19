@@ -40,7 +40,12 @@ export default function ClientCombobox({ clients, value, onChange, error, placeh
     return (
         <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
-                <Button variant="outline" role="combobox" aria-expanded={open} className={cn('w-full justify-between', error && 'border-red-500')}>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className={cn('w-full justify-between', error && 'border-red-500', selectedClient?.is_deleted && 'bg-red-50 text-orange-800')}
+                >
                     <span className="flex items-center gap-2">
                         <User className="h-4 w-4 text-gray-500" />
                         <span className={cn('truncate', !selectedClient && 'text-muted-foreground')}>{getClientDisplay(selectedClient)}</span>

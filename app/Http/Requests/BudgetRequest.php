@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class BudgetRequest extends FormRequest
 {
@@ -27,15 +28,24 @@ class BudgetRequest extends FormRequest
 
         $rules = [
             'title' => 'required|string|max:255',
-            'client_id' => 'required|exists:clients,id',
-            'picking_payment_condition_id' => ['nullable', 'exists:picking_payment_conditions,id'],
+            'client_id' => [
+                'required',
+                Rule::exists('clients', 'id')->whereNull('deleted_at'),
+            ],
+            'picking_payment_condition_id' => [
+                'nullable',
+                Rule::exists('picking_payment_conditions', 'id')->whereNull('deleted_at'),
+            ],
             'issue_date' => $this->getIssueDateRules($isEditing),
             'expiry_date' => $this->getExpiryDateRules($isEditing),
             'send_email_to_client' => 'boolean',
             'footer_comments' => 'nullable|string',
             'rejection_comments' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.product_id' => [
+                'required',
+                Rule::exists('products', 'id')->whereNull('deleted_at'),
+            ],
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.production_time_days' => 'nullable|integer|min:1',

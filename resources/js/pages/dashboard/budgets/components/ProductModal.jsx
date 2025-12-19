@@ -456,25 +456,27 @@ export default function ProductModal({ products, existingItems = [], editingItem
                             <SelectContent>
                                 {products.map((product) => (
                                     <SelectItem className="py-2" key={product.id} value={product.id.toString()}>
-                                        <div className="flex items-center gap-3">
-                                            {product.images && product.images.length > 0 ? (
-                                                <img
-                                                    src={product.featured_image.full_url}
-                                                    alt={product.name}
-                                                    className="h-10 w-10 rounded object-cover"
-                                                />
-                                            ) : (
-                                                <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
-                                                    <Package className="h-5 w-5 text-gray-400" />
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col">
-                                                <span className="font-medium">{product.name}</span>
-                                                {product.last_price && (
-                                                    <span className="text-sm text-gray-500">{formatCurrency(product.last_price)}</span>
+                                        {!product.deleted_at && (
+                                            <div className="flex items-center gap-3">
+                                                {product.images && product.images.length > 0 ? (
+                                                    <img
+                                                        src={product.featured_image.full_url}
+                                                        alt={product.name}
+                                                        className="h-10 w-10 rounded object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
+                                                        <Package className="h-5 w-5 text-gray-400" />
+                                                    </div>
                                                 )}
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium">{product.name}</span>
+                                                    {product.last_price && (
+                                                        <span className="text-sm text-gray-500">{formatCurrency(product.last_price)}</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
+                                        )}
                                     </SelectItem>
                                 ))}
                             </SelectContent>

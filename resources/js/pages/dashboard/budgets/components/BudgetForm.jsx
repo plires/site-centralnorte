@@ -37,11 +37,10 @@ export default function BudgetForm({
     businessConfig = null,
     isEditing = false,
     originalBudget = null,
+    warnings = [],
 }) {
     const [showExitDialog, setShowExitDialog] = useState(false);
     const [pendingNavigation, setPendingNavigation] = useState(null);
-
-    console.log(data);
 
     // Pasar paymentConditionId y paymentConditions al hook
     const { totals, selectedVariants, selectedPaymentCondition, handleVariantChange, calculateTotals, getItemsWithUpdatedSelection } = useBudgetLogic(
@@ -110,6 +109,7 @@ export default function BudgetForm({
                         paymentConditions={paymentConditions}
                         disabled={processing}
                         showInfo={true}
+                        errors={errors}
                     />
 
                     {/* Items del presupuesto */}
@@ -128,6 +128,7 @@ export default function BudgetForm({
                         ivaRate={businessConfig?.iva_rate ?? 0.21}
                         showIva={businessConfig?.apply_iva ?? true}
                         paymentCondition={selectedPaymentCondition}
+                        warnings={warnings}
                     />
 
                     {/* Comentarios */}

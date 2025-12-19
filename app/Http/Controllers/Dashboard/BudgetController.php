@@ -199,21 +199,57 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para ver este presupuesto.');
         }
 
-        // Cargar relaciones necesarias
+        // 1. Cargar relaciones INCLUYENDO las borradas
         $budget->load([
-            'client',
-            'user',
-            'items.product.featuredImage',
-            'items.product.variants',
-            'items.productVariant',
-            'paymentCondition',
+            'client' => fn($q) => $q->withTrashed(),
+            'user' => fn($q) => $q->withTrashed(),
+            'paymentCondition' => fn($q) => $q->withTrashed(),
+            'items.product' => fn($q) => $q->withTrashed()->with(['featuredImage', 'variants']),
+            'items.productVariant' => fn($q) => $q->withTrashed(),
         ]);
 
-        // Agrupar items
+        // 2. Generar Array de Advertencias Globales
+        $warnings = [];
+
+        // Verificamos Cliente
+        if ($budget->client && $budget->client->trashed()) {
+            $warnings[] = [
+                'type' => 'client',
+                'message' => "El cliente '{$budget->client->name}' ha sido eliminado del sistema."
+            ];
+        }
+
+        // Verificamos Vendedor (User)
+        if ($budget->user && $budget->user->trashed()) {
+            $warnings[] = [
+                'type' => 'user',
+                'message' => "El vendedor '{$budget->user->name}' ya no es un usuario activo."
+            ];
+        }
+
+        // Verificamos Condición de Pago
+        if ($budget->paymentCondition && $budget->paymentCondition->trashed()) {
+            $warnings[] = [
+                'type' => 'condition',
+                'message' => "La condición de pago original ya no está disponible en la configuración."
+            ];
+        }
+
+        // 3. Procesamiento de Items (Detectar productos borrados)
         $regularItems = [];
         $variantGroups = [];
+        $deletedProductsCount = 0;
 
         foreach ($budget->items as $item) {
+            // Inyectamos una propiedad "virtual" al item para facilitar el trabajo en React
+            // Esto nos evita tener que revisar 'item.product.deleted_at' profundamente en el JSX
+            $item->is_product_deleted = $item->product && $item->product->trashed();
+
+            if ($item->is_product_deleted) {
+                $deletedProductsCount++;
+            }
+
+            // ... Tu lógica de agrupación original ...
             if ($item->variant_group) {
                 if (!isset($variantGroups[$item->variant_group])) {
                     $variantGroups[$item->variant_group] = [];
@@ -224,13 +260,20 @@ class BudgetController extends Controller
             }
         }
 
+        if ($deletedProductsCount > 0) {
+            $warnings[] = [
+                'type' => 'product',
+                'message' => "Este presupuesto contiene producto/s que han sido eliminado/s del catálogo."
+            ];
+        }
+
         $hasVariants = count($variantGroups) > 0;
         $statusData = $budget->getStatusData();
         $budgetFinal = array_merge($budget->toArray(), $statusData);
 
-
         return Inertia::render('dashboard/budgets/Show', [
             'budget' => $budgetFinal,
+            'warnings' => $warnings,
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
             'hasVariants' => $hasVariants,
@@ -247,19 +290,31 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
+        // 1. Cargar relaciones (INCLUYENDO BORRADOS)
         $budget->load([
-            'client',
-            'user',
-            'items.product.featuredImage',
-            'items.product.variants',
-            'items.productVariant',
-            'paymentCondition',
+            'client' => fn($q) => $q->withTrashed(),
+            'user' => fn($q) => $q->withTrashed(),
+            'items.product' => fn($q) => $q->withTrashed()->with(['featuredImage', 'variants']),
+            'items.productVariant' => fn($q) => $q->withTrashed(),
+            'paymentCondition' => fn($q) => $q->withTrashed(),
         ]);
 
+        // 2. Procesar Items y detectar productos borrados
         $regularItems = [];
         $variantGroups = [];
+        $currentProductIds = $budget->items->pluck('product_id')->unique()->toArray();
+
+        // --- CORRECCIÓN: Inicializamos contador ---
+        $deletedProductsCount = 0;
 
         foreach ($budget->items as $item) {
+            $item->is_product_deleted = $item->product && $item->product->trashed();
+
+            // --- CORRECCIÓN: Sumamos si está borrado ---
+            if ($item->is_product_deleted) {
+                $deletedProductsCount++;
+            }
+
             if ($item->variant_group) {
                 $variantGroups[$item->variant_group][] = $item;
             } else {
@@ -267,34 +322,118 @@ class BudgetController extends Controller
             }
         }
 
-        $clients = Client::orderBy('name')->get()->map(fn($client) => [
-            'value' => $client->id,
-            'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
-        ]);
-
-        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
+        // 3. Cargar lista de CLIENTES (Activos + Actual)
+        $clients = Client::query()
+            ->withTrashed()
+            ->where(function ($q) use ($budget) {
+                $q->whereNull('deleted_at')->orWhere('id', $budget->client_id);
+            })
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($client) {
+                $label = $client->company ? "{$client->name} ({$client->company})" : $client->name;
+                if ($client->trashed()) {
+                    $label .= " (ELIMINADO)";
+                }
+                return [
+                    'value' => $client->id,
+                    'label' => $label,
+                    'is_deleted' => $client->trashed()
+                ];
+            });
 
-        $paymentConditions = PickingPaymentCondition::where('is_active', true)
+        // 4. Cargar lista de PRODUCTOS (Activos + Actuales en uso)
+        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
+            ->withTrashed()
+            ->where(function ($q) use ($currentProductIds) {
+                $q->whereNull('deleted_at')->orWhereIn('id', $currentProductIds);
+            })
+            ->orderBy('name')
+            ->get()
+            ->map(function ($product) {
+                $product->is_deleted = $product->trashed();
+                if ($product->trashed()) {
+                    $product->name .= " (NO DISPONIBLE)";
+                }
+                return $product;
+            });
+
+        // 5. Cargar CONDICIONES DE PAGO
+        $paymentConditions = PickingPaymentCondition::query()
+            ->withTrashed()
+            ->where(function ($q) use ($budget) {
+                $q->where('is_active', true)
+                    ->orWhere('id', $budget->payment_condition_id);
+            })
             ->orderBy('description')
-            ->get();
+            ->get()
+            ->map(function ($condition) {
+                // Agregamos la propiedad dinámica
+                $condition->condition_deleted = $condition->trashed();
 
-        // Obtener vendedores disponibles solo si es admin
+                // Opcional: Si quieres que el front vea visualmente que está borrada en el Select
+                if ($condition->trashed()) {
+                    $condition->description .= ' (NO DISPONIBLE)';
+                }
+
+                return $condition;
+            });
+
+        // 6. Cargar VENDEDORES
         $vendors = [];
         if (Auth::user()->role->name === 'admin') {
-            $vendors = User::whereHas('role', function ($q) {
-                $q->whereIn('name', ['vendedor', 'admin']);
-            })
-                ->select('id', 'name')
+            $vendors = User::withTrashed()
+                ->where(function ($query) use ($budget) {
+                    $query->whereHas('role', function ($q) {
+                        $q->whereIn('name', ['vendedor', 'admin']);
+                    });
+                    $query->where(function ($q) use ($budget) {
+                        $q->whereNull('deleted_at')->orWhere('id', $budget->user_id);
+                    });
+                })
                 ->orderBy('name')
                 ->get()
                 ->map(function ($vendor) {
                     return [
                         'value' => $vendor->id,
-                        'label' => $vendor->name,
+                        'label' => $vendor->trashed() ? "{$vendor->name} (INACTIVO)" : $vendor->name,
+                        'vendor_deletd' => $vendor->trashed() ? true : false,
                     ];
                 });
+        }
+
+        // --- Generación completa de Warnings ---
+        $warnings = [];
+
+        // Verificamos Cliente
+        if ($budget->client && $budget->client->trashed()) {
+            $warnings[] = [
+                'type' => 'client',
+                'message' => "El cliente '{$budget->client->name}' ha sido eliminado del sistema."
+            ];
+        }
+
+        // Verificamos Vendedor (User)
+        if ($budget->user && $budget->user->trashed()) {
+            $warnings[] = [
+                'type' => 'user',
+                'message' => "El vendedor '{$budget->user->name}' ya no es un usuario activo."
+            ];
+        }
+
+        // Verificamos Condición de Pago
+        if ($budget->paymentCondition && $budget->paymentCondition->trashed()) {
+            $warnings[] = [
+                'type' => 'condition',
+                'message' => "La condición de pago original ya no está disponible en la configuración."
+            ];
+        }
+
+        if ($deletedProductsCount > 0) {
+            $warnings[] = [
+                'type' => 'product',
+                'message' => "Este presupuesto contiene producto/s que han sido eliminado/s del catálogo."
+            ];
         }
 
         return Inertia::render('dashboard/budgets/Edit', [
@@ -307,6 +446,7 @@ class BudgetController extends Controller
             'user' => $user,
             'vendors' => $vendors,
             'businessConfig' => $this->getBusinessConfig(),
+            'warnings' => $warnings,
         ]);
     }
 

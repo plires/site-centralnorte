@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 // Componentes reutilizados y adaptados
+import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import BudgetCommentsDisplay from './components/BudgetCommentsDisplay';
 import BudgetHeaderWithStatus from './components/BudgetHeaderWithStatus';
 import BudgetInfoSection from './components/BudgetInfoSection';
@@ -27,7 +28,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Show({ budget, regularItems, variantGroups, hasVariants, businessConfig }) {
+export default function Show({ budget, warnings, regularItems, variantGroups, hasVariants, businessConfig }) {
     const [selectedVariants, setSelectedVariants] = useState({});
     const [calculatedTotals, setCalculatedTotals] = useState({
         subtotal: parseFloat(budget.subtotal),
@@ -154,6 +155,15 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                        {/* Banner de Advertencias Globales */}
+                        {warnings.length > 0 && (
+                            <GlobalWarningsBanner
+                                warnings={warnings}
+                                title="Atención: Existen registros históricos eliminados."
+                                subtitle="Te recomendamos editar los registros que ya no estan disponibles marcados en rojo y enviar el presupuesto
+                            nuevamente."
+                            />
+                        )}
                         <PageHeader backRoute={route('dashboard.budgets.index')} backText="Volver" />
 
                         <div className="space-y-6 p-6">
@@ -176,10 +186,11 @@ export default function Show({ budget, regularItems, variantGroups, hasVariants,
                                 totals={calculatedTotals}
                                 ivaRate={ivaRate}
                                 showIva={applyIva}
+                                warnings={warnings}
                                 paymentCondition={paymentConditionInfo}
                             />
 
-                            <BudgetActionsSection budget={budget} />
+                            <BudgetActionsSection budget={budget} warnings={warnings} />
                         </div>
                     </div>
                 </div>

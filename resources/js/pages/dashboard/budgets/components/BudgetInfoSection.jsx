@@ -31,20 +31,30 @@ export default function BudgetInfoSection({ budget }) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Nombre</dt>
-                            <dd className="text-sm text-gray-900">{budget.client.name}</dd>
-                        </div>
-                        {budget.client.company && (
-                            <div>
-                                <dt className="text-sm font-medium text-gray-500">Empresa</dt>
-                                <dd className="text-sm text-gray-900">{budget.client.company}</dd>
-                            </div>
-                        )}
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Email</dt>
-                            <dd className="text-sm text-gray-900">{budget.client.email || 'No configurado'}</dd>
-                        </div>
+                        <>
+                            {!budget.client.deleted_at ? (
+                                <>
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Nombre</dt>
+                                        <dd className="text-sm text-gray-900">{budget.client.name || 'No disponible'}</dd>
+                                    </div>
+                                    {budget.client.company && (
+                                        <div>
+                                            <dt className="text-sm font-medium text-gray-500">Empresa</dt>
+                                            <dd className="text-sm text-gray-900">{budget.client.company || 'No disponible'}</dd>
+                                        </div>
+                                    )}
+                                    <div>
+                                        <dt className="text-sm font-medium text-gray-500">Email</dt>
+                                        <dd className="text-sm text-gray-900">{budget.client.email || 'No disponible'}</dd>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className={budget?.client?.deleted_at ? 'border-l-4 border-red-500 bg-red-50 p-4' : ''}>
+                                    <span className="text-sm font-medium text-orange-800"> {budget.client.name} - (Eliminado)</span>
+                                </div>
+                            )}
+                        </>
                     </CardContent>
                 </Card>
 
@@ -85,10 +95,14 @@ export default function BudgetInfoSection({ budget }) {
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div>
+                    <div className={budget?.user?.deleted_at ? 'border-l-4 border-red-500 bg-red-50 p-4' : ''}>
                         <dt className="text-sm font-medium text-gray-500">Nombre</dt>
                         <dd className="text-sm text-gray-900">
-                            {budget.user?.name || <span className="text-gray-500 italic">Sin vendedor asignado</span>}
+                            {!budget.user.deleted_at ? (
+                                budget.user.name
+                            ) : (
+                                <span className="font-medium text-orange-800"> {budget.user.name} - (Eliminado)</span>
+                            )}
                         </dd>
                     </div>
                 </CardContent>
