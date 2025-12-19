@@ -34,7 +34,8 @@ export default function Index({ auth, users, filters = {} }) {
     const handleDelete = async (userId, userName) => {
         const confirmed = await confirmDelete({
             title: 'Eliminar usuario',
-            description: 'Esta acción no se puede deshacer. El usuario será eliminado permanentemente del sistema.',
+            description:
+                'Esta acción no se puede deshacer. El usuario será eliminado permanentemente del sistema. Tené en cuenta que el usuario puede tener presupuestos asignados y deberán editarse si quieren mantenerse vigentes.',
             itemName: userName,
         });
 
