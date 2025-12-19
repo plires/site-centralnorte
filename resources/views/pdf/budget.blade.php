@@ -22,6 +22,7 @@
         /* HEADER INSTITUCIONAL */
         .institutional-header {
             width: 100%;
+            top: 0;
             background: {{ env('PRIMARY_COLOR', '#3d5095') }};
             padding: 30px 20px;
             text-align: center;
@@ -54,6 +55,11 @@
             font-size: 14px;
             text-align: center;
         }
+
+        /* .main-content {
+            margin-top: 350px;
+            margin-bottom: 350px;
+        } */
 
         /* INFO GENERAL */
         .budget-info-header {
@@ -181,6 +187,12 @@
         }
 
         /* TOTALES */
+        .totals-wrapper {
+            page-break-inside: avoid;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
         .totals {
             width: 350px;
             float: right;
@@ -255,7 +267,12 @@
         }
 
         @page {
-            margin: 1cm;
+            margin-top: 3.5cm;
+            /* Aumentar para dar espacio al header */
+            margin-bottom: 3cm;
+            /* Aumentar para dar espacio al footer */
+            margin-left: 1cm;
+            margin-right: 1cm;
         }
     </style>
 </head>
@@ -278,97 +295,37 @@
         </div>
     </div>
     <div class="header-title">{{ $budget['title'] }}</div>
-    {{-- <div class="header-subtitle">{{ $budget['title'] }}</div> --}}
 
-    <!-- INFO GENERAL DEL PRESUPUESTO -->
-    <table class="budget-info-header">
-        <tr>
-            <td class="header-col">
-                <div><span class="label">Presupuesto N°: </span>#{{ $budget['id'] }}</div>
-                <div><span class="label">Cliente: </span>{{ $budget['client']['name'] }}</div>
-                @if (!empty($budget['client']['company']))
-                    <div><span class="label">Empresa: </span>{{ $budget['client']['company'] }}</div>
-                @endif
-                <div><span class="label">Fecha de emisión: </span>
-                    {{ $budget['issue_date_formatted'] ?? $budget['issue_date_short'] }}</div>
-                <div><span class="label">Válido hasta: </span>
-                    {{ $budget['expiry_date_formatted'] ?? $budget['expiry_date_short'] }}</div>
-            </td>
+    <div class="main-content">
 
-            <td class="header-col">
-                <div><span class="label">Vendedor: </span>{{ $budget['user']['name'] }}</div>
-                @if (!empty($budget['user']['email']))
-                    <div><span class="label">Email: </span>{{ $budget['user']['email'] }}</div>
-                @endif
-                <div><span class="label">Estado: </span>
-                    {{ $budget['status_text'] ?? ($budget['status_label'] ?? 'Pendiente') }}</div>
-            </td>
-        </tr>
-    </table>
+        <!-- INFO GENERAL DEL PRESUPUESTO -->
+        <table class="budget-info-header">
+            <tr>
+                <td class="header-col">
+                    <div><span class="label">Presupuesto N°: </span>#{{ $budget['id'] }}</div>
+                    <div><span class="label">Cliente: </span>{{ $budget['client']['name'] }}</div>
+                    @if (!empty($budget['client']['company']))
+                        <div><span class="label">Empresa: </span>{{ $budget['client']['company'] }}</div>
+                    @endif
+                    <div><span class="label">Fecha de emisión: </span>
+                        {{ $budget['issue_date_formatted'] ?? $budget['issue_date_short'] }}</div>
+                    <div><span class="label">Válido hasta: </span>
+                        {{ $budget['expiry_date_formatted'] ?? $budget['expiry_date_short'] }}</div>
+                </td>
 
-    <!-- PRODUCTOS REGULARES -->
-    @if (!empty($budget['grouped_items']['regular']))
-        <table class="products-table">
-            <thead>
-                <tr>
-                    <th style="width: 60px;">Imagen</th>
-                    <th style="width: 40px;">Cant.</th>
-                    <th>Producto</th>
-                    <th style="width: 80px;">Precio Unit.</th>
-                    <th style="width: 60px;">Tiempo</th>
-                    <th style="width: 60px;">Logo</th>
-                    <th style="width: 80px;">Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($budget['grouped_items']['regular'] as $item)
-                    <tr>
-                        <td class="product-image">
-                            @if (isset($item['featured_image']['file_path']))
-                                <img src="{{ $item['featured_image']['file_path'] }}" alt="producto" />
-                            @else
-                                <div class="product-image-placeholder">Sin imagen</div>
-                            @endif
-                        </td>
-                        <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
-                        <td>
-                            <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
-                            @if (isset($item['product']['category_display']) && !empty($item['product']['category_display']))
-                                <br><small style="color: #666;">{{ $item['product']['category_display'] }}</small>
-                            @endif
-                            @if (isset($item['description']))
-                                <br><small>{{ $item['description'] }}</small>
-                            @endif
-                        </td>
-                        <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
-                        <td class="text-center">
-                            @if (isset($item['production_time_days']))
-                                {{ $item['production_time_days'] }} días
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if (isset($item['logo_printing']))
-                                {{ $item['logo_printing'] ? 'Sí' : 'No' }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
+                <td class="header-col">
+                    <div><span class="label">Vendedor: </span>{{ $budget['user']['name'] }}</div>
+                    @if (!empty($budget['user']['email']))
+                        <div><span class="label">Email: </span>{{ $budget['user']['email'] }}</div>
+                    @endif
+                    <div><span class="label">Estado: </span>
+                        {{ $budget['status_text'] ?? ($budget['status_label'] ?? 'Pendiente') }}</div>
+                </td>
+            </tr>
         </table>
-    @endif
 
-    <!-- PRODUCTOS CON VARIANTES -->
-    @if (!empty($budget['grouped_items']['variants']))
-        @foreach ($budget['grouped_items']['variants'] as $groupName => $variantItems)
-            @php
-                $productName = $variantItems[0]['product']['name'] ?? 'Producto';
-            @endphp
-
+        <!-- PRODUCTOS REGULARES -->
+        @if (!empty($budget['grouped_items']['regular']))
             <table class="products-table">
                 <thead>
                     <tr>
@@ -382,7 +339,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($variantItems as $item)
+                    @foreach ($budget['grouped_items']['regular'] as $item)
                         <tr>
                             <td class="product-image">
                                 @if (isset($item['featured_image']['file_path']))
@@ -419,91 +376,158 @@
                             <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
                         </tr>
                     @endforeach
-                    <tr class="variant-header-row">
-                        <td colspan="7" class="variant-header-cell">
-                            Opción seleccionada para: {{ $productName }}
-                        </td>
-                    </tr>
                 </tbody>
             </table>
-        @endforeach
-    @endif
+        @endif
 
-    {{-- Información de condición de pago --}}
-    @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
-        <div class="info-box">
-            <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
-            <small style="color: #6b7280;">
+        <!-- PRODUCTOS CON VARIANTES -->
+        @if (!empty($budget['grouped_items']['variants']))
+            @foreach ($budget['grouped_items']['variants'] as $groupName => $variantItems)
                 @php
-                    2 % ($paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0));
-                @endphp
-                @if ($paymentPercentage > 0)
-                    Se ha aplicado un <strong style="color: #dc2626;">recargo del
-                        {{ number_format($paymentPercentage, 2) }}%</strong> sobre el subtotal.
-                @elseif ($paymentPercentage < 0)
-                    Se ha aplicado un <strong style="color: #16a34a;">descuento del
-                        {{ number_format(abs($paymentPercentage), 2) }}%</strong> sobre el subtotal.
-                @else
-                    Sin ajuste adicional.
-                @endif
-            </small>
-        </div>
-    @endif
-
-    <!-- COMENTARIOS -->
-    @if (!empty($budget['footer_comments']))
-        <div class="comments">
-            <strong>Comentarios:</strong>
-            <small style="color: #6b7280;">{{ $budget['footer_comments'] }}</small>
-        </div>
-    @endif
-
-    <!-- TOTALES -->
-    <div class="totals">
-        <table class="totals-table">
-            <tr>
-                <td><strong>Subtotal:</strong></td>
-                <td class="text-right">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
-            </tr>
-
-            {{-- Mostrar ajuste de condición de pago si existe --}}
-            @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
-                @php
-                    // Validar que existan los valores antes de usarlos
-                    $paymentAmount = isset($budget['payment_condition']['amount'])
-                        ? floatval($budget['payment_condition']['amount'])
-                        : 0;
-                    $paymentDescription =
-                        'Modo de pago: ' . $budget['payment_condition']['description'] ?? 'Ajuste de pago';
-                    $isPositive = $paymentAmount > 0;
+                    $productName = $variantItems[0]['product']['name'] ?? 'Producto';
                 @endphp
 
-                <tr class="payment-condition-row {{ $isPositive ? 'positive' : 'negative' }}">
-                    <td>
-                        <strong>{{ $paymentDescription }}</strong>
-                        <br><small>{{ number_format($paymentPercentage, 2, ',', '.') }}
-                            %</small>
-                    </td>
-                    <td class="text-right">
-                        <strong>${{ number_format($paymentAmount, 2, ',', '.') }}</strong>
-                    </td>
-                </tr>
-            @endif
+                <table class="products-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Imagen</th>
+                            <th style="width: 40px;">Cant.</th>
+                            <th>Producto</th>
+                            <th style="width: 80px;">Precio Unit.</th>
+                            <th style="width: 60px;">Tiempo</th>
+                            <th style="width: 60px;">Logo</th>
+                            <th style="width: 80px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($variantItems as $item)
+                            <tr>
+                                <td class="product-image">
+                                    @if (isset($item['featured_image']['file_path']))
+                                        <img src="{{ $item['featured_image']['file_path'] }}" alt="producto" />
+                                    @else
+                                        <div class="product-image-placeholder">Sin imagen</div>
+                                    @endif
+                                </td>
+                                <td class="text-center">{{ $item['quantity'] ?? 1 }}</td>
+                                <td>
+                                    <strong>{{ $item['product']['name'] ?? 'Producto' }}</strong>
+                                    @if (isset($item['product']['category_display']) && !empty($item['product']['category_display']))
+                                        <br><small
+                                            style="color: #666;">{{ $item['product']['category_display'] }}</small>
+                                    @endif
+                                    @if (isset($item['description']))
+                                        <br><small>{{ $item['description'] }}</small>
+                                    @endif
+                                </td>
+                                <td class="text-right">${{ number_format($item['unit_price'] ?? 0, 2, ',', '.') }}</td>
+                                <td class="text-center">
+                                    @if (isset($item['production_time_days']))
+                                        {{ $item['production_time_days'] }} días
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    @if (isset($item['logo_printing']))
+                                        {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td class="text-right">${{ number_format($item['line_total'] ?? 0, 2, ',', '.') }}</td>
+                            </tr>
+                        @endforeach
+                        <tr class="variant-header-row">
+                            <td colspan="7" class="variant-header-cell">
+                                Opción seleccionada para: {{ $productName }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            @endforeach
+        @endif
 
-            @if ($businessConfig['apply_iva'])
-                <tr>
-                    <td>IVA ({{ $businessConfig['iva_rate'] * 100 }}%):</td>
-                    <td class="text-right">
-                        ${{ number_format((($budget['subtotal'] ?? 0) + ($paymentAmount ?? 0)) * $businessConfig['iva_rate'], 2, ',', '.') }}
-                    </td>
-                </tr>
-            @endif
+        {{-- Información de condición de pago --}}
+        @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
+            <div class="info-box">
+                <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
+                <small style="color: #6b7280;">
+                    @php
+                        2 % ($paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0));
+                    @endphp
+                    @if ($paymentPercentage > 0)
+                        Se ha aplicado un <strong style="color: #dc2626;">recargo del
+                            {{ number_format($paymentPercentage, 2) }}%</strong> sobre el subtotal.
+                    @elseif ($paymentPercentage < 0)
+                        Se ha aplicado un <strong style="color: #16a34a;">descuento del
+                            {{ number_format(abs($paymentPercentage), 2) }}%</strong> sobre el subtotal.
+                    @else
+                        Sin ajuste adicional.
+                    @endif
+                </small>
+            </div>
+        @endif
 
-            <tr class="total-row">
-                <td><strong>TOTAL:</strong></td>
-                <td class="text-right"><strong>${{ number_format($budget['total'] ?? 0, 2, ',', '.') }}</strong></td>
-            </tr>
-        </table>
+        <!-- COMENTARIOS -->
+        @if (!empty($budget['footer_comments']))
+            <div class="comments">
+                <strong>Comentarios:</strong>
+                <small style="color: #6b7280;">{{ $budget['footer_comments'] }}</small>
+            </div>
+        @endif
+
+        <!-- TOTALES -->
+        <div class="totals-wrapper">
+            <div class="totals">
+                <table class="totals-table">
+                    <tr>
+                        <td><strong>Subtotal:</strong></td>
+                        <td class="text-right">${{ number_format($budget['subtotal'] ?? 0, 2, ',', '.') }}</td>
+                    </tr>
+
+                    {{-- Mostrar ajuste de condición de pago si existe --}}
+                    @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
+                        @php
+                            // Validar que existan los valores antes de usarlos
+                            $paymentAmount = isset($budget['payment_condition']['amount'])
+                                ? floatval($budget['payment_condition']['amount'])
+                                : 0;
+                            $paymentDescription =
+                                'Modo de pago: ' . $budget['payment_condition']['description'] ?? 'Ajuste de pago';
+                            $isPositive = $paymentAmount > 0;
+                        @endphp
+
+                        <tr class="payment-condition-row {{ $isPositive ? 'positive' : 'negative' }}">
+                            <td>
+                                <strong>{{ $paymentDescription }}</strong>
+                                <br><small>{{ number_format($paymentPercentage, 2, ',', '.') }}
+                                    %</small>
+                            </td>
+                            <td class="text-right">
+                                <strong>${{ number_format($paymentAmount, 2, ',', '.') }}</strong>
+                            </td>
+                        </tr>
+                    @endif
+
+                    @if ($businessConfig['apply_iva'])
+                        <tr>
+                            <td>IVA ({{ $businessConfig['iva_rate'] * 100 }}%):</td>
+                            <td class="text-right">
+                                ${{ number_format((($budget['subtotal'] ?? 0) + ($paymentAmount ?? 0)) * $businessConfig['iva_rate'], 2, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+
+                    <tr class="total-row">
+                        <td><strong>TOTAL:</strong></td>
+                        <td class="text-right">
+                            <strong>${{ number_format($budget['total'] ?? 0, 2, ',', '.') }}</strong>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="clear"></div>
