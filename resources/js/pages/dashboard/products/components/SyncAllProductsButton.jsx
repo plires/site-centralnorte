@@ -1,4 +1,5 @@
 import { useSyncConfirmation } from '@/components/SyncConfirmationDialog';
+import { SyncLoadingOverlay } from '@/components/SyncLoadingOverlay';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
@@ -37,29 +38,32 @@ export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true, pro
     };
 
     return (
-        <Alert className="mb-4">
-            <Info className="h-4 w-4" />
-            <AlertTitle>Algunos productos se sincronizan desde una API externa</AlertTitle>
-            <AlertDescription className="mt-2 flex items-center justify-between">
-                <div className="text-sm">
-                    <p className="mb-1">Se pueden sincronizar para traer los últimos cambios. Usar solo si es imperativo.</p>
-                    {lastSyncInfo && (
-                        <p className="text-muted-foreground text-xs">
-                            Última sincronización: <strong>{lastSyncInfo.last_sync_human}</strong>
-                        </p>
+        <>
+            <SyncLoadingOverlay isLoading={loading} title="Sincronizando productos..." subtitle="Esta operación puede tardar varios minutos." />
+            <Alert className="mb-4">
+                <Info className="h-4 w-4" />
+                <AlertTitle>Algunos productos se sincronizan desde una API externa</AlertTitle>
+                <AlertDescription className="mt-2 flex items-center justify-between">
+                    <div className="text-sm">
+                        <p className="mb-1">Se pueden sincronizar para traer los últimos cambios. Usar solo si es imperativo.</p>
+                        {lastSyncInfo && (
+                            <p className="text-muted-foreground text-xs">
+                                Última sincronización: <strong>{lastSyncInfo.last_sync_human}</strong>
+                            </p>
+                        )}
+                    </div>
+                    {showSyncButton && (
+                        <>
+                            <Button onClick={handleSync} variant="destructive" disabled={loading} size="sm" className="ml-4 whitespace-nowrap">
+                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                {loading ? 'Sincronizando...' : 'Sincronizar productos'}
+                            </Button>
+                            {/* Diálogo de confirmación */}
+                            <SyncConfirmationDialog />
+                        </>
                     )}
-                </div>
-                {showSyncButton && (
-                    <>
-                        <Button onClick={handleSync} variant="destructive" disabled={loading} size="sm" className="ml-4 whitespace-nowrap">
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                            {loading ? 'Sincronizando...' : 'Sincronizar productos'}
-                        </Button>
-                        {/* Diálogo de confirmación */}
-                        <SyncConfirmationDialog />
-                    </>
-                )}
-            </AlertDescription>
-        </Alert>
+                </AlertDescription>
+            </Alert>
+        </>
     );
 }
