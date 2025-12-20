@@ -285,26 +285,20 @@ export const productColumns = (actions, isDeleting = false) => [
         },
     },
     {
-        key: 'stock',
-        label: 'Stock',
-        sortable: true,
-        hideOnMobile: true,
-        render: (value) => {
-            const stockValue = parseInt(value) || 0;
-            const colorClass = stockValue > 10 ? 'text-green-600' : stockValue > 0 ? 'text-orange-600' : 'text-red-600';
-            return <span className={colorClass}>{stockValue}</span>;
-        },
-    },
-    {
-        key: 'source',
+        key: 'origin',
         label: 'Origen',
         sortable: true,
-        hideOnMobile: true,
-        render: (value) => (
-            <Badge variant="outline" className="text-xs">
-                {value === 'zecat' ? 'Zecat' : 'Local'}
-            </Badge>
-        ),
+        render: (value, row) => {
+            const { label, className } = row.origin_config;
+
+            return (
+                <div className="text-center">
+                    <Badge variant="outline" className={className}>
+                        {label}
+                    </Badge>
+                </div>
+            );
+        },
     },
     {
         key: 'actions',
