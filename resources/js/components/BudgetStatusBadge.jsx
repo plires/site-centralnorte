@@ -5,12 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, FileEdit, FileText, Send, XCircle } from 'lucide-react';
 
 // NOTA IMPORTANTE:
-// La configuración del estado "expired" en statusConfig DEBE permanecer porque
+// La configuración del estado que se pretenda ocultar en statusConfig DEBE permanecer porque
 // el badge todavía necesita renderizar correctamente cuando un presupuesto
-// tiene status='expired' (por ejemplo, cuando se vence automáticamente).
+// tiene ese status (por ejemplo, cuando se vence automáticamente).
 //
-// Solo estamos eliminando "expired" de budgetStatusOptions para que NO aparezca
-// en los selectores/dropdowns donde el usuario cambia manualmente el estado.
+// Solo estamos eliminamos el estado de budgetStatusOptions para que NO aparezca
+// en los selectores/dropdowns donde el usuario cambia manualmente ese estado.
 const statusConfig = {
     unsent: {
         label: 'Sin enviar',
@@ -107,9 +107,7 @@ export default function BudgetStatusBadge({ status, statusText, showIcon = true,
  * Helpers exportados para uso externo
  */
 export const budgetStatusOptions = [
-    { value: 'unsent', label: 'Sin enviar' },
     { value: 'draft', label: 'Borrador' },
-    { value: 'sent', label: 'Enviado' },
     { value: 'approved', label: 'Aprobado' },
     { value: 'rejected', label: 'Rechazado' },
 ];
