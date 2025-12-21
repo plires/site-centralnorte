@@ -7,8 +7,10 @@ import { useRef, useState } from 'react';
 // Componentes extraídos
 import ImagePreviewDialog from './components/ImagePreviewDialog';
 import ProductActionsCard from './components/ProductActionsCard';
+import ProductAttributesCard from './components/ProductAttributesCard';
 import ProductImagesSection from './components/ProductImagesSection';
 import ProductInfoCard from './components/ProductInfoCard';
+import ProductVariantsCard from './components/ProductVariantsCard';
 import SyncProductButton from './components/SyncProductButton';
 import SystemInfoCard from './components/SystemInfoCard';
 
@@ -94,6 +96,12 @@ export default function Show({ product, is_readonly, last_sync_info }) {
                             <div className="grid gap-6 md:grid-cols-2">
                                 <ProductInfoCard product={product} />
                                 <SystemInfoCard product={product} />
+                            </div>
+
+                            {/* Atributos y Variantes */}
+                            <div className="mt-6">
+                                <ProductAttributesCard attributes={product.attributes} />
+                                <ProductVariantsCard variants={product.variants} />
                             </div>
 
                             {/* Acciones del producto */}
