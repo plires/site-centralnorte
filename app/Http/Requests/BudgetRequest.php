@@ -68,12 +68,13 @@ class BudgetRequest extends FormRequest
                     $user = \App\Models\User::with('role')->find($value);
 
                     if (!$user) {
-                        $fail('El vendedor seleccionado no existe.');
+                        $fail('El usuario seleccionado no existe.');
                         return;
                     }
 
-                    if (!$user->role || $user->role->name !== 'vendedor') {
-                        $fail('Debe seleccionar un vendedor válido. El usuario seleccionado no tiene el rol de vendedor.');
+                    // Permitir solo vendedores y admins
+                    if (!$user->role || !in_array($user->role->name, ['vendedor', 'admin'])) {
+                        $fail('Debe seleccionar un vendedor o administrador válido.');
                     }
                 }
             ];
