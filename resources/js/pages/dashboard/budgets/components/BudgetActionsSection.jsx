@@ -99,16 +99,18 @@ export default function BudgetActionsSection({ budget, statuses = [], warnings =
                     {/* Botones de acción principales */}
                     <div className="flex flex-wrap gap-2">
                         {/* Editar - Solo si es editable */}
-                        <Button
-                            onClick={handleEdit}
-                            variant={!isEditable ? 'outline' : warnings.length > 0 ? 'destructive' : 'default'}
-                            size="sm"
-                            disabled={!isEditable}
-                            title={!isEditable ? 'Solo se pueden editar presupuestos sin enviar o en borrador' : ''}
-                        >
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                        </Button>
+                        {canSendEmail && (
+                            <Button
+                                onClick={handleEdit}
+                                variant={!isEditable ? 'outline' : warnings.length > 0 ? 'destructive' : 'default'}
+                                size="sm"
+                                disabled={!isEditable}
+                                title={!isEditable ? 'Solo se pueden editar presupuestos sin enviar o en borrador' : ''}
+                            >
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                            </Button>
+                        )}
 
                         {/* Duplicar */}
                         {warnings.length === 0 && (
@@ -187,16 +189,18 @@ export default function BudgetActionsSection({ budget, statuses = [], warnings =
                         )}
 
                         {/* Ver público - Solo si está enviado */}
-                        <Button
-                            onClick={handleViewPublic}
-                            variant="outline"
-                            size="sm"
-                            disabled={!isPubliclyVisible}
-                            title={!isPubliclyVisible ? 'El presupuesto debe estar enviado para ser visible públicamente' : ''}
-                        >
-                            <ExternalLink className="mr-2 h-4 w-4" />
-                            Ver Público
-                        </Button>
+                        {isPubliclyVisible && (
+                            <Button
+                                onClick={handleViewPublic}
+                                variant="outline"
+                                size="sm"
+                                disabled={!isPubliclyVisible}
+                                title={!isPubliclyVisible ? 'El presupuesto debe estar enviado para ser visible públicamente' : ''}
+                            >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Ver Público
+                            </Button>
+                        )}
                     </div>
 
                     {warnings.length > 0 && (
