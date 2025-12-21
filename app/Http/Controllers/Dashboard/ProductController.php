@@ -92,7 +92,7 @@ class ProductController extends Controller
     public function show(Product $product)
     {
 
-        $product->load('categories', 'images', 'featuredImage');
+        $product->load('categories', 'images', 'featuredImage', 'attributes', 'variants');
 
         return inertia('dashboard/products/Show', [
             'product' => $product
