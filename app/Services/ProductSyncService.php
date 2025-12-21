@@ -127,22 +127,32 @@ class ProductSyncService
 
                     // Extraer category_ids antes de crear el producto
                     $categoryIds = $normalized['category_ids'] ?? [];
-                    unset($normalized['category_ids']); // Remover del array antes de updateOrCreate
+                    unset($normalized['category_ids']);
 
-                    $product = Product::updateOrCreate(
-                        ['sku' => $normalized['sku']],
-                        $normalized
-                    );
+                    // Buscar producto (incluyendo soft-deleted)
+                    $product = Product::withTrashed()
+                        ->where('sku', $normalized['sku'])
+                        ->first();
+
+                    if ($product) {
+                        // Si existe (activo o soft-deleted), restaurar y actualizar
+                        if ($product->trashed()) {
+                            $product->restore();
+                            Log::info("Restored soft-deleted product", [
+                                'sku' => $normalized['sku']
+                            ]);
+                        }
+                        $product->update($normalized);
+                        $stats['updated']++;
+                    } else {
+                        // No existe, crear nuevo
+                        $product = Product::create($normalized);
+                        $stats['created']++;
+                    }
 
                     // Sincronizar categorías
                     if (!empty($categoryIds)) {
                         $product->categories()->sync($categoryIds);
-                    }
-
-                    if ($product->wasRecentlyCreated) {
-                        $stats['created']++;
-                    } else {
-                        $stats['updated']++;
                     }
 
                     // Sincronizar imágenes
@@ -199,43 +209,56 @@ class ProductSyncService
     protected function syncProductAttributes(Product $product, array $attributes): void
     {
         try {
-            // Obtener combinaciones existentes de attribute_name + value como string único
-            $existingCombinations = $product->attributes()
-                ->get()
-                ->map(fn($attr) => $attr->attribute_name . '::' . $attr->value)
-                ->toArray();
 
-            // Nuevas combinaciones desde la API
-            $newCombinations = collect($attributes)
-                ->map(fn($attr) => $attr['attribute_name'] . '::' . $attr['value'])
-                ->toArray();
+            // NO comparar todavía, primero procesar los que vienen de la API
+            // 1. PRIMERO: Agregar/actualizar/restaurar atributos que vienen de la API
+            $processedExternalIds = [];
 
-            // Eliminar atributos que ya no están en la API
-            $combinationsToDelete = array_diff($existingCombinations, $newCombinations);
+            foreach ($attributes as $attrData) {
+                if (empty($attrData['external_id'])) {
+                    Log::warning("Attribute missing external_id, skipping", [
+                        'product_sku' => $product->sku,
+                        'attribute_name' => $attrData['attribute_name'] ?? 'unknown',
+                    ]);
+                    continue;
+                }
 
-            if (!empty($combinationsToDelete)) {
-                foreach ($combinationsToDelete as $combo) {
-                    [$attrName, $attrValue] = explode('::', $combo, 2);
-                    $product->attributes()
-                        ->where('attribute_name', $attrName)
-                        ->where('value', $attrValue)
-                        ->delete();
+                $processedExternalIds[] = $attrData['external_id'];
+
+                // Buscar si existe (incluyendo soft deleted)
+                $existing = ProductAttribute::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->where('external_id', $attrData['external_id'])
+                    ->first();
+
+                if ($existing) {
+                    // Si existe (activo o soft-deleted), restaurar y actualizar
+                    if ($existing->trashed()) {
+                        $existing->restore();
+                        Log::info("Restored soft-deleted attribute", [
+                            'product_sku' => $product->sku,
+                            'external_id' => $attrData['external_id']
+                        ]);
+                    }
+                    $existing->update([
+                        'attribute_name' => $attrData['attribute_name'],
+                        'value' => $attrData['value']
+                    ]);
+                } else {
+                    // No existe, crear nuevo
+                    ProductAttribute::create([
+                        'product_id' => $product->id,
+                        'external_id' => $attrData['external_id'],
+                        'attribute_name' => $attrData['attribute_name'],
+                        'value' => $attrData['value']
+                    ]);
                 }
             }
 
-            // Agregar/actualizar atributos
-            foreach ($attributes as $attrData) {
-                ProductAttribute::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'attribute_name' => $attrData['attribute_name'],
-                        'value' => $attrData['value']
-                    ],
-                    [
-                        'external_id' => $attrData['external_id']
-                    ]
-                );
-            }
+            // 2. DESPUÉS: Soft delete los que NO vinieron de la API
+            $product->attributes()
+                ->whereNotIn('external_id', $processedExternalIds)
+                ->delete();
         } catch (\Exception $e) {
             Log::error("Error syncing attributes for product {$product->sku}", [
                 'error' => $e->getMessage()
@@ -249,36 +272,48 @@ class ProductSyncService
     protected function syncProductImages(Product $product, array $images): void
     {
         try {
-            // Obtener URLs existentes
-            $existingUrls = $product->images()->pluck('url')->toArray();
-            $newUrls = array_column($images, 'url');
+            $processedUrls = [];
 
-            // Eliminar imágenes que ya no están en la API
-            $urlsToDelete = array_diff($existingUrls, $newUrls);
-            if (!empty($urlsToDelete)) {
-                $product->images()->whereIn('url', $urlsToDelete)->delete();
-            }
-
-            // Agregar/actualizar imágenes
             foreach ($images as $imageData) {
                 if (empty($imageData['url'])) {
+                    Log::warning("Image missing URL, skipping", [
+                        'product_sku' => $product->sku,
+                    ]);
                     continue;
                 }
 
-                ProductImage::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'url' => $imageData['url']
-                    ],
-                    [
+                $processedUrls[] = $imageData['url'];
+
+                $existing = ProductImage::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->where('url', $imageData['url'])
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->trashed()) {
+                        $existing->restore();
+                        Log::info("Restored soft-deleted image", [
+                            'product_sku' => $product->sku,
+                            'url' => $imageData['url']
+                        ]);
+                    }
+                    $existing->update([
                         'is_featured' => $imageData['is_featured'] ?? false,
-                        'variant' => $imageData['variant'] ?? null
-                    ]
-                );
+                        'variant' => $imageData['variant'] ?? null,
+                    ]);
+                } else {
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'url' => $imageData['url'],
+                        'is_featured' => $imageData['is_featured'] ?? false,
+                        'variant' => $imageData['variant'] ?? null,
+                    ]);
+                }
             }
 
-            // Asegurar que haya al menos una imagen destacada
-            $this->ensureFeaturedImage($product);
+            $product->images()
+                ->whereNotIn('url', $processedUrls)
+                ->delete();
         } catch (\Exception $e) {
             Log::error("Error syncing images for product {$product->sku}", [
                 'error' => $e->getMessage()
@@ -318,14 +353,31 @@ class ProductSyncService
 
             $normalized = $this->adapter->normalizeProduct($externalProduct);
 
-            // Extraer category_ids antes de crear el producto
+            // Extraer category_ids
             $categoryIds = $normalized['category_ids'] ?? [];
-            unset($normalized['category_ids']); // Remover del array antes de updateOrCreate
+            unset($normalized['category_ids']);
 
-            $product = Product::updateOrCreate(
-                ['sku' => $sku],
-                $normalized
-            );
+            // Buscar producto (incluyendo soft-deleted)
+            $product = Product::withTrashed()
+                ->where('sku', $normalized['sku'])
+                ->first();
+
+            if ($product) {
+                // Si existe (activo o soft-deleted), restaurar y actualizar
+                if ($product->trashed()) {
+                    $product->restore();
+                    Log::info("Restored soft-deleted product", [
+                        'sku' => $normalized['sku']
+                    ]);
+                }
+                $product->update($normalized);
+            } else {
+                // No existe, crear nuevo
+                $product = Product::create($normalized);
+                Log::info("Created new product", [
+                    'sku' => $normalized['sku']
+                ]);
+            }
 
             // Sincronizar categorías
             if (!empty($categoryIds)) {
@@ -449,28 +501,32 @@ class ProductSyncService
     protected function syncProductVariants(Product $product, array $variants): void
     {
         try {
-            // Obtener SKUs existentes de variantes
-            $existingSkus = $product->variants()->pluck('sku')->toArray();
-            $newSkus = array_column($variants, 'sku');
+            $processedSkus = [];
 
-            // Eliminar variantes que ya no están en la API
-            $skusToDelete = array_diff($existingSkus, $newSkus);
-            if (!empty($skusToDelete)) {
-                $product->variants()->whereIn('sku', $skusToDelete)->delete();
-            }
-
-            // Agregar/actualizar variantes
             foreach ($variants as $variantData) {
                 if (empty($variantData['sku'])) {
+                    Log::warning("Variant missing SKU, skipping", [
+                        'product_sku' => $product->sku,
+                    ]);
                     continue;
                 }
 
-                ProductVariant::updateOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'sku' => $variantData['sku']
-                    ],
-                    [
+                $processedSkus[] = $variantData['sku'];
+
+                $existing = ProductVariant::withTrashed()
+                    ->where('product_id', $product->id)
+                    ->where('sku', $variantData['sku'])
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->trashed()) {
+                        $existing->restore();
+                        Log::info("Restored soft-deleted variant", [
+                            'product_sku' => $product->sku,
+                            'variant_sku' => $variantData['sku']
+                        ]);
+                    }
+                    $existing->update([
                         'external_id' => $variantData['external_id'],
                         'size' => $variantData['size'],
                         'color' => $variantData['color'],
@@ -481,9 +537,28 @@ class ProductSyncService
                         'primary_color' => $variantData['primary_color'],
                         'secondary_color' => $variantData['secondary_color'],
                         'variant_type' => $variantData['variant_type'],
-                    ]
-                );
+                    ]);
+                } else {
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'sku' => $variantData['sku'],
+                        'external_id' => $variantData['external_id'],
+                        'size' => $variantData['size'],
+                        'color' => $variantData['color'],
+                        'primary_color_text' => $variantData['primary_color_text'],
+                        'secondary_color_text' => $variantData['secondary_color_text'],
+                        'material_text' => $variantData['material_text'],
+                        'stock' => $variantData['stock'],
+                        'primary_color' => $variantData['primary_color'],
+                        'secondary_color' => $variantData['secondary_color'],
+                        'variant_type' => $variantData['variant_type'],
+                    ]);
+                }
             }
+
+            $product->variants()
+                ->whereNotIn('sku', $processedSkus)
+                ->delete();
         } catch (\Exception $e) {
             Log::error("Error syncing variants for product {$product->sku}", [
                 'error' => $e->getMessage()

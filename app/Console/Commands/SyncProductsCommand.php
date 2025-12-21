@@ -28,6 +28,10 @@ class SyncProductsCommand extends Command
 
     public function handle(): int
     {
+        // Aumentar timeout para sincronización completa
+        set_time_limit(600); // 10 minutos
+        ini_set('memory_limit', '512M'); // Por si acaso
+
         $this->info('🚀 Starting product synchronization...');
         $this->newLine();
 
