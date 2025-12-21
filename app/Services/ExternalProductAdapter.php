@@ -161,6 +161,19 @@ class ExternalProductAdapter
     }
 
     /**
+     * Normalizar string: convierte strings vacíos o solo espacios en null
+     */
+    private function normalizeString(?string $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        return $trimmed === '' ? null : $trimmed;
+    }
+
+    /**
      * Limpiar descripción removiendo textos innecesarios
      */
     protected function cleanDescription(?string $description): ?string
@@ -349,8 +362,8 @@ class ExternalProductAdapter
                 if (isset($subattr['attribute_name']) && isset($subattr['name'])) {
                     $attributes[] = [
                         'external_id' => $subattr['id'] ?? null,
-                        'attribute_name' => $subattr['attribute_name'],
-                        'value' => $subattr['name'],
+                        'attribute_name' => $this->normalizeString($subattr['attribute_name']),
+                        'value' => $this->normalizeString($subattr['name']),
                     ];
                 }
             }
@@ -411,17 +424,17 @@ class ExternalProductAdapter
 
             $variant = [
                 'external_id' => $variantData['id'] ?? null,
-                'sku' => $variantData['sku'],
+                'sku' => $this->normalizeString($variantData['sku']),
                 'stock' => $variantData['stock'] ?? 0,
-                'variant_type' => $variantType,
-                'primary_color' => $variantData['primary_color'] ?? null,
-                'secondary_color' => $variantData['secondary_color'] ?? null,
+                'variant_type' => $this->normalizeString($variantType),
+                'primary_color' => $this->normalizeString($variantData['primary_color']) ?? null,
+                'secondary_color' => $this->normalizeString($variantData['secondary_color']) ?? null,
             ];
 
             if ($isApparel) {
                 // Para productos Apparel: guardar size y color
-                $variant['size'] = !empty($variantData['size']) ? $variantData['size'] : null;
-                $variant['color'] = !empty($variantData['color']) ? $variantData['color'] : null;
+                $variant['size'] = !empty($variantData['size']) ? $this->normalizeString($variantData['size']) : null;
+                $variant['color'] = !empty($variantData['color']) ? $this->normalizeString($variantData['color']) : null;
                 $variant['primary_color_text'] = null;
                 $variant['secondary_color_text'] = null;
                 $variant['material_text'] = null;
@@ -429,9 +442,9 @@ class ExternalProductAdapter
                 // Para productos Standard: guardar element_description_1, 2, 3
                 $variant['size'] = null;
                 $variant['color'] = null;
-                $variant['primary_color_text'] = $variantData['element_description_1'] ?? null;
-                $variant['secondary_color_text'] = $variantData['element_description_2'] ?? null;
-                $variant['material_text'] = $variantData['element_description_3'] ?? null;
+                $variant['primary_color_text'] = $this->normalizeString($variantData['element_description_1']) ?? null;
+                $variant['secondary_color_text'] = $this->normalizeString($variantData['element_description_2']) ?? null;
+                $variant['material_text'] = $this->normalizeString($variantData['element_description_3']) ?? null;
             }
 
             $variants[] = $variant;
