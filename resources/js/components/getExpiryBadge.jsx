@@ -15,8 +15,8 @@ const getExpiryBadge = (budget) => {
 
     if (budget.is_expiring_today) {
         return (
-            <Badge variant="warning" className="flex items-center gap-1 border-orange-200 bg-orange-100 text-orange-800">
-                <Clock className="h-3 w-3" />
+            <Badge variant="warning" className="border-orange-200 bg-orange-100 text-orange-800">
+                <Clock className="nr-1 h-3 w-3" />
                 Vence Hoy
             </Badge>
         );
@@ -24,10 +24,12 @@ const getExpiryBadge = (budget) => {
 
     if (budget.is_expired) {
         const dayText = days === 1 ? 'día' : 'días';
+        const messageWithDays = 'Vencido hace ' + days + ' ' + dayText;
+        const message = days > 5 ? 'Vencido' : messageWithDays;
         return (
-            <Badge variant="destructive" className="flex items-center gap-1 border-red-200 bg-red-100 text-red-800">
-                <AlertTriangle className="h-3 w-3" />
-                Vencido hace {days} {dayText}
+            <Badge variant="destructive" className="border-red-200 bg-red-100 text-red-800">
+                <AlertTriangle className="nr-1 h-3 w-3" />
+                {message}
             </Badge>
         );
     }
@@ -35,8 +37,8 @@ const getExpiryBadge = (budget) => {
     if (days <= 3 && days > 0) {
         const dayText = days === 1 ? 'día' : 'días';
         return (
-            <Badge variant="warning" className="flex items-center gap-1 border-orange-200 bg-orange-100 text-orange-800">
-                <Clock className="h-3 w-3" />
+            <Badge variant="warning" className="border-orange-200 bg-orange-100 text-orange-800">
+                <Clock className="nr-1 h-3 w-3" />
                 Vence en {days} {dayText}
             </Badge>
         );
@@ -44,8 +46,8 @@ const getExpiryBadge = (budget) => {
 
     const dayText = days === 1 ? 'día' : 'días';
     return (
-        <Badge variant="success" className="flex items-center gap-1 border-green-200 bg-green-100 text-green-800">
-            <CheckCircle className="h-3 w-3" />
+        <Badge variant="success" className="border-green-200 bg-green-100 text-green-800">
+            <CheckCircle className="nr-1 h-3 w-3" />
             Vigente ({days} {dayText} restantes)
         </Badge>
     );
