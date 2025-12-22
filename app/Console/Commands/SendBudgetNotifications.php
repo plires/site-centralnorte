@@ -2,15 +2,16 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\Budget;
-use App\Models\BudgetNotification;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-use App\Mail\BudgetExpiryWarningMail;
+use App\Enums\BudgetStatus;
 use App\Mail\BudgetExpiredMail;
-use App\Mail\BudgetExpiryWarningClientMail;
+use Illuminate\Console\Command;
+use App\Models\BudgetNotification;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Mail\BudgetExpiredClientMail;
+use App\Mail\BudgetExpiryWarningMail;
+use App\Mail\BudgetExpiryWarningClientMail;
 
 class SendBudgetNotifications extends Command
 {
@@ -62,9 +63,9 @@ class SendBudgetNotifications extends Command
      */
     private function getBudgetsExpiringSoon(int $warningDays)
     {
-        // Obtener todos los presupuestos activos que no han vencido aún
+        // Obtener todos los presupuestos enviados que no han vencido aún
         $activeBudgets = Budget::with(['user', 'client'])
-            ->where('is_active', true)
+            ->where('status', BudgetStatus::SENT)
             ->where('expiry_date', '>', now()->startOfDay())
             ->whereDoesntHave('notifications', function ($query) {
                 $query->where('type', 'expiry_warning')
@@ -86,9 +87,9 @@ class SendBudgetNotifications extends Command
      */
     private function getBudgetsExpiredToday()
     {
-        // Obtener presupuestos activos y usar getStatusData() para verificar si vencen hoy
+        // Obtener presupuestos enviados y usar getStatusData() para verificar si vencen hoy
         $activeBudgets = Budget::with(['user', 'client'])
-            ->where('is_active', true)
+            ->where('status', BudgetStatus::SENT)
             ->whereDate('expiry_date', now()->startOfDay())
             ->whereDoesntHave('notifications', function ($query) {
                 $query->where('type', 'expired')
