@@ -15,7 +15,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Create({ clients, products, paymentConditions, user, businessConfig, budget = null }) {
+export default function Create({ clients, products, paymentConditions, user, businessConfig, budget = null, vendors = [] }) {
     const isEditing = !!budget;
 
     // Obtener días de validez desde la configuración del backend
@@ -84,6 +84,7 @@ export default function Create({ clients, products, paymentConditions, user, bus
                 businessConfig={businessConfig}
                 isEditing={isEditing}
                 originalBudget={budget}
+                vendors={vendors}
             />
         </AppLayout>
     );

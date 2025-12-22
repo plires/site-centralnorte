@@ -127,10 +127,13 @@ export default function BudgetDateSection({ data, setData, errors, user, vendors
 
                 <div>
                     <Label htmlFor="user_id">Vendedor *</Label>
-                    {isAdmin && isEditing ? (
+                    {isAdmin ? (
                         // ADMIN: Select editable con vendedores
                         <>
-                            <Select value={data.user_id?.toString()} onValueChange={(value) => setData('user_id', parseInt(value))}>
+                            <Select
+                                value={data.user_id ? data.user_id.toString() : user.id.toString()}
+                                onValueChange={(value) => setData('user_id', parseInt(value))}
+                            >
                                 <SelectTrigger
                                     className={` ${errors.user_id ? 'border-red-500' : ''} ${selectedVendor?.vendor_deletd ? 'bg-red-50 text-orange-800' : ''} `}
                                 >

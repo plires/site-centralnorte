@@ -123,10 +123,28 @@ class BudgetController extends Controller
             ->orderBy('description')
             ->get();
 
+
+
+        $vendors = [];
+        if ($user->role->name === 'admin') {
+            $vendors = User::whereHas('role', function ($q) {
+                $q->whereIn('name', ['vendedor', 'admin']);
+            })
+                ->orderBy('name')
+                ->get()
+                ->map(function ($vendor) {
+                    return [
+                        'value' => $vendor->id,
+                        'label' => $vendor->name,
+                    ];
+                });
+        }
+
         return Inertia::render('dashboard/budgets/Create', [
             'clients' => $clients,
             'products' => $products,
             'paymentConditions' => $paymentConditions,
+            'vendors' => $vendors,
             'user' => $user,
             'businessConfig' => $this->getBusinessConfig(),
         ]);
