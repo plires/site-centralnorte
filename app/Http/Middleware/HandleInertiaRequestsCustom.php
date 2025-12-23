@@ -19,6 +19,8 @@ class HandleInertiaRequestsCustom extends Middleware
         $publicRoutesUsingDashboardLayout = [
             'public.budget.show',
             'public.budget.pdf',
+            'public.picking.budget.show',
+            'public.picking.budget.pdf',
         ];
 
         if ($routeName && in_array($routeName, $publicRoutesUsingDashboardLayout)) {

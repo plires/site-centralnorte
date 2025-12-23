@@ -88,7 +88,7 @@ class PublicPickingBudgetController extends Controller
             ]);
 
             if ($budget->vendor && $budget->vendor->email) {
-                $dashboardUrl = route('dashboard.picking-budgets.show', $budget->id);
+                $dashboardUrl = route('dashboard.picking.budgets.show', $budget->id);
                 Mail::to($budget->vendor->email)->send(new PickingBudgetApprovedVendorMail($budget, $dashboardUrl));
             }
 
@@ -117,13 +117,10 @@ class PublicPickingBudgetController extends Controller
 
             $budget->markAsRejected();
 
-            // Guardar motivo de rechazo
-            $rejectionReason = null;
-            if ($request->has('reason')) {
-                $rejectionReason = $request->reason;
+            // Guardar motivo de rechazo en rejection_comments (igual que Budget)
+            if ($request->has('reason') && !empty($request->reason)) {
                 $budget->update([
-                    'notes' => ($budget->notes ? $budget->notes . "\n\n" : '') .
-                        'Motivo de rechazo del cliente: ' . $rejectionReason
+                    'rejection_comments' => $request->reason
                 ]);
             }
 
@@ -134,8 +131,8 @@ class PublicPickingBudgetController extends Controller
             ]);
 
             if ($budget->vendor && $budget->vendor->email) {
-                $dashboardUrl = route('dashboard.picking-budgets.show', $budget->id);
-                Mail::to($budget->vendor->email)->send(new PickingBudgetRejectedVendorMail($budget, $dashboardUrl, $rejectionReason));
+                $dashboardUrl = route('dashboard.picking.budgets.show', $budget->id);
+                Mail::to($budget->vendor->email)->send(new PickingBudgetRejectedVendorMail($budget, $dashboardUrl, $request->reason));
             }
 
             return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
