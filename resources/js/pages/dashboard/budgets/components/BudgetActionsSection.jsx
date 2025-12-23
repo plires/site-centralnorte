@@ -99,7 +99,7 @@ export default function BudgetActionsSection({ budget, statuses = [], warnings =
                     {/* Botones de acción principales */}
                     <div className="flex flex-wrap gap-2">
                         {/* Editar - Solo si es editable */}
-                        {canSendEmail && (
+                        {isEditable && (
                             <Button
                                 onClick={handleEdit}
                                 variant={!isEditable ? 'outline' : warnings.length > 0 ? 'destructive' : 'default'}
