@@ -135,10 +135,11 @@
                 <h3>📋 Detalles del Presupuesto</h3>
                 <p><strong>Presupuesto N°:</strong> {{ $budget->budget_number }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->created_at->format('d/m/Y') }}</p>
-                <p><strong>Cliente:</strong> {{ $budget->client_name }}</p>
-                <p><strong>Cantidad de kits:</strong> {{ number_format($budget->quantity) }}</p>
+                <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
+                <p><strong>Cantidad de kits:</strong> {{ number_format($budget->total_kits) }}</p>
                 <p><strong>Componentes por kit:</strong> {{ $budget->total_components_per_kit }}</p>
                 <p><strong>Tiempo de producción:</strong> {{ $budget->production_time }}</p>
+                <p><strong>Precio por kit:</strong> ${{ number_format($budget->unit_price_per_kit, 2, ',', '.') }}</p>
                 <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
