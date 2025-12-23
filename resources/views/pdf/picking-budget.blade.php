@@ -24,12 +24,12 @@
 
         .header {
             margin-bottom: 30px;
-            border-bottom: 3px solid #2563eb;
+            border-bottom: 3px solid {{ env('PRIMARY_COLOR', '#19ac90') }};
             padding-bottom: 15px;
         }
 
         .header h1 {
-            color: #2563eb;
+            color: {{ env('PRIMARY_COLOR', '#19ac90') }};
             font-size: 24px;
             margin-bottom: 5px;
         }
@@ -44,7 +44,7 @@
         }
 
         .info-section h2 {
-            background-color: #2563eb;
+            background-color: {{ env('PRIMARY_COLOR', '#19ac90') }};
             color: white;
             padding: 8px 12px;
             font-size: 14px;
@@ -164,11 +164,11 @@
         }
 
         .total-final {
-            border-top: 2px solid #2563eb;
+            border-top: 2px solid {{ env('PRIMARY_COLOR', '#19ac90') }};
             padding-top: 10px;
             margin-top: 10px;
             font-size: 16px;
-            color: #2563eb;
+            color: {{ env('PRIMARY_COLOR', '#19ac90') }};
         }
 
         .price-per-kit {
