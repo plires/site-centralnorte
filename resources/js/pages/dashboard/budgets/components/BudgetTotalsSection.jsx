@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, Info, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function BudgetTotalsSection({ totals, ivaRate = 0.21, showIva = true, warnings, paymentCondition = null }) {
-    console.log(warnings);
     const hasConditionWarning = warnings?.some((warning) => warning.type === 'condition');
 
     const formatCurrency = (amount) => {
