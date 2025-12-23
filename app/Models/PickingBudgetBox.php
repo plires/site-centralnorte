@@ -22,6 +22,7 @@ class PickingBudgetBox extends Model
 
     protected $casts = [
         'picking_budget_id' => 'integer',
+        'picking_box_id' => 'integer',
         'box_unit_cost' => 'decimal:2',
         'quantity' => 'integer',
         'subtotal' => 'decimal:2',
