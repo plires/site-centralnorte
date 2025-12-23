@@ -41,6 +41,7 @@ class PickingBudget extends Model
         'email_sent',
         'email_sent_at',
         'valid_until',
+        'rejection_comments',
         'notes',
     ];
 
