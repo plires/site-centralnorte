@@ -16,6 +16,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('picking_budget_id')->constrained('picking_budgets')->onDelete('cascade');
 
+            $table->foreignId('picking_box_id')->nullable()->constrained('picking_boxes')->onDelete('set null');
+
             // Snapshot de la caja (se guarda aquí para histórico)
             $table->string('box_dimensions'); // "200 x 200 x 100"
             $table->decimal('box_unit_cost', 10, 2); // Costo unitario de esta caja

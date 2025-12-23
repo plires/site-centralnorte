@@ -51,7 +51,20 @@ export default function PickingBudgetForm({
     const [pendingNavigation, setPendingNavigation] = useState(null);
 
     // Estados para servicios - Tipo de armado (obligatorio)
-    const [assemblyType, setAssemblyType] = useState('');
+    // Inicializar desde originalBudget si estamos editando
+    const [assemblyType, setAssemblyType] = useState(() => {
+        if (isEditing && originalBudget && originalBudget.services) {
+            const assemblyService = originalBudget.services.find((s) => s.service_type === 'assembly');
+            if (assemblyService) {
+                if (assemblyService.service_description.toLowerCase().includes('no requiera')) {
+                    return 'cost_without_assembly';
+                } else {
+                    return 'cost_with_assembly';
+                }
+            }
+        }
+        return '';
+    });
 
     // Estados para servicios - Servicios adicionales (checkboxes)
     const [domeSticking, setDomeSticking] = useState(false);
@@ -91,14 +104,7 @@ export default function PickingBudgetForm({
         if (isEditing && originalBudget && originalBudget.services) {
             originalBudget.services.forEach((service) => {
                 switch (service.service_type) {
-                    case 'assembly':
-                        // Determinar el tipo de armado según la descripción
-                        if (service.service_description.toLowerCase().includes('no requiera')) {
-                            setAssemblyType('cost_without_assembly');
-                        } else {
-                            setAssemblyType('cost_with_assembly');
-                        }
-                        break;
+                    // el case 'assembly' porque ya se inicializa en useState
 
                     case 'dome_sticking':
                         setDomeSticking(true);
@@ -132,11 +138,20 @@ export default function PickingBudgetForm({
                         } else if (service.service_description.includes('35x45')) {
                             setBagType('bag_35x45_unit');
                         }
-                        setBagQuantity(service.quantity.toString());
+
+                        // Extraer cantidad POR KIT desde la descripción
+                        const bagMatch = service.service_description.match(/\((\d+)\s+por\s+kit\)/i);
+                        if (bagMatch) {
+                            const bagsPerKit = bagMatch[1];
+                            setBagQuantity(bagsPerKit);
+                        } else {
+                            const totalKits = parseInt(originalBudget.total_kits) || 1;
+                            const bagsPerKit = Math.round(service.quantity / totalKits);
+                            setBagQuantity(bagsPerKit.toString());
+                        }
                         break;
 
                     case 'bubble_wrap':
-                        // Determinar el tipo de pluribol según la descripción
                         if (service.service_description.includes('5x10')) {
                             setBubbleWrapType('bubble_wrap_5x10_unit');
                         } else if (service.service_description.includes('10x15')) {
@@ -144,11 +159,19 @@ export default function PickingBudgetForm({
                         } else if (service.service_description.includes('20x30')) {
                             setBubbleWrapType('bubble_wrap_20x30_unit');
                         }
-                        setBubbleWrapQuantity(service.quantity.toString());
+
+                        const bubbleMatch = service.service_description.match(/\((\d+)\s+por\s+kit\)/i);
+                        if (bubbleMatch) {
+                            const bubblesPerKit = bubbleMatch[1];
+                            setBubbleWrapQuantity(bubblesPerKit);
+                        } else {
+                            const totalKits = parseInt(originalBudget.total_kits) || 1;
+                            const bubblesPerKit = Math.round(service.quantity / totalKits);
+                            setBubbleWrapQuantity(bubblesPerKit.toString());
+                        }
                         break;
 
                     case 'palletizing':
-                        // Determinar el tipo de palletizado según la descripción
                         if (service.service_description.toLowerCase().includes('sin pallet')) {
                             setPalletizingType('palletizing_without_pallet');
                         } else {
@@ -157,7 +180,6 @@ export default function PickingBudgetForm({
                         break;
 
                     case 'labeling':
-                        // Determinar el tipo de rotulado según la descripción
                         if (service.service_description.toLowerCase().includes('sin rotulado')) {
                             setLabelingType('cost_without_labeling');
                         } else {

@@ -405,7 +405,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     </div>
 
                     {/* Grid de información */}
-                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                         <Card className={`${budget?.vendor?.deleted_at ? 'border-2 border-red-800' : ''}`}>
                             <CardContent className="pt-6">
                                 <div className="flex items-center gap-3">
@@ -440,6 +440,42 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                         <Card>
                             <CardContent className="pt-6">
                                 <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                                        <Calendar className="h-5 w-5 text-amber-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Fecha</p>
+                                        <p className="font-semibold">{new Date(budget.created_at).toLocaleDateString('es-AR')}</p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
+                                        <Package className="h-5 w-5 text-gray-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Tipo de Armado</p>
+                                        {budget.services &&
+                                            budget.services.length > 0 &&
+                                            (() => {
+                                                const assemblyService = budget.services.find((s) => s.service_type === 'assembly');
+                                                if (assemblyService) {
+                                                    return <p className="font-semibold">{assemblyService.service_description}</p>;
+                                                }
+                                                return <p className="text-sm text-gray-500">No especificado</p>;
+                                            })()}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
                                         <Package className="h-5 w-5 text-green-600" />
                                     </div>
@@ -460,20 +496,6 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                                     <div>
                                         <p className="text-sm text-gray-600">Componentes por Kit</p>
                                         <p className="font-semibold">{budget.total_components_per_kit}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-                                        <Calendar className="h-5 w-5 text-amber-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Fecha</p>
-                                        <p className="font-semibold">{new Date(budget.created_at).toLocaleDateString('es-AR')}</p>
                                     </div>
                                 </div>
                             </CardContent>

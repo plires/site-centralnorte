@@ -173,11 +173,12 @@ class PickingBudgetController extends Controller
                 'notes' => $validated['notes'] ?? null,
             ], $paymentConditionData));
 
-            // Crear cajas
+            // Crear/Actualizar cajas
             if (!empty($validated['boxes'])) {
                 foreach ($validated['boxes'] as $boxData) {
                     PickingBudgetBox::create([
-                        'picking_budget_id' => $budget->id,
+                        'picking_budget_id' => $budget->id, // 
+                        'picking_box_id' => $boxData['box_id'] ?? null,
                         'box_dimensions' => $boxData['box_dimensions'],
                         'box_unit_cost' => $boxData['box_unit_cost'],
                         'quantity' => $boxData['quantity'],
@@ -434,10 +435,12 @@ class PickingBudgetController extends Controller
 
             // Actualizar cajas
             $pickingBudget->boxes()->delete();
+            // Crear/Actualizar cajas
             if (!empty($validated['boxes'])) {
                 foreach ($validated['boxes'] as $boxData) {
                     PickingBudgetBox::create([
                         'picking_budget_id' => $pickingBudget->id,
+                        'picking_box_id' => $boxData['box_id'] ?? null,
                         'box_dimensions' => $boxData['box_dimensions'],
                         'box_unit_cost' => $boxData['box_unit_cost'],
                         'quantity' => $boxData['quantity'],

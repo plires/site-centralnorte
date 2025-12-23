@@ -21,7 +21,6 @@ export default function PickingQuantitiesSection({
     processing,
     formatCurrency,
 }) {
-    console.log(data);
     return (
         <Card>
             <CardHeader>

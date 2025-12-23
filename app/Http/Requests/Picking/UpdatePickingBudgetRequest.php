@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Picking;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdatePickingBudgetRequest extends FormRequest
 {
@@ -23,7 +24,10 @@ class UpdatePickingBudgetRequest extends FormRequest
     {
         return [
             // Cliente - Ahora usa client_id desde el ClientCombobox
-            'client_id' => ['required', 'exists:clients,id'],
+            'client_id' => [
+                'required',
+                Rule::exists('clients', 'id')->whereNull('deleted_at'),
+            ],
 
             // Cantidades base
             'total_kits' => ['required', 'integer', 'min:1', 'max:100000'],
@@ -42,6 +46,12 @@ class UpdatePickingBudgetRequest extends FormRequest
             'services.*.service_description' => ['required', 'string', 'max:255'],
             'services.*.unit_cost' => ['required', 'numeric', 'min:0'],
             'services.*.quantity' => ['required', 'integer', 'min:1'],
+
+            // Condición de pago
+            'picking_payment_condition_id' => [
+                'nullable',
+                Rule::exists('picking_payment_conditions', 'id')->whereNull('deleted_at'),
+            ],
 
             // Notas opcionales
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -109,6 +119,8 @@ class UpdatePickingBudgetRequest extends FormRequest
             'services.*.quantity.required' => 'La cantidad del servicio es obligatoria.',
             'services.*.quantity.integer' => 'La cantidad del servicio debe ser un número entero.',
             'services.*.quantity.min' => 'La cantidad del servicio debe ser al menos 1.',
+
+            'picking_payment_condition_id.exists' => 'La condición de pago seleccionada no existe.',
 
             'notes.string' => 'Las notas deben ser texto válido.',
             'notes.max' => 'Las notas no pueden superar los 1000 caracteres.',

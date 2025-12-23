@@ -13,6 +13,7 @@ class PickingBudgetBox extends Model
 
     protected $fillable = [
         'picking_budget_id',
+        'picking_box_id',
         'box_dimensions',
         'box_unit_cost',
         'quantity',
@@ -32,6 +33,11 @@ class PickingBudgetBox extends Model
     public function pickingBudget(): BelongsTo
     {
         return $this->belongsTo(PickingBudget::class);
+    }
+
+    public function pickingBox()
+    {
+        return $this->belongsTo(PickingBox::class, 'picking_box_id')->withTrashed();
     }
 
     /**

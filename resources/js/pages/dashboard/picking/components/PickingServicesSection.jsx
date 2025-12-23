@@ -147,12 +147,16 @@ export default function PickingServicesSection({
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="shavings_type">Tamaño de viruta</Label>
-                            <Select value={shavingsType} onValueChange={setShavingsType} disabled={processing}>
+                            <Select
+                                value={shavingsType || 'no-shavings'}
+                                onValueChange={(val) => setShavingsType(val === 'no-shavings' ? undefined : val)}
+                                disabled={processing}
+                            >
                                 <SelectTrigger id="shavings_type">
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={undefined}>Sin viruta</SelectItem>
+                                    <SelectItem value="no-shavings">Sin viruta</SelectItem>
                                     {currentScale.shavings_50g_unit && (
                                         <SelectItem value="shavings_50g_unit">
                                             50g - {formatCurrency(currentScale.shavings_50g_unit)} por unidad
@@ -170,7 +174,9 @@ export default function PickingServicesSection({
                                     )}
                                 </SelectContent>
                             </Select>
-                            {shavingsType && <p className="mt-2 text-xs text-gray-600">Se aplicará a cada kit automáticamente</p>}
+                            {shavingsType && shavingsType !== 'no-shavings' && (
+                                <p className="mt-2 text-xs text-gray-600">Se aplicará a cada kit automáticamente</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -183,12 +189,16 @@ export default function PickingServicesSection({
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="bag_type">Tamaño de bolsita</Label>
-                            <Select value={bagType} onValueChange={setBagType} disabled={processing}>
+                            <Select
+                                value={bagType || 'no-bag'}
+                                onValueChange={(val) => setBagType(val === 'no-bag' ? undefined : val)}
+                                disabled={processing}
+                            >
                                 <SelectTrigger id="bag_type">
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={undefined}>Sin bolsita</SelectItem>
+                                    <SelectItem value="no-bag">Sin bolsita</SelectItem>
                                     {currentScale.bag_10x15_unit && (
                                         <SelectItem value="bag_10x15_unit">
                                             10x15 - {formatCurrency(currentScale.bag_10x15_unit)} por unidad
@@ -208,7 +218,7 @@ export default function PickingServicesSection({
                             </Select>
                         </div>
 
-                        {bagType && (
+                        {bagType && bagType !== 'no-bag' && (
                             <div>
                                 <Label htmlFor="bag_quantity">Cantidad de bolsitas</Label>
                                 <Input
@@ -234,12 +244,16 @@ export default function PickingServicesSection({
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="bubble_wrap_type">Tamaño de pluribol</Label>
-                            <Select value={bubbleWrapType} onValueChange={setBubbleWrapType} disabled={processing}>
+                            <Select
+                                value={bubbleWrapType || 'no-bubble'}
+                                onValueChange={(val) => setBubbleWrapType(val === 'no-bubble' ? undefined : val)}
+                                disabled={processing}
+                            >
                                 <SelectTrigger id="bubble_wrap_type">
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={undefined}>Sin pluribol</SelectItem>
+                                    <SelectItem value="no-bubble">Sin pluribol</SelectItem>
                                     {currentScale.bubble_wrap_5x10_unit && (
                                         <SelectItem value="bubble_wrap_5x10_unit">
                                             5x10 - {formatCurrency(currentScale.bubble_wrap_5x10_unit)} por unidad
@@ -259,7 +273,7 @@ export default function PickingServicesSection({
                             </Select>
                         </div>
 
-                        {bubbleWrapType && (
+                        {bubbleWrapType && bubbleWrapType !== 'no-bubble' && (
                             <div>
                                 <Label htmlFor="bubble_wrap_quantity">Cantidad de pluribol</Label>
                                 <Input
@@ -288,12 +302,16 @@ export default function PickingServicesSection({
                     <CardContent className="space-y-4">
                         <div>
                             <Label htmlFor="palletizing_type">Tipo de palletizado</Label>
-                            <Select value={palletizingType} onValueChange={setPalletizingType} disabled={processing}>
+                            <Select
+                                value={palletizingType || 'no-palletizing'}
+                                onValueChange={(val) => setPalletizingType(val === 'no-palletizing' ? undefined : val)}
+                                disabled={processing}
+                            >
                                 <SelectTrigger id="palletizing_type">
                                     <SelectValue placeholder="Seleccionar..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value={undefined}>Sin palletizado</SelectItem>
+                                    <SelectItem value="no-palletizing">Sin palletizado</SelectItem>
                                     {currentScale.palletizing_without_pallet && (
                                         <SelectItem value="palletizing_without_pallet">
                                             Sin pallet - {formatCurrency(currentScale.palletizing_without_pallet)} por kit
@@ -306,7 +324,9 @@ export default function PickingServicesSection({
                                     )}
                                 </SelectContent>
                             </Select>
-                            {palletizingType && <p className="mt-2 text-xs text-gray-600">Se aplicará a todos los kits</p>}
+                            {palletizingType && palletizingType !== 'no-palletizing' && (
+                                <p className="mt-2 text-xs text-gray-600">Se aplicará a todos los kits</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
