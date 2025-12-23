@@ -47,7 +47,7 @@ class UserController extends Controller
             $query->orderBy('created_at', 'desc'); // Orden por defecto
         }
 
-        $users = $query->with('role')->paginate(5)->withQueryString();
+        $users = $query->with('role')->paginate(10)->withQueryString();
 
         return Inertia::render('dashboard/users/Index', [
             'users' => $users,
