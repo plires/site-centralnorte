@@ -222,18 +222,52 @@ class PickingBudgetController extends Controller
             abort(403, 'No tienes permiso para ver este presupuesto.');
         }
 
+        // 1. Cargar relaciones INCLUYENDO las borradas
         $pickingBudget->load([
-            'vendor:id,name,email',
-            'client:id,name,email,phone,company,address',
+            'vendor' => fn($q) => $q->withTrashed(),
+            'client' => fn($q) => $q->withTrashed(),
             'services',
             'boxes',
-            'paymentCondition'
+            'paymentCondition' => fn($q) => $q->withTrashed()
         ]);
+
+        // 2. Generar Array de Advertencias Globales
+        $warnings = [];
+
+        // Verificamos Cliente
+        if ($pickingBudget->client && $pickingBudget->client->trashed()) {
+            $warnings[] = [
+                'type' => 'client',
+                'message' => "El cliente '{$pickingBudget->client->name}' ha sido eliminado del sistema."
+            ];
+        }
+
+        // Verificamos Vendedor (User)
+        if ($pickingBudget->vendor && $pickingBudget->vendor->trashed()) {
+            $warnings[] = [
+                'type' => 'user',
+                'message' => "El vendedor '{$pickingBudget->vendor->name}' ya no es un usuario activo."
+            ];
+        }
+
+        // Verificamos Condición de Pago
+        if ($pickingBudget->paymentCondition && $pickingBudget->paymentCondition->trashed()) {
+            $warnings[] = [
+                'type' => 'condition',
+                'message' => "La condición de pago original ya no está disponible en la configuración."
+            ];
+        }
+
+        // Verificar si las boxes, scales o increments usados fueron eliminados
+        // Nota: boxes, scales e increments están guardados como datos en el presupuesto,
+        // no como relaciones directas, por lo que no podemos verificar si fueron eliminados
+        // a menos que establezcas relaciones directas
 
         $statusData = $pickingBudget->getStatusData();
 
         return Inertia::render('dashboard/picking/Show', [
             'budget' => array_merge($pickingBudget->toArray(), $statusData),
+            'warnings' => $warnings,
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
@@ -252,23 +286,90 @@ class PickingBudgetController extends Controller
 
         // Solo se puede editar si es editable
         if (!$pickingBudget->isEditable()) {
-            return back()->withErrors(['error' => 'Solo se pueden editar presupuestos sin enviar o en borrador.']);
+            return redirect()->route('dashboard.picking.budgets.show', $pickingBudget)
+                ->with('error', 'Solo se pueden editar presupuestos sin enviar o en borrador. Cambie el estado a borrador y luego edite.');
         }
 
-        $pickingBudget->load(['services', 'boxes', 'client:id,name,email,phone,company']);
-
-        $boxes = PickingBox::active()->orderBy('cost')->get();
-        $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
-        $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
-
-        $clients = Client::orderBy('name')->get()->map(fn($client) => [
-            'value' => $client->id,
-            'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
+        // 1. Cargar relaciones INCLUYENDO las borradas
+        $pickingBudget->load([
+            'services',
+            'boxes',
+            'client' => fn($q) => $q->withTrashed(),
+            'vendor' => fn($q) => $q->withTrashed(),
+            'paymentCondition' => fn($q) => $q->withTrashed()
         ]);
 
-        $paymentConditions = PickingPaymentCondition::where('is_active', true)
+        // 2. Cargar BOXES (activas + la usada en el presupuesto si fue borrada)
+        $boxes = PickingBox::active()->orderBy('cost')->get();
+
+        // 3. Cargar SCALES (activas)
+        $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
+
+        // 4. Cargar INCREMENTS (activos)
+        $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
+
+        // 5. Cargar CLIENTES (activos + el cliente actual si fue borrado)
+        $clients = Client::query()
+            ->withTrashed()
+            ->where(function ($query) use ($pickingBudget) {
+                $query->whereNull('deleted_at')
+                    ->orWhere('id', $pickingBudget->client_id);
+            })
+            ->orderBy('name')
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'value' => $client->id,
+                    'label' => $client->company
+                        ? "{$client->name} ({$client->company})" . ($client->trashed() ? ' - ELIMINADO' : '')
+                        : $client->name . ($client->trashed() ? ' - ELIMINADO' : ''),
+                    'is_deleted' => $client->trashed()
+                ];
+            });
+
+        // 6. Cargar CONDICIONES DE PAGO (activas + la usada si fue borrada)
+        $paymentConditions = PickingPaymentCondition::query()
+            ->withTrashed()
+            ->where(function ($q) use ($pickingBudget) {
+                $q->where('is_active', true)
+                    ->orWhere('id', $pickingBudget->picking_payment_condition_id);
+            })
             ->orderBy('description')
-            ->get();
+            ->get()
+            ->map(function ($condition) {
+                $condition->condition_deleted = $condition->trashed();
+                if ($condition->trashed()) {
+                    $condition->description .= ' (NO DISPONIBLE)';
+                }
+                return $condition;
+            });
+
+        // 7. Generar Array de Advertencias Globales
+        $warnings = [];
+
+        // Verificamos Cliente
+        if ($pickingBudget->client && $pickingBudget->client->trashed()) {
+            $warnings[] = [
+                'type' => 'client',
+                'message' => "El cliente '{$pickingBudget->client->name}' ha sido eliminado del sistema."
+            ];
+        }
+
+        // Verificamos Vendedor
+        if ($pickingBudget->vendor && $pickingBudget->vendor->trashed()) {
+            $warnings[] = [
+                'type' => 'user',
+                'message' => "El vendedor '{$pickingBudget->vendor->name}' ya no es un usuario activo."
+            ];
+        }
+
+        // Verificamos Condición de Pago
+        if ($pickingBudget->paymentCondition && $pickingBudget->paymentCondition->trashed()) {
+            $warnings[] = [
+                'type' => 'condition',
+                'message' => "La condición de pago original ya no está disponible en la configuración."
+            ];
+        }
 
         return Inertia::render('dashboard/picking/Edit', [
             'budget' => $pickingBudget,
@@ -277,6 +378,7 @@ class PickingBudgetController extends Controller
             'componentIncrements' => $increments,
             'clients' => $clients,
             'paymentConditions' => $paymentConditions,
+            'warnings' => $warnings,
         ]);
     }
 
@@ -480,16 +582,44 @@ class PickingBudgetController extends Controller
         try {
             $user = Auth::user();
 
-            if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
-                abort(403, 'No tienes permiso para modificar este presupuesto.');
+            if ($user->role->name === 'vendedor' && $pickingBudget->user_id !== $user->id) {
+                abort(403, 'No tienes permisos para modificar este presupuesto.');
             }
-
+            $oldStatus = $pickingBudget->status;
             $newStatus = BudgetStatus::from($request->status);
-            $pickingBudget->update(['status' => $newStatus]);
 
-            if ($newStatus === BudgetStatus::SENT && !$pickingBudget->email_sent) {
-                $pickingBudget->update(['email_sent' => true, 'email_sent_at' => now()]);
+            // Datos a actualizar
+            $updateData = ['status' => $newStatus];
+
+            // Si un presupuesto esta vencido y se quiere cambiar el estado
+            if ($pickingBudget->isExpiredByDate()) {
+                return back()->with(
+                    'error',
+                    'No podés cambiar el estado de un presupuesto vencido. Podés duplicar el presupuesto y volver a enviar.'
+                );
             }
+
+            // Si cambia de REJECTED a otro estado, limpiar rejection_comments
+            if ($oldStatus === BudgetStatus::REJECTED && $newStatus !== BudgetStatus::REJECTED) {
+                $updateData['rejection_comments'] = null;
+            }
+
+            // Si cambia a SENT y no se había enviado antes, marcar como enviado
+            if ($newStatus === BudgetStatus::SENT && !$pickingBudget->email_sent) {
+                $updateData['email_sent'] = true;
+                $updateData['email_sent_at'] = now();
+            }
+
+            // Si cambia de SENT a UNSENT o DRAFT, resetear flags de envío
+            if (
+                in_array($oldStatus, [BudgetStatus::SENT, BudgetStatus::APPROVED, BudgetStatus::REJECTED, BudgetStatus::EXPIRED])
+                && in_array($newStatus, [BudgetStatus::UNSENT, BudgetStatus::DRAFT])
+            ) {
+                $updateData['email_sent'] = false;
+                $updateData['email_sent_at'] = null;
+            }
+
+            $pickingBudget->update($updateData);
 
             return back()->with('success', 'Estado actualizado a: ' . $newStatus->label());
         } catch (\Exception $e) {

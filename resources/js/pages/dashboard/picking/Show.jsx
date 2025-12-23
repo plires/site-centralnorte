@@ -1,5 +1,6 @@
 // resources/js/pages/dashboard/picking/Show.jsx
-import ButtonCustom from '@/components/ButtonCustom';
+import BudgetStatusBadge, { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
+import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -10,22 +11,57 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Calendar, Copy, DollarSign, Download, Edit, Mail, Package, PackagePlus, Trash2, User } from 'lucide-react';
+import {
+    Box,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Copy,
+    DollarSign,
+    Download,
+    Edit,
+    ExternalLink,
+    FileEdit,
+    FileText,
+    Loader2,
+    Mail,
+    Package,
+    PackagePlus,
+    Send,
+    User,
+    XCircle,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
 
-export default function Show({ auth, budget, businessConfig }) {
+export default function Show({ auth, budget, warnings, businessConfig }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
     const [showSendDialog, setShowSendDialog] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSending, setIsSending] = useState(false);
+
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [showStatusConfirm, setShowStatusConfirm] = useState(false);
+    const [pendingStatus, setPendingStatus] = useState(null);
+
+    // Determinar permisos
+    const canSendEmail = canSendStatus(budget.status) || budget.status === 'sent';
+    const isEditable = isEditableStatus(budget.status);
+    const isPubliclyVisible = isPubliclyVisibleStatus(budget.status);
+
+    // Obtener etiqueta del estado
+    const getStatusLabel = (status) => {
+        const option = budgetStatusOptions.find((o) => o.value === status);
+        return option?.label || status;
+    };
 
     // Estado para totales calculados
     const [calculatedTotals, setCalculatedTotals] = useState({
@@ -38,6 +74,34 @@ export default function Show({ auth, budget, businessConfig }) {
         total: 0,
         unitPricePerKit: 0,
     });
+
+    const handleStatusChange = (newStatus) => {
+        if (newStatus === budget.status) return;
+        setPendingStatus(newStatus);
+        setShowStatusConfirm(true);
+    };
+
+    const confirmStatusChange = () => {
+        setIsUpdatingStatus(true);
+        setShowStatusConfirm(false);
+
+        router.patch(
+            route('dashboard.picking.budgets.update-status', budget.id),
+            { status: pendingStatus },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setIsUpdatingStatus(false);
+                    setPendingStatus(null);
+                },
+            },
+        );
+    };
+
+    const handleViewPublic = () => {
+        const publicUrl = route('public.budget.show', budget.token);
+        window.open(publicUrl, '_blank');
+    };
 
     // Hook para manejar respuestas de Inertia
     const { handleCrudResponse } = useInertiaResponse();
@@ -168,30 +232,6 @@ export default function Show({ auth, budget, businessConfig }) {
         }).format(value);
     };
 
-    // Determinar permisos
-    const canEdit = auth.user?.role === 'admin' || budget.user_id === auth.user?.id;
-    const canDelete = auth.user?.role === 'admin' || budget.user_id === auth.user?.id;
-
-    const StatusBadge = ({ status }) => {
-        const statusColors = {
-            draft: 'bg-gray-100 text-gray-800',
-            pending: 'bg-yellow-100 text-yellow-800',
-            sent: 'bg-blue-100 text-blue-800',
-            approved: 'bg-green-100 text-green-800',
-            rejected: 'bg-red-100 text-red-800',
-        };
-
-        const statusLabels = {
-            draft: 'Borrador',
-            pending: 'Pendiente',
-            sent: 'Enviado',
-            approved: 'Aprobado',
-            rejected: 'Rechazado',
-        };
-
-        return <Badge className={`${statusColors[status] || statusColors.draft} rounded-full px-3 py-1`}>{statusLabels[status] || status}</Badge>;
-    };
-
     const breadcrumbs = [
         {
             title: 'Presupuestos de Picking',
@@ -215,20 +255,119 @@ export default function Show({ auth, budget, businessConfig }) {
                             <h1 className="text-2xl font-bold text-gray-900">Presupuesto {budget.budget_number}</h1>
                             <p className="text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
                         </div>
-                        <StatusBadge status={budget.status} />
                     </div>
+
+                    {/* Banner de Advertencias Globales */}
+                    {warnings && warnings.length > 0 && (
+                        <div className="mb-6">
+                            <GlobalWarningsBanner
+                                warnings={warnings}
+                                title="Atención: Existen registros históricos eliminados."
+                                subtitle="Te recomendamos editar los registros que ya no están disponibles y enviar el presupuesto nuevamente."
+                            />
+                        </div>
+                    )}
+
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                                <Label className="text-sm font-medium">Estado del Presupuesto</Label>
+                                <p className="text-muted-foreground text-sm">Cambia el estado para controlar la visibilidad y acciones disponibles</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <Select value={budget.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
+                                    <SelectTrigger className="w-[180px]">
+                                        {isUpdatingStatus ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <span>Actualizando...</span>
+                                            </div>
+                                        ) : (
+                                            <SelectValue>
+                                                <BudgetStatusBadge status={budget.status} size="sm" />
+                                            </SelectValue>
+                                        )}
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {budgetStatusOptions.map((option) => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                <BudgetStatusBadge status={option.value} size="sm" />
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Información contextual según el estado */}
+                        <div className="rounded-lg bg-gray-50 p-3 text-sm">
+                            {budget.status === 'unsent' && (
+                                <p className="text-gray-600">
+                                    <FileEdit className="mr-1 inline h-4 w-4" />
+                                    El presupuesto aún no ha sido enviado al cliente. Puedes editarlo libremente.
+                                </p>
+                            )}
+                            {budget.status === 'draft' && (
+                                <p className="text-gray-600">
+                                    <FileText className="mr-1 inline h-4 w-4" />
+                                    Este es un borrador (copia de otro presupuesto). Puedes editarlo antes de enviarlo.
+                                </p>
+                            )}
+                            {budget.status === 'sent' && (
+                                <p className="text-blue-600">
+                                    <Send className="mr-1 inline h-4 w-4" />
+                                    El presupuesto está visible para el cliente. Puede aprobarlo o rechazarlo.
+                                </p>
+                            )}
+                            {budget.status === 'approved' && (
+                                <p className="text-green-600">
+                                    <CheckCircle className="mr-1 inline h-4 w-4" />
+                                    ¡El cliente aprobó este presupuesto! Coordina los siguientes pasos.
+                                </p>
+                            )}
+                            {budget.status === 'rejected' && (
+                                <div className="space-y-2">
+                                    <p className="text-red-600">
+                                        <XCircle className="mr-1 inline h-4 w-4" />
+                                        El cliente rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
+                                    </p>
+                                    {budget.rejection_comments && (
+                                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-4">
+                                            <p className="mb-1 text-sm font-medium text-red-800">Motivo del rechazo:</p>
+                                            <p className="text-sm whitespace-pre-wrap text-red-700">{budget.rejection_comments}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            {budget.status === 'expired' && (
+                                <p className="text-orange-600">
+                                    <Clock className="mr-1 inline h-4 w-4" />
+                                    Este presupuesto venció. Puedes duplicarlo para crear uno nuevo con fechas actualizadas.
+                                </p>
+                            )}
+                        </div>
+                    </div>
+
+                    {warnings.length > 0 && (
+                        <div className="mb-2 border-l-4 border-red-500 bg-red-50 p-4">
+                            <span className="text-sm font-medium text-orange-800">
+                                Si el presupuesto se encuentra vigente, te recomendamos editar los registros que ya no estan disponibles marcados en
+                                rojo y enviar el presupuesto nuevamente.
+                            </span>
+                        </div>
+                    )}
 
                     {/* Botones de acción */}
                     <div className="mb-6 flex flex-wrap gap-2">
-                        {canEdit && (
-                            <ButtonCustom
-                                variant="primary"
+                        {(warnings.length > 0 || isEditable) && (
+                            <Button
+                                variant={warnings.length > 0 ? 'destructive' : 'outline'}
                                 size="sm"
                                 onClick={() => router.visit(route('dashboard.picking.budgets.edit', budget.id))}
                             >
                                 <Edit className="mr-2 h-4 w-4" />
                                 Editar
-                            </ButtonCustom>
+                            </Button>
                         )}
 
                         <Button variant="outline" size="sm" onClick={handleDownload}>
@@ -236,29 +375,53 @@ export default function Show({ auth, budget, businessConfig }) {
                             Descargar PDF
                         </Button>
 
-                        {budget.client.email && (
+                        {canSendEmail && warnings.length === 0 && (
                             <Button variant="outline" size="sm" onClick={() => setShowSendDialog(true)}>
                                 <Mail className="mr-2 h-4 w-4" />
                                 Enviar por Email
                             </Button>
                         )}
 
-                        <Button variant="outline" size="sm" onClick={handleDuplicate}>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicar
-                        </Button>
+                        {warnings.length === 0 && (
+                            <Button variant="outline" size="sm" onClick={handleDuplicate}>
+                                <Copy className="mr-2 h-4 w-4" />
+                                Duplicar
+                            </Button>
+                        )}
 
-                        {canDelete && (
-                            <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Eliminar
+                        {/* Ver público - Solo si está enviado */}
+                        {isPubliclyVisible && (
+                            <Button
+                                onClick={handleViewPublic}
+                                variant="outline"
+                                size="sm"
+                                disabled={!isPubliclyVisible}
+                                title={!isPubliclyVisible ? 'El presupuesto debe estar enviado para ser visible públicamente' : ''}
+                            >
+                                <ExternalLink className="mr-2 h-4 w-4" />
+                                Ver Público
                             </Button>
                         )}
                     </div>
 
                     {/* Grid de información */}
-                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                        <Card>
+                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
+                        <Card className={`${budget?.vendor?.deleted_at ? 'border-2 border-red-800' : ''}`}>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                                        <User className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Vendedor</p>
+                                        <p className={`font-semibold ${budget?.vendor?.deleted_at ? 'text-red-800' : ''}`}>
+                                            {budget?.vendor?.deleted_at ? budget.vendor.name + ' - No disponible' : budget.vendor.name}
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card className={`${budget?.client?.deleted_at ? 'border-2 border-red-800' : ''}`}>
                             <CardContent className="pt-6">
                                 <div className="flex items-center gap-3">
                                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
@@ -266,7 +429,9 @@ export default function Show({ auth, budget, businessConfig }) {
                                     </div>
                                     <div>
                                         <p className="text-sm text-gray-600">Cliente</p>
-                                        <p className="font-semibold">{budget.client.name}</p>
+                                        <p className={`font-semibold ${budget?.client?.deleted_at ? 'text-red-800' : ''}`}>
+                                            {budget?.client?.deleted_at ? budget.client.name + ' - No disponible' : budget.client.name}
+                                        </p>
                                     </div>
                                 </div>
                             </CardContent>
@@ -428,6 +593,7 @@ export default function Show({ auth, budget, businessConfig }) {
                         totalKits={budget.total_kits}
                         ivaRate={ivaRate}
                         showIva={applyIva}
+                        warnings={warnings}
                     />
 
                     {/* Notas */}
@@ -475,6 +641,40 @@ export default function Show({ auth, budget, businessConfig }) {
                         <AlertDialogCancel disabled={isSending}>Cancelar</AlertDialogCancel>
                         <AlertDialogAction onClick={handleSendEmail} disabled={isSending}>
                             {isSending ? 'Enviando...' : 'Enviar'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>¿Cambiar estado del presupuesto?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Estás por cambiar el estado de <strong>{getStatusLabel(budget.status)}</strong> a{' '}
+                            <strong>{getStatusLabel(pendingStatus)}</strong>.
+                            {pendingStatus === 'sent' && (
+                                <span className="mt-2 block text-blue-600">Esto hará el presupuesto visible para el cliente.</span>
+                            )}
+                            {pendingStatus === 'expired' && (
+                                <span className="mt-2 block text-orange-600">El cliente ya no podrá ver el presupuesto.</span>
+                            )}
+                            {pendingStatus === 'approved' && (
+                                <span className="mt-2 block text-green-600">Esto marcará el presupuesto como aprobado manualmente.</span>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isUpdatingStatus}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmStatusChange} disabled={isUpdatingStatus}>
+                            {isUpdatingStatus ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Actualizando...
+                                </>
+                            ) : (
+                                'Confirmar cambio'
+                            )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

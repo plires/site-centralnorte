@@ -309,6 +309,12 @@ class BudgetController extends Controller
             abort(403, 'No tienes permisos para editar este presupuesto.');
         }
 
+        // Solo se puede editar si es editable
+        if (!$budget->isEditable()) {
+            return redirect()->route('dashboard.budgets.show', $budget)
+                ->with('error', 'Solo se pueden editar presupuestos sin enviar o en borrador. Cambie el estado a borrador y luego edite.');
+        }
+
         // 1. Cargar relaciones (INCLUYENDO BORRADOS)
         $budget->load([
             'client' => fn($q) => $q->withTrashed(),
@@ -478,6 +484,12 @@ class BudgetController extends Controller
 
             if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
                 abort(403, 'No tienes permisos para actualizar este presupuesto.');
+            }
+
+            // Solo se puede editar si es editable
+            if (!$budget->isEditable()) {
+                return redirect()->route('dashboard.budgets.show', $budget)
+                    ->with('error', 'Solo se pueden editar presupuestos sin enviar o en borrador. Cambie el estado a borrador y luego edite.');
             }
 
             if ($user->role->name === 'admin' && !$request->has('user_id')) {

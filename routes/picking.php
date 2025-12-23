@@ -45,6 +45,7 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             ->name('budgets.send');
         Route::get('/{pickingBudget}/pdf', [PickingBudgetController::class, 'downloadPdf'])
             ->name('budgets.pdf');
+        Route::patch('{pickingBudget}/status', [PickingBudgetController::class, 'updateStatus'])->name('budgets.update-status');
 
         // ====================================================================
         // CONFIGURACIÓN (Solo Administradores)

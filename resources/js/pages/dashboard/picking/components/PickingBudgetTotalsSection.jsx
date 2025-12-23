@@ -14,7 +14,10 @@ export default function PickingBudgetTotalsSection({
     totalKits = null,
     ivaRate = 0.21,
     showIva = true,
+    warnings = [],
 }) {
+    const hasConditionWarning = warnings?.some((warning) => warning.type === 'condition');
+
     const formatCurrency = (value) => {
         return new Intl.NumberFormat('es-AR', {
             style: 'currency',
@@ -69,8 +72,14 @@ export default function PickingBudgetTotalsSection({
                     </div>
 
                     {/* Ajuste por Condición de Pago */}
+                    {hasConditionWarning && (
+                        <div className="border-l-4 border-red-500 bg-red-50 p-4 text-sm font-medium text-orange-800">
+                            {/* Podés usar el mensaje específico si querés */}
+                            {warnings.find((warning) => warning.type === 'condition')?.message}
+                        </div>
+                    )}
                     {paymentCondition && totals.paymentConditionAmount !== 0 && (
-                        <>
+                        <div className={`${hasConditionWarning ? 'border-2 border-red-800 p-2' : ''}`}>
                             <div className="mb-0 flex items-center justify-between text-sm">
                                 <span className="flex items-center gap-2 text-sm text-gray-600">
                                     Condición de Pago ({paymentCondition.description})
@@ -100,7 +109,7 @@ export default function PickingBudgetTotalsSection({
                                     )}
                                 </span>
                             </div>
-                        </>
+                        </div>
                     )}
 
                     {/* IVA */}
