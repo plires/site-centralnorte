@@ -332,14 +332,15 @@ class PickingBudget extends Model
     public static function generateBudgetNumber(): string
     {
         $year = now()->year;
-        $lastBudget = self::whereYear('created_at', $year)
-            ->orderBy('id', 'desc')
-            ->first();
 
-        $nextNumber = $lastBudget ?
-            (int) substr($lastBudget->budget_number, -4) + 1 : 1;
+        // Tomamos el último presupuesto por ID
+        $lastBudget = self::orderBy('id', 'desc')->first();
 
-        return sprintf('PK-%d-%04d', $year, $nextNumber);
+        // El próximo ID será el último id + 1, o 1 si no hay registros
+        $nextId = $lastBudget ? $lastBudget->id + 1 : 1;
+
+        // Formato: PK-2025-123 (sin padding fijo)
+        return sprintf('PK-%d-%d', $year, $nextId);
     }
 
     public function calculateTotals(): void
