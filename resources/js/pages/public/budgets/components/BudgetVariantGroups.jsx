@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/budget/budgetUtils';
 import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState } from 'react';
+import ImageGalleryModal from './ImageGalleryModal';
 
 /**
  * Componente para mostrar grupos de variantes del presupuesto - Imagen única por producto
@@ -24,9 +26,35 @@ export default function BudgetVariantGroups({
     nextImage,
     prevImage,
 }) {
+    // Estado para controlar el modal
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedImageKey, setSelectedImageKey] = useState(null);
+
     // No renderizar si no hay grupos de variantes
     if (!variantGroups || Object.keys(variantGroups).length === 0) {
         return null;
+    }
+
+    // Función para abrir el modal con una galería específica
+    const openModal = (imageKey) => {
+        setSelectedImageKey(imageKey);
+        setModalOpen(true);
+    };
+
+    // Obtener datos del modal actual
+    const modalImages = selectedImageKey ? imageGalleries[selectedImageKey] || [] : [];
+    const modalCurrentIndex = selectedImageKey ? currentImageIndexes[selectedImageKey] || 0 : 0;
+
+    // Encontrar el nombre del producto para el modal
+    let modalProductName = '';
+    if (selectedImageKey && variantGroups) {
+        for (const [group, items] of Object.entries(variantGroups)) {
+            const item = items.find((item) => `variant-${group}-${item.id}` === selectedImageKey);
+            if (item) {
+                modalProductName = item.product.name;
+                break;
+            }
+        }
     }
 
     return (
@@ -49,11 +77,32 @@ export default function BudgetVariantGroups({
                                     <div className="relative mx-auto h-32 w-32 flex-shrink-0 sm:mx-0 sm:h-24 sm:w-24">
                                         {images.length > 0 ? (
                                             <>
-                                                <img
-                                                    src={images[currentIndex].full_url}
-                                                    alt={firstItem.product.name}
-                                                    className="h-full w-full rounded-md object-cover"
-                                                />
+                                                <div
+                                                    onClick={() => openModal(productImageKey)}
+                                                    className="group relative h-full w-full cursor-pointer"
+                                                >
+                                                    <img
+                                                        src={images[currentIndex].full_url}
+                                                        alt={firstItem.product.name}
+                                                        className="h-full w-full rounded-md object-cover transition-opacity group-hover:opacity-75"
+                                                    />
+                                                    {/* Overlay de zoom al hacer hover */}
+                                                    <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/0 transition-all group-hover:bg-black/20">
+                                                        <svg
+                                                            className="h-8 w-8 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            viewBox="0 0 24 24"
+                                                        >
+                                                            <path
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth={2}
+                                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
+                                                            />
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                                 {images.length > 1 && (
                                                     <>
                                                         <button
@@ -167,6 +216,17 @@ export default function BudgetVariantGroups({
                     </Card>
                 );
             })}
+
+            {/* Modal de galería de imágenes */}
+            <ImageGalleryModal
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+                images={modalImages}
+                currentIndex={modalCurrentIndex}
+                onNext={() => selectedImageKey && nextImage(selectedImageKey)}
+                onPrev={() => selectedImageKey && prevImage(selectedImageKey)}
+                productName={modalProductName}
+            />
         </>
     );
 }
