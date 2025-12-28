@@ -158,6 +158,12 @@ class BudgetController extends Controller
 
             $user = Auth::user();
 
+            if ($user->role->name !== 'admin') {
+                $budgetOwner = $user->id;
+            } else {
+                $budgetOwner = $request->user_id;
+            }
+
             // Obtener snapshot de la condición de pago si fue seleccionada
             $paymentConditionData = [];
             if ($request->picking_payment_condition_id) {
@@ -178,7 +184,7 @@ class BudgetController extends Controller
             // Crear el presupuesto usando los datos validados
             $budget = Budget::create(array_merge([
                 'title' => $request->title,
-                'user_id' => $user->id,
+                'user_id' => $budgetOwner,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
                 'expiry_date' => $request->expiry_date,
@@ -486,6 +492,12 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para actualizar este presupuesto.');
             }
 
+            if ($user->role->name !== 'admin') {
+                $budgetOwner = $user->id;
+            } else {
+                $budgetOwner = $request->user_id;
+            }
+
             // Solo se puede editar si es editable
             if (!$budget->isEditable()) {
                 return redirect()->route('dashboard.budgets.show', $budget)
@@ -516,7 +528,7 @@ class BudgetController extends Controller
 
             $budget->update(array_merge([
                 'title' => $request->title,
-                'user_id' => $request->user_id,
+                'user_id' => $budgetOwner,
                 'client_id' => $request->client_id,
                 'issue_date' => $request->issue_date,
                 'expiry_date' => $request->expiry_date,

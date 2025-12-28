@@ -56,7 +56,8 @@ class BudgetCreatedMail extends Mailable
             with: [
                 'budget' => $this->budget,
                 'client' => $this->budget->client,
-                'vendedor' => $this->user,
+                'vendedor' => $this->budget->user ? $this->budget->user : 'Central Norte',
+                'user' => $this->user,
                 'publicUrl' => $this->publicUrl,
                 'isResend' => $this->isResend, // pasar a la vista para saber si es reenvio de presupuesto o no
             ]
