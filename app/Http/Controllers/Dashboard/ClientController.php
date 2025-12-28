@@ -7,6 +7,8 @@ use App\Models\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreClientRequest;
+use App\Http\Requests\UpdateClientRequest;
 
 class ClientController extends Controller
 {
@@ -31,18 +33,10 @@ class ClientController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreClientRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'max:255|required|string',
-            'email' => 'max:255|required|email|string',
-            'company' => 'max:255|nullable|string',
-            'phone' => 'max:255|nullable|string',
-            'address' => 'max:255|nullable|string',
-        ]);
-
         try {
-            $client = Client::create($validated);
+            $client = Client::create($request->validated());
 
             return redirect()->back()->with('success', "Cliente '{$client->name}' creado correctamente.");
         } catch (\Exception $e) {
@@ -61,18 +55,10 @@ class ClientController extends Controller
     }
 
 
-    public function update(Request $request, Client $client)
+    public function update(UpdateClientRequest $request, Client $client)
     {
-        $validated = $request->validate([
-            'name' => 'max:255|required|string',
-            'email' => 'max:255|required|email|string',
-            'company' => 'max:255|nullable|string',
-            'phone' => 'max:255|nullable|string',
-            'address' => 'max:255|nullable|string',
-        ]);
-
         try {
-            $client->update($validated);
+            $client->update($request->validated());
             return redirect()->back()->with('success', "Cliente '{$client->name}' actualizado correctamente.");
         } catch (\Throwable $e) {
             Log::error('Error al actualizar el cliente: ' . $e->getMessage());
