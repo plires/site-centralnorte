@@ -63,7 +63,7 @@ class PickingBudgetController extends Controller
             });
         }
 
-        $budgets = $query->orderBy('created_at', 'desc')
+        $budgets = $query->orderBy('id', 'desc')
             ->paginate(15)
             ->withQueryString();
 
