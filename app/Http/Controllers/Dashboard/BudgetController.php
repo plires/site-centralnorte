@@ -29,6 +29,7 @@ class BudgetController extends Controller
         $query = Budget::with(['user:id,name', 'client:id,name,company'])
             ->select([
                 'id',
+                'budget_merch_number',
                 'title',
                 'token',
                 'user_id',
@@ -75,7 +76,7 @@ class BudgetController extends Controller
             });
         }
 
-        $budgets = $query->orderBy('created_at', 'desc')
+        $budgets = $query->orderBy('id', 'desc')
             ->paginate(15)
             ->withQueryString();
 
@@ -152,7 +153,6 @@ class BudgetController extends Controller
 
     public function store(BudgetRequest $request)
     {
-
         try {
             DB::beginTransaction();
 
@@ -183,6 +183,7 @@ class BudgetController extends Controller
 
             // Crear el presupuesto usando los datos validados
             $budget = Budget::create(array_merge([
+                'budget_merch_number' => Budget::generateBudgetMerchNumber(),
                 'title' => $request->title,
                 'user_id' => $budgetOwner,
                 'client_id' => $request->client_id,
@@ -590,6 +591,7 @@ class BudgetController extends Controller
             $budget->load('items');
 
             $newBudget = $budget->replicate(['token', 'email_sent', 'email_sent_at']);
+            $newBudget->budget_merch_number = Budget::generateBudgetMerchNumber();
             $newBudget->title = $budget->title . ' (copia)';
             $newBudget->status = BudgetStatus::DRAFT;
             $newBudget->issue_date = now();

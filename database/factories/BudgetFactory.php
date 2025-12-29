@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Models\Budget;
 use App\Models\Client;
 use App\Enums\BudgetStatus;
 use Illuminate\Support\Str;
@@ -33,6 +34,7 @@ class BudgetFactory extends Factory
 
         return [
             'title' => $this->faker->randomElement($titles),
+            'budget_merch_number' => Budget::generateBudgetMerchNumber(),
             'token' => Str::random(32),
             'user_id' => User::factory(),
             'client_id' => Client::factory(),

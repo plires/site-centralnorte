@@ -25,6 +25,11 @@ const StatusBadge = ({ value, type = 'default' }) => {
 // Definiciones de columnas por entidad
 export const budgetsColumns = (actions, isDeleting = false) => [
     {
+        key: 'budget_merch_number',
+        label: 'N° Presupuesto',
+        sortable: true,
+    },
+    {
         key: 'title',
         label: 'Título',
         sortable: true,

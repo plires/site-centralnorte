@@ -14,6 +14,7 @@ class Budget extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'budget_merch_number',
         'title',
         'token',
         'user_id',
@@ -226,6 +227,20 @@ class Budget extends Model
     // =========================================================================
     // MÉTODOS DE NEGOCIO
     // =========================================================================
+
+    public static function generateBudgetMerchNumber(): string
+    {
+        $year = now()->year;
+
+        // Tomamos el último presupuesto por ID
+        $lastBudget = self::orderBy('id', 'desc')->first();
+
+        // El próximo ID será el último id + 1, o 1 si no hay registros
+        $nextId = $lastBudget ? $lastBudget->id + 1 : 1;
+
+        // Formato: PK-2025-123 (sin padding fijo)
+        return sprintf('MC-%d-%d', $year, $nextId);
+    }
 
     /**
      * ¿El presupuesto está vencido por fecha?

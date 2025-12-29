@@ -63,6 +63,7 @@ class BudgetSeeder extends Seeder
             $budget = Budget::factory()
                 ->state(['status' => $status])
                 ->create([
+                    'budget_merch_number' => Budget::generateBudgetMerchNumber(),
                     'user_id' => $users->random()->id,
                     'client_id' => $clients->random()->id,
                 ]);
