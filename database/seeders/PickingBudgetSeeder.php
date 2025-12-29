@@ -104,6 +104,19 @@ class PickingBudgetSeeder extends Seeder
         $totalKits = fake()->numberBetween(50, 500);
         $componentsPerKit = fake()->numberBetween(3, 15);
 
+        $titles = [
+            'Presupuesto Picking: bolígrafos y botellas',
+            'Presupuesto Picking: Material promocional corporativo',
+            'Presupuesto Picking: Artículos publicitarios para evento',
+            'Presupuesto Picking: Merchandising personalizado',
+            'Presupuesto Picking: Productos promocionales para campaña',
+            'Presupuesto Picking: Kit corporativo personalizado',
+            'Presupuesto Picking: Regalos empresariales',
+            'Presupuesto Picking: Material POP y señalética',
+            'Presupuesto Picking: Productos con logo corporativo',
+            'Presupuesto Picking: Artículos para feria comercial'
+        ];
+
         // Datos de escala (simulados)
         $scaleFrom = (int) (floor($totalKits / 100) * 100);
         $scaleTo = $scaleFrom + 99;
@@ -137,6 +150,7 @@ class PickingBudgetSeeder extends Seeder
 
         return PickingBudget::create([
             'budget_number' => PickingBudget::generateBudgetNumber(),
+            'title' => fake()->randomElement($titles),
             'vendor_id' => $vendor->id,
             'client_id' => Client::inRandomOrder()->first()->id,
             'total_kits' => $totalKits,

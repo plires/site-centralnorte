@@ -17,6 +17,7 @@ export default function Edit({ auth, budget, boxes, costScales, clients, compone
     // Inicializar formulario con datos del presupuesto existente
     const { data, setData, put, processing, errors } = useForm({
         client_id: budget.client_id.toString(),
+        title: budget.title || '',
         picking_payment_condition_id: budget.picking_payment_condition_id || '',
         total_kits: budget.total_kits,
         total_components_per_kit: budget.total_components_per_kit,

@@ -23,6 +23,9 @@ class UpdatePickingBudgetRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Titulo del presupuesto
+            'title' => ['required', 'string', 'max:255'],
+
             // Cliente - Ahora usa client_id desde el ClientCombobox
             'client_id' => [
                 'required',
@@ -64,6 +67,7 @@ class UpdatePickingBudgetRequest extends FormRequest
     public function attributes(): array
     {
         return [
+            'title' => 'título',
             'client_id' => 'cliente',
             'total_kits' => 'cantidad de kits',
             'total_components_per_kit' => 'componentes por kit',
@@ -87,6 +91,10 @@ class UpdatePickingBudgetRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'title.required' => 'Debe ingresar un título para el presupuesto.',
+            'title.string' => 'El título para el presupuesto deben ser texto válido.',
+            'title.max' => 'El Título no puede superar los 255 caracteres.',
+
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',
 

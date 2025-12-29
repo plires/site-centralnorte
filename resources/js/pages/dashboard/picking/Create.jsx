@@ -12,6 +12,7 @@ import PickingBudgetForm from './components/PickingBudgetForm';
 export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, businessConfig }) {
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
+        title: '',
         picking_payment_condition_id: '',
         total_kits: '',
         total_components_per_kit: '',

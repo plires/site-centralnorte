@@ -252,7 +252,8 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     {/* Header con título y estado */}
                     <div className="mb-6 flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold text-gray-900">Presupuesto {budget.budget_number}</h1>
+                            <h1 className="mb-3 text-2xl font-bold text-gray-900">Título {budget.title}</h1>
+                            <h2 className="text-1xl font-bold text-gray-600">Presupuesto {budget.budget_number}</h2>
                             <p className="text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
                         </div>
                     </div>

@@ -13,6 +13,11 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
         render: (value) => <span className="font-mono text-sm font-medium">{value}</span>,
     },
     {
+        key: 'title',
+        label: 'Título',
+        sortable: true,
+    },
+    {
         key: 'client.name',
         label: 'Cliente',
         sortable: true,

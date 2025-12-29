@@ -17,6 +17,7 @@ class PickingBudget extends Model
 
     protected $fillable = [
         'budget_number',
+        'title',
         'token',
         'vendor_id',
         'client_id',

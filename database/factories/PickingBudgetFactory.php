@@ -29,8 +29,22 @@ class PickingBudgetFactory extends Factory
         $total = $subtotalWithIncrement + $boxTotal;
         $unitPricePerKit = $totalKits > 0 ? round($total / $totalKits, 2) : 0;
 
+        $titles = [
+            'Presupuesto Picking: bolígrafos y botellas',
+            'Presupuesto Picking: Material promocional corporativo',
+            'Presupuesto Picking: Artículos publicitarios para evento',
+            'Presupuesto Picking: Merchandising personalizado',
+            'Presupuesto Picking: Productos promocionales para campaña',
+            'Presupuesto Picking: Kit corporativo personalizado',
+            'Presupuesto Picking: Regalos empresariales',
+            'Presupuesto Picking: Material POP y señalética',
+            'Presupuesto Picking: Productos con logo corporativo',
+            'Presupuesto Picking: Artículos para feria comercial'
+        ];
+
         return [
             'budget_number' => PickingBudget::generateBudgetNumber(),
+            'title' => $this->faker->randomElement($titles),
             'token' => Str::random(32),
             'vendor_id' => User::factory(),
             'client_id' => Client::factory(),

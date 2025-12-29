@@ -1,6 +1,7 @@
 // resources/js/pages/dashboard/picking/components/PickingClientSection.jsx
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox';
 
@@ -19,6 +20,20 @@ export default function PickingClientSection({ data, setData, clients, errors, p
                 <CardTitle>Información del Cliente</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                <div>
+                    <Label htmlFor="title">
+                        Título del presupuesto <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                        id="title"
+                        type="text"
+                        value={data.title}
+                        onChange={(e) => setData('title', e.target.value)}
+                        placeholder="Presupuesto de picking Unilever"
+                    />
+                    {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title}</p>}
+                </div>
+
                 <div>
                     <Label htmlFor="client_id">Cliente *</Label>
                     <ClientCombobox

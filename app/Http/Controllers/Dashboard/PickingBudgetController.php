@@ -153,6 +153,7 @@ class PickingBudgetController extends Controller
             // Crear con estado UNSENT (sin enviar)
             $budget = PickingBudget::create(array_merge([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
+                'title' => $validated['title'],
                 'vendor_id' => Auth::id(),
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
@@ -421,6 +422,7 @@ class PickingBudgetController extends Controller
             }
 
             $pickingBudget->update(array_merge([
+                'title' => $validated['title'],
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
@@ -506,6 +508,7 @@ class PickingBudgetController extends Controller
             // Clonar con estado DRAFT (borrador)
             $newBudget = $pickingBudget->replicate(['token', 'email_sent', 'email_sent_at']);
             $newBudget->budget_number = PickingBudget::generateBudgetNumber();
+            $newBudget->title = $pickingBudget->title . ' (copia)';
             $newBudget->status = BudgetStatus::DRAFT;
             $newBudget->valid_until = now()->addDays(30);
             $newBudget->vendor_id = Auth::id();
