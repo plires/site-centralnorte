@@ -39,6 +39,9 @@ class PickingBudgetSent extends Mailable
     {
         return new Content(
             view: 'emails.picking-budget-sent',
+            with: [
+                'vendedor' => $this->budget->vendor ? $this->budget->vendor : 'Central Norte',
+            ]
         );
     }
 
@@ -50,7 +53,7 @@ class PickingBudgetSent extends Mailable
     public function attachments(): array
     {
         return [
-            Attachment::fromData(fn () => $this->pdf->output(), "presupuesto-{$this->budget->budget_number}.pdf")
+            Attachment::fromData(fn() => $this->pdf->output(), "presupuesto-{$this->budget->budget_number}.pdf")
                 ->withMime('application/pdf'),
         ];
     }

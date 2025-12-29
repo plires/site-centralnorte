@@ -40,8 +40,8 @@ class BudgetCreatedMail extends Mailable
     {
         // Subject diferenciado para reenvío
         $subject = $this->isResend
-            ? 'Reenvío de Presupuesto: ' . $this->budget->title
-            : 'Nuevo Presupuesto: ' . $this->budget->title;
+            ? 'Reenvío de Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte'
+            : 'Nuevo Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte';
 
         return new Envelope(subject: $subject);
     }

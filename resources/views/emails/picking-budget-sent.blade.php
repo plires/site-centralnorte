@@ -134,8 +134,10 @@
             <div class="budget-details">
                 <h3>📋 Detalles del Presupuesto</h3>
                 <p><strong>Presupuesto N°:</strong> {{ $budget->budget_number }}</p>
+                <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->created_at->format('d/m/Y') }}</p>
-                <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
+                <p><strong>Válido hasta:</strong> {{ $budget->valid_until->format('d/m/Y') }}</p>
+                <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
                 <p><strong>Cantidad de kits:</strong> {{ number_format($budget->total_kits) }}</p>
                 <p><strong>Componentes por kit:</strong> {{ $budget->total_components_per_kit }}</p>
                 <p><strong>Tiempo de producción:</strong> {{ $budget->production_time }}</p>

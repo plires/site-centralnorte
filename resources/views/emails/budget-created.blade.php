@@ -151,11 +151,13 @@
                 A continuación encontrarás los detalles:</p>
 
             <div class="budget-details">
-                <h3>{{ $budget->title }}</h3>
+                <h3>📋 Detalles del Presupuesto</h3>
+                <p><strong>Presupuesto N°:</strong> {{ $budget->budget_merch_number }}</p>
+                <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date->format('d/m/Y') }}</p>
                 <p><strong>Válido hasta:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
-                <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
                 <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+                <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
             <p>Para ver los detalles completos del presupuesto, hacé clic en el siguiente enlace:</p>
