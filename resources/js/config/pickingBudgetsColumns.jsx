@@ -2,6 +2,7 @@
 
 import ActionsDropdown from '@/components/ActionsDropdown';
 import BudgetStatusBadge from '@/components/BudgetStatusBadge';
+import getExpiryBadge from '@/components/getExpiryBadge';
 
 // Definición de columnas para presupuestos de picking
 export const pickingBudgetsColumns = (actions, isDeleting = false) => [
@@ -50,25 +51,9 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
     },
     {
         key: 'valid_until',
-        label: 'Válido hasta',
-        sortable: true,
-        hideOnMobile: true,
-        render: (value) => {
-            if (!value) return '-';
-
-            // Si viene como string YYYY-MM-DD, parsearlo correctamente
-            if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}$/)) {
-                const [year, month, day] = value.split('-');
-                return `${day}/${month}/${year}`;
-            }
-
-            return new Date(value).toLocaleDateString('es-AR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                timeZone: 'America/Argentina/Buenos_Aires',
-            });
-        },
+        label: 'Vigencia',
+        sortable: false,
+        render: (value, row) => <div className="text-center">{getExpiryBadge(row)}</div>,
     },
     {
         key: 'status',
