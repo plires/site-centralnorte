@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\Budget;
 use App\Models\Client;
 use App\Models\Product;
+use App\Traits\ExportsToExcel;
 use App\Models\BudgetItem;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Enums\BudgetStatus;
@@ -22,6 +23,8 @@ use App\Models\User;
 
 class BudgetController extends Controller
 {
+    use ExportsToExcel;
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -963,5 +966,112 @@ class BudgetController extends Controller
             'default_validity_days' => config('business.budget.default_validity_days'),
             'warning_days_before_expiry' => config('business.budget.warning_days_before_expiry'),
         ];
+    }
+
+    /**
+     * Exportar listado de budgets a Excel
+     * Solo accesible para usuarios con role 'admin'
+     */
+    public function export(Request $request)
+    {
+        try {
+
+            // Verificar que el usuario sea admin
+            $user = Auth::user();
+
+            // Verificar que el usuario sea admin
+            if ($user->role->name !== 'admin') {
+                // Si es una petición AJAX, devolver JSON
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No tienes permisos para exportar datos.'
+                    ], 403);
+                }
+
+                // Si es navegación directa, abort normal
+                abort(403, 'No tienes permisos para exportar datos.');
+            }
+
+            $budgets = Budget::all();
+
+            // Verificar si hay datos para exportar
+            if ($budgets->isEmpty()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No hay presupuestos para exportar.'
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'No hay presupuestos para exportar.');
+            }
+
+            // Definir encabezados y sus keys correspondientes
+            $headers = [
+                'id' => 'ID',
+                'budget_merch_number' => 'Numero',
+                'title' => 'Título',
+                'user_id' => 'Vendedor',
+                'client_id' => 'Cliente',
+                'payment_condition_description' => 'Condicion de pago',
+                'status' => 'Estado',
+                'total' => 'Total',
+                'issue_date' => 'Fecha de emisión',
+                'expiry_date' => 'Fecha de vencimiento',
+                'created_at' => 'Fecha de Creación',
+                'updated_at' => 'Última Actualización',
+                'deleted_at' => 'Fecha de Eliminación',
+            ];
+
+            // Preparar datos para exportación
+            $data = $budgets->map(function ($budget) {
+                return [
+                    'id' => $budget->id,
+                    'budget_merch_number' => $budget->budget_merch_number,
+                    'title' => $budget->title,
+                    'user_id' => $budget->user->name,
+                    'client_id' => $budget->client->name,
+                    'payment_condition_description' => $budget->payment_condition_description,
+                    'status' => $budget->status->label(),
+                    'total' => $budget->total,
+                    'issue_date' => $budget->issue_date->format('d/m/Y H:i'),
+                    'expiry_date' => $budget->expiry_date->format('d/m/Y H:i'),
+                    'created_at' => $budget->created_at ? $budget->created_at->format('d/m/Y H:i') : '',
+                    'updated_at' => $budget->updated_at ? $budget->updated_at->format('d/m/Y H:i') : '',
+                    'deleted_at' => $budget->deleted_at ? $budget->deleted_at->format('d/m/Y H:i') : '',
+                ];
+            })->toArray();
+
+            // Log de exportación exitosa
+            Log::info('Presupuestos Merch exportados', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'count' => count($data),
+            ]);
+
+            // Exportar usando el trait
+            return $this->exportToExcel(
+                data: $data,
+                headers: $headers,
+                filename: 'presupuestos',
+                sheetTitle: 'Lista de Presupuestos Merch'
+            );
+        } catch (\Exception $e) {
+            // Log del error
+            Log::error('Error al exportar presupuestos', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Si es petición AJAX, devolver JSON
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.'
+                ], 500);
+            }
+
+            // Si es navegación normal, redirect con error
+            return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
+        }
     }
 }

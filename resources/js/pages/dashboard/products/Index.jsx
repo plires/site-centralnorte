@@ -2,10 +2,11 @@ import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { productColumns } from '@/config/tableColumns';
+import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { FileDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { SyncAllProductsButton } from './components/SyncAllProductsButton';
 
@@ -22,6 +23,10 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
     const [isDeleting, setIsDeleting] = useState(false);
 
     const { handleCrudResponse } = useInertiaResponse();
+    const { handleExport, isExporting } = useExcelExport();
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     const handleView = (productId) => {
         router.get(route('dashboard.products.show', productId));
@@ -53,15 +58,32 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
             <Head title="Productos" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
-                    <SyncAllProductsButton lastSyncInfo={last_sync_info} />
+                    {isAdmin && <SyncAllProductsButton lastSyncInfo={last_sync_info} />}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
                                 <h3 className="text-lg font-medium">Lista de Productos</h3>
-                                <ButtonCustom route={route('dashboard.products.create')} variant="primary" size="md">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Producto
-                                </ButtonCustom>
+                                {/* Grupo de botones */}
+                                <div className="flex gap-2">
+                                    {/* Botón Sincronizar - Solo para admins */}
+                                    {isAdmin && (
+                                        <ButtonCustom
+                                            onClick={() => handleExport(route('dashboard.products.export'), 'prducts_export.xlsx')}
+                                            disabled={isExporting}
+                                            variant="outline"
+                                            size="md"
+                                            className="flex items-center gap-2"
+                                        >
+                                            <FileDown className={`h-4 w-4 ${isExporting ? 'animate-bounce' : ''}`} />
+                                            {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                                        </ButtonCustom>
+                                    )}
+
+                                    <ButtonCustom route={route('dashboard.products.create')} variant="primary" size="md">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Producto
+                                    </ButtonCustom>
+                                </div>
                             </div>
 
                             <DataTable

@@ -1,23 +1,18 @@
 // resources/js/pages/dashboard/budgets/Index.jsx
 
+import BudgetStatusBadge, { budgetStatusOptions } from '@/components/BudgetStatusBadge';
 import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { budgetsColumns } from '@/config/tableColumns';
+import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Plus, Filter, X } from 'lucide-react';
+import { FileDown, Filter, Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
-import BudgetStatusBadge, { budgetStatusOptions } from '@/components/BudgetStatusBadge';
 
 const breadcrumbs = [
     {
@@ -31,8 +26,12 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
     const [isDeleting, setIsDeleting] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState(filters.status || '');
     const [selectedVendor, setSelectedVendor] = useState(filters.user_id || '');
+    const { handleExport, isExporting } = useExcelExport();
 
     const { handleCrudResponse } = useInertiaResponse();
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     const handleView = (budgetId) => {
         router.get(route('dashboard.budgets.show', budgetId));
@@ -58,7 +57,7 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
     const handleStatusFilter = (value) => {
         const newStatus = value === 'all' ? '' : value;
         setSelectedStatus(newStatus);
-        
+
         router.get(
             route('dashboard.budgets.index'),
             {
@@ -69,14 +68,14 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
     const handleVendorFilter = (value) => {
         const newVendor = value === 'all' ? '' : value;
         setSelectedVendor(newVendor);
-        
+
         router.get(
             route('dashboard.budgets.index'),
             {
@@ -87,21 +86,21 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
     const clearFilters = () => {
         setSelectedStatus('');
         setSelectedVendor('');
-        
+
         router.get(
             route('dashboard.budgets.index'),
             { search: filters.search || undefined },
             {
                 preserveState: true,
                 replace: true,
-            }
+            },
         );
     };
 
@@ -111,9 +110,7 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
     const columns = budgetsColumns(actions, isDeleting);
 
     // Usar statuses del backend o los predefinidos
-    const statusOptions = statuses.length > 0 
-        ? statuses 
-        : budgetStatusOptions;
+    const statusOptions = statuses.length > 0 ? statuses : budgetStatusOptions;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>
@@ -123,15 +120,31 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             {/* Header */}
-                            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
                                     <h3 className="text-lg font-medium">Lista de Presupuestos</h3>
                                     <p className="mt-1 text-sm text-gray-600">Gestiona los presupuestos de merchandising</p>
                                 </div>
-                                <ButtonCustom route={route('dashboard.budgets.create')} variant="primary" size="md">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nuevo Presupuesto
-                                </ButtonCustom>
+                                <div className="flex gap-2">
+                                    {/* Botón Exportar - Solo para admins */}
+                                    {isAdmin && (
+                                        <ButtonCustom
+                                            onClick={() => handleExport(route('dashboard.budgets.export'), 'budgets_export.xlsx')}
+                                            disabled={isExporting}
+                                            variant="outline"
+                                            size="md"
+                                            className="flex items-center gap-2"
+                                        >
+                                            <FileDown className={`h-4 w-4 ${isExporting ? 'animate-bounce' : ''}`} />
+                                            {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                                        </ButtonCustom>
+                                    )}
+
+                                    <ButtonCustom route={route('dashboard.budgets.create')} variant="primary" size="md">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nuevo Presupuesto
+                                    </ButtonCustom>
+                                </div>
                             </div>
 
                             {/* Filtros */}
@@ -145,11 +158,7 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
                                 <Select value={selectedStatus || 'all'} onValueChange={handleStatusFilter}>
                                     <SelectTrigger className="w-[160px]">
                                         <SelectValue placeholder="Estado">
-                                            {selectedStatus ? (
-                                                <BudgetStatusBadge status={selectedStatus} size="xs" />
-                                            ) : (
-                                                'Todos los estados'
-                                            )}
+                                            {selectedStatus ? <BudgetStatusBadge status={selectedStatus} size="xs" /> : 'Todos los estados'}
                                         </SelectValue>
                                     </SelectTrigger>
                                     <SelectContent>
@@ -167,10 +176,9 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
                                     <Select value={selectedVendor || 'all'} onValueChange={handleVendorFilter}>
                                         <SelectTrigger className="w-[180px]">
                                             <SelectValue placeholder="Vendedor">
-                                                {selectedVendor 
-                                                    ? vendors.find(v => v.id.toString() === selectedVendor)?.name || 'Vendedor'
-                                                    : 'Todos los vendedores'
-                                                }
+                                                {selectedVendor
+                                                    ? vendors.find((v) => v.id.toString() === selectedVendor)?.name || 'Vendedor'
+                                                    : 'Todos los vendedores'}
                                             </SelectValue>
                                         </SelectTrigger>
                                         <SelectContent>
@@ -186,12 +194,7 @@ export default function Index({ auth, budgets, vendors = [], filters = {}, statu
 
                                 {/* Botón limpiar filtros */}
                                 {hasActiveFilters && (
-                                    <Button 
-                                        variant="ghost" 
-                                        size="sm" 
-                                        onClick={clearFilters}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
+                                    <Button variant="ghost" size="sm" onClick={clearFilters} className="text-gray-500 hover:text-gray-700">
                                         <X className="mr-1 h-4 w-4" />
                                         Limpiar
                                     </Button>

@@ -5,21 +5,28 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
+import ButtonCustom from '@/components/ButtonCustom';
 import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfirmationDialog';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { FileDown, Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
-export default function Boxes({ boxes: initialBoxes }) {
+export default function Boxes({ auth, boxes: initialBoxes }) {
     const { props } = usePage();
     const serverErrors = props.errors || {};
 
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
     const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
+
+    const { handleExport, isExporting } = useExcelExport();
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     const [isMassEditMode, setIsMassEditMode] = useState(false);
     const [isIndividualEditMode, setIsIndividualEditMode] = useState(false);
@@ -286,10 +293,26 @@ export default function Boxes({ boxes: initialBoxes }) {
                                         </Label>
                                     </div>
                                     {!isIndividualEditMode && !isMassEditMode && (
-                                        <Button onClick={handleAddRow}>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Agregar Fila
-                                        </Button>
+                                        <>
+                                            {isAdmin && (
+                                                <ButtonCustom
+                                                    onClick={() =>
+                                                        handleExport(route('dashboard.picking.config.boxes.export'), 'picking_boxes_export.xlsx')
+                                                    }
+                                                    disabled={isExporting}
+                                                    variant="outline"
+                                                    size="md"
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <FileDown className={`h-4 w-4 ${isExporting ? 'animate-bounce' : ''}`} />
+                                                    {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                                                </ButtonCustom>
+                                            )}
+                                            <Button onClick={handleAddRow}>
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Agregar Fila
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </div>

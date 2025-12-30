@@ -7,8 +7,11 @@ use Inertia\Inertia;
 use App\Models\PickingBox;
 use App\Models\PickingCostScale;
 use Illuminate\Support\Facades\DB;
+use App\Traits\ExportsToExcel;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Request;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\UpdateAllPickingBoxesRequest;
 use App\Http\Requests\Picking\UpdateAllPickingCostScalesRequest;
@@ -17,6 +20,8 @@ use App\Http\Requests\Picking\UpdatePickingComponentIncrementRequest;
 
 class PickingConfigurationController extends Controller
 {
+    use ExportsToExcel;
+
     // ========================================================================
     // GESTIÓN DE CAJAS
     // ========================================================================
@@ -76,6 +81,99 @@ class PickingConfigurationController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->with('error', 'Ocurrió un error al actualizar las cajas. Por favor, verifica los datos e intenta nuevamente.');
+        }
+    }
+
+    /**
+     * Exportar listado de cajas de picking a Excel
+     * Solo accesible para usuarios con role 'admin'
+     */
+    public function exportAllBoxes(Request $request)
+    {
+        try {
+
+            // Verificar que el usuario sea admin
+            $user = Auth::user();
+
+            // Verificar que el usuario sea admin
+            if ($user->role->name !== 'admin') {
+                // Si es una petición AJAX, devolver JSON
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No tienes permisos para exportar datos.'
+                    ], 403);
+                }
+
+                // Si es navegación directa, abort normal
+                abort(403, 'No tienes permisos para exportar datos.');
+            }
+
+            $pickingBoxes = PickingBox::all();
+
+            // Verificar si hay datos para exportar
+            if ($pickingBoxes->isEmpty()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No hay cajas de picking para exportar.'
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'No hay cajas de picking para exportar.');
+            }
+
+            // Definir encabezados y sus keys correspondientes
+            $headers = [
+                'id' => 'ID',
+                'dimensions' => 'Dimensiones',
+                'cost' => 'Costo',
+                'created_at' => 'Fecha de Creación',
+                'updated_at' => 'Última Actualización',
+                'deleted_at' => 'Fecha de Eliminación',
+            ];
+
+            // Preparar datos para exportación
+            $data = $pickingBoxes->map(function ($pickingBox) {
+                return [
+                    'id' => $pickingBox->id,
+                    'dimensions' => $pickingBox->dimensions,
+                    'cost' => $pickingBox->cost,
+                    'created_at' => $pickingBox->created_at ? $pickingBox->created_at->format('d/m/Y H:i') : '',
+                    'updated_at' => $pickingBox->updated_at ? $pickingBox->updated_at->format('d/m/Y H:i') : '',
+                    'deleted_at' => $pickingBox->deleted_at ? $pickingBox->deleted_at->format('d/m/Y H:i') : '',
+                ];
+            })->toArray();
+
+            // Log de exportación exitosa
+            Log::info('Cajas exportadas', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'count' => count($data),
+            ]);
+
+            // Exportar usando el trait
+            return $this->exportToExcel(
+                data: $data,
+                headers: $headers,
+                filename: 'cajas',
+                sheetTitle: 'Lista de Cajas'
+            );
+        } catch (\Exception $e) {
+            // Log del error
+            Log::error('Error al exportar cajas', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Si es petición AJAX, devolver JSON
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.'
+                ], 500);
+            }
+
+            // Si es navegación normal, redirect con error
+            return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
         }
     }
 
@@ -166,6 +264,137 @@ class PickingConfigurationController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'Ocurrió un error al actualizar las escalas de costos. Por favor, verifica los datos e intenta nuevamente.');
+        }
+    }
+
+    /**
+     * Exportar listado de escala de costos de picking a Excel
+     * Solo accesible para usuarios con role 'admin'
+     */
+    public function exportAllCostScales(Request $request)
+    {
+        try {
+
+            // Verificar que el usuario sea admin
+            $user = Auth::user();
+
+            // Verificar que el usuario sea admin
+            if ($user->role->name !== 'admin') {
+                // Si es una petición AJAX, devolver JSON
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No tienes permisos para exportar datos.'
+                    ], 403);
+                }
+
+                // Si es navegación directa, abort normal
+                abort(403, 'No tienes permisos para exportar datos.');
+            }
+
+            $pickingCostScales = PickingCostScale::all();
+
+            // Verificar si hay datos para exportar
+            if ($pickingCostScales->isEmpty()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No hay escala de costos de picking para exportar.'
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'No hay escala de costos de picking para exportar.');
+            }
+
+            // Definir encabezados y sus keys correspondientes
+            $headers = [
+                'id' => 'ID',
+                'quantity_from' => 'Cantidad desde',
+                'quantity_to' => 'Cantidad hasta',
+                'cost_without_assembly' => 'costo sin montaje',
+                'cost_with_assembly' => 'costo con montaje',
+                'palletizing_without_pallet' => 'paletizado sin palet',
+                'palletizing_with_pallet' => 'paletizado con palet',
+                'cost_without_labeling' => 'costo sin etiquetado',
+                'cost_with_labeling' => 'costo con etiquetado',
+                'additional_assembly' => 'montaje adicional',
+                'quality_control' => 'control de calidad',
+                'dome_sticking_unit' => 'unidad de pegado de domes',
+                'shavings_50g_unit' => 'virutas unidad de 50g',
+                'shavings_100g_unit' => 'virutas unidad de 100g',
+                'shavings_200g_unit' => 'virutas unidad de 200g',
+                'bag_10x15_unit' => 'bolsa 10x15 unidad',
+                'bag_20x30_unit' => 'bolsa 20x30 unidad',
+                'bag_35x45_unit' => 'bolsa 35x45 unidad',
+                'bubble_wrap_5x10_unit' => 'Pluribol unidad 5x10',
+                'bubble_wrap_10x15_unit' => 'Pluribol unidad 10x15',
+                'bubble_wrap_20x30_unit' => 'Pluribol unidad 20x30',
+                'production_time' => 'tiempo de producion',
+                'created_at' => 'Fecha de Creación',
+                'updated_at' => 'Última Actualización',
+                'deleted_at' => 'Fecha de Eliminación',
+            ];
+
+            // Preparar datos para exportación
+            $data = $pickingCostScales->map(function ($pickingCostScale) {
+                return [
+                    'id' => $pickingCostScale->id,
+                    'quantity_from' => $pickingCostScale->quantity_from,
+                    'quantity_to' => $pickingCostScale->quantity_to,
+                    'cost_without_assembly' => $pickingCostScale->cost_without_assembly,
+                    'cost_with_assembly' => $pickingCostScale->cost_with_assembly,
+                    'palletizing_without_pallet' => $pickingCostScale->palletizing_without_pallet,
+                    'palletizing_with_pallet' => $pickingCostScale->palletizing_with_pallet,
+                    'cost_without_labeling' => $pickingCostScale->cost_without_labeling,
+                    'cost_with_labeling' => $pickingCostScale->cost_with_labeling,
+                    'additional_assembly' => $pickingCostScale->additional_assembly,
+                    'quality_control' => $pickingCostScale->quality_control,
+                    'dome_sticking_unit' => $pickingCostScale->dome_sticking_unit,
+                    'shavings_50g_unit' => $pickingCostScale->shavings_50g_unit,
+                    'shavings_100g_unit' => $pickingCostScale->shavings_100g_unit,
+                    'shavings_200g_unit' => $pickingCostScale->shavings_200g_unit,
+                    'bag_10x15_unit' => $pickingCostScale->bag_10x15_unit,
+                    'bag_20x30_unit' => $pickingCostScale->bag_20x30_unit,
+                    'bag_35x45_unit' => $pickingCostScale->bag_35x45_unit,
+                    'bubble_wrap_5x10_unit' => $pickingCostScale->bubble_wrap_5x10_unit,
+                    'bubble_wrap_10x15_unit' => $pickingCostScale->bubble_wrap_10x15_unit,
+                    'bubble_wrap_20x30_unit' => $pickingCostScale->bubble_wrap_20x30_unit,
+                    'production_time' => $pickingCostScale->production_time,
+                    'created_at' => $pickingCostScale->created_at ? $pickingCostScale->created_at->format('d/m/Y H:i') : '',
+                    'updated_at' => $pickingCostScale->updated_at ? $pickingCostScale->updated_at->format('d/m/Y H:i') : '',
+                    'deleted_at' => $pickingCostScale->deleted_at ? $pickingCostScale->deleted_at->format('d/m/Y H:i') : '',
+                ];
+            })->toArray();
+
+            // Log de exportación exitosa
+            Log::info('Escalas de costos exportadas', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'count' => count($data),
+            ]);
+
+            // Exportar usando el trait
+            return $this->exportToExcel(
+                data: $data,
+                headers: $headers,
+                filename: 'escalas-costos',
+                sheetTitle: 'Lista de Escalas de costos'
+            );
+        } catch (\Exception $e) {
+            // Log del error
+            Log::error('Error al exportar escalas-costos', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Si es petición AJAX, devolver JSON
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.'
+                ], 500);
+            }
+
+            // Si es navegación normal, redirect con error
+            return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
         }
     }
 

@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Client;
 use App\Models\PickingBox;
 use Illuminate\Http\Request;
+use App\Traits\ExportsToExcel;
 use App\Models\PickingBudget;
 use App\Enums\BudgetStatus;
 use App\Mail\PickingBudgetSent;
@@ -26,6 +27,9 @@ use App\Http\Requests\Picking\UpdatePickingBudgetRequest;
 
 class PickingBudgetController extends Controller
 {
+
+    use ExportsToExcel;
+
     public function index(Request $request)
     {
         $user = Auth::user();
@@ -698,5 +702,114 @@ class PickingBudgetController extends Controller
                 ? round($total / $validated['total_kits'], 2)
                 : 0,
         ]);
+    }
+
+    /**
+     * Exportar listado de presupuestos picking a Excel
+     * Solo accesible para usuarios con role 'admin'
+     */
+    public function export(Request $request)
+    {
+        try {
+
+            // Verificar que el usuario sea admin
+            $user = Auth::user();
+
+            // Verificar que el usuario sea admin
+            if ($user->role->name !== 'admin') {
+                // Si es una petición AJAX, devolver JSON
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No tienes permisos para exportar datos.'
+                    ], 403);
+                }
+
+                // Si es navegación directa, abort normal
+                abort(403, 'No tienes permisos para exportar datos.');
+            }
+
+            $budgets = PickingBudget::all();
+
+            // Verificar si hay datos para exportar
+            if ($budgets->isEmpty()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No hay presupuestos de picking para exportar.'
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'No hay presupuestos de picking para exportar.');
+            }
+
+            // Definir encabezados y sus keys correspondientes
+            $headers = [
+                'id' => 'ID',
+                'budget_number' => 'Numero de Presupuesto',
+                'title' => 'Título',
+                'vendor_id' => 'Vendedor',
+                'client_id' => 'Cliente',
+                'payment_condition_description' => 'Forma de Pago',
+                'total_kits' => 'Kits Totales',
+                'total_components_per_kit' => 'Componentes por Kit',
+                'total' => 'Total',
+                'status' => 'Estado',
+                'valid_until' => 'Vencimiento',
+                'created_at' => 'Fecha de Creación',
+                'updated_at' => 'Última Actualización',
+                'deleted_at' => 'Fecha de Eliminación',
+            ];
+
+            // Preparar datos para exportación
+            $data = $budgets->map(function ($budget) {
+                return [
+                    'id' => $budget->id,
+                    'budget_number' => $budget->budget_number,
+                    'title' => $budget->title,
+                    'vendor_id' => $budget->vendor->name,
+                    'client_id' => $budget->client->name,
+                    'payment_condition_description' => $budget->payment_condition_description,
+                    'total_kits' => $budget->total_kits,
+                    'total_components_per_kit' => $budget->total_components_per_kit,
+                    'total' => $budget->total,
+                    'status' => $budget->status->label(),
+                    'valid_until' => $budget->valid_until ? $budget->valid_until->format('d/m/Y H:i') : '',
+                    'created_at' => $budget->created_at ? $budget->created_at->format('d/m/Y H:i') : '',
+                    'updated_at' => $budget->updated_at ? $budget->updated_at->format('d/m/Y H:i') : '',
+                    'deleted_at' => $budget->deleted_at ? $budget->deleted_at->format('d/m/Y H:i') : '',
+                ];
+            })->toArray();
+
+            // Log de exportación exitosa
+            Log::info('Categorias exportados', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'count' => count($data),
+            ]);
+
+            // Exportar usando el trait
+            return $this->exportToExcel(
+                data: $data,
+                headers: $headers,
+                filename: 'categorias',
+                sheetTitle: 'Lista de Categorias'
+            );
+        } catch (\Exception $e) {
+            // Log del error
+            Log::error('Error al exportar clientes', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Si es petición AJAX, devolver JSON
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.'
+                ], 500);
+            }
+
+            // Si es navegación normal, redirect con error
+            return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
+        }
     }
 }

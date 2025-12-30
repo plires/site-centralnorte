@@ -2,10 +2,11 @@ import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/Components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { categoryColumns } from '@/config/tableColumns';
+import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router } from '@inertiajs/react';
-import { Plus } from 'lucide-react';
+import { FileDown, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs = [
@@ -20,6 +21,10 @@ export default function Index({ auth, categories, filters = {} }) {
     const [isDeleting, setIsDeleting] = useState(false);
 
     const { handleCrudResponse } = useInertiaResponse();
+    const { handleExport, isExporting } = useExcelExport();
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     const handleView = (categoryId) => {
         // Redirigir a la página de Show
@@ -61,10 +66,28 @@ export default function Index({ auth, categories, filters = {} }) {
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
                                 <h3 className="text-lg font-medium">Lista de Categorías</h3>
-                                <ButtonCustom route={route('dashboard.categories.create')} variant="primary" size="md">
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Nueva Categoría
-                                </ButtonCustom>
+
+                                {/* Grupo de botones */}
+                                <div className="flex gap-2">
+                                    {/* Botón Exportar - Solo para admins */}
+                                    {isAdmin && (
+                                        <ButtonCustom
+                                            onClick={() => handleExport(route('dashboard.categories.export'), 'categories_export.xlsx')}
+                                            disabled={isExporting}
+                                            variant="outline"
+                                            size="md"
+                                            className="flex items-center gap-2"
+                                        >
+                                            <FileDown className={`h-4 w-4 ${isExporting ? 'animate-bounce' : ''}`} />
+                                            {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                                        </ButtonCustom>
+                                    )}
+
+                                    <ButtonCustom route={route('dashboard.categories.create')} variant="primary" size="md">
+                                        <Plus className="mr-2 h-4 w-4" />
+                                        Nueva Categoría
+                                    </ButtonCustom>
+                                </div>
                             </div>
 
                             <DataTable

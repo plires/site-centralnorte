@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use Inertia\Inertia;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use App\Traits\ExportsToExcel;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\Rule;
@@ -12,6 +13,8 @@ use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
 {
+    use ExportsToExcel;
+
     public function index(Request $request)
     {
         $query = Category::withoutTrashed();
@@ -170,6 +173,105 @@ class CategoryController extends Controller
                 'error',
                 'Ocurrió un error al eliminar la categoría. Inténtalo de nuevo.'
             );
+        }
+    }
+
+    /**
+     * Exportar listado de categorias a Excel
+     * Solo accesible para usuarios con role 'admin'
+     */
+    public function export(Request $request)
+    {
+        try {
+
+            // Verificar que el usuario sea admin
+            $user = Auth::user();
+
+            // Verificar que el usuario sea admin
+            if ($user->role->name !== 'admin') {
+                // Si es una petición AJAX, devolver JSON
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No tienes permisos para exportar datos.'
+                    ], 403);
+                }
+
+                // Si es navegación directa, abort normal
+                abort(403, 'No tienes permisos para exportar datos.');
+            }
+
+            $categories = Category::all();
+
+            // Verificar si hay datos para exportar
+            if ($categories->isEmpty()) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json([
+                        'message' => 'No hay categorías para exportar.'
+                    ], 404);
+                }
+
+                return redirect()->back()->with('error', 'No hay categorías para exportar.');
+            }
+
+            // Definir encabezados y sus keys correspondientes
+            $headers = [
+                'id' => 'ID',
+                'name' => 'Nombre',
+                'title' => 'Título',
+                'description' => 'Descripción',
+                'show' => 'Visible en Front',
+                'origin' => 'Origen de la categoría',
+                'created_at' => 'Fecha de Creación',
+                'updated_at' => 'Última Actualización',
+                'deleted_at' => 'Fecha de Eliminación',
+            ];
+
+            // Preparar datos para exportación
+            $data = $categories->map(function ($category) {
+                return [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'title' => $category->title,
+                    'description' => $category->description,
+                    'show' => $category->show,
+                    'origin' => $category->origin,
+                    'created_at' => $category->created_at ? $category->created_at->format('d/m/Y H:i') : '',
+                    'updated_at' => $category->updated_at ? $category->updated_at->format('d/m/Y H:i') : '',
+                    'deleted_at' => $category->deleted_at ? $category->deleted_at->format('d/m/Y H:i') : '',
+                ];
+            })->toArray();
+
+            // Log de exportación exitosa
+            Log::info('Categorias exportados', [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'count' => count($data),
+            ]);
+
+            // Exportar usando el trait
+            return $this->exportToExcel(
+                data: $data,
+                headers: $headers,
+                filename: 'categorias',
+                sheetTitle: 'Lista de Categorias'
+            );
+        } catch (\Exception $e) {
+            // Log del error
+            Log::error('Error al exportar clientes', [
+                'user_id' => $user->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Si es petición AJAX, devolver JSON
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'message' => 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.'
+                ], 500);
+            }
+
+            // Si es navegación normal, redirect con error
+            return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
         }
     }
 }

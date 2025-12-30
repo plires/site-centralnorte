@@ -19,13 +19,16 @@ const breadcrumbs = [
     { title: 'Detalles del Producto', href: '#' },
 ];
 
-export default function Show({ product, is_readonly, last_sync_info }) {
+export default function Show({ auth, product, is_readonly, last_sync_info }) {
     const { is_external } = product.origin_config;
 
     const [selectedImage, setSelectedImage] = useState(null);
     const [preview, setPreview] = useState(null);
     const [file, setFile] = useState(null);
     const fileInputRef = useRef(null);
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     const { data, setData, post, processing, errors, reset } = useForm({
         image: '',
@@ -129,7 +132,7 @@ export default function Show({ product, is_readonly, last_sync_info }) {
                             </div>
 
                             {/* Sincronizacion de producto individual */}
-                            {is_external && (
+                            {is_external && isAdmin && (
                                 <SyncProductButton sku={product.sku} isExternal={product.origin_config?.is_external} productName={product.name} />
                             )}
                         </div>

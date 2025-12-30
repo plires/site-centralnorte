@@ -25,6 +25,11 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
         // CRUD básico
         Route::get('/', [PickingBudgetController::class, 'index'])
             ->name('budgets.index');
+
+        Route::get('/export', [PickingBudgetController::class, 'export'])
+            ->name('budgets.export')
+            ->middleware('admin');
+
         Route::get('/create', [PickingBudgetController::class, 'create'])
             ->name('budgets.create');
         Route::post('/', [PickingBudgetController::class, 'store'])
@@ -56,6 +61,10 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::put('/boxes/update-all', [PickingConfigurationController::class, 'updateAllBoxes'])
                 ->name('boxes.update-all');
 
+            Route::get('/boxes/export', [PickingConfigurationController::class, 'exportAllBoxes'])
+                ->name('boxes.export')
+                ->middleware('admin');
+
             Route::get('/boxes', [PickingConfigurationController::class, 'boxes'])
                 ->name('boxes');
 
@@ -65,6 +74,10 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             // Gestión de Escalas de Costos
             Route::put('/cost-scales/update-all', [PickingConfigurationController::class, 'updateAllCostScales'])
                 ->name('cost-scales.update-all');
+
+            Route::get('/cost-scales/export', [PickingConfigurationController::class, 'exportAllCostScales'])
+                ->name('cost-scales.export')
+                ->middleware('admin');
 
             Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
                 ->name('cost-scales');

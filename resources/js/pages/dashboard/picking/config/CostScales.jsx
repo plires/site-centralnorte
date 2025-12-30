@@ -5,12 +5,14 @@ import { Input } from '@/Components/ui/input';
 import { Label } from '@/Components/ui/label';
 import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
+import ButtonCustom from '@/components/ButtonCustom';
 import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfirmationDialog';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AlertCircle, Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { AlertCircle, FileDown, Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs = [
@@ -20,7 +22,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function CostScales({ scales: initialScales }) {
+export default function CostScales({ auth, scales: initialScales }) {
     const { props } = usePage();
     const serverErrors = props.errors || {};
 
@@ -36,6 +38,11 @@ export default function CostScales({ scales: initialScales }) {
     const [localErrors, setLocalErrors] = useState({});
     const [pendingNewScales, setPendingNewScales] = useState([]); // Guardar filas nuevas
     const lastServerErrorsRef = useRef('');
+
+    const { handleExport, isExporting } = useExcelExport();
+
+    // Verificar si el usuario es admin
+    const isAdmin = auth.user.role?.name === 'admin';
 
     // Sincronizar errores del servidor con el estado local
     // Solo actualizar cuando los serverErrors realmente cambien (no cuando sean los mismos)
@@ -442,10 +449,29 @@ export default function CostScales({ scales: initialScales }) {
                                         </Label>
                                     </div>
                                     {!isIndividualEditMode && !isMassEditMode && (
-                                        <Button onClick={handleAddRow}>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Agregar Fila
-                                        </Button>
+                                        <>
+                                            {isAdmin && (
+                                                <ButtonCustom
+                                                    onClick={() =>
+                                                        handleExport(
+                                                            route('dashboard.picking.config.cost-scales.export'),
+                                                            'picking_cost_scales_export.xlsx',
+                                                        )
+                                                    }
+                                                    disabled={isExporting}
+                                                    variant="outline"
+                                                    size="md"
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <FileDown className={`h-4 w-4 ${isExporting ? 'animate-bounce' : ''}`} />
+                                                    {isExporting ? 'Exportando...' : 'Exportar Excel'}
+                                                </ButtonCustom>
+                                            )}
+                                            <Button onClick={handleAddRow}>
+                                                <Plus className="mr-2 h-4 w-4" />
+                                                Agregar Fila
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </div>

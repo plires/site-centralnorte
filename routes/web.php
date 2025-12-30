@@ -82,6 +82,11 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_usuarios'])->prefix
 // Clientes
 Route::middleware(['auth', 'verified', 'permission:gestionar_clientes'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/clients', [ClientController::class, 'index'])->name('clients.index');
+
+    Route::get('/clients/export', [ClientController::class, 'export'])
+        ->name('clients.export')
+        ->middleware('admin');
+
     Route::get('/clients/create', [ClientController::class, 'create'])->name('clients.create');
     Route::post('/clients', [ClientController::class, 'store'])->name('clients.store');
     Route::get('/clients/{client}', [ClientController::class, 'show'])->name('clients.show');
@@ -104,6 +109,11 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_roles'])->prefix('d
 // Productos
 Route::middleware(['auth', 'verified', 'permission:gestionar_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+
+    Route::get('/products/export', [ProductController::class, 'export'])
+        ->name('products.export')
+        ->middleware('admin');
+
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
     Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
@@ -119,6 +129,11 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_productos'])->prefi
 // Categorias
 Route::middleware(['auth', 'verified', 'permission:gestionar_categorias'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+
+    Route::get('/categories/export', [CategoryController::class, 'export'])
+        ->name('categories.export')
+        ->middleware('admin');
+
     Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::get('/categories/{category}', [CategoryController::class, 'show'])->name('categories.show');
@@ -130,6 +145,11 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_categorias'])->pref
 // Presupuestos de Merchandising
 Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_merch'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::get('/budgets', [BudgetController::class, 'index'])->name('budgets.index');
+
+    Route::get('/budgets/export', [BudgetController::class, 'export'])
+        ->name('budgets.export')
+        ->middleware('admin');
+
     Route::get('/budgets/create', [BudgetController::class, 'create'])->name('budgets.create');
     Route::post('/budgets', [BudgetController::class, 'store'])->name('budgets.store');
     Route::get('/budgets/{budget}', [BudgetController::class, 'show'])->name('budgets.show');
