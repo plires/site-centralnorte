@@ -1,6 +1,7 @@
 // resources/js/pages/public/components/BudgetComments.jsx
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MessageSquareText } from 'lucide-react';
 
 /**
  * Componente para mostrar comentarios del pie del presupuesto
@@ -16,7 +17,10 @@ export default function BudgetComments({ budget }) {
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Comentarios</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <MessageSquareText className="h-5 w-5 text-blue-600" />
+                    Comentarios
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-gray-700">{budget.footer_comments}</p>

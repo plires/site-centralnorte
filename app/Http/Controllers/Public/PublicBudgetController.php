@@ -58,6 +58,7 @@ class PublicBudgetController extends Controller
             return Inertia::render('public/budgets/Budget', [
                 'budget' => array_merge([
                     'id' => $budget->id,
+                    'budget_merch_number' => $budget->budget_merch_number,
                     'title' => $budget->title,
                     'token' => $budget->token,
                     'status' => $budget->status?->value,
@@ -83,6 +84,8 @@ class PublicBudgetController extends Controller
                     'grouped_items' => $groupedItems,
                     'variant_groups' => $budget->getVariantGroups(),
                     'has_variants' => $budget->hasVariants(),
+                    'issue_date' => $budget->issue_date,
+                    'expiry_date' => $budget->expiry_date,
                 ], $statusData),
                 'businessConfig' => $businessConfig,
             ]);

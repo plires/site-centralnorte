@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/budget/budgetUtils';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Package } from 'lucide-react';
 import { useState } from 'react';
 import ImageGalleryModal from './ImageGalleryModal';
 
@@ -34,14 +34,15 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
     // Obtener datos del modal actual
     const modalImages = selectedImageKey ? imageGalleries[selectedImageKey] || [] : [];
     const modalCurrentIndex = selectedImageKey ? currentImageIndexes[selectedImageKey] || 0 : 0;
-    const modalProductName = selectedImageKey
-        ? items.find((item) => `regular-${item.id}` === selectedImageKey)?.product.name
-        : '';
+    const modalProductName = selectedImageKey ? items.find((item) => `regular-${item.id}` === selectedImageKey)?.product.name : '';
 
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Productos</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-blue-600" />
+                    Productos
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
@@ -58,10 +59,7 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                     <div className="relative mx-auto h-32 w-32 flex-shrink-0 sm:mx-0 sm:h-24 sm:w-24">
                                         {images.length > 0 ? (
                                             <>
-                                                <div
-                                                    onClick={() => openModal(imageKey)}
-                                                    className="group relative h-full w-full cursor-pointer"
-                                                >
+                                                <div onClick={() => openModal(imageKey)} className="group relative h-full w-full cursor-pointer">
                                                     <img
                                                         src={images[currentIndex].full_url}
                                                         alt={item.product.name}

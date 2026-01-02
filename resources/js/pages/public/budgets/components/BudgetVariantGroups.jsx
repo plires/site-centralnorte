@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/budget/budgetUtils';
-import { CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChartBarStacked, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import ImageGalleryModal from './ImageGalleryModal';
 
@@ -69,7 +69,10 @@ export default function BudgetVariantGroups({
                 return (
                     <Card key={group} className="mb-6">
                         <CardHeader>
-                            <CardTitle className="text-lg sm:text-xl">Opciones para {firstItem.product.name}</CardTitle>
+                            <CardTitle className="flex items-center gap-2">
+                                <ChartBarStacked className="h-5 w-5 text-blue-600" />
+                                Opciones para {firstItem.product.name}
+                            </CardTitle>
                             {/* Imagen del producto - Una sola vez, mismo layout que productos regulares */}
                             <div className="mb-4 rounded-lg p-4">
                                 <div className="flex flex-col items-center gap-4 sm:flex-row">

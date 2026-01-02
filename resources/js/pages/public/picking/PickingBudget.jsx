@@ -5,14 +5,16 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetNotFound from './PickingBudgetNotFound';
 
+import BudgetHeader from '@/pages/public/components/BudgetHeader';
+import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
+import Header from '@/pages/public/components/Header';
+
 // Componentes UI especializados
 import ClientBudgetActions from '@/pages/public/budgets/components/ClientBudgetActions';
 import PickingBudgetBoxesCard from './components/PickingBudgetBoxesCard';
 import PickingBudgetComments from './components/PickingBudgetComments';
-import PickingBudgetHeader from './components/PickingBudgetHeader';
 import PickingBudgetInfoCard from './components/PickingBudgetInfoCard';
 import PickingBudgetServicesCard from './components/PickingBudgetServicesCard';
-import PickingBudgetStatusAlert from './components/PickingBudgetStatusAlert';
 import PickingBudgetTotalsCard from './components/PickingBudgetTotalsCard';
 
 /**
@@ -78,41 +80,14 @@ export default function PickingBudget({ budget, businessConfig }) {
             <Head title={`Presupuesto de Picking #${budget.budget_number}`} />
 
             {/* Header visual con logo */}
-            <div className="border-b bg-gradient-to-r from-blue-600 to-blue-700">
-                <div className="mx-auto max-w-4xl px-4 py-8">
-                    <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-                        {/* Logo y título */}
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-white backdrop-blur-sm">
-                                <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </div>
-                            <div className="text-center sm:text-left">
-                                <h1 className="text-xl font-bold text-white sm:text-2xl">{appName}</h1>
-                                <p className="text-sm text-blue-100">Presupuesto de Picking/Armado de Kit</p>
-                            </div>
-                        </div>
-
-                        {/* Información adicional */}
-                        <div className="text-center sm:text-right">
-                            <p className="text-sm text-blue-100">Fecha: {new Date().toLocaleDateString('es-AR')}</p>
-                            <p className="text-xs text-blue-200">Documento generado automáticamente</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <Header appName={appName} title="Presupuesto de Picking/Armado de Kit" backgroundColor={import.meta.env.VITE_SECONDARY_COLOR} />
 
             {/* Header del presupuesto */}
-            <PickingBudgetHeader budget={budget} />
+            <BudgetHeader budget={budget} />
 
             <div className="mx-auto max-w-4xl px-4 py-8">
                 {/* Estado del presupuesto */}
-                <PickingBudgetStatusAlert budget={budget} />
+                <BudgetStatusAlert budget={budget} />
 
                 {/* Información básica */}
                 <PickingBudgetInfoCard budget={budget} />

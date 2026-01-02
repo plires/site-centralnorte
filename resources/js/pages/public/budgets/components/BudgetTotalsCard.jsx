@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/budget/budgetUtils';
-import { Info, TrendingDown, TrendingUp } from 'lucide-react';
+import { DollarSign, Info, TrendingDown, TrendingUp } from 'lucide-react';
 
 /**
  * Card con el resumen de totales del presupuesto
@@ -36,7 +36,10 @@ export default function BudgetTotalsCard({ budget, calculatedTotals, ivaRate, ap
     return (
         <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Resumen del Presupuesto</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
+                    Resumen del Presupuesto
+                </CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="space-y-3">
