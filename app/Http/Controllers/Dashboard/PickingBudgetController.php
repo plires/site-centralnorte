@@ -570,8 +570,11 @@ class PickingBudgetController extends Controller
             $isResend = $pickingBudget->email_sent;
 
             $pdf = $this->generatePdf($pickingBudget);
+
+            $publicUrl = route('public.picking.budget.show', $pickingBudget->token);
+
             Mail::to($pickingBudget->client->email)
-                ->send(new PickingBudgetSent($pickingBudget, $pdf));
+                ->send(new PickingBudgetSent($pickingBudget, $publicUrl, $pdf));
 
             $pickingBudget->markAsSent();
 

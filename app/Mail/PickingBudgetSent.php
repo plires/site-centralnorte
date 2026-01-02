@@ -19,7 +19,8 @@ class PickingBudgetSent extends Mailable
      */
     public function __construct(
         public PickingBudget $budget,
-        public $pdf
+        public string $publicUrl,
+        public $pdf,
     ) {}
 
     /**
@@ -41,6 +42,7 @@ class PickingBudgetSent extends Mailable
             view: 'emails.picking-budget-sent',
             with: [
                 'vendedor' => $this->budget->vendor ? $this->budget->vendor : 'Central Norte',
+                'publicUrl' => $this->publicUrl,
             ]
         );
     }
