@@ -15,7 +15,7 @@ use App\Http\Controllers\Dashboard\PickingBudgetController;
 use App\Http\Controllers\Dashboard\PickingConfigurationController;
 use App\Http\Controllers\Dashboard\PickingPaymentConditionController;
 
-Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->prefix('dashboard')->name('dashboard.')->group(function () {
+Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_pick'])->prefix('dashboard')->name('dashboard.')->group(function () {
 
     // ========================================================================
     // PRESUPUESTOS DE PICKING
@@ -51,6 +51,33 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
         Route::get('/{pickingBudget}/pdf', [PickingBudgetController::class, 'downloadPdf'])
             ->name('budgets.pdf');
         Route::patch('{pickingBudget}/status', [PickingBudgetController::class, 'updateStatus'])->name('budgets.update-status');
+    });
+
+    // ========================================================================
+    // API - RUTAS AJAX PARA CÁLCULOS EN TIEMPO REAL
+    // ========================================================================
+    Route::prefix('api/picking')->name('api.picking.')->group(function () {
+
+        // Calcular totales del presupuesto en tiempo real
+        Route::post('/calculate', [PickingBudgetController::class, 'calculateTotals'])
+            ->name('calculate');
+
+        // Obtener escala de costos según cantidad de kits
+        Route::get('/cost-scale/{quantity}', [PickingBudgetController::class, 'getCostScaleForQuantity'])
+            ->name('cost-scale');
+
+        // Obtener incremento según cantidad de componentes
+        Route::get('/component-increment/{components}', [PickingBudgetController::class, 'getComponentIncrementForQuantity'])
+            ->name('component-increment');
+    });
+});
+
+Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->prefix('dashboard')->name('dashboard.')->group(function () {
+
+    // ========================================================================
+    // PRESUPUESTOS DE PICKING
+    // ========================================================================
+    Route::prefix('picking')->name('picking.')->group(function () {
 
         // ====================================================================
         // CONFIGURACIÓN (Solo Administradores)
@@ -111,23 +138,5 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::delete('/payment-conditions/{pickingPaymentCondition}', [PickingPaymentConditionController::class, 'destroy'])
                 ->name('payment-conditions.destroy');
         });
-    });
-
-    // ========================================================================
-    // API - RUTAS AJAX PARA CÁLCULOS EN TIEMPO REAL
-    // ========================================================================
-    Route::prefix('api/picking')->name('api.picking.')->group(function () {
-
-        // Calcular totales del presupuesto en tiempo real
-        Route::post('/calculate', [PickingBudgetController::class, 'calculateTotals'])
-            ->name('calculate');
-
-        // Obtener escala de costos según cantidad de kits
-        Route::get('/cost-scale/{quantity}', [PickingBudgetController::class, 'getCostScaleForQuantity'])
-            ->name('cost-scale');
-
-        // Obtener incremento según cantidad de componentes
-        Route::get('/component-increment/{components}', [PickingBudgetController::class, 'getComponentIncrementForQuantity'])
-            ->name('component-increment');
     });
 });
