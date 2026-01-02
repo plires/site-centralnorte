@@ -224,7 +224,7 @@ class PickingBudget extends Model
 
     public function isPubliclyVisible(): bool
     {
-        return $this->status === BudgetStatus::SENT;
+        return $this->status?->isPubliclyVisible() ?? false;
     }
 
     public function allowsClientAction(): bool

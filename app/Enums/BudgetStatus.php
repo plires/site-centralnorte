@@ -27,7 +27,7 @@ enum BudgetStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UNSENT => 'Sin enviar',
             self::DRAFT => 'Borrador',
             self::SENT => 'Enviado',
@@ -42,7 +42,7 @@ enum BudgetStatus: string
      */
     public function color(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UNSENT => 'slate',
             self::DRAFT => 'gray',
             self::SENT => 'blue',
@@ -57,7 +57,7 @@ enum BudgetStatus: string
      */
     public function badgeClass(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UNSENT => 'bg-slate-100 text-slate-800',
             self::DRAFT => 'bg-gray-100 text-gray-800',
             self::SENT => 'bg-blue-100 text-blue-800',
@@ -72,7 +72,7 @@ enum BudgetStatus: string
      */
     public function icon(): string
     {
-        return match($this) {
+        return match ($this) {
             self::UNSENT => 'file-edit',
             self::DRAFT => 'file-text',
             self::SENT => 'send',
@@ -84,11 +84,11 @@ enum BudgetStatus: string
 
     /**
      * ¿El presupuesto es visible públicamente?
-     * Solo los enviados pueden verse en la vista pública
+     * Visible en estados: SENT, APPROVED y REJECTED
      */
     public function isPubliclyVisible(): bool
     {
-        return $this === self::SENT;
+        return in_array($this, [self::SENT, self::APPROVED, self::REJECTED]);
     }
 
     /**

@@ -45,8 +45,9 @@ export default function Budget({ budget, businessConfig }) {
     }, [props.flash]);
 
     // Verificación de seguridad - El presupuesto debe estar visible públicamente
-    // Solo el estado 'sent' es visible para el cliente
-    if (!budget.allows_client_action && budget.status !== 'sent') {
+    const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
+
+    if (!isPubliclyVisible) {
         let message = 'Este presupuesto no está disponible para visualización.';
         let reason = 'not_visible';
 
@@ -56,21 +57,13 @@ export default function Budget({ budget, businessConfig }) {
                 message = 'Este presupuesto aún no ha sido enviado.';
                 reason = 'not_sent';
                 break;
-            case 'approved':
-                message = 'Este presupuesto ya fue aprobado. Gracias por tu confianza.';
-                reason = 'approved';
-                break;
-            case 'rejected':
-                message = 'Este presupuesto fue rechazado.';
-                reason = 'rejected';
-                break;
             case 'expired':
                 message = 'Este presupuesto ha vencido y ya no está disponible.';
                 reason = 'expired';
                 break;
         }
 
-        return <BudgetNotFound message={message} reason={reason} status={budget.status} />;
+        return <BudgetNotFound message={message} reason={reason} />;
     }
 
     // Hooks personalizados para manejo de estado
@@ -131,7 +124,7 @@ export default function Budget({ budget, businessConfig }) {
                     </div>
                 )}
 
-                {selectedVariants && Object.keys(selectedVariants).length > 0 && (
+                {selectedVariants && Object.keys(selectedVariants).length > 0 && budget.allows_client_action && (
                     <>
                         {/* Botón de descarga */}
                         <BudgetDownloadButton budget={budget} selectedVariants={selectedVariants} />

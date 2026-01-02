@@ -38,12 +38,13 @@ export default function PickingBudget({ budget, businessConfig }) {
         }
     }, [props.flash]);
 
-    // Verificación de seguridad - El presupuesto debe estar visible públicamente
-    // Solo renderizar la vista completa si el estado es 'sent' o si permite acciones del cliente
     const allowsAction = budget.allows_client_action === true || budget.allows_client_action === 1;
     const isSent = budget.status === 'sent';
 
-    if (!allowsAction && !isSent) {
+    // Verificación de seguridad - El presupuesto debe estar visible públicamente
+    const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
+
+    if (!isPubliclyVisible) {
         let message = 'Este presupuesto no está disponible para visualización.';
         let reason = 'not_visible';
 
@@ -52,14 +53,6 @@ export default function PickingBudget({ budget, businessConfig }) {
             case 'draft':
                 message = 'Este presupuesto aún no ha sido enviado.';
                 reason = 'not_sent';
-                break;
-            case 'approved':
-                message = 'Este presupuesto ya fue aprobado. Gracias por tu confianza.';
-                reason = 'approved';
-                break;
-            case 'rejected':
-                message = 'Este presupuesto fue rechazado.';
-                reason = 'rejected';
                 break;
             case 'expired':
                 message = 'Este presupuesto ha vencido y ya no está disponible.';
