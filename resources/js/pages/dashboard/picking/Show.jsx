@@ -99,7 +99,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
     };
 
     const handleViewPublic = () => {
-        const publicUrl = route('public.budget.show', budget.token);
+        const publicUrl = route('public.picking.budget.show', budget.token);
         window.open(publicUrl, '_blank');
     };
 
