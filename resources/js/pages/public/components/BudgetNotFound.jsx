@@ -1,19 +1,9 @@
-// resources/js/pages/public/budgets/BudgetNotFound.jsx
+// resources/js/pages/public/components/BudgetNotFound.jsx
 
-import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-    FileX, 
-    Clock, 
-    XCircle, 
-    CheckCircle, 
-    FileEdit, 
-    Send,
-    Home,
-    RefreshCcw,
-    Mail
-} from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { CheckCircle, Clock, FileEdit, FileX, Home, Mail, RefreshCcw, Send, XCircle } from 'lucide-react';
 
 /**
  * Configuración de estados para la página de "no encontrado"
@@ -32,6 +22,20 @@ const statusConfig = {
         description: 'Este presupuesto aún no ha sido enviado. Por favor, contacta al vendedor.',
         iconBgColor: 'bg-slate-100',
         iconColor: 'text-slate-600',
+    },
+    unsent: {
+        icon: FileEdit,
+        title: 'Presupuesto no disponible',
+        description: 'Este presupuesto aún no ha sido enviado. Por favor, contacta al vendedor.',
+        iconBgColor: 'bg-slate-100',
+        iconColor: 'text-slate-600',
+    },
+    draft: {
+        icon: FileEdit,
+        title: 'Presupuesto en borrador',
+        description: 'Este presupuesto está en borrador y no está disponible.',
+        iconBgColor: 'bg-gray-100',
+        iconColor: 'text-gray-600',
     },
     expired: {
         icon: Clock,
@@ -74,7 +78,9 @@ const statusConfig = {
 };
 
 /**
- * Página de presupuesto no encontrado o no disponible
+ * Componente unificado para presupuestos no disponibles
+ * Funciona tanto para presupuestos de Merch como de Picking
+ *
  * @param {Object} props
  * @param {string} props.message - Mensaje personalizado (opcional)
  * @param {string} props.reason - Razón del estado (not_found, expired, rejected, approved, etc.)
@@ -85,32 +91,20 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
     const StatusIcon = config.icon;
     const displayMessage = message || config.description;
 
-    // Obtener nombre de la empresa desde .env
+    // Obtener nombre de la empresa y color primario desde .env
     const appName = import.meta.env.VITE_APP_NAME || 'Central Norte';
+    const primaryColor = import.meta.env.VITE_PRIMARY_COLOR || '#3d5095';
+    const secondaryColor = import.meta.env.VITE_SECONDARY_COLOR || '#19ac90';
 
     return (
         <div className="flex min-h-screen flex-col bg-gray-50">
             <Head title="Presupuesto no disponible" />
 
-            {/* Header de la empresa */}
-            <div className="border-b-2 bg-white shadow-sm">
-                <div className="mx-auto max-w-4xl px-4 py-6">
-                    <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-                        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 text-blue-600 sm:h-12 sm:w-12">
-                                <svg className="h-8 w-8 sm:h-6 sm:w-6" fill="currentColor" viewBox="0 0 20 20">
-                                    <path
-                                        fillRule="evenodd"
-                                        d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
-                                        clipRule="evenodd"
-                                    />
-                                </svg>
-                            </div>
-                            <div className="text-center sm:text-left">
-                                <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">{appName}</h1>
-                                <p className="text-sm text-gray-600">Presupuesto Empresarial</p>
-                            </div>
-                        </div>
+            {/* Header de la empresa con color primario */}
+            <div className="border-b" style={{ backgroundColor: primaryColor }}>
+                <div className="mx-auto max-w-4xl px-4 py-8">
+                    <div className="flex items-center justify-center gap-4">
+                        <img src="/images/logo-publico-horizontal.png" alt="Logo" className="w-auto" />
                     </div>
                 </div>
             </div>
@@ -126,14 +120,10 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
                             </div>
 
                             {/* Título */}
-                            <h2 className={`mb-3 text-2xl font-bold ${config.isSuccess ? 'text-green-700' : 'text-gray-900'}`}>
-                                {config.title}
-                            </h2>
+                            <h2 className={`mb-3 text-2xl font-bold ${config.isSuccess ? 'text-green-700' : 'text-gray-900'}`}>{config.title}</h2>
 
                             {/* Descripción */}
-                            <p className="mb-4 text-gray-600">
-                                {displayMessage}
-                            </p>
+                            <p className="mb-4 text-gray-600">{displayMessage}</p>
 
                             {/* Sugerencia adicional */}
                             {config.suggestion && (
@@ -154,21 +144,13 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
 
                             {/* Botones de acción */}
                             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => window.location.href = '/'}
-                                    className="flex items-center gap-2"
-                                >
+                                <Button variant="outline" onClick={() => (window.location.href = '/')} className="flex items-center gap-2">
                                     <Home className="h-4 w-4" />
                                     Ir al inicio
                                 </Button>
 
                                 {!config.isSuccess && (
-                                    <Button
-                                        variant="default"
-                                        onClick={() => window.location.reload()}
-                                        className="flex items-center gap-2"
-                                    >
+                                    <Button variant="default" onClick={() => window.location.reload()} className="flex items-center gap-2">
                                         <RefreshCcw className="h-4 w-4" />
                                         Reintentar
                                     </Button>
@@ -180,11 +162,9 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
             </div>
 
             {/* Footer */}
-            <div className="border-t bg-white py-4">
-                <div className="mx-auto max-w-4xl px-4 text-center text-sm text-gray-500">
-                    <p>
-                        ¿Tienes dudas? Contacta a nuestro equipo de ventas.
-                    </p>
+            <div className="border-t bg-white py-4" style={{ backgroundColor: secondaryColor }}>
+                <div className="mx-auto max-w-4xl px-4 text-center text-sm text-white">
+                    <p>¿Tienes dudas? Contacta a nuestro equipo de ventas.</p>
                 </div>
             </div>
         </div>

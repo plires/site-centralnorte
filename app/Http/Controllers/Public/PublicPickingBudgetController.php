@@ -38,7 +38,7 @@ class PublicPickingBudgetController extends Controller
 
             // Verificar si está vencido por fecha
             if ($budget->isExpiredByDate()) {
-                return Inertia::render('public/picking/PickingBudgetNotFound', [
+                return Inertia::render('public/components/BudgetNotFound', [
                     'message' => 'Este presupuesto está vencido y no está disponible para visualización.',
                     'reason' => 'expired'
                 ]);
@@ -57,7 +57,7 @@ class PublicPickingBudgetController extends Controller
         } catch (\Exception $e) {
             Log::error('Error al mostrar presupuesto de picking público: ' . $e->getMessage());
 
-            return Inertia::render('public/picking/PickingBudgetNotFound', [
+            return Inertia::render('public/components/BudgetNotFound', [
                 'message' => 'El presupuesto solicitado no existe o ha sido eliminado.',
                 'reason' => 'not_found'
             ]);
@@ -200,7 +200,7 @@ class PublicPickingBudgetController extends Controller
 
         $message = $messages[$budget->status->value] ?? 'Este presupuesto no está disponible.';
 
-        return Inertia::render('public/picking/PickingBudgetNotFound', [
+        return Inertia::render('public/components/BudgetNotFound', [
             'message' => $message,
             'reason' => $budget->status->value,
         ]);

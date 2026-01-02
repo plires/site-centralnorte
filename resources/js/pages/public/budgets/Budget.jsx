@@ -1,9 +1,9 @@
 // resources/js/pages/public/budgets/Budget.jsx
 
+import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
-import BudgetNotFound from './BudgetNotFound';
 
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
