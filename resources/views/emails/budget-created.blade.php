@@ -113,6 +113,22 @@
             margin: 8px 0;
         }
 
+        .info-box {
+            background-color: #e7f3ff;
+            border-left: 4px solid {{ env('SECONDARY_COLOR', '#19ac90') }};
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        .info-box p {
+            margin: 5px 0;
+        }
+
+        .info-box strong {
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+        }
+
         .footer {
             background-color: #f8f9fa;
             padding: 20px;
@@ -126,6 +142,10 @@
             margin: 5px 0;
         }
 
+        .footer strong {
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
+        }
+
         .divider {
             height: 1px;
             background-color: #e9ecef;
@@ -137,7 +157,8 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte" class="logo">
+            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte"
+                class="logo">
             <h1>{{ $isResend ? '📤 Te reenviamos tu presupuesto' : '🎉 ¡Tienes un nuevo presupuesto!' }}</h1>
             @if ($isResend)
                 <div class="resend-badge">Reenvío de presupuesto</div>
@@ -145,7 +166,7 @@
         </div>
 
         <div class="content">
-            <p class="greeting">Estimado/a {{ $client->name }},</p>
+            <p class="greeting">Hola {{ $client->name }},</p>
 
             <p>{{ $isResend ? 'Te reenviamos el presupuesto solicitado.' : 'Te enviamos el presupuesto que solicitaste.' }}
                 A continuación encontrarás los detalles:</p>
@@ -159,6 +180,8 @@
                 <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
                 <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
+
+            <p>Encontrarás el detalle completo en el PDF adjunto a este correo.</p>
 
             <p>Para ver los detalles completos del presupuesto, hacé clic en el siguiente enlace:</p>
 
@@ -176,18 +199,31 @@
 
             <div class="divider"></div>
 
-            <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
+            @if ($budget->footer_comments)
+                <div class="info-box">
+                    <p><strong>Notas:</strong></p>
+                    <p>{{ $budget->footer_comments }}</p>
+                </div>
+            @endif
 
-            <p><strong>¡Gracias por confiar en nosotros!</strong></p>
+            <div class="divider"></div>
+
+            <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en
+                contactarnos.</p>
+
+            <p style="text-align: center;"><strong>¡Gracias por confiar en nosotros!</strong></p>
         </div>
 
         <div class="footer">
-            <p><strong>Central Norte</strong></p>
+            <p><strong>{{ env('COMPANY_NAME', 'Central Norte') }}</strong></p>
             <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
             </p>
             <p style="margin-top: 15px;">Este es un email automático. Para consultas, contactá directamente con
-                {{ $vendedor->name }}.</p>
+                <a href="mailto:{{ $vendedor->email }}"
+                    style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ $vendedor->name }}</a>
+            </p>
         </div>
+
     </div>
 </body>
 
