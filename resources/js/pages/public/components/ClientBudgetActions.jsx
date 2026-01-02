@@ -1,10 +1,5 @@
-// resources/js/pages/public/budgets/components/ClientBudgetActions.jsx
+// resources/js/pages/public/components/ClientBudgetActions.jsx
 
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -15,22 +10,23 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, XCircle, Loader2, ThumbsUp, MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { router } from '@inertiajs/react';
+import { CheckCircle, Loader2, MessageSquare, ThumbsUp, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Botones de acción del cliente para aprobar/rechazar presupuesto
  * Se usa en la vista pública del presupuesto
- * 
+ *
  * @param {Object} props
  * @param {string} props.token - Token del presupuesto
  * @param {string} props.approveRoute - Nombre de la ruta para aprobar
  * @param {string} props.rejectRoute - Nombre de la ruta para rechazar
  */
-export default function ClientBudgetActions({
-    token,
-    approveRoute,
-    rejectRoute,
-}) {
+export default function ClientBudgetActions({ token, approveRoute, rejectRoute }) {
     const [isApproving, setIsApproving] = useState(false);
     const [isRejecting, setIsRejecting] = useState(false);
     const [showApproveDialog, setShowApproveDialog] = useState(false);
@@ -48,7 +44,7 @@ export default function ClientBudgetActions({
                     setIsApproving(false);
                     setShowApproveDialog(false);
                 },
-            }
+            },
         );
     };
 
@@ -64,7 +60,7 @@ export default function ClientBudgetActions({
                     setShowRejectDialog(false);
                     setRejectReason('');
                 },
-            }
+            },
         );
     };
 
@@ -78,15 +74,14 @@ export default function ClientBudgetActions({
             </CardHeader>
             <CardContent>
                 <p className="mb-4 text-sm text-gray-600">
-                    Revisa los detalles del presupuesto y selecciona una opción. 
-                    Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
+                    Revisa los detalles del presupuesto y selecciona una opción. Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                     {/* Botón Aprobar */}
                     <Button
                         onClick={() => setShowApproveDialog(true)}
-                        className="bg-green-600 hover:bg-green-700 text-white flex-1 h-12"
+                        className="h-12 flex-1 bg-green-600 text-white hover:bg-green-700"
                         disabled={isApproving || isRejecting}
                     >
                         <CheckCircle className="mr-2 h-5 w-5" />
@@ -97,7 +92,7 @@ export default function ClientBudgetActions({
                     <Button
                         onClick={() => setShowRejectDialog(true)}
                         variant="outline"
-                        className="border-red-300 text-red-600 hover:bg-red-50 flex-1 h-12"
+                        className="h-12 flex-1 border-red-300 text-red-600 hover:bg-red-50"
                         disabled={isApproving || isRejecting}
                     >
                         <XCircle className="mr-2 h-5 w-5" />
@@ -114,12 +109,10 @@ export default function ClientBudgetActions({
                                 ¿Aprobar este presupuesto?
                             </AlertDialogTitle>
                             <AlertDialogDescription className="space-y-3">
+                                <p>Al aprobar este presupuesto, confirmas tu interés en proceder con la propuesta.</p>
                                 <p>
-                                    Al aprobar este presupuesto, confirmas tu interés en proceder con la propuesta.
-                                </p>
-                                <p>
-                                    Nuestro equipo se pondrá en contacto contigo para coordinar los siguientes pasos,
-                                    incluyendo formas de pago y plazos de entrega.
+                                    Nuestro equipo se pondrá en contacto contigo para coordinar los siguientes pasos, incluyendo formas de pago y
+                                    plazos de entrega.
                                 </p>
                                 <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
                                     <strong>Nota:</strong> Esta acción no genera ningún compromiso de pago inmediato.
@@ -127,14 +120,8 @@ export default function ClientBudgetActions({
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isApproving}>
-                                Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleApprove}
-                                disabled={isApproving}
-                                className="bg-green-600 hover:bg-green-700"
-                            >
+                            <AlertDialogCancel disabled={isApproving}>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleApprove} disabled={isApproving} className="bg-green-600 hover:bg-green-700">
                                 {isApproving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -162,14 +149,11 @@ export default function ClientBudgetActions({
                             <AlertDialogDescription asChild>
                                 <div className="space-y-4">
                                     <p>
-                                        Si este presupuesto no cumple con tus expectativas,
-                                        puedes rechazarlo. Opcionalmente, puedes indicarnos
-                                        el motivo para mejorar futuras propuestas.
+                                        Si este presupuesto no cumple con tus expectativas, puedes rechazarlo. Opcionalmente, puedes indicarnos el
+                                        motivo para mejorar futuras propuestas.
                                     </p>
                                     <div>
-                                        <label className="text-sm font-medium text-gray-700 mb-1 block">
-                                            Motivo del rechazo (opcional)
-                                        </label>
+                                        <label className="mb-1 block text-sm font-medium text-gray-700">Motivo del rechazo (opcional)</label>
                                         <Textarea
                                             placeholder="Ej: El precio está fuera de mi presupuesto, necesito otras cantidades, etc."
                                             value={rejectReason}
@@ -179,21 +163,15 @@ export default function ClientBudgetActions({
                                         />
                                     </div>
                                     <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-                                        <strong>Tip:</strong> Si tienes dudas o necesitas modificaciones,
-                                        puedes contactar al vendedor antes de rechazar.
+                                        <strong>Tip:</strong> Si tienes dudas o necesitas modificaciones, puedes contactar al vendedor antes de
+                                        rechazar.
                                     </div>
                                 </div>
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isRejecting}>
-                                Cancelar
-                            </AlertDialogCancel>
-                            <AlertDialogAction
-                                onClick={handleReject}
-                                disabled={isRejecting}
-                                className="bg-red-600 hover:bg-red-700"
-                            >
+                            <AlertDialogCancel disabled={isRejecting}>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleReject} disabled={isRejecting} className="bg-red-600 hover:bg-red-700">
                                 {isRejecting ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
+import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
 import Header from '@/pages/public/components/Header';
 
 // Hooks personalizados
@@ -21,7 +22,6 @@ import BudgetInfoCard from './components/BudgetInfoCard';
 import BudgetRegularItems from './components/BudgetRegularItems';
 import BudgetTotalsCard from './components/BudgetTotalsCard';
 import BudgetVariantGroups from './components/BudgetVariantGroups';
-import ClientBudgetActions from './components/ClientBudgetActions';
 
 /**
  * Vista pública del presupuesto - Con sistema de estados unificado

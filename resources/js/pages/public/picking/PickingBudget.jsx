@@ -6,10 +6,10 @@ import { toast } from 'sonner';
 
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
+import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
 import Header from '@/pages/public/components/Header';
 
 // Componentes UI especializados
-import ClientBudgetActions from '@/pages/public/budgets/components/ClientBudgetActions';
 import PickingBudgetBoxesCard from './components/PickingBudgetBoxesCard';
 import PickingBudgetComments from './components/PickingBudgetComments';
 import PickingBudgetInfoCard from './components/PickingBudgetInfoCard';
