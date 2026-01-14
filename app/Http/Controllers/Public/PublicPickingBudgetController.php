@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Mail\PickingBudgetApprovedVendorMail;
 use App\Mail\PickingBudgetRejectedVendorMail;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\PickingBudgetInReviewVendorMail;
 
 class PublicPickingBudgetController extends Controller
 {
@@ -106,7 +107,7 @@ class PublicPickingBudgetController extends Controller
     {
         try {
             $budget = PickingBudget::where('token', $token)->firstOrFail();
-            
+
             if (!$budget->allowsClientAction()) {
                 return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
             }
@@ -122,10 +123,10 @@ class PublicPickingBudgetController extends Controller
                 'budget_number' => $budget->budget_number,
             ]);
 
+            // Enviar email al vendedor
             if ($budget->vendor && $budget->vendor->email) {
                 $dashboardUrl = route('dashboard.picking.budgets.show', $budget->id);
-                // Puedes crear un mail específico o reutilizar uno existente
-                // Mail::to($budget->vendor->email)->send(new PickingBudgetInReviewVendorMail($budget, $dashboardUrl));
+                Mail::to($budget->vendor->email)->send(new PickingBudgetInReviewVendorMail($budget, $dashboardUrl));
             }
 
             return back()->with('success', 'Presupuesto marcado como "En Evaluación". Te contactaremos pronto.');

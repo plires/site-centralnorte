@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
 use App\Mail\BudgetApprovedVendorMail;
 use App\Mail\BudgetRejectedVendorMail;
 use Illuminate\Support\Facades\Mail;
+use App\Mail\BudgetInReviewVendorMail;
 
 class PublicBudgetController extends Controller
 {
@@ -157,10 +158,10 @@ class PublicBudgetController extends Controller
                 'title' => $budget->title,
             ]);
 
+            // Enviar email al vendedor
             if ($budget->user && $budget->user->email) {
                 $dashboardUrl = route('dashboard.budgets.show', $budget->id);
-                // Puedes crear un mail específico o reutilizar uno existente
-                // Mail::to($budget->user->email)->send(new BudgetInReviewVendorMail($budget, $dashboardUrl));
+                Mail::to($budget->user->email)->send(new BudgetInReviewVendorMail($budget, $dashboardUrl));
             }
 
             return back()->with('success', 'Presupuesto marcado como "En Evaluación". Te contactaremos pronto.');
