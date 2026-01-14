@@ -282,6 +282,11 @@ class Budget extends Model
         return $this->status?->canBeSent() ?? false;
     }
 
+    public function allowsInReviewAction(): bool
+    {
+        return $this->status?->allowsInReviewAction() ?? false;
+    }
+
     /**
      * Marcar como enviado
      */
@@ -292,6 +297,14 @@ class Budget extends Model
             'email_sent' => true,
             'email_sent_at' => now(),
         ]);
+    }
+
+    /**
+     * Marcar como en evaluación
+     */
+    public function markAsInReview(): void
+    {
+        $this->update(['status' => BudgetStatus::IN_REVIEW]);
     }
 
     /**
@@ -371,6 +384,7 @@ class Budget extends Model
             'is_expiring_today' => $isExpiringToday,
             'is_publicly_visible' => $this->isPubliclyVisible(),
             'allows_client_action' => $this->allowsClientAction(),
+            'allows_in_review_action' => $this->allowsInReviewAction(),
             'is_editable' => $this->isEditable(),
             'can_be_sent' => $this->canBeSent(),
         ];

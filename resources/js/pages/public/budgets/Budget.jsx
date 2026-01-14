@@ -1,10 +1,10 @@
 // resources/js/pages/public/budgets/Budget.jsx
 
-import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
+import { Toaster, toast } from 'sonner';
 
+import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
@@ -45,7 +45,7 @@ export default function Budget({ budget, businessConfig }) {
     }, [props.flash]);
 
     // Verificación de seguridad - El presupuesto debe estar visible públicamente
-    const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
+   const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
 
     if (!isPubliclyVisible) {
         let message = 'Este presupuesto no está disponible para visualización.';
@@ -76,6 +76,7 @@ export default function Budget({ budget, businessConfig }) {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster richColors position="top-right" />
             <Head title={`Presupuesto - ${budget.title}`} />
 
             {/* Header de la empresa */}
@@ -120,7 +121,12 @@ export default function Budget({ budget, businessConfig }) {
                 {/* Acciones del cliente (aprobar/rechazar) - Solo si está en estado 'sent' */}
                 {budget.allows_client_action && (
                     <div className="mt-8 mb-8">
-                        <ClientBudgetActions token={budget.token} approveRoute="public.budget.approve" rejectRoute="public.budget.reject" />
+                        <ClientBudgetActions 
+                            token={budget.token} 
+                            approveRoute="public.budget.approve" 
+                            inReviewRoute="public.budget.in_review" 
+                            currentStatus={budget.status} 
+                        />
                     </div>
                 )}
 

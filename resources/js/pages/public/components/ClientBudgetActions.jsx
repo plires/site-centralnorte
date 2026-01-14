@@ -1,5 +1,9 @@
 // resources/js/pages/public/components/ClientBudgetActions.jsx
 
+import { useState } from 'react';
+import { router } from '@inertiajs/react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -10,28 +14,31 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { router } from '@inertiajs/react';
-import { CheckCircle, Loader2, MessageSquare, ThumbsUp, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircle, Clock, Loader2, MessageSquare } from 'lucide-react';
 
 /**
- * Botones de acción del cliente para aprobar/rechazar presupuesto
+ * Botones de acción del cliente para aprobar o poner en evaluación un presupuesto
  * Se usa en la vista pública del presupuesto
- *
+ * 
  * @param {Object} props
  * @param {string} props.token - Token del presupuesto
  * @param {string} props.approveRoute - Nombre de la ruta para aprobar
- * @param {string} props.rejectRoute - Nombre de la ruta para rechazar
+ * @param {string} props.inReviewRoute - Nombre de la ruta para poner en evaluación
+ * @param {string} props.currentStatus - Estado actual del presupuesto
  */
-export default function ClientBudgetActions({ token, approveRoute, rejectRoute }) {
+export default function ClientBudgetActions({
+    token,
+    approveRoute,
+    inReviewRoute,
+    currentStatus = 'sent',
+}) {
     const [isApproving, setIsApproving] = useState(false);
-    const [isRejecting, setIsRejecting] = useState(false);
+    const [isSettingReview, setIsSettingReview] = useState(false);
     const [showApproveDialog, setShowApproveDialog] = useState(false);
-    const [showRejectDialog, setShowRejectDialog] = useState(false);
-    const [rejectReason, setRejectReason] = useState('');
+    const [showReviewDialog, setShowReviewDialog] = useState(false);
+
+    // Determinar si está en evaluación
+    const isInReview = currentStatus === 'in_review';
 
     const handleApprove = () => {
         setIsApproving(true);
@@ -44,23 +51,22 @@ export default function ClientBudgetActions({ token, approveRoute, rejectRoute }
                     setIsApproving(false);
                     setShowApproveDialog(false);
                 },
-            },
+            }
         );
     };
 
-    const handleReject = () => {
-        setIsRejecting(true);
+    const handleInReview = () => {
+        setIsSettingReview(true);
         router.post(
-            route(rejectRoute, token),
-            { reason: rejectReason },
+            route(inReviewRoute, token),
+            {},
             {
                 preserveScroll: true,
                 onFinish: () => {
-                    setIsRejecting(false);
-                    setShowRejectDialog(false);
-                    setRejectReason('');
+                    setIsSettingReview(false);
+                    setShowReviewDialog(false);
                 },
-            },
+            }
         );
     };
 
@@ -73,120 +79,179 @@ export default function ClientBudgetActions({ token, approveRoute, rejectRoute }
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="mb-4 text-sm text-gray-600">
-                    Revisa los detalles del presupuesto y selecciona una opción. Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
-                </p>
+                {isInReview ? (
+                    <>
+                        <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+                            <p className="text-sm font-medium text-yellow-800 mb-2">
+                                📋 Este presupuesto está en evaluación
+                            </p>
+                            <p className="text-sm text-yellow-700">
+                                Ya marcaste este presupuesto como "En Evaluación". 
+                                Cuando estés listo, puedes aprobarlo directamente desde aquí.
+                            </p>
+                        </div>
+                    </>
+                ) : (
+                    <p className="mb-4 text-sm text-gray-600">
+                        Revisa los detalles del presupuesto y selecciona una opción. 
+                        Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
+                    </p>
+                )}
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                    {/* Botón Aprobar */}
-                    <Button
-                        onClick={() => setShowApproveDialog(true)}
-                        className="h-12 flex-1 bg-green-600 text-white hover:bg-green-700"
-                        disabled={isApproving || isRejecting}
-                    >
-                        <CheckCircle className="mr-2 h-5 w-5" />
-                        Aprobar Presupuesto
-                    </Button>
-
-                    {/* Botón Rechazar */}
-                    <Button
-                        onClick={() => setShowRejectDialog(true)}
-                        variant="outline"
-                        className="h-12 flex-1 border-red-300 text-red-600 hover:bg-red-50"
-                        disabled={isApproving || isRejecting}
-                    >
-                        <XCircle className="mr-2 h-5 w-5" />
-                        Rechazar Presupuesto
-                    </Button>
-                </div>
-
-                {/* Dialog de confirmación para Aprobar */}
-                <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2 text-green-700">
-                                <ThumbsUp className="h-5 w-5" />
-                                ¿Aprobar este presupuesto?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription className="space-y-3">
-                                <p>Al aprobar este presupuesto, confirmas tu interés en proceder con la propuesta.</p>
-                                <p>
-                                    Nuestro equipo se pondrá en contacto contigo para coordinar los siguientes pasos, incluyendo formas de pago y
-                                    plazos de entrega.
-                                </p>
-                                <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
-                                    <strong>Nota:</strong> Esta acción no genera ningún compromiso de pago inmediato.
-                                </div>
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isApproving}>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleApprove} disabled={isApproving} className="bg-green-600 hover:bg-green-700">
+                    {isInReview ? (
+                        /* Si está en evaluación, solo mostrar botón de aprobar */
+                        <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+                            <Button
+                                onClick={() => setShowApproveDialog(true)}
+                                disabled={isApproving}
+                                className="w-full bg-green-600 hover:bg-green-700"
+                                size="lg"
+                            >
                                 {isApproving ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Aprobando...
+                                        Procesando...
                                     </>
                                 ) : (
                                     <>
-                                        <CheckCircle className="mr-2 h-4 w-4" />
-                                        Sí, aprobar presupuesto
+                                        <CheckCircle className="mr-2 h-5 w-5" />
+                                        Aprobar Presupuesto
                                     </>
                                 )}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                            </Button>
 
-                {/* Dialog de confirmación para Rechazar */}
-                <AlertDialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle className="flex items-center gap-2 text-red-700">
-                                <XCircle className="h-5 w-5" />
-                                ¿Rechazar este presupuesto?
-                            </AlertDialogTitle>
-                            <AlertDialogDescription asChild>
-                                <div className="space-y-4">
-                                    <p>
-                                        Si este presupuesto no cumple con tus expectativas, puedes rechazarlo. Opcionalmente, puedes indicarnos el
-                                        motivo para mejorar futuras propuestas.
-                                    </p>
-                                    <div>
-                                        <label className="mb-1 block text-sm font-medium text-gray-700">Motivo del rechazo (opcional)</label>
-                                        <Textarea
-                                            placeholder="Ej: El precio está fuera de mi presupuesto, necesito otras cantidades, etc."
-                                            value={rejectReason}
-                                            onChange={(e) => setRejectReason(e.target.value)}
-                                            rows={3}
-                                            className="w-full"
-                                        />
-                                    </div>
-                                    <div className="rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-                                        <strong>Tip:</strong> Si tienes dudas o necesitas modificaciones, puedes contactar al vendedor antes de
-                                        rechazar.
-                                    </div>
-                                </div>
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel disabled={isRejecting}>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleReject} disabled={isRejecting} className="bg-red-600 hover:bg-red-700">
-                                {isRejecting ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Rechazando...
-                                    </>
-                                ) : (
-                                    <>
-                                        <XCircle className="mr-2 h-4 w-4" />
-                                        Confirmar rechazo
-                                    </>
-                                )}
-                            </AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2 text-green-600">
+                                        <CheckCircle className="h-5 w-5" />
+                                        Aprobar Presupuesto
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription className="text-base">
+                                        ¿Estás seguro de que deseas aprobar este presupuesto?
+                                        <br />
+                                        <br />
+                                        Al confirmar, notificaremos al vendedor que has aceptado la propuesta
+                                        y nos pondremos en contacto contigo para coordinar los siguientes pasos.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleApprove}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        Sí, aprobar
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    ) : (
+                        /* Si está en SENT, mostrar ambos botones */
+                        <>
+                            {/* Botón Aprobar */}
+                            <AlertDialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+                                <Button
+                                    onClick={() => setShowApproveDialog(true)}
+                                    disabled={isApproving || isSettingReview}
+                                    className="flex-1 bg-green-600 hover:bg-green-700"
+                                    size="lg"
+                                >
+                                    {isApproving ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Procesando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <CheckCircle className="mr-2 h-5 w-5" />
+                                            Aprobar Presupuesto
+                                        </>
+                                    )}
+                                </Button>
+
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="flex items-center gap-2 text-green-600">
+                                            <CheckCircle className="h-5 w-5" />
+                                            Aprobar Presupuesto
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-base">
+                                            ¿Estás seguro de que deseas aprobar este presupuesto?
+                                            <br />
+                                            <br />
+                                            Al confirmar, notificaremos al vendedor que has aceptado la propuesta
+                                            y nos pondremos en contacto contigo para coordinar los siguientes pasos.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleApprove}
+                                            className="bg-green-600 hover:bg-green-700"
+                                        >
+                                            Sí, aprobar
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+
+                            {/* Botón En Evaluación */}
+                            <AlertDialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+                                <Button
+                                    onClick={() => setShowReviewDialog(true)}
+                                    disabled={isApproving || isSettingReview}
+                                    variant="outline"
+                                    className="flex-1 border-yellow-600 text-yellow-700 hover:bg-yellow-50"
+                                    size="lg"
+                                >
+                                    {isSettingReview ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Procesando...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Clock className="mr-2 h-5 w-5" />
+                                            Poner en Evaluación
+                                        </>
+                                    )}
+                                </Button>
+
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="flex items-center gap-2 text-yellow-600">
+                                            <Clock className="h-5 w-5" />
+                                            Poner en Evaluación
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription className="text-base">
+                                            ¿Necesitas más tiempo para revisar este presupuesto?
+                                            <br />
+                                            <br />
+                                            Al marcar como "En Evaluación", el vendedor sabrá que estás considerando
+                                            la propuesta y nos comunicaremos contigo para resolver cualquier duda.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction
+                                            onClick={handleInReview}
+                                            className="bg-yellow-600 hover:bg-yellow-700"
+                                        >
+                                            Sí, poner en evaluación
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </>
+                    )}
+                </div>
+
+                {!isInReview && (
+                    <p className="mt-4 text-center text-xs text-gray-500">
+                        Si tienes dudas o necesitas hacer modificaciones, contáctanos directamente.
+                    </p>
+                )}
             </CardContent>
         </Card>
     );

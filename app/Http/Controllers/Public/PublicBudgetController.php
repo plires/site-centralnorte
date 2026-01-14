@@ -135,9 +135,9 @@ class PublicBudgetController extends Controller
     }
 
     /**
-     * Cliente rechaza el presupuesto
+     * Cliente pone el presupuesto en evaluación
      */
-    public function reject($token, Request $request)
+    public function inReview($token)
     {
         try {
             $budget = Budget::where('token', $token)->firstOrFail();
@@ -150,32 +150,22 @@ class PublicBudgetController extends Controller
                 return back()->with('error', 'Este presupuesto está vencido.');
             }
 
-            $budget->markAsRejected();
+            $budget->markAsInReview();
 
-            // Guardar el motivo de rechazo en el nuevo campo rejection_comments
-            // footer_comments permanece inmutable
-            $rejectionReason = null;
-            if ($request->has('reason') && !empty($request->reason)) {
-                $rejectionReason = $request->reason;
-                $budget->update([
-                    'rejection_comments' => $rejectionReason
-                ]);
-            }
-
-            Log::info('Presupuesto rechazado por cliente', [
+            Log::info('Presupuesto puesto en evaluación por cliente', [
                 'budget_id' => $budget->id,
                 'title' => $budget->title,
-                'reason' => $request->reason ?? 'No especificado',
             ]);
 
             if ($budget->user && $budget->user->email) {
                 $dashboardUrl = route('dashboard.budgets.show', $budget->id);
-                Mail::to($budget->user->email)->send(new BudgetRejectedVendorMail($budget, $dashboardUrl, $rejectionReason));
+                // Puedes crear un mail específico o reutilizar uno existente
+                // Mail::to($budget->user->email)->send(new BudgetInReviewVendorMail($budget, $dashboardUrl));
             }
 
-            return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
+            return back()->with('success', 'Presupuesto marcado como "En Evaluación". Te contactaremos pronto.');
         } catch (\Exception $e) {
-            Log::error('Error al rechazar presupuesto: ' . $e->getMessage());
+            Log::error('Error al poner presupuesto en evaluación: ' . $e->getMessage());
             return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
         }
     }

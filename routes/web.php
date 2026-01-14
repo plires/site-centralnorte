@@ -32,11 +32,11 @@ Route::prefix('presupuesto')->name('public.budget.')->group(function () {
         ->name('show');
     Route::get('/{token}/pdf', [PublicBudgetController::class, 'downloadPdf'])
         ->name('pdf');
-    // Acciones del cliente (aprobar/rechazar)
+    // Acciones del cliente (aprobar/evaluar)
     Route::post('/{token}/aprobar', [PublicBudgetController::class, 'approve'])
         ->name('approve');
-    Route::post('/{token}/rechazar', [PublicBudgetController::class, 'reject'])
-        ->name('reject');
+    Route::post('/{token}/en-evaluacion', [PublicBudgetController::class, 'inReview'])
+    ->name('in_review');
 });
 
 // Vista pública del presupuesto de Picking
@@ -45,11 +45,11 @@ Route::prefix('presupuesto-picking')->name('public.picking.budget.')->group(func
         ->name('show');
     Route::get('/{token}/pdf', [PublicPickingBudgetController::class, 'downloadPdf'])
         ->name('pdf');
-    // Acciones del cliente (aprobar/rechazar)
+    // Acciones del cliente (aprobar/evaluar)
     Route::post('/{token}/aprobar', [PublicPickingBudgetController::class, 'approve'])
         ->name('approve');
-    Route::post('/{token}/rechazar', [PublicPickingBudgetController::class, 'reject'])
-        ->name('reject');
+    Route::post('/{token}/en-evaluacion', [PublicPickingBudgetController::class, 'inReview'])
+    ->name('in_review');
 });
 
 // ===========================================================================

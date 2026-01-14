@@ -36,6 +36,11 @@ const statusConfig = {
         icon: CheckCircle,
         className: 'bg-green-100 text-green-800 border-green-200',
     },
+    in_review: {
+        label: 'En Evaluación',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        icon: Clock,
+    },
     rejected: {
         label: 'Rechazado',
         variant: 'destructive',
@@ -110,9 +115,10 @@ export const budgetStatusOptions = [
     { value: 'draft', label: 'Borrador' },
     { value: 'approved', label: 'Aprobado' },
     { value: 'rejected', label: 'Rechazado' },
+    { value: 'in_review', label: 'En Evaluación' },
 ];
 
 export const getStatusConfig = (status) => statusConfig[status] || statusConfig.unsent;
 export const isEditableStatus = (status) => ['unsent', 'draft', 'sent'].includes(status);
 export const canSendStatus = (status) => ['unsent', 'draft'].includes(status);
-export const isPubliclyVisibleStatus = (status) => ['sent', 'approved', 'rejected', 'expired'].includes(status);
+export const isPubliclyVisibleStatus = (status) => ['approved', 'rejected', 'in_review', 'sent'].includes(status);

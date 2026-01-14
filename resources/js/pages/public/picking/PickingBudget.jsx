@@ -2,8 +2,9 @@
 
 import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
-import { toast } from 'sonner';
+import { Toaster, toast } from 'sonner';
 
+import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
@@ -59,7 +60,7 @@ export default function PickingBudget({ budget, businessConfig }) {
                 break;
         }
 
-        return <PickingBudgetNotFound message={message} reason={reason} />;
+        return <BudgetNotFound message={message} reason={reason} />;
     }
 
     const ivaRate = businessConfig?.iva_rate || 0.21;
@@ -69,6 +70,7 @@ export default function PickingBudget({ budget, businessConfig }) {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            <Toaster richColors position="top-right" />
             <Head title={`Presupuesto de Picking #${budget.budget_number}`} />
 
             {/* Header visual con logo */}
@@ -102,7 +104,8 @@ export default function PickingBudget({ budget, businessConfig }) {
                         <ClientBudgetActions
                             token={budget.token}
                             approveRoute="public.picking.budget.approve"
-                            rejectRoute="public.picking.budget.reject"
+                            inReviewRoute="public.picking.budget.in_review"
+                            currentStatus={budget.status}
                         />
                     </div>
                 )}

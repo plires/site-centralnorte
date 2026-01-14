@@ -9,18 +9,20 @@ namespace App\Enums;
  * - Crear nuevo: unsent
  * - Clonar/duplicar: draft
  * - Enviar por email: sent
+ * - Cliente pone en evaluación: in_review
  * - Cliente aprueba: approved
  * - Cliente rechaza: rejected
  * - Vence sin acción: expired
  */
 enum BudgetStatus: string
 {
-    case UNSENT = 'unsent';       // Sin enviar (recién creado)
-    case DRAFT = 'draft';         // Borrador (clonado/duplicado)
-    case SENT = 'sent';           // Enviado al cliente
-    case APPROVED = 'approved';   // Aprobado por cliente o vendedor
-    case REJECTED = 'rejected';   // Rechazado por cliente o vendedor
-    case EXPIRED = 'expired';     // Vencido automáticamente
+    case UNSENT = 'unsent';           // Sin enviar (recién creado)
+    case DRAFT = 'draft';             // Borrador (clonado/duplicado)
+    case SENT = 'sent';               // Enviado al cliente
+    case IN_REVIEW = 'in_review';     // En evaluación por el cliente
+    case APPROVED = 'approved';       // Aprobado por cliente o vendedor
+    case REJECTED = 'rejected';       // Rechazado por cliente o vendedor
+    case EXPIRED = 'expired';         // Vencido automáticamente
 
     /**
      * Etiqueta en español para mostrar en UI
@@ -31,6 +33,7 @@ enum BudgetStatus: string
             self::UNSENT => 'Sin enviar',
             self::DRAFT => 'Borrador',
             self::SENT => 'Enviado',
+            self::IN_REVIEW => 'En Evaluación',
             self::APPROVED => 'Aprobado',
             self::REJECTED => 'Rechazado',
             self::EXPIRED => 'Vencido',
@@ -46,6 +49,7 @@ enum BudgetStatus: string
             self::UNSENT => 'slate',
             self::DRAFT => 'gray',
             self::SENT => 'blue',
+            self::IN_REVIEW => 'yellow',
             self::APPROVED => 'green',
             self::REJECTED => 'red',
             self::EXPIRED => 'orange',
@@ -61,6 +65,7 @@ enum BudgetStatus: string
             self::UNSENT => 'bg-slate-100 text-slate-800',
             self::DRAFT => 'bg-gray-100 text-gray-800',
             self::SENT => 'bg-blue-100 text-blue-800',
+            self::IN_REVIEW => 'bg-yellow-100 text-yellow-800',
             self::APPROVED => 'bg-green-100 text-green-800',
             self::REJECTED => 'bg-red-100 text-red-800',
             self::EXPIRED => 'bg-orange-100 text-orange-800',
@@ -76,26 +81,31 @@ enum BudgetStatus: string
             self::UNSENT => 'file-edit',
             self::DRAFT => 'file-text',
             self::SENT => 'send',
+            self::IN_REVIEW => 'clock',
             self::APPROVED => 'check-circle',
             self::REJECTED => 'x-circle',
-            self::EXPIRED => 'clock',
+            self::EXPIRED => 'alert-circle',
         };
     }
 
     /**
      * ¿El presupuesto es visible públicamente?
-     * Visible en estados: SENT, APPROVED y REJECTED
+     * Visible en todos los estados excepto: UNSENT, DRAFT y EXPIRED
      */
     public function isPubliclyVisible(): bool
     {
-        return in_array($this, [self::SENT, self::APPROVED, self::REJECTED]);
+        return !in_array($this, [self::UNSENT, self::DRAFT, self::EXPIRED]);
     }
 
     /**
-     * ¿El cliente puede tomar acción (aprobar/rechazar)?
-     * Solo cuando está enviado
+     * El cliente puede tomar acción (aprobar/poner en evaluación)
      */
     public function allowsClientAction(): bool
+    {
+        return in_array($this, [self::SENT, self::IN_REVIEW]);
+    }
+
+    public function allowsInReviewAction(): bool
     {
         return $this === self::SENT;
     }
@@ -128,10 +138,11 @@ enum BudgetStatus: string
 
     /**
      * ¿Puede vencer automáticamente?
+     * Solo sin enviar, borrador, enviado o en evaluación
      */
     public function canExpire(): bool
     {
-        return in_array($this, [self::UNSENT, self::DRAFT, self::SENT]);
+        return in_array($this, [self::UNSENT, self::DRAFT, self::SENT, self::IN_REVIEW]);
     }
 
     /**
@@ -154,6 +165,7 @@ enum BudgetStatus: string
             self::UNSENT,
             self::DRAFT,
             self::SENT,
+            self::IN_REVIEW,
             self::APPROVED,
             self::REJECTED,
         ];

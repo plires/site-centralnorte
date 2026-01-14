@@ -242,6 +242,11 @@ class PickingBudget extends Model
         return $this->status?->canBeSent() ?? false;
     }
 
+    public function allowsInReviewAction(): bool
+    {
+        return $this->status?->allowsInReviewAction() ?? false;
+    }
+
     public function markAsSent(): void
     {
         $this->update([
@@ -249,6 +254,11 @@ class PickingBudget extends Model
             'email_sent' => true,
             'email_sent_at' => now(),
         ]);
+    }
+
+    public function markAsInReview(): void
+    {
+        $this->update(['status' => BudgetStatus::IN_REVIEW]);
     }
 
     public function markAsApproved(): void
@@ -316,6 +326,7 @@ class PickingBudget extends Model
             'is_expiring_today' => $isExpiringToday,
             'is_publicly_visible' => $this->isPubliclyVisible(),
             'allows_client_action' => $this->allowsClientAction(),
+            'allows_in_review_action' => $this->allowsInReviewAction(),
             'is_editable' => $this->isEditable(),
             'can_be_sent' => $this->canBeSent(),
         ];

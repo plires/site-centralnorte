@@ -71,7 +71,7 @@ class PublicPickingBudgetController extends Controller
     {
         try {
             $budget = PickingBudget::where('token', $token)->firstOrFail();
-
+            
             if (!$budget->allowsClientAction()) {
                 return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
             }
@@ -100,13 +100,13 @@ class PublicPickingBudgetController extends Controller
     }
 
     /**
-     * Cliente rechaza el presupuesto
+     * Cliente pone el presupuesto en evaluación
      */
-    public function reject($token, Request $request)
+    public function inReview($token)
     {
         try {
             $budget = PickingBudget::where('token', $token)->firstOrFail();
-
+            
             if (!$budget->allowsClientAction()) {
                 return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
             }
@@ -115,29 +115,22 @@ class PublicPickingBudgetController extends Controller
                 return back()->with('error', 'Este presupuesto está vencido.');
             }
 
-            $budget->markAsRejected();
+            $budget->markAsInReview();
 
-            // Guardar motivo de rechazo en rejection_comments (igual que Budget)
-            if ($request->has('reason') && !empty($request->reason)) {
-                $budget->update([
-                    'rejection_comments' => $request->reason
-                ]);
-            }
-
-            Log::info('Presupuesto de picking rechazado por cliente', [
+            Log::info('Presupuesto de picking puesto en evaluación por cliente', [
                 'budget_id' => $budget->id,
                 'budget_number' => $budget->budget_number,
-                'reason' => $request->reason ?? 'No especificado',
             ]);
 
             if ($budget->vendor && $budget->vendor->email) {
                 $dashboardUrl = route('dashboard.picking.budgets.show', $budget->id);
-                Mail::to($budget->vendor->email)->send(new PickingBudgetRejectedVendorMail($budget, $dashboardUrl, $request->reason));
+                // Puedes crear un mail específico o reutilizar uno existente
+                // Mail::to($budget->vendor->email)->send(new PickingBudgetInReviewVendorMail($budget, $dashboardUrl));
             }
 
-            return back()->with('success', 'Presupuesto rechazado. Gracias por tu respuesta.');
+            return back()->with('success', 'Presupuesto marcado como "En Evaluación". Te contactaremos pronto.');
         } catch (\Exception $e) {
-            Log::error('Error al rechazar presupuesto de picking: ' . $e->getMessage());
+            Log::error('Error al poner presupuesto de picking en evaluación: ' . $e->getMessage());
             return back()->with('error', 'Ocurrió un error al procesar tu solicitud.');
         }
     }
