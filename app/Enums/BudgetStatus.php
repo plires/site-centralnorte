@@ -11,7 +11,7 @@ namespace App\Enums;
  * - Enviar por email: sent
  * - Cliente pone en evaluación: in_review
  * - Cliente aprueba: approved
- * - Cliente rechaza: rejected
+ * - Vendedor rechaza: rejected
  * - Vence sin acción: expired
  */
 enum BudgetStatus: string
@@ -21,7 +21,7 @@ enum BudgetStatus: string
     case SENT = 'sent';               // Enviado al cliente
     case IN_REVIEW = 'in_review';     // En evaluación por el cliente
     case APPROVED = 'approved';       // Aprobado por cliente o vendedor
-    case REJECTED = 'rejected';       // Rechazado por cliente o vendedor
+    case REJECTED = 'rejected';       // Rechazado por vendedor
     case EXPIRED = 'expired';         // Vencido automáticamente
 
     /**
