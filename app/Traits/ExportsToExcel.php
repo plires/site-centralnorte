@@ -2,14 +2,15 @@
 
 namespace App\Traits;
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Support\Str;
 
 trait ExportsToExcel
 {
@@ -23,9 +24,9 @@ trait ExportsToExcel
      * @return StreamedResponse
      */
     protected function exportToExcel(
-        array $data, 
-        array $headers, 
-        string $filename = 'export', 
+        array $data,
+        array $headers,
+        string $filename = 'export',
         string $sheetTitle = 'Datos'
     ): StreamedResponse {
         $spreadsheet = new Spreadsheet();
@@ -35,7 +36,7 @@ trait ExportsToExcel
         // Configurar encabezados
         $column = 'A';
         $headerRow = 1;
-        
+
         foreach ($headers as $header) {
             $sheet->setCellValue($column . $headerRow, $header);
             $column++;
@@ -44,7 +45,7 @@ trait ExportsToExcel
         // Estilizar encabezados
         $lastColumn = chr(ord('A') + count($headers) - 1);
         $headerRange = 'A1:' . $lastColumn . '1';
-        
+
         $sheet->getStyle($headerRange)->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -113,7 +114,7 @@ trait ExportsToExcel
         // Agregar metadatos
         $spreadsheet->getProperties()
             ->setCreator(config('app.name'))
-            ->setLastModifiedBy(auth()->user()->name ?? 'Sistema')
+            ->setLastModifiedBy(Auth::user()->name ?? 'Sistema')
             ->setTitle($sheetTitle)
             ->setSubject('Exportación de datos')
             ->setDescription('Generado automáticamente desde ' . config('app.name'))

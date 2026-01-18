@@ -2,8 +2,9 @@
 
 namespace App\Http\Requests\Picking;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdatePickingBudgetRequest extends FormRequest
 {
@@ -30,6 +31,17 @@ class UpdatePickingBudgetRequest extends FormRequest
             'client_id' => [
                 'required',
                 Rule::exists('clients', 'id')->whereNull('deleted_at'),
+            ],
+
+            // Vendedor - Requerido si es admin
+            'vendor_id' => [
+                function ($attribute, $value, $fail) {
+                    if (Auth::user()->role->name === 'admin' && empty($value)) {
+                        $fail('Debe asignar un vendedor al presupuesto.');
+                    }
+                },
+                'nullable',
+                'exists:users,id'
             ],
 
             // Cantidades base

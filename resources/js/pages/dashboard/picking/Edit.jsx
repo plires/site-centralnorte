@@ -11,13 +11,14 @@ import PickingBudgetForm from './components/PickingBudgetForm';
  * Vista para editar un presupuesto de picking existente
  * Renderiza el PickingBudgetForm con datos del presupuesto
  */
-export default function Edit({ auth, budget, boxes, costScales, clients, componentIncrements, paymentConditions, businessConfig }) {
+export default function Edit({ auth, budget, boxes, costScales, clients, componentIncrements, paymentConditions, vendors, user, businessConfig }) {
     const { flash } = usePage().props;
 
     // Inicializar formulario con datos del presupuesto existente
     const { data, setData, put, processing, errors } = useForm({
         client_id: budget.client_id.toString(),
         title: budget.title || '',
+        vendor_id: budget.vendor_id,
         picking_payment_condition_id: budget.picking_payment_condition_id || '',
         total_kits: budget.total_kits,
         total_components_per_kit: budget.total_components_per_kit,
@@ -77,6 +78,8 @@ export default function Edit({ auth, budget, boxes, costScales, clients, compone
                 processing={processing}
                 errors={errors}
                 clients={clients}
+                vendors={vendors}
+                user={user}
                 boxes={boxes}
                 costScales={costScales}
                 componentIncrements={componentIncrements}

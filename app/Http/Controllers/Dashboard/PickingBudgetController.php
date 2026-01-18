@@ -93,6 +93,8 @@ class PickingBudgetController extends Controller
 
     public function create()
     {
+        $user = Auth::user();
+
         $boxes = PickingBox::active()->orderBy('cost')->get();
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
@@ -107,12 +109,28 @@ class PickingBudgetController extends Controller
             ->orderBy('description')
             ->get();
 
+        // Cargar vendedores solo si es admin
+        $vendors = [];
+        if ($user->role->name === 'admin') {
+            $vendors = User::whereHas('role', function ($q) {
+                $q->whereIn('name', ['vendedor', 'admin']);
+            })
+                ->orderBy('name')
+                ->get()
+                ->map(fn($vendor) => [
+                    'value' => $vendor->id,
+                    'label' => $vendor->name,
+                ]);
+        }
+
         return Inertia::render('dashboard/picking/Create', [
             'boxes' => $boxes,
             'costScales' => $scales,
             'componentIncrements' => $increments,
             'clients' => $clients,
             'paymentConditions' => $paymentConditions,
+            'vendors' => $vendors,
+            'user' => $user,
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
@@ -123,10 +141,18 @@ class PickingBudgetController extends Controller
     public function store(StorePickingBudgetRequest $request)
     {
         $validated = $request->validated();
+        $user = Auth::user();
 
         DB::beginTransaction();
 
         try {
+            // Determinar vendedor asignado
+            if ($user->role->name !== 'admin') {
+                $vendorId = $user->id;
+            } else {
+                $vendorId = $validated['vendor_id'];
+            }
+
             $scale = PickingCostScale::findForQuantity($validated['total_kits']);
             if (!$scale) {
                 return back()->withErrors(['total_kits' => 'No se encontró una escala de costos para esta cantidad.']);
@@ -158,7 +184,7 @@ class PickingBudgetController extends Controller
             $budget = PickingBudget::create(array_merge([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
                 'title' => $validated['title'],
-                'vendor_id' => Auth::id(),
+                'vendor_id' => $vendorId,
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],
@@ -350,7 +376,30 @@ class PickingBudgetController extends Controller
                 return $condition;
             });
 
-        // 7. Generar Array de Advertencias Globales
+        // 7. Cargar VENDEDORES (activos + el vendedor actual si fue borrado)
+        $vendors = [];
+        if (Auth::user()->role->name === 'admin') {
+            $vendors = User::withTrashed()
+                ->where(function ($query) use ($pickingBudget) {
+                    $query->whereHas('role', function ($q) {
+                        $q->whereIn('name', ['vendedor', 'admin']);
+                    });
+                    $query->where(function ($q) use ($pickingBudget) {
+                        $q->whereNull('deleted_at')->orWhere('id', $pickingBudget->vendor_id);
+                    });
+                })
+                ->orderBy('name')
+                ->get()
+                ->map(function ($vendor) {
+                    return [
+                        'value' => $vendor->id,
+                        'label' => $vendor->name . ($vendor->trashed() ? ' (ELIMINADO)' : ''),
+                        'vendor_deleted' => $vendor->trashed()
+                    ];
+                });
+        }
+
+        // 8. Generar Array de Advertencias Globales
         $warnings = [];
 
         // Verificamos Cliente
@@ -384,6 +433,8 @@ class PickingBudgetController extends Controller
             'componentIncrements' => $increments,
             'clients' => $clients,
             'paymentConditions' => $paymentConditions,
+            'vendors' => $vendors,
+            'user' => $user,
             'warnings' => $warnings,
         ]);
     }
@@ -401,6 +452,13 @@ class PickingBudgetController extends Controller
         }
 
         $validated = $request->validated();
+
+        // Determinar vendedor asignado
+        if ($user->role->name !== 'admin') {
+            $vendorId = $user->id;
+        } else {
+            $vendorId = $validated['vendor_id'];
+        }
 
         DB::beginTransaction();
 
@@ -427,6 +485,7 @@ class PickingBudgetController extends Controller
 
             $pickingBudget->update(array_merge([
                 'title' => $validated['title'],
+                'vendor_id' => $vendorId,
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
                 'total_components_per_kit' => $validated['total_components_per_kit'],

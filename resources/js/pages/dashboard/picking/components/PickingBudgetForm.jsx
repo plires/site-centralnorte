@@ -38,6 +38,8 @@ export default function PickingBudgetForm({
     processing,
     errors,
     clients,
+    vendors = [],
+    user,
     boxes,
     costScales,
     componentIncrements,
@@ -386,8 +388,16 @@ export default function PickingBudgetForm({
                 <PageHeader backRoute={route('dashboard.picking.budgets.index')} backText="Volver" onBack={handleExit} />
 
                 <form onSubmit={handleFormSubmit} className="space-y-6 p-6">
-                    {/* Información del Cliente */}
-                    <PickingClientSection data={data} setData={setData} clients={clients} errors={errors} processing={processing} />
+                    {/* Información del Cliente y Vendedor */}
+                    <PickingClientSection
+                        data={data}
+                        setData={setData}
+                        clients={clients}
+                        vendors={vendors}
+                        user={user}
+                        errors={errors}
+                        processing={processing}
+                    />
 
                     {/* Cantidades */}
                     <PickingQuantitiesSection

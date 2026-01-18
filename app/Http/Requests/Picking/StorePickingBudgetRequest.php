@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Picking;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StorePickingBudgetRequest extends FormRequest
@@ -27,6 +28,17 @@ class StorePickingBudgetRequest extends FormRequest
 
             // Cliente - Ahora usa client_id desde el ClientCombobox
             'client_id' => ['required', 'exists:clients,id'],
+
+            // Vendedor - Requerido si es admin
+            'vendor_id' => [
+                function ($attribute, $value, $fail) {
+                    if (Auth::user()->role->name === 'admin' && empty($value)) {
+                        $fail('Debe asignar un vendedor al presupuesto.');
+                    }
+                },
+                'nullable',
+                'exists:users,id'
+            ],
 
             // Cantidades base
             'total_kits' => ['required', 'integer', 'min:1', 'max:100000'],

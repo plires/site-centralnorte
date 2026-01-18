@@ -9,10 +9,11 @@ import PickingBudgetForm from './components/PickingBudgetForm';
  * Vista para crear un nuevo presupuesto de picking
  * Renderiza el PickingBudgetForm con datos vacíos
  */
-export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, businessConfig }) {
+export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, vendors, user, businessConfig }) {
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         title: '',
+        vendor_id: user.id, // Por defecto, el usuario actual
         picking_payment_condition_id: '',
         total_kits: '',
         total_components_per_kit: '',
@@ -50,6 +51,8 @@ export default function Create({ auth, boxes, costScales, clients, componentIncr
                 processing={processing}
                 errors={errors}
                 clients={clients}
+                vendors={vendors}
+                user={user}
                 boxes={boxes}
                 costScales={costScales}
                 componentIncrements={componentIncrements}
