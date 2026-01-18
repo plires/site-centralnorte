@@ -1,4 +1,3 @@
-import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
@@ -408,9 +407,8 @@ export default function Boxes({ auth, boxes: initialBoxes }) {
                                             <TableHeader>
                                                 <TableRow>
                                                     <TableHead className="w-[5%]">#</TableHead>
-                                                    <TableHead className="w-[35%]">Dimensiones (LxAxH)</TableHead>
-                                                    <TableHead className="w-[20%]">Costo ($)</TableHead>
-                                                    <TableHead className="w-[20%]">Estado</TableHead>
+                                                    <TableHead className="w-[45%]">Dimensiones (LxAxH)</TableHead>
+                                                    <TableHead className="w-[30%]">Costo ($)</TableHead>
                                                     <TableHead className="w-[20%] text-right">Acciones</TableHead>
                                                 </TableRow>
                                             </TableHeader>
@@ -468,28 +466,6 @@ export default function Boxes({ auth, boxes: initialBoxes }) {
                                                                     <span className="font-medium">${parseFloat(box.cost || 0).toFixed(2)}</span>
                                                                 )}
                                                             </TableCell>
-                                                            <TableCell>
-                                                                {isIndividualEditMode ? (
-                                                                    <>
-                                                                        <Switch
-                                                                            checked={box.is_active}
-                                                                            onCheckedChange={(checked) =>
-                                                                                handleCellChange(index, 'is_active', checked)
-                                                                            }
-                                                                            disabled={disabled}
-                                                                        />
-                                                                        {getFieldError(index, 'is_active') && (
-                                                                            <p className="mt-1 text-xs text-red-600">
-                                                                                {getFieldError(index, 'is_active')}
-                                                                            </p>
-                                                                        )}
-                                                                    </>
-                                                                ) : (
-                                                                    <Badge variant={box.is_active ? 'default' : 'secondary'}>
-                                                                        {box.is_active ? 'Activa' : 'Inactiva'}
-                                                                    </Badge>
-                                                                )}
-                                                            </TableCell>
                                                             <TableCell className="text-right">
                                                                 {!isIndividualEditMode && !isMassEditMode && (
                                                                     <Button
@@ -508,7 +484,7 @@ export default function Boxes({ auth, boxes: initialBoxes }) {
 
                                                 {editedBoxes.length === 0 && (
                                                     <TableRow>
-                                                        <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
+                                                        <TableCell colSpan={4} className="text-muted-foreground py-8 text-center">
                                                             No hay cajas registradas. Haz clic en "Agregar Fila" para crear una.
                                                         </TableCell>
                                                     </TableRow>
