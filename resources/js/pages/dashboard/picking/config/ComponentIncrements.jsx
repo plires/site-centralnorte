@@ -1,5 +1,3 @@
-import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
-import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
@@ -7,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { Pencil, Plus, Save, X } from 'lucide-react';
 import { useState } from 'react';
 
 const breadcrumbs = [
@@ -25,7 +23,6 @@ export default function ComponentIncrements({ increments }) {
 
     const [editingId, setEditingId] = useState(null);
     const [isAdding, setIsAdding] = useState(false);
-    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
 
     const {
         data,
@@ -105,23 +102,6 @@ export default function ComponentIncrements({ increments }) {
         });
     };
 
-    const handleDelete = async (increment) => {
-        const confirmed = await confirmDelete({
-            title: `Borrar rango`,
-            description: `Esta acción eliminará el rango de componentes ${increment.description} de la base de datos. Esta acción es irreversible.`,
-            itemName: increment.description || 'Sin dimensiones',
-        });
-
-        if (!confirmed) return;
-
-        router.delete(route('dashboard.picking.config.component-increments.destroy', increment.id), {
-            preserveScroll: true,
-            ...handleResponse(() => {
-                // Callback de éxito
-            }),
-        });
-    };
-
     const formatRange = (increment) => {
         if (!increment.components_to) return `${increment.components_from}+`;
         return `${increment.components_from} - ${increment.components_to}`;
@@ -161,11 +141,10 @@ export default function ComponentIncrements({ increments }) {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="w-[15%]">Desde</TableHead>
-                                                <TableHead className="w-[15%]">Hasta</TableHead>
-                                                <TableHead className="w-[30%]">Descripción</TableHead>
+                                                <TableHead className="w-[20%]">Desde</TableHead>
+                                                <TableHead className="w-[20%]">Hasta</TableHead>
+                                                <TableHead className="w-[35%]">Descripción</TableHead>
                                                 <TableHead className="w-[15%]">Porcentaje</TableHead>
-                                                <TableHead className="w-[15%]">Estado</TableHead>
                                                 <TableHead className="w-[10%] text-right">Acciones</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -214,9 +193,6 @@ export default function ComponentIncrements({ increments }) {
                                                             <span className="text-muted-foreground">%</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="default">Activo</Badge>
-                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-2">
                                                             <Button size="sm" onClick={handleCreate} disabled={processing}>
@@ -240,7 +216,8 @@ export default function ComponentIncrements({ increments }) {
                                                                 type="number"
                                                                 value={data.components_from}
                                                                 onChange={(e) => setData('components_from', e.target.value)}
-                                                                disabled={processing}
+                                                                disabled={true}
+                                                                className="bg-gray-100"
                                                             />
                                                         ) : (
                                                             <span className="font-medium">{increment.components_from}</span>
@@ -252,8 +229,9 @@ export default function ComponentIncrements({ increments }) {
                                                                 type="number"
                                                                 value={data.components_to}
                                                                 onChange={(e) => setData('components_to', e.target.value)}
-                                                                disabled={processing}
+                                                                disabled={true}
                                                                 placeholder="Ilimitado"
+                                                                className="bg-gray-100"
                                                             />
                                                         ) : (
                                                             <span>{increment.components_to || '∞'}</span>
@@ -288,11 +266,6 @@ export default function ComponentIncrements({ increments }) {
                                                             <span className="font-medium">{(increment.percentage * 100).toFixed(0)}%</span>
                                                         )}
                                                     </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={increment.is_active ? 'default' : 'secondary'}>
-                                                            {increment.is_active ? 'Activo' : 'Inactivo'}
-                                                        </Badge>
-                                                    </TableCell>
                                                     <TableCell className="text-right">
                                                         {editingId === increment.id ? (
                                                             <div className="flex justify-end gap-2">
@@ -315,14 +288,6 @@ export default function ComponentIncrements({ increments }) {
                                                                 >
                                                                     <Pencil className="h-4 w-4" />
                                                                 </Button>
-                                                                <Button
-                                                                    size="sm"
-                                                                    variant="ghost"
-                                                                    onClick={() => handleDelete(increment)}
-                                                                    disabled={isAdding || editingId !== null}
-                                                                >
-                                                                    <Trash2 className="text-destructive h-4 w-4" />
-                                                                </Button>
                                                             </div>
                                                         )}
                                                     </TableCell>
@@ -331,7 +296,7 @@ export default function ComponentIncrements({ increments }) {
 
                                             {increments.length === 0 && !isAdding && (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} className="text-muted-foreground py-8 text-center">
+                                                    <TableCell colSpan={5} className="text-muted-foreground py-8 text-center">
                                                         No hay incrementos registrados. Haz clic en "Nuevo Incremento" para agregar uno.
                                                     </TableCell>
                                                 </TableRow>
@@ -365,8 +330,6 @@ export default function ComponentIncrements({ increments }) {
                 </div>
             </div>
 
-            {/* Modales de confirmación */}
-            <DeleteConfirmationDialog />
         </AppLayout>
     );
 }

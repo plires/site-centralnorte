@@ -454,20 +454,4 @@ class PickingConfigurationController extends Controller
             return back()->with('error', 'Error al actualizar el incremento por componentes.');
         }
     }
-
-    /**
-     * Remove the specified component increment
-     */
-    public function destroyComponentIncrement(PickingComponentIncrement $pickingComponentIncrement)
-    {
-
-        try {
-            $pickingComponentIncrement->delete();
-
-            return back()->with('success', 'Incremento por componentes eliminado correctamente.');
-        } catch (\Exception $e) {
-            Log::error('Error al eliminar Incremento por componentes: ' . $e->getMessage());
-            return back()->with('error', 'Error al eliminar el incremento por componentes.');
-        }
-    }
 }

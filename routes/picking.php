@@ -119,9 +119,6 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::post('/component-increments', [PickingConfigurationController::class, 'storeComponentIncrement'])
                 ->name('component-increments.store');
 
-            Route::delete('/component-increments/{pickingComponentIncrement}', [PickingConfigurationController::class, 'destroyComponentIncrement'])
-                ->name('component-increments.destroy');
-
             // Gestión de Condiciones de Pago
             Route::get('/payment-conditions', [PickingPaymentConditionController::class, 'index'])
                 ->name('payment-conditions');
