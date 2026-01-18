@@ -3,7 +3,6 @@ import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
-import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
@@ -180,9 +179,8 @@ export default function PaymentConditions({ paymentConditions }) {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead className="w-[40%]">Descripción</TableHead>
-                                                <TableHead className="w-[25%]">Ajuste Porcentual</TableHead>
-                                                <TableHead className="w-[20%]">Estado</TableHead>
+                                                <TableHead className="w-[50%]">Descripción</TableHead>
+                                                <TableHead className="w-[35%]">Ajuste Porcentual</TableHead>
                                                 <TableHead className="w-[15%] text-right">Acciones</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -214,9 +212,6 @@ export default function PaymentConditions({ paymentConditions }) {
                                                             <span className="text-muted-foreground text-sm">%</span>
                                                         </div>
                                                         {errors.percentage && <p className="text-destructive mt-1 text-sm">{errors.percentage}</p>}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="secondary">Activo</Badge>
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-2">
@@ -272,22 +267,6 @@ export default function PaymentConditions({ paymentConditions }) {
                                                             </>
                                                         ) : (
                                                             getPercentageBadge(condition.percentage)
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {editingId === condition.id ? (
-                                                            <div className="flex items-center gap-2">
-                                                                <Switch
-                                                                    checked={data.is_active}
-                                                                    onCheckedChange={(checked) => setData('is_active', checked)}
-                                                                    disabled={processing}
-                                                                />
-                                                                <span className="text-sm">{data.is_active ? 'Activo' : 'Inactivo'}</span>
-                                                            </div>
-                                                        ) : (
-                                                            <Badge variant={condition.is_active ? 'default' : 'secondary'}>
-                                                                {condition.is_active ? 'Activo' : 'Inactivo'}
-                                                            </Badge>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="text-right">
