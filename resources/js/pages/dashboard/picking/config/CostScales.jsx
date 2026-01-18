@@ -7,12 +7,11 @@ import { Switch } from '@/Components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/Components/ui/table';
 import ButtonCustom from '@/components/ButtonCustom';
 import { useCostAdjustmentConfirmation } from '@/components/CostAdjustmentConfirmationDialog';
-import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AlertCircle, FileDown, Percent, Plus, Save, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { AlertCircle, FileDown, Percent, Plus, Save, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 const breadcrumbs = [
@@ -28,7 +27,6 @@ export default function CostScales({ auth, scales: initialScales }) {
 
     const { handleResponse } = useInertiaResponse();
     const { confirmAdjustment, CostAdjustmentConfirmationDialog } = useCostAdjustmentConfirmation();
-    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
 
     const [isMassEditMode, setIsMassEditMode] = useState(false);
     const [isIndividualEditMode, setIsIndividualEditMode] = useState(false);
@@ -164,33 +162,6 @@ export default function CostScales({ auth, scales: initialScales }) {
         if (!isIndividualEditMode) {
             setIsIndividualEditMode(true);
         }
-    };
-
-    const handleDeleteRow = async (index, scale) => {
-        const rangeText =
-            scale.quantity_from && scale.quantity_to
-                ? `Rango de kits desde ${scale.quantity_from} a ${scale.quantity_to}`
-                : scale.quantity_from
-                  ? `${scale.quantity_from} o más`
-                  : 'Sin rango definido';
-
-        const confirmed = await confirmDelete({
-            title: 'Eliminar Rango',
-            description: `Esta acción eliminará el rango que contiene los rangos de kits desde ${scale.quantity_from} a ${scale.quantity_to} de la base de datos. Esta acción no se puede deshacer.`,
-            itemName: rangeText,
-        });
-
-        if (!confirmed) return;
-
-        router.delete(route('dashboard.picking.config.cost-scales.destroy', scale.id), {
-            preserveScroll: true,
-            ...handleResponse(() => {
-                // Callback de éxito
-                const newScales = [...editedScales];
-                newScales.splice(index, 1);
-                setEditedScales(newScales);
-            }),
-        });
     };
 
     // Función para aplicar incremento/decremento porcentual masivo
@@ -687,8 +658,6 @@ export default function CostScales({ auth, scales: initialScales }) {
                                                         T.
                                                         <br /> Prod.
                                                     </TableHead>
-                                                    <TableHead className="px-2 py-2 text-xs">Estado</TableHead>
-                                                    <TableHead className="sticky right-0 z-10 bg-white px-2 py-2 text-right text-xs">Acc.</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -928,38 +897,13 @@ export default function CostScales({ auth, scales: initialScales }) {
                                                                     scale={scale}
                                                                 />
                                                             </TableCell>
-                                                            <TableCell className="px-2 py-2">
-                                                                {isIndividualEditMode ? (
-                                                                    <Switch
-                                                                        checked={scale.is_active}
-                                                                        onCheckedChange={(checked) => handleCellChange(index, 'is_active', checked)}
-                                                                        disabled={disabled}
-                                                                    />
-                                                                ) : (
-                                                                    <Badge variant={scale.is_active ? 'default' : 'secondary'} className="text-xs">
-                                                                        {scale.is_active ? 'Activa' : 'Inactiva'}
-                                                                    </Badge>
-                                                                )}
-                                                            </TableCell>
-                                                            <TableCell className="sticky right-0 z-10 bg-white px-2 py-2 text-right">
-                                                                {!isIndividualEditMode && !isMassEditMode && (
-                                                                    <Button
-                                                                        size="sm"
-                                                                        variant="ghost"
-                                                                        onClick={() => handleDeleteRow(index, scale)}
-                                                                        className="h-7 w-7 p-0 hover:bg-red-50"
-                                                                    >
-                                                                        <Trash2 className="text-destructive h-3.5 w-3.5" />
-                                                                    </Button>
-                                                                )}
-                                                            </TableCell>
                                                         </TableRow>
                                                     );
                                                 })}
 
                                                 {editedScales.length === 0 && (
                                                     <TableRow>
-                                                        <TableCell colSpan={22} className="text-muted-foreground py-8 text-center text-sm">
+                                                        <TableCell colSpan={20} className="text-muted-foreground py-8 text-center text-sm">
                                                             No hay escalas de costos registradas. Haz clic en "Agregar Fila" para crear una.
                                                         </TableCell>
                                                     </TableRow>
@@ -976,7 +920,6 @@ export default function CostScales({ auth, scales: initialScales }) {
 
             {/* Modales de confirmación */}
             <CostAdjustmentConfirmationDialog />
-            <DeleteConfirmationDialog />
         </AppLayout>
     );
 }

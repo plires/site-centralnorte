@@ -109,9 +109,6 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_costos_pick'])->pre
             Route::get('/cost-scales', [PickingConfigurationController::class, 'costScales'])
                 ->name('cost-scales');
 
-            Route::delete('/cost-scales/{pickingCostScale}', [PickingConfigurationController::class, 'destroyCostScale'])
-                ->name('cost-scales.destroy');
-
             // Gestión de Incrementos por Componentes
             Route::get('/component-increments', [PickingConfigurationController::class, 'componentIncrements'])
                 ->name('component-increments');

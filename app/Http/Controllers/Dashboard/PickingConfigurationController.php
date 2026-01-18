@@ -410,21 +410,6 @@ class PickingConfigurationController extends Controller
         ]);
     }
 
-    /**
-     * Remove the specified cost scale
-     */
-    public function destroyCostScale(PickingCostScale $pickingCostScale)
-    {
-        try {
-            $pickingCostScale->delete();
-
-            return back()->with('success', 'Rango eliminado correctamente.');
-        } catch (\Exception $e) {
-            Log::error('Error al eliminar el rango: ' . $e->getMessage());
-            return back()->with('error', 'Error al eliminar el rango.');
-        }
-    }
-
     // ========================================================================
     // GESTIÓN DE INCREMENTOS POR COMPONENTES
     // ========================================================================
