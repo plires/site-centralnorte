@@ -262,7 +262,7 @@ export default function BudgetActionsSection({ budget, statuses = [], warnings =
                             {budget.status === 'sent' && (
                                 <p className="text-blue-600">
                                     <Send className="mr-1 inline h-4 w-4" />
-                                    El presupuesto está visible para el cliente. Puede aprobarlo o rechazarlo.
+                                    El presupuesto está visible para el cliente. Puede aprobarlo o colocarlo en evaluación.
                                 </p>
                             )}
                             {budget.status === 'approved' && (
