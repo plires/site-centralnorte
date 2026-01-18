@@ -259,7 +259,7 @@ class PickingBudgetController extends Controller
             'vendor' => fn($q) => $q->withTrashed(),
             'client' => fn($q) => $q->withTrashed(),
             'services',
-            'boxes',
+            'boxes.pickingBox' => fn($q) => $q->withTrashed(),
             'paymentCondition' => fn($q) => $q->withTrashed()
         ]);
 
@@ -290,10 +290,20 @@ class PickingBudgetController extends Controller
             ];
         }
 
-        // Verificar si las boxes, scales o increments usados fueron eliminados
-        // Nota: boxes, scales e increments están guardados como datos en el presupuesto,
-        // no como relaciones directas, por lo que no podemos verificar si fueron eliminados
-        // a menos que establezcas relaciones directas
+        // Verificamos Cajas eliminadas
+        $deletedBoxesCount = 0;
+        foreach ($pickingBudget->boxes as $budgetBox) {
+            if ($budgetBox->pickingBox && $budgetBox->pickingBox->trashed()) {
+                $deletedBoxesCount++;
+            }
+        }
+        if ($deletedBoxesCount > 0) {
+            $boxText = $deletedBoxesCount === 1 ? 'caja' : 'cajas';
+            $warnings[] = [
+                'type' => 'box',
+                'message' => "{$deletedBoxesCount} {$boxText} del presupuesto ya no está disponible en la configuración."
+            ];
+        }
 
         $statusData = $pickingBudget->getStatusData();
 
@@ -325,7 +335,7 @@ class PickingBudgetController extends Controller
         // 1. Cargar relaciones INCLUYENDO las borradas
         $pickingBudget->load([
             'services',
-            'boxes',
+            'boxes.pickingBox' => fn($q) => $q->withTrashed(),
             'client' => fn($q) => $q->withTrashed(),
             'vendor' => fn($q) => $q->withTrashed(),
             'paymentCondition' => fn($q) => $q->withTrashed()
@@ -423,6 +433,21 @@ class PickingBudgetController extends Controller
             $warnings[] = [
                 'type' => 'condition',
                 'message' => "La condición de pago original ya no está disponible en la configuración."
+            ];
+        }
+
+        // Verificamos Cajas eliminadas
+        $deletedBoxesCount = 0;
+        foreach ($pickingBudget->boxes as $budgetBox) {
+            if ($budgetBox->pickingBox && $budgetBox->pickingBox->trashed()) {
+                $deletedBoxesCount++;
+            }
+        }
+        if ($deletedBoxesCount > 0) {
+            $boxText = $deletedBoxesCount === 1 ? 'caja' : 'cajas';
+            $warnings[] = [
+                'type' => 'box',
+                'message' => "{$deletedBoxesCount} {$boxText} del presupuesto ya no está disponible en la configuración."
             ];
         }
 

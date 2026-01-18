@@ -1,5 +1,6 @@
 // resources/js/pages/dashboard/picking/Edit.jsx
 
+import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, useForm, usePage } from '@inertiajs/react';
@@ -11,7 +12,19 @@ import PickingBudgetForm from './components/PickingBudgetForm';
  * Vista para editar un presupuesto de picking existente
  * Renderiza el PickingBudgetForm con datos del presupuesto
  */
-export default function Edit({ auth, budget, boxes, costScales, clients, componentIncrements, paymentConditions, vendors, user, businessConfig }) {
+export default function Edit({
+    auth,
+    budget,
+    warnings,
+    boxes,
+    costScales,
+    clients,
+    componentIncrements,
+    paymentConditions,
+    vendors,
+    user,
+    businessConfig,
+}) {
     const { flash } = usePage().props;
 
     // Inicializar formulario con datos del presupuesto existente
@@ -70,6 +83,15 @@ export default function Edit({ auth, budget, boxes, costScales, clients, compone
     return (
         <AppLayout user={auth.user} breadcrumbs={breadcrumbs}>
             <Head title={`Editar - ${budget.budget_number}`} />
+
+            {/* Banner de Advertencias Globales */}
+            {warnings && warnings.length > 0 && (
+                <GlobalWarningsBanner
+                    warnings={warnings}
+                    title="Atención: Existen registros históricos eliminados."
+                    subtitle="Te recomendamos editar los registros que ya no están disponibles y enviar el presupuesto nuevamente."
+                />
+            )}
 
             <PickingBudgetForm
                 data={data}

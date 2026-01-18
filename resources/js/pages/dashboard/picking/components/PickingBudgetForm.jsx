@@ -450,7 +450,14 @@ export default function PickingBudgetForm({
                     />
 
                     {/* Cajas */}
-                    <PickingBoxesSection data={data} setData={setData} boxes={boxes} errors={errors} processing={processing} />
+                    <PickingBoxesSection
+                        data={data}
+                        setData={setData}
+                        boxes={boxes}
+                        errors={errors}
+                        processing={processing}
+                        originalBudget={originalBudget}
+                    />
 
                     {/* Notas */}
                     <PickingNotesSection data={data} setData={setData} errors={errors} processing={processing} />

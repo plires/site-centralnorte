@@ -545,20 +545,26 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {budget.boxes.map((box, index) => (
-                                                <tr key={index} className="border-b last:border-0">
-                                                    <td className="px-3 py-3 text-sm text-gray-900">{box.box_dimensions}</td>
-                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
-                                                        {box.quantity.toLocaleString('es-AR')}
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right text-sm text-gray-900">
-                                                        {formatCurrency(box.box_unit_cost)}
-                                                    </td>
-                                                    <td className="px-3 py-3 text-right text-sm font-medium text-gray-900">
-                                                        {formatCurrency(box.subtotal)}
-                                                    </td>
-                                                </tr>
-                                            ))}
+                                            {budget.boxes.map((box, index) => {
+                                                const isDeleted = box.picking_box && box.picking_box.deleted_at;
+                                                return (
+                                                    <tr key={index} className={`border-b last:border-0 ${isDeleted ? 'bg-red-50' : ''}`}>
+                                                        <td className={`px-3 py-3 text-sm ${isDeleted ? 'text-red-700 font-semibold' : 'text-gray-900'}`}>
+                                                            {box.box_dimensions}
+                                                            {isDeleted && ' (ELIMINADA)'}
+                                                        </td>
+                                                        <td className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                            {box.quantity.toLocaleString('es-AR')}
+                                                        </td>
+                                                        <td className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                            {formatCurrency(box.box_unit_cost)}
+                                                        </td>
+                                                        <td className={`px-3 py-3 text-right text-sm font-medium ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                            {formatCurrency(box.subtotal)}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>

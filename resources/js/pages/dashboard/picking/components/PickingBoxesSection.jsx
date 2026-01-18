@@ -12,7 +12,7 @@ import { toast } from 'sonner';
  * Componente para manejar las cajas de un presupuesto de picking
  * Permite agregar, editar y eliminar cajas con validación de duplicados
  */
-export default function PickingBoxesSection({ data, setData, boxes, errors, processing }) {
+export default function PickingBoxesSection({ data, setData, boxes, errors, processing, originalBudget = null }) {
     /**
      * Agregar una nueva caja vacía al array
      */
@@ -93,6 +93,16 @@ export default function PickingBoxesSection({ data, setData, boxes, errors, proc
         }).format(value);
     };
 
+    /**
+     * Verificar si una caja está eliminada
+     */
+    const isBoxDeleted = (boxId) => {
+        if (!originalBudget || !originalBudget.boxes) return false;
+
+        const originalBox = originalBudget.boxes.find((b) => b.picking_box_id?.toString() === boxId?.toString());
+        return originalBox?.picking_box?.deleted_at ? true : false;
+    };
+
     return (
         <Card>
             <CardHeader>
@@ -124,12 +134,19 @@ export default function PickingBoxesSection({ data, setData, boxes, errors, proc
                     <div className="space-y-4">
                         {data.boxes.map((box, index) => {
                             const subtotal = calculateBoxSubtotal(box);
-                            
+                            const deleted = isBoxDeleted(box.box_id);
+
                             return (
-                                <div key={index} className="space-y-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                <div
+                                    key={index}
+                                    className={`space-y-3 rounded-lg border p-4 ${deleted ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}
+                                >
                                     {/* Header de la caja */}
                                     <div className="mb-2 flex items-center justify-between">
-                                        <span className="text-sm font-medium text-gray-700">Caja #{index + 1}</span>
+                                        <span className={`text-sm font-medium ${deleted ? 'text-red-700' : 'text-gray-700'}`}>
+                                            Caja #{index + 1}
+                                            {deleted && <span className="ml-2 text-xs font-semibold">(ELIMINADA)</span>}
+                                        </span>
                                         <Button
                                             type="button"
                                             onClick={() => removeBox(index)}
@@ -154,14 +171,17 @@ export default function PickingBoxesSection({ data, setData, boxes, errors, proc
                                                 onValueChange={(value) => updateBox(index, 'box_id', value)}
                                                 disabled={processing}
                                             >
-                                                <SelectTrigger id={`box_${index}_select`}>
+                                                <SelectTrigger
+                                                    id={`box_${index}_select`}
+                                                    className={deleted ? 'border-red-400 bg-red-100 text-red-800' : ''}
+                                                >
                                                     <SelectValue placeholder="Elegir caja..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {boxes.map((b) => {
                                                         // Deshabilitar cajas ya seleccionadas en otras posiciones
                                                         const isAlreadySelected = data.boxes.some(
-                                                            (selectedBox, i) => i !== index && selectedBox.box_id === b.id.toString()
+                                                            (selectedBox, i) => i !== index && selectedBox.box_id === b.id.toString(),
                                                         );
 
                                                         return (
@@ -249,9 +269,7 @@ export default function PickingBoxesSection({ data, setData, boxes, errors, proc
                             </div>
                             <div className="text-right">
                                 <p className="text-lg font-bold text-blue-900">
-                                    {formatCurrency(
-                                        data.boxes.reduce((sum, box) => sum + calculateBoxSubtotal(box), 0)
-                                    )}
+                                    {formatCurrency(data.boxes.reduce((sum, box) => sum + calculateBoxSubtotal(box), 0))}
                                 </p>
                                 <p className="text-xs text-blue-700">Subtotal de cajas</p>
                             </div>
