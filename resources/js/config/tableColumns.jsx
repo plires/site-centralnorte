@@ -245,7 +245,6 @@ export const productColumns = (actions, isDeleting = false) => [
         sortable: false,
         render: (value, row) => {
             const imageUrl = row.featured_image?.full_url;
-            console.log(imageUrl);
             return imageUrl ? (
                 <img src={imageUrl} alt={row.name} className="h-10 w-10 rounded object-cover" loading="lazy" />
             ) : (
