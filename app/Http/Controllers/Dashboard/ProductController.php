@@ -287,7 +287,7 @@ class ProductController extends Controller
             // Sincronizar categorías (reemplaza todas)
             $product->categories()->sync($validated['category_ids']);
 
-            // 👇 AGREGAR: Sincronizar atributos
+            // Sincronizar atributos
             // Eliminar atributos existentes y crear nuevos
             $product->attributes()->delete();
             if (!empty($validated['attributes'])) {
