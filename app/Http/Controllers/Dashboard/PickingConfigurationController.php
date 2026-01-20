@@ -195,6 +195,21 @@ class PickingConfigurationController extends Controller
     public function destroyBox(PickingBox $pickingBox)
     {
         try {
+            // Verificar si la caja está incluida en presupuestos vigentes (no expirados por fecha)
+            $hasActiveBudgets = $pickingBox->budgetBoxes()
+                ->whereHas('pickingBudget', function ($query) {
+                    $query->where('valid_until', '>=', now()->startOfDay())
+                        ->whereIn('status', ['unsent', 'draft', 'sent', 'in_review', 'approved']);
+                })
+                ->exists();
+
+            if ($hasActiveBudgets) {
+                return back()->with(
+                    'error',
+                    "No se puede eliminar la caja '{$pickingBox->dimensions}' porque está incluida en presupuestos de picking vigentes."
+                );
+            }
+
             $pickingBox->delete();
 
             return back()->with('success', 'Caja eliminada correctamente.');

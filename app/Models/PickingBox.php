@@ -36,4 +36,12 @@ class PickingBox extends Model
     {
         return $query->orderBy('cost', $direction);
     }
+
+    /**
+     * Relación con presupuestos de picking que usan esta caja
+     */
+    public function budgetBoxes()
+    {
+        return $this->hasMany(PickingBudgetBox::class, 'picking_box_id');
+    }
 }
