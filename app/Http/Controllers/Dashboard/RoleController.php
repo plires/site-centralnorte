@@ -22,7 +22,7 @@ class RoleController extends Controller
     public function index()
     {
         return Inertia::render('dashboard/roles/Index', [
-            'roles' => Role::with('permissions')->get(),
+            'roles' => Role::with('permissions')->withCount('users')->get(),
             'permissions' => Permission::all()
         ]);
     }
