@@ -234,7 +234,7 @@ export default function Index({ auth, slides, filters = {}, stats }) {
                                             <TableHead>Título</TableHead>
                                             <TableHead className="hidden md:table-cell">Enlace</TableHead>
                                             <TableHead>Estado</TableHead>
-                                            <TableHead className="text-right">Acciones</TableHead>
+                                            <TableHead className="text-center">Acciones</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>

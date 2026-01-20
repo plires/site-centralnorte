@@ -176,7 +176,7 @@ export default function DataTable({
                                 {columns.map((column) => (
                                     <TableHead
                                         key={column.key}
-                                        className={`text-center font-medium whitespace-nowrap ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}`}
+                                        className={`${column.align === 'left' ? 'text-left' : 'text-center'} font-medium whitespace-nowrap ${column.hideOnMobile ? 'hidden sm:table-cell' : ''}`}
                                     >
                                         {column.sortable ? (
                                             <Button
@@ -219,7 +219,7 @@ export default function DataTable({
                                         {columns.map((column) => (
                                             <TableCell
                                                 key={column.key}
-                                                className={`${
+                                                className={`${column.align === 'left' ? 'text-left' : 'text-center'} ${
                                                     column.hideOnMobile ? 'hidden sm:table-cell' : ''
                                                 } ${column.truncate ? 'max-w-[200px] truncate' : ''}`}
                                             >
