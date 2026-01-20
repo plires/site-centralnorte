@@ -44,18 +44,33 @@ export default function RoleForm({ data, setData, handleSubmit, processing, erro
                             <CardContent>
                                 <form onSubmit={handleSubmit} className="space-y-6">
                                     {/* Nombre del Rol */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor="name">Nombre del Rol</Label>
-                                        <Input
-                                            id="name"
-                                            type="text"
-                                            value={data.name}
-                                            onChange={(e) => setData('name', e.target.value)}
-                                            placeholder="Ej: Administrador"
-                                            className={errors.name ? 'border-red-500' : ''}
-                                        />
-                                        {errors.name && <span className="text-xs text-red-500">{errors.name}</span>}
-                                    </div>
+                                    {isEditing && data.is_system ? (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name">Nombre del Rol</Label>
+                                            <Input
+                                                id="name"
+                                                type="text"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', data.name)}
+                                                placeholder="Ej: Administrador"
+                                                disabled={true}
+                                                className="cursor-not-allowed bg-gray-100"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="name">Nombre del Rol</Label>
+                                            <Input
+                                                id="name"
+                                                type="text"
+                                                value={data.name}
+                                                onChange={(e) => setData('name', e.target.value)}
+                                                placeholder="Ej: Administrador"
+                                                className={errors.name ? 'border-red-500' : ''}
+                                            />
+                                            {errors.name && <span className="text-xs text-red-500">{errors.name}</span>}
+                                        </div>
+                                    )}
 
                                     {/* Permisos */}
                                     <div className="space-y-2">

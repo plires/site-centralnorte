@@ -17,6 +17,7 @@ const breadcrumbs = [
 export default function Edit({ role, permissions }) {
     const { data, setData, put, processing, errors } = useForm({
         name: role.name || '',
+        is_system: role.is_system || false,
         permissions: role.permissions?.map((p) => p.id) || [],
     });
 

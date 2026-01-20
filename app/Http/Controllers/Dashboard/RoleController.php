@@ -73,6 +73,14 @@ class RoleController extends Controller
 
     public function update(Request $request, Role $role)
     {
+        // Verificar si el rol es de sistema y se intenta cambiar el nombre
+        if ($role->is_system && $request->name !== $role->name) {
+            return redirect()->back()->with(
+                'error',
+                "No se puede modificar el nombre del rol '{$role->name}' porque es un rol del sistema."
+            );
+        }
+
         $request->validate([
             'name' => 'required|unique:roles,name,' . $role->id,
             'permissions' => 'array'
