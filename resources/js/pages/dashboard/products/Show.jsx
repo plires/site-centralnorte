@@ -1,8 +1,9 @@
 import PageHeader from '@/components/PageHeader';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
-import { Head, router, useForm } from '@inertiajs/react';
-import { useRef, useState } from 'react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // Componentes extraídos
 import ImagePreviewDialog from './components/ImagePreviewDialog';
@@ -20,6 +21,8 @@ const breadcrumbs = [
 ];
 
 export default function Show({ auth, product, is_readonly, last_sync_info }) {
+    const { props } = usePage();
+
     const { is_external } = product.origin_config;
 
     const [selectedImage, setSelectedImage] = useState(null);
@@ -36,6 +39,24 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
     });
 
     const { handleResponse } = useInertiaResponse();
+
+    // Interceptar flash messages en el destino de la navegación
+    useEffect(() => {
+        const flashSuccess = props.flash?.success;
+        const flashError = props.flash?.error;
+        const flashWarning = props.flash?.warning;
+        const flashInfo = props.flash?.info;
+
+        if (flashSuccess) {
+            toast.success(flashSuccess);
+        } else if (flashError) {
+            toast.error(flashError);
+        } else if (flashWarning) {
+            toast.warning(flashWarning);
+        } else if (flashInfo) {
+            toast.info(flashInfo);
+        }
+    }, [props.flash]);
 
     // Funciones de utilidad
     const resetFile = () => {
