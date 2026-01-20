@@ -136,21 +136,23 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
                             )}
 
                             {/* Sección de imágenes */}
-                            <div className="mt-6">
-                                <ProductImagesSection
-                                    product={product}
-                                    onImageClick={setSelectedImage}
-                                    onDeleteImage={handleDeleteImage}
-                                    onSetFeaturedImage={handleSetFeaturedImage}
-                                    setData={setData}
-                                    handleSubmit={handleSubmit}
-                                    processing={processing}
-                                    errors={errors}
-                                    preview={preview}
-                                    handleImageChange={handleImageChange}
-                                    fileInputRef={fileInputRef}
-                                />
-                            </div>
+                            {!is_external && (
+                                <div className="mt-6">
+                                    <ProductImagesSection
+                                        product={product}
+                                        onImageClick={setSelectedImage}
+                                        onDeleteImage={handleDeleteImage}
+                                        onSetFeaturedImage={handleSetFeaturedImage}
+                                        setData={setData}
+                                        handleSubmit={handleSubmit}
+                                        processing={processing}
+                                        errors={errors}
+                                        preview={preview}
+                                        handleImageChange={handleImageChange}
+                                        fileInputRef={fileInputRef}
+                                    />
+                                </div>
+                            )}
 
                             {/* Sincronizacion de producto individual */}
                             {is_external && isAdmin && (
