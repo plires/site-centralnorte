@@ -6,7 +6,7 @@ import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { pickingBudgetsColumns } from '@/config/pickingBudgetsColumns';
+import { pickingBudgetsColumns } from '@/config/tableColumns';
 import { useExcelExport } from '@/hooks/use-excel-export';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
