@@ -208,7 +208,7 @@ class ProductController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', "Producto '{$product->name}' creado correctamente.");
+            return redirect()->route('dashboard.products.show', $product->id)->with('success', "Producto '{$product->name}' creado correctamente.");
         } catch (\Exception $e) {
             Log::error('Error al crear el producto: ' . $e->getMessage());
 
