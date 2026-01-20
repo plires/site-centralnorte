@@ -302,6 +302,20 @@ export const rolesColumns = (actions, isDeleting = false) => [
         ),
     },
     {
+        key: 'is_system',
+        label: 'Tipo de Rol',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value, row) => {
+            const isSystem = row.is_system;
+            return (
+                <Badge variant="outline" className="rounded-full">
+                    {isSystem ? 'Sistema' : 'Local'}
+                </Badge>
+            );
+        },
+    },
+    {
         key: 'created_at',
         label: 'Creado',
         sortable: true,

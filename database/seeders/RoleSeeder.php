@@ -17,16 +17,19 @@ class RoleSeeder extends Seeder
         // Crear rol admin
         Role::factory(1)->create([
             'name' => 'admin',
+            'is_system' => true,
         ]);
 
         // Crear rol vendedor
         Role::factory(1)->create([
             'name' => 'vendedor',
+            'is_system' => true,
         ]);
 
         // Crear rol diseñador
         Role::factory(1)->create([
             'name' => 'design',
+            'is_system' => true,
         ]);
     }
 }

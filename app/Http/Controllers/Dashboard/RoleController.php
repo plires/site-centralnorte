@@ -92,6 +92,14 @@ class RoleController extends Controller
     public function destroy(Role $role)
     {
         try {
+
+            // Verificar si el rol es de sistema y no se puede borrar
+            if ($role->is_system) {
+                return redirect()->back()->with(
+                    'error',
+                    "No se puede eliminar el rol '{$role->name}' porque es un rol del sistema."
+                );
+            }
             // Verificar si el rol tiene usuarios asociados
             if ($role->users()->exists()) {
                 return redirect()->back()->with(
