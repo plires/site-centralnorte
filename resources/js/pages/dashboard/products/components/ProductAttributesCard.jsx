@@ -5,7 +5,7 @@ import { Tag } from 'lucide-react';
 export default function ProductAttributesCard({ attributes }) {
     if (!attributes || attributes.length === 0) {
         return (
-            <Card>
+            <Card className="mb-6">
                 <CardHeader>
                     <CardTitle className="flex items-center">
                         <Tag className="mr-2 h-5 w-5" />
