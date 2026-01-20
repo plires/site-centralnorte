@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { router } from '@inertiajs/react';
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ChevronsLeft, ChevronsRight, Search, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function DataTable({
@@ -252,6 +252,15 @@ export default function DataTable({
                         <Button
                             variant="outline"
                             className="h-8 w-8 p-0"
+                            onClick={() => handlePageChange(pagination.first_page_url)}
+                            disabled={pagination.current_page === 1}
+                        >
+                            <span className="sr-only">Ir a la primera página</span>
+                            <ChevronsLeft className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0"
                             onClick={() => handlePageChange(pagination.prev_page_url)}
                             disabled={!pagination.prev_page_url}
                         >
@@ -270,6 +279,15 @@ export default function DataTable({
                         >
                             <span className="sr-only">Ir a la página siguiente</span>
                             <ChevronRight className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handlePageChange(pagination.last_page_url)}
+                            disabled={pagination.current_page === pagination.last_page}
+                        >
+                            <span className="sr-only">Ir a la última página</span>
+                            <ChevronsRight className="h-4 w-4" />
                         </Button>
                     </div>
                 </div>
