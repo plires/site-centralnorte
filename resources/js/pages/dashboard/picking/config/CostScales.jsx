@@ -1,4 +1,3 @@
-import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
@@ -469,9 +468,14 @@ export default function CostScales({ auth, scales: initialScales }) {
                             {/* Banner informativo cuando hay filas nuevas */}
                             {hasNewRows && (
                                 <div className="mt-4 mb-5 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                                    <p className="text-sm text-blue-900">
+                                    <p className="mb-3 text-sm text-blue-900">
                                         <strong>✨ Nueva fila agregada:</strong> Completa los datos de la nueva escala y presiona "Guardar Todos los
                                         Cambios" cuando termines. Las filas existentes están bloqueadas mientras agregas nuevas escalas.
+                                    </p>
+                                    <p className="text-sm text-red-900">
+                                        <strong>✨ Tené especial cuidado cuando agregues "Rangos de kits":</strong> si el rango se superpone con uno
+                                        existente, o si el valor "Desde" es mayor que "Hasta", podrían generarse errores en el sistema. El sistema no
+                                        valida ni compara con otros registros ingresados, por lo tanto ingresá los valores con responsabilidad.
                                     </p>
                                 </div>
                             )}
@@ -569,13 +573,24 @@ export default function CostScales({ auth, scales: initialScales }) {
 
                             <Card>
                                 <CardHeader>
-                                    <CardTitle>Listado de Escalas de Costos</CardTitle>
+                                    <CardTitle className="mb-3">Listado de Escalas de Costos</CardTitle>
                                     <CardDescription>
-                                        {isMassEditMode
-                                            ? '📊 Modificación Masiva: Usa los controles para ajustar todos los valores'
-                                            : isIndividualEditMode
-                                              ? '✏️ Modificación Individual: Edita cada celda según necesites'
-                                              : '📋 Vista de solo lectura: Activa un modo de edición para modificar'}
+                                        {isMassEditMode ? (
+                                            '📊 Modificación Masiva: Usa los controles para ajustar todos los valores'
+                                        ) : isIndividualEditMode ? (
+                                            <>
+                                                <p className="-900 mb-1 text-sm">✏️ Modificación Individual: Edita cada celda según necesites</p>
+
+                                                <p className="text-sm text-red-900">
+                                                    <strong>✨ Tené especial cuidado cuando agregues "Rangos de kits":</strong> si el rango se
+                                                    superpone con uno existente, o si el valor "Desde" es mayor que "Hasta", podrían generarse errores
+                                                    en el sistema. El sistema no valida ni compara con otros registros ingresados, por lo tanto
+                                                    ingresá los valores con responsabilidad.
+                                                </p>
+                                            </>
+                                        ) : (
+                                            '📋 Vista de solo lectura: Activa un modo de edición para modificar'
+                                        )}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -681,7 +696,7 @@ export default function CostScales({ auth, scales: initialScales }) {
                                                                                 type="number"
                                                                                 placeholder="Desde"
                                                                                 scale={scale}
-                                                                                className="w-16"
+                                                                                className={`w-16 ${isIndividualEditMode ? 'bg-orange-300' : ''}`}
                                                                             />
                                                                             <span className="self-center text-xs">-</span>
                                                                             <EditableCell
@@ -691,7 +706,7 @@ export default function CostScales({ auth, scales: initialScales }) {
                                                                                 type="number"
                                                                                 placeholder="Hasta"
                                                                                 scale={scale}
-                                                                                className="w-16"
+                                                                                className={`w-16 ${isIndividualEditMode ? 'bg-orange-300' : ''}`}
                                                                             />
                                                                         </div>
                                                                     </TableCell>
