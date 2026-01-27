@@ -23,6 +23,29 @@
     -webkit-backdrop-filter: blur(8px);
 }
 
+/* Mobile menu abierto: fullscreen, fondo sólido */
+.navbar.mobileOpen {
+    position: fixed;
+    top: 0;
+    height: 100dvh;
+    background: var(--neutral-color);
+    overflow-y: auto;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+    z-index: 1100;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar.mobileOpen :global(.container),
+.navbar.mobileOpen :global(.row),
+.navbar.mobileOpen :global(.col) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
 /* ===== Inner row ===== */
 .navbarInner {
     display: flex;
@@ -163,6 +186,7 @@
     flex-direction: column;
     gap: 0;
     padding: 16px 0 8px;
+    flex: 1;
 }
 
 .mobileMenu.open {
@@ -200,6 +224,7 @@
 
     .hamburger {
         display: flex;
+        align-self: flex-start;
     }
 }
 

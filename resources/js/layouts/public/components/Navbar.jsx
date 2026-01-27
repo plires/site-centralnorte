@@ -3,7 +3,6 @@ import logoSrc from '@/../images/header/logo-site-header.svg';
 import { useEffect, useState } from 'react';
 import { HiOutlineShoppingCart } from 'react-icons/hi2';
 import styles from './Navbar.module.css';
-console.log(logoSmallSrc);
 
 const navItems = [
     { label: 'Merchandising', href: '#' },
@@ -40,7 +39,7 @@ const Navbar = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const navbarClass = `${styles.navbar} ${scrolled ? styles.scrolled : ''}`;
+    const navbarClass = `${styles.navbar} ${scrolled ? styles.scrolled : ''} ${mobileOpen ? styles.mobileOpen : ''}`;
 
     return (
         <nav className={navbarClass}>
@@ -50,7 +49,7 @@ const Navbar = () => {
                         <div className={styles.navbarInner}>
                             {/* Logo */}
                             <a href="/" className={styles.logo}>
-                                <img src={scrolled ? logoSmallSrc : logoSrc} alt="Central Norte" />
+                                <img src={scrolled || mobileOpen ? logoSmallSrc : logoSrc} alt="Central Norte" />
                             </a>
 
                             {/* Nav links (desktop) */}
