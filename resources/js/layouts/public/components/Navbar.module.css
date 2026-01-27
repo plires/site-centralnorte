@@ -1,0 +1,210 @@
+/* ===== Navbar wrapper ===== */
+.navbar {
+    position: absolute;
+    top: 48px;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    padding: 20px 0;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0) 100%);
+    transition:
+        padding 0.3s ease,
+        background 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.navbar.scrolled {
+    position: fixed;
+    top: 0;
+    padding: 10px 0;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+/* ===== Inner row ===== */
+.navbarInner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ===== Logo ===== */
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.logo img {
+    height: 90px;
+    width: auto;
+    transition: height 0.3s ease;
+}
+
+.navbar.scrolled .logo img {
+    height: 36px;
+}
+
+/* ===== Nav links (desktop) ===== */
+.navList {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navLink {
+    color: var(--tertiary-color);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+}
+
+.navLink:hover {
+    color: var(--primary-color);
+}
+
+/* ===== Right actions ===== */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cartLink {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--tertiary-color);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.cartLink:hover {
+    color: var(--primary-color);
+}
+
+.cartIcon {
+    font-size: 20px;
+}
+
+.ctaButton {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 20px;
+    border: 2px solid var(--tertiary-color);
+    border-radius: 24px;
+    background: transparent;
+    color: var(--tertiary-color);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
+}
+
+.ctaButton:hover {
+    background-color: var(--tertiary-color);
+    color: #ffffff;
+}
+
+/* ===== Hamburger button (mobile) ===== */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    gap: 5px;
+}
+
+.hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background-color: var(--tertiary-color);
+    border-radius: 2px;
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
+}
+
+.hamburger.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ===== Mobile menu ===== */
+.mobileMenu {
+    display: none;
+    flex-direction: column;
+    gap: 0;
+    padding: 16px 0 8px;
+}
+
+.mobileMenu.open {
+    display: flex;
+}
+
+.mobileMenu .navLink {
+    display: block;
+    padding: 10px 0;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.mobileMenu .navLink:last-child {
+    border-bottom: none;
+}
+
+.mobileActions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 991px) {
+    .navList {
+        display: none;
+    }
+
+    .desktopActions {
+        display: none;
+    }
+
+    .hamburger {
+        display: flex;
+    }
+}
+
+@media (min-width: 992px) {
+    .mobileMenu {
+        display: none !important;
+    }
+}

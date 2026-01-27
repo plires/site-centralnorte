@@ -9,9 +9,23 @@ This is a Laravel + Inertia.js + React application for "Central Norte" - a compr
 **Tech Stack:**
 - Backend: Laravel 12 (PHP 8.2+)
 - Frontend: React 19 + Inertia.js 2.0
-- Styling: Tailwind CSS 4
-- UI Components: Radix UI primitives
 - Database: MySQL with Eloquent ORM
+
+The frontend has **two independent stacks** that share the same React + Inertia base but differ in styling and tooling:
+
+| Aspecto | Dashboard (admin) | Sitio Público |
+|---|---|---|
+| Blade root view | `resources/views/dashboard.blade.php` | `resources/views/public.blade.php` |
+| JS entry point | `resources/js/dashboard.jsx` | `resources/js/public.jsx` |
+| CSS entry point | `resources/css/dashboard.css` | `resources/css/public.css` |
+| Styling | Tailwind CSS 4 | Bootstrap 5 + CSS Modules |
+| UI Components | Radix UI / shadcn | Bootstrap grid + clases utilitarias |
+| Icons | Lucide React | react-icons (cualquier set: fa6, si, etc.) |
+| Animations | — | AOS (Animate On Scroll) |
+| Layout | `resources/js/layouts/dashboard/` | `resources/js/layouts/public/` |
+| Pages | `resources/js/pages/dashboard/` | `resources/js/pages/public/site/` |
+
+> **IMPORTANTE:** No mezclar Tailwind en el sitio público ni Bootstrap en el dashboard. Cada stack es independiente.
 
 ## Architecture
 
@@ -43,22 +57,30 @@ This is a Laravel + Inertia.js + React application for "Central Norte" - a compr
 ### Frontend (React + Inertia)
 
 **Directory Structure:**
-- `resources/js/dashboard.jsx` - Dashboard entry point
-- `resources/js/public.jsx` - Public site entry point
-- `resources/js/components/` - Reusable UI components
-  - `resources/js/components/ui/` - Radix UI-based design system components
-  - `resources/js/components/layouts/` - Layout wrappers (DashboardLayout, PublicLayout)
+- `resources/js/dashboard.jsx` - Dashboard entry point (loads Tailwind CSS)
+- `resources/js/public.jsx` - Public site entry point (loads Bootstrap + AOS)
+- `resources/js/components/` - Reusable UI components (dashboard only)
+  - `resources/js/components/ui/` - Radix UI-based design system components (dashboard)
+- `resources/js/layouts/` - Layout wrappers
+  - `resources/js/layouts/dashboard/` - Dashboard layout (Tailwind)
+  - `resources/js/layouts/public/` - Public site layout (Bootstrap)
+    - `resources/js/layouts/public/public-layout.jsx` - Layout principal del sitio público
+    - `resources/js/layouts/public/components/` - Componentes del layout público (TopHeader, Footer, etc.)
+    - `resources/js/layouts/public/components/*.module.css` - Estilos CSS Module de cada componente
 - `resources/js/pages/` - Inertia page components
-  - `resources/js/pages/dashboard/` - Admin pages
-  - `resources/js/pages/public/` - Public-facing pages
+  - `resources/js/pages/dashboard/` - Admin pages (Tailwind + Radix UI)
+  - `resources/js/pages/public/site/` - **Sitio público** (Bootstrap + AOS + react-icons)
+  - `resources/js/pages/public/budgets/` - Vistas públicas de presupuestos merch (Tailwind, NO son parte del sitio público)
+  - `resources/js/pages/public/picking/` - Vistas públicas de presupuestos picking (Tailwind, NO son parte del sitio público)
+  - `resources/js/pages/public/components/` - Componentes compartidos de vistas de presupuestos (Tailwind)
   - `resources/js/pages/auth/` - Authentication pages
   - `resources/js/pages/settings/` - User settings pages
 - `resources/js/utils/` - Helper functions and utilities
 - `resources/js/hooks/` - Custom React hooks
+- `resources/css/public.css` - CSS global del sitio público (variables CSS, fuentes, layout flex)
+- `resources/css/dashboard.css` - CSS global del dashboard
 
-**Key Technologies:**
-- React 19 with JSX (TypeScript typing available)
-- Inertia.js 2.0 for SPA routing
+**Dashboard Technologies:**
 - Tailwind CSS 4 with custom theme
 - Radix UI primitives (Dialog, Dropdown, Select, etc.)
 - TanStack Table for data tables
@@ -66,6 +88,13 @@ This is a Laravel + Inertia.js + React application for "Central Norte" - a compr
 - Sonner for toast notifications
 - date-fns for date formatting
 - cmdk for command palette
+
+**Public Site Technologies:**
+- Bootstrap 5 (grid system, utility classes, responsive breakpoints)
+- CSS Modules (archivos `*.module.css` para estilos por componente)
+- AOS (Animate On Scroll) for scroll animations
+- react-icons (cualquier set de iconos: `react-icons/fa6`, `react-icons/si`, etc.)
+- CSS custom properties defined in `resources/css/public.css`
 
 ## Development Commands
 
@@ -415,6 +444,68 @@ Main branch: `master`
 - Reference issues if applicable
 
 ## Project-Specific Notes
+
+### Public Site Architecture (Sitio Público)
+
+The public site and the dashboard are **two separate Inertia applications** that share the same Laravel backend but use different Blade root views, JS entry points, and CSS stacks.
+
+**Dual Root View Mechanism:**
+The middleware `HandleInertiaRequestsCustom` (`app/Http/Middleware/HandleInertiaRequestsCustom.php`) determines which Blade root view to use based on the route name:
+- Routes named `public.home`, `public.nosotros`, etc. → `resources/views/public.blade.php` (loads Bootstrap + AOS)
+- Routes named `public.budget.*`, `public.picking.budget.*` → `resources/views/dashboard.blade.php` (loads Tailwind)
+- All other routes (dashboard, auth, settings) → `resources/views/dashboard.blade.php` (loads Tailwind)
+
+This means the budget/picking public views (`resources/js/pages/public/budgets/`, `resources/js/pages/public/picking/`) are **NOT** part of the public site — they use the dashboard Blade template and Tailwind CSS. They are small standalone views for clients to see their budgets via token URLs.
+
+**Public Site File Structure:**
+```
+resources/js/layouts/public/
+├── public-layout.jsx                    # Layout principal (TopHeader + main + Footer)
+└── components/
+    ├── TopHeader.jsx                    # Barra superior con redes sociales
+    ├── TopHeader.module.css
+    ├── Footer.jsx                       # Footer con logo, navegación y redes sociales
+    └── Footer.module.css
+
+resources/js/pages/public/site/          # Páginas del sitio público
+├── home/
+│   └── Home.jsx
+└── nosotros/
+    └── Nosotros.jsx
+```
+
+**Inertia Persistent Layout Pattern:**
+Each public site page uses the Inertia persistent layout pattern to avoid remounting the layout on navigation:
+```jsx
+import LayoutPublic from '@/layouts/public/public-layout';
+
+const PageName = () => {
+    return ( /* page content using Bootstrap grid */ );
+};
+
+PageName.layout = (page) => <LayoutPublic children={page} />;
+
+export default PageName;
+```
+
+**Shared Data via Inertia:**
+The layout components (TopHeader, Footer) read shared data from `usePage().props` instead of receiving props from each page. This data is shared from `HandleInertiaRequests.php`:
+- `socialLinks` — Social media URLs configured in `config/business.php` via environment variables (`SOCIAL_FACEBOOK`, `SOCIAL_INSTAGRAM`, etc.)
+
+**CSS Convention for the Public Site:**
+- **Global styles**: `resources/css/public.css` — CSS variables (`:root`), font families, flex layout for `#app`
+- **Component styles**: CSS Modules (`*.module.css`) colocated next to each component
+- **Grid and layout**: Use Bootstrap 5 classes (`container`, `row`, `col-*`, `d-flex`, `justify-content-*`, etc.)
+- **Colors**: Use CSS variables from `public.css` (`--primary-color`, `--secondary-color`, `--tertiary-color`, `--neutral-color`)
+- **Icons**: Use `react-icons` (any icon set, not limited to Bootstrap icons)
+- **Animations**: Use AOS `data-aos` attributes on elements
+
+**Creating a New Public Site Page:**
+1. Create controller in `app/Http/Controllers/Public/Site/`
+2. Add route in `routes/web.php` with `public.*` name prefix
+3. Create page component in `resources/js/pages/public/site/{section}/PageName.jsx`
+4. Apply the persistent layout pattern: `PageName.layout = (page) => <LayoutPublic children={page} />;`
+5. Use Bootstrap grid, CSS Modules, AOS, and react-icons (NO Tailwind)
 
 ### Token-Based Public Access
 Both budget types use unique tokens for public access without authentication:

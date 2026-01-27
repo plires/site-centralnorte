@@ -1,9 +1,14 @@
+import Footer from './components/Footer';
+import Navbar from './components/Navbar';
+import TopHeader from './components/TopHeader';
+
 const LayoutPublic = ({ children }) => {
     return (
         <>
-            <header>HEADER</header>
-            <main className="flex">{children}</main>
-            <footer>&copy; {new Date().getFullYear()} - Mi App con Inertia + React</footer>
+            <TopHeader />
+            <Navbar />
+            <main>{children}</main>
+            <Footer />
         </>
     );
 };

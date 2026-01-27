@@ -2,10 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiController;
-use App\Http\Controllers\Public\HomeController;
+use App\Http\Controllers\Public\Site\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
-use App\Http\Controllers\Public\NosotrosController;
+use App\Http\Controllers\Public\Site\NosotrosController;
 use App\Http\Controllers\Dashboard\BudgetController;
 use App\Http\Controllers\Dashboard\ClientController;
 use App\Http\Controllers\Dashboard\ProductController;

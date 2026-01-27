@@ -59,6 +59,7 @@ class HandleInertiaRequests extends Middleware
             'product' => [
                 'placeholder_image' => config('business.product.placeholder_image'),
             ],
+            'socialLinks' => array_filter(config('business.social_links', [])),
         ];
     }
 }

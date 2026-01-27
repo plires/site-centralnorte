@@ -1,5 +1,14 @@
 @import url('fonts.css');
 
+/* Variables */
+:root {
+    --primary-color: rgba(59, 80, 147, 1);
+    --secondary-color: rgba(31, 172, 158, 1);
+    --tertiary-color: rgba(22, 27, 51, 1);
+    --neutral-color: rgba(230, 233, 241, 1);
+}
+/* Variables end */
+
 body {
     font-family: 'Montserrat';
     font-weight: 400;
@@ -15,14 +24,13 @@ body {
 #app {
     display: flex;
     flex-direction: column;
+    min-height: 100dvh;
 }
 
-#app header,
 #app footer {
-    /*flex: 0 0 auto; /* no crecen, no encogen */
-    background: rebeccapurple;
+    flex: 0 0 auto; /* no crece, no encoge */
 }
 
 #app main {
-    min-height: 100dvh;
+    flex: 1 0 auto; /* crece para ocupar el espacio restante */
 }

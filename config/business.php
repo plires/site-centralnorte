@@ -38,6 +38,22 @@ return [
     */
   'product' => [
     'placeholder_image' => env('PRODUCT_PLACEHOLDER_IMAGE', '/images/product-placeholder.jpg'),
-  ]
+  ],
+
+  /*
+    |--------------------------------------------------------------------------
+    | Social Links
+    |--------------------------------------------------------------------------
+    |
+    | Social media URLs displayed in the public site header.
+    |
+    */
+  'social_links' => [
+    'facebook' => env('SOCIAL_FACEBOOK', ''),
+    'instagram' => env('SOCIAL_INSTAGRAM', ''),
+    'tiktok' => env('SOCIAL_TIKTOK', ''),
+    'twitter' => env('SOCIAL_TWITTER', ''),
+    'linkedin' => env('SOCIAL_LINKEDIN', ''),
+  ],
 
 ];

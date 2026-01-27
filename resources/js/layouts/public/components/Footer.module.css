@@ -1,0 +1,121 @@
+.footer {
+    background-color: var(--tertiary-color);
+    width: 100%;
+    padding: 48px 0 32px;
+}
+
+/* Fila superior: logo + nav */
+.topRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 32px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logo img {
+    height: 48px;
+    width: auto;
+}
+
+.navList {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navLink {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: color 0.3s ease;
+}
+
+.navLink:hover {
+    color: var(--secondary-color);
+}
+
+/* Fila inferior: redes sociales */
+.bottomRow {
+    display: flex;
+    justify-content: center;
+    padding-top: 24px;
+}
+
+.socialList {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.socialLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    background-color: transparent;
+    color: #ffffff;
+    text-decoration: none;
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        transform 0.2s ease;
+    font-size: 14px;
+}
+
+.socialLink:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: #ffffff;
+    transform: scale(1.1);
+    color: #ffffff;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .topRow {
+        flex-direction: column;
+        gap: 24px;
+        text-align: center;
+    }
+
+    .navList {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 576px) {
+    .footer {
+        padding: 32px 0 24px;
+    }
+
+    .navList {
+        gap: 12px;
+    }
+
+    .navLink {
+        font-size: 13px;
+    }
+
+    .socialLink {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+
+    .socialList {
+        gap: 8px;
+    }
+}
