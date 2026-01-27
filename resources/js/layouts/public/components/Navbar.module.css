@@ -1,7 +1,7 @@
 /* ===== Navbar wrapper ===== */
 .navbar {
     position: absolute;
-    top: 48px;
+    top: 44px;
     left: 0;
     width: 100%;
     z-index: 1000;
@@ -206,5 +206,11 @@
 @media (min-width: 992px) {
     .mobileMenu {
         display: none !important;
+    }
+}
+
+@media (min-width: 576px) {
+    .navbar {
+        top: 47px;
     }
 }
