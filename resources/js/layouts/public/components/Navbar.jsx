@@ -100,7 +100,7 @@ const Navbar = () => {
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>(0)</span>
                                 </a>
-                                <Button href="#" variant="secondary" size="sm" onClick={() => setMobileOpen(false)}>
+                                <Button href="#" variant="white" size="sm" onClick={() => setMobileOpen(false)}>
                                     Cotizá ahora
                                 </Button>
                             </div>
