@@ -499,6 +499,26 @@ The layout components (TopHeader, Footer) read shared data from `usePage().props
 - **Colors**: Use CSS variables from `public.css` (`--primary-color`, `--secondary-color`, `--tertiary-color`, `--neutral-color`)
 - **Icons**: Use `react-icons` (any icon set, not limited to Bootstrap icons)
 - **Animations**: Use AOS `data-aos` attributes on elements
+- **Responsive approach**: Mobile-first using `min-width` media queries (Bootstrap standard breakpoints):
+  ```css
+  /* Estilos base (móvil) */
+  .component { ... }
+
+  /* sm - Small devices (≥576px) */
+  @media (min-width: 576px) { ... }
+
+  /* md - Medium devices (≥768px) */
+  @media (min-width: 768px) { ... }
+
+  /* lg - Large devices (≥992px) */
+  @media (min-width: 992px) { ... }
+
+  /* xl - Extra large devices (≥1200px) */
+  @media (min-width: 1200px) { ... }
+
+  /* xxl - Extra extra large devices (≥1400px) */
+  @media (min-width: 1400px) { ... }
+  ```
 
 **Creating a New Public Site Page:**
 1. Create controller in `app/Http/Controllers/Public/Site/`
