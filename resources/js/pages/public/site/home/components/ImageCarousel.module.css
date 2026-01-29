@@ -1,0 +1,54 @@
+.carouselSection {
+    width: 100%;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.carouselTrack {
+    display: flex;
+    width: max-content;
+    animation: scroll 30s linear infinite;
+}
+
+.carouselSlide {
+    flex-shrink: 0;
+    width: 220px;
+    height: 330px;
+}
+
+.carouselImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Desktop */
+@media (min-width: 992px) {
+    .carouselSlide {
+        width: 350px;
+        height: 525px;
+    }
+}
+
+/* Tablet */
+@media (min-width: 768px) and (max-width: 991px) {
+    .carouselSlide {
+        width: 300px;
+        height: 450px;
+    }
+}
+
+/* Pausar animación al hover */
+/* .carouselSection:hover .carouselTrack {
+    animation-play-state: paused;
+} */

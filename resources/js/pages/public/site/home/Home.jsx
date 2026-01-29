@@ -1,5 +1,6 @@
 import LayoutPublic from '@/layouts/public/public-layout';
 import HeroSlider from './components/HeroSlider';
+import ImageCarousel from './components/ImageCarousel';
 import TaglineSection from './components/TaglineSection';
 
 const Home = ({ slides }) => {
@@ -7,6 +8,7 @@ const Home = ({ slides }) => {
         <>
             <HeroSlider slides={slides} />
             <TaglineSection />
+            <ImageCarousel />
             <p>
                 Lorem, ipsum dolor sit amet consectetur adipisicing elit. Atque necessitatibus rem commodi dolor corrupti, sapiente aut doloremque
                 quam nemo cumque modi! Vitae modi deserunt facere, distinctio sunt debitis corporis. Rerum id quasi sunt ullam aperiam sit itaque
