@@ -13,7 +13,15 @@ const PhraseSection = ({ line1, line2, variant = 'secondary', backgroundImage = 
 
     return (
         <section className={sectionClass}>
-            {backgroundImage && <div className={styles.backgroundPattern} style={{ backgroundImage: `url(${backgroundImage})` }}></div>}
+            {backgroundImage && (
+                <div
+                    className={styles.backgroundPattern}
+                    style={{
+                        backgroundImage: `url(${backgroundImage})`,
+                        mixBlendMode: 'multiply',
+                    }}
+                ></div>
+            )}
             <div className="container">
                 <h2 className={styles.phraseText}>
                     <span className={styles.line1}>{line1}</span>
