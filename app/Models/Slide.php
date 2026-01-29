@@ -19,7 +19,7 @@ class Slide extends Model
      * Dimensiones de las imágenes
      */
     public const DESKTOP_WIDTH = 1920;
-    public const DESKTOP_HEIGHT = 900;
+    public const DESKTOP_HEIGHT = 850;
     public const MOBILE_WIDTH = 580;
     public const MOBILE_HEIGHT = 630;
 

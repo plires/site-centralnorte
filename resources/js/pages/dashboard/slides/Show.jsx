@@ -64,7 +64,7 @@ export default function Show({ slide }) {
                                             <Monitor className="h-5 w-5" />
                                             Imagen Desktop
                                         </CardTitle>
-                                        <CardDescription>Tamaño: 1920 x 1080 px</CardDescription>
+                                        <CardDescription>Tamaño: 1920 x 850 px</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {slide.image_desktop_url ? (

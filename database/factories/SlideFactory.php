@@ -26,7 +26,7 @@ class SlideFactory extends Factory
 
         return [
             'title' => $this->faker->sentence(4),
-            'image_desktop' => "https://placehold.co/1920x1080/{$desktopBgColor}/FFFFFF?text={$text}",
+            'image_desktop' => "https://placehold.co/1920x850/{$desktopBgColor}/FFFFFF?text={$text}",
             'image_mobile' => "https://placehold.co/580x630/{$mobileBgColor}/FFFFFF?text={$text}",
             'link' => $this->faker->optional(0.7)->url(),
             'is_active' => $this->faker->boolean(80), // 80% activos
@@ -39,7 +39,7 @@ class SlideFactory extends Factory
      */
     public function active(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'is_active' => true,
         ]);
     }
@@ -49,7 +49,7 @@ class SlideFactory extends Factory
      */
     public function inactive(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'is_active' => false,
         ]);
     }
@@ -59,7 +59,7 @@ class SlideFactory extends Factory
      */
     public function withLink(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'link' => $this->faker->url(),
         ]);
     }
@@ -69,7 +69,7 @@ class SlideFactory extends Factory
      */
     public function withoutLink(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'link' => null,
         ]);
     }

@@ -98,13 +98,13 @@ export default function SlideForm({
                                             id="title"
                                             value={data.title}
                                             onChange={(e) => setData('title', e.target.value)}
-                                            maxLength={80}
+                                            maxLength={50}
                                             placeholder="Ej: Bienvenidos a nuestra tienda"
                                             className="mt-1"
                                         />
                                         <div className="mt-1 flex justify-between text-xs text-gray-500">
                                             <span>{errors.title && <span className="text-red-500">{errors.title}</span>}</span>
-                                            <span>{data.title.length}/80 caracteres</span>
+                                            <span>{data.title.length}/50 caracteres</span>
                                         </div>
                                     </div>
 
@@ -150,7 +150,7 @@ export default function SlideForm({
                                             Imagen Desktop
                                             {!isEditing && <span className="text-red-500">*</span>}
                                         </CardTitle>
-                                        <CardDescription>Tamaño recomendado: 1920 x 1080 px</CardDescription>
+                                        <CardDescription>Tamaño recomendado: 1920 x 850 px</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         {/* Preview */}

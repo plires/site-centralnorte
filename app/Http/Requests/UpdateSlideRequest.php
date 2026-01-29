@@ -24,7 +24,7 @@ class UpdateSlideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:80'],
+            'title' => ['required', 'string', 'max:50'],
             'image_desktop' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // opcional en update
             'image_mobile' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // opcional en update
             'link' => ['nullable', 'string', 'max:255'],
@@ -91,7 +91,7 @@ class UpdateSlideRequest extends FormRequest
     {
         return [
             'title.required' => 'El título es obligatorio.',
-            'title.max' => 'El título no puede superar los 80 caracteres.',
+            'title.max' => 'El título no puede superar los 50 caracteres.',
 
             'image_desktop.image' => 'El archivo de escritorio debe ser una imagen válida.',
             'image_desktop.mimes' => 'La imagen de escritorio debe ser JPEG, PNG, JPG o WebP.',

@@ -24,7 +24,7 @@ class StoreSlideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:80'],
+            'title' => ['required', 'string', 'max:50'],
             'image_desktop' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // máx 10MB
             'image_mobile' => ['required', 'image', 'mimes:jpeg,png,jpg,webp', 'max:10240'], // máx 10MB
             'link' => ['nullable', 'string', 'max:255'],
@@ -82,7 +82,7 @@ class StoreSlideRequest extends FormRequest
     {
         return [
             'title.required' => 'El título es obligatorio.',
-            'title.max' => 'El título no puede superar los 80 caracteres.',
+            'title.max' => 'El título no puede superar los 50 caracteres.',
 
             'image_desktop.required' => 'La imagen de escritorio es obligatoria.',
             'image_desktop.image' => 'El archivo de escritorio debe ser una imagen válida.',

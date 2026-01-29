@@ -17,7 +17,7 @@ class SlideSeeder extends Seeder
         $slides = [
             [
                 'title' => 'Bienvenidos a Central Norte',
-                'image_desktop' => 'https://placehold.co/1920x1080/3d5095/FFFFFF?text=Slide+1',
+                'image_desktop' => 'https://placehold.co/1920x850/3d5095/FFFFFF?text=Slide+1',
                 'image_mobile' => 'https://placehold.co/580x630/3d5095/FFFFFF?text=Slide+1',
                 'link' => null,
                 'is_active' => true,
@@ -25,7 +25,7 @@ class SlideSeeder extends Seeder
             ],
             [
                 'title' => 'Productos de Merchandising',
-                'image_desktop' => 'https://placehold.co/1920x1080/19ac90/FFFFFF?text=Slide+2',
+                'image_desktop' => 'https://placehold.co/1920x850/19ac90/FFFFFF?text=Slide+2',
                 'image_mobile' => 'https://placehold.co/580x630/19ac90/FFFFFF?text=Slide+2',
                 'link' => '/productos',
                 'is_active' => true,
@@ -33,7 +33,7 @@ class SlideSeeder extends Seeder
             ],
             [
                 'title' => 'Servicios de Picking y Kitting',
-                'image_desktop' => 'https://placehold.co/1920x1080/FF6B35/FFFFFF?text=Slide+3',
+                'image_desktop' => 'https://placehold.co/1920x850/FF6B35/FFFFFF?text=Slide+3',
                 'image_mobile' => 'https://placehold.co/580x630/FF6B35/FFFFFF?text=Slide+3',
                 'link' => '/servicios',
                 'is_active' => true,
@@ -41,7 +41,7 @@ class SlideSeeder extends Seeder
             ],
             [
                 'title' => 'Cotizá tu proyecto',
-                'image_desktop' => 'https://placehold.co/1920x1080/7B68EE/FFFFFF?text=Slide+4',
+                'image_desktop' => 'https://placehold.co/1920x850/7B68EE/FFFFFF?text=Slide+4',
                 'image_mobile' => 'https://placehold.co/580x630/7B68EE/FFFFFF?text=Slide+4',
                 'link' => '/contacto',
                 'is_active' => true,
@@ -49,7 +49,7 @@ class SlideSeeder extends Seeder
             ],
             [
                 'title' => 'Conocé nuestra trayectoria',
-                'image_desktop' => 'https://placehold.co/1920x1080/2C3E50/FFFFFF?text=Slide+5',
+                'image_desktop' => 'https://placehold.co/1920x850/2C3E50/FFFFFF?text=Slide+5',
                 'image_mobile' => 'https://placehold.co/580x630/2C3E50/FFFFFF?text=Slide+5',
                 'link' => '/nosotros',
                 'is_active' => true,
