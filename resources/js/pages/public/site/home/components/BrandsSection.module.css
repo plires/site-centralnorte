@@ -1,0 +1,93 @@
+.brandsSection {
+    background-color: var(--primary-color);
+    padding: 2rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.backgroundPattern {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    height: 90%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    pointer-events: none;
+    top: -50%;
+    transform: translateY(60%);
+    -webkit-transform: translateY(60%);
+    -moz-transform: translateY(60%);
+    -ms-transform: translateY(60%);
+    -o-transform: translateY(60%);
+}
+
+.brandsText {
+    position: relative;
+    z-index: 1;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.line1 {
+    display: block;
+    color: #fff;
+}
+
+.line2 {
+    display: block;
+    color: var(--tertiary-color);
+}
+
+/* MEDIA QUERIES (Bootstrap mobile-first) */
+@media (min-width: 576px) {
+    .brandsText {
+        text-align: left;
+    }
+}
+
+@media (min-width: 768px) {
+    .brandsText {
+        font-size: 5rem;
+    }
+
+    .brandsSection {
+        padding: 3rem 0;
+    }
+
+    .backgroundPattern {
+        width: 70%;
+        background-position: right center;
+    }
+}
+
+@media (min-width: 992px) {
+    .backgroundPattern {
+        width: 60%;
+    }
+}
+
+@media (min-width: 1200px) {
+}
+
+@media (min-width: 1400px) {
+}
+
+@media (min-width: 1600px) {
+}
+
+@media (min-width: 1700px) {
+    .backgroundPattern {
+        background-size: 95%;
+    }
+}
+
+@media (min-width: 1800px) {
+    .backgroundPattern {
+        background-size: 85%;
+    }
+}
