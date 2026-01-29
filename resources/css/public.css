@@ -6,13 +6,21 @@
     --secondary-color: rgba(31, 172, 158, 1);
     --tertiary-color: rgba(22, 27, 51, 1);
     --neutral-color: rgba(230, 233, 241, 1);
+    --text-font: 'Montserrat', system-ui, -apple-system, sans-serif;
 }
 /* Variables end */
 
 body {
-    font-family: 'Montserrat';
-    font-weight: 400;
+    font-family: var(--text-font);
     font-style: normal;
+}
+
+p {
+    font-weight: 300;
+    color: var(--tertiary-color);
+    font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem); /* 16px → 18px aprox */
+    line-height: 1.6;
+    margin: 0 0 1em;
 }
 
 .bebas {
