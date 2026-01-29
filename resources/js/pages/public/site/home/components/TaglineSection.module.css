@@ -1,0 +1,38 @@
+.taglineSection {
+    background-color: var(--secondary-color);
+    padding: 3rem 0;
+}
+
+.taglineText {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 5rem;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.line1 {
+    display: block;
+    color: #fff;
+}
+
+.line2 {
+    display: block;
+    color: var(--tertiary-color);
+}
+
+@media (max-width: 768px) {
+    .taglineText {
+        font-size: 3rem;
+    }
+
+    .taglineSection {
+        padding: 2rem 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .taglineText {
+        text-align: center;
+    }
+}

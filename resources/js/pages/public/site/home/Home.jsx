@@ -1,10 +1,12 @@
 import LayoutPublic from '@/layouts/public/public-layout';
 import HeroSlider from './components/HeroSlider';
+import TaglineSection from './components/TaglineSection';
 
 const Home = ({ slides }) => {
     return (
         <>
             <HeroSlider slides={slides} />
+            <TaglineSection />
             <p>
                 Lorem, ipsum dolor sit amet consectetur adipisicing elit. Atque necessitatibus rem commodi dolor corrupti, sapiente aut doloremque
                 quam nemo cumque modi! Vitae modi deserunt facere, distinctio sunt debitis corporis. Rerum id quasi sunt ullam aperiam sit itaque
