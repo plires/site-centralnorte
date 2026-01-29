@@ -1,16 +1,16 @@
 import LayoutPublic from '@/layouts/public/public-layout';
-import BrandsSection from './components/BrandsSection';
+import backgroundLogos from '@/../images/home/background.webp';
 import HeroSlider from './components/HeroSlider';
 import ImageCarousel from './components/ImageCarousel';
-import TaglineSection from './components/TaglineSection';
+import PhraseSection from './components/PhraseSection';
 
 const Home = ({ slides }) => {
     return (
         <>
             <HeroSlider slides={slides} />
-            <TaglineSection />
+            <PhraseSection line1="Te ofrecemos" line2="soluciones" variant="secondary" />
             <ImageCarousel />
-            <BrandsSection />
+            <PhraseSection line1="Marcas que" line2="confían" variant="primary" backgroundImage={backgroundLogos} />
             <p>
                 Lorem, ipsum dolor sit amet consectetur adipisicing elit. Atque necessitatibus rem commodi dolor corrupti, sapiente aut doloremque
                 quam nemo cumque modi! Vitae modi deserunt facere, distinctio sunt debitis corporis. Rerum id quasi sunt ullam aperiam sit itaque

@@ -1,28 +1,11 @@
-.brandsSection {
-    background-color: var(--primary-color);
+/* Estilos base (móvil) */
+.section {
     padding: 2rem 0;
     position: relative;
     overflow: hidden;
 }
 
-.backgroundPattern {
-    position: absolute;
-    right: 0;
-    width: 100%;
-    height: 90%;
-    background-position: center center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    pointer-events: none;
-    top: -50%;
-    transform: translateY(60%);
-    -webkit-transform: translateY(60%);
-    -moz-transform: translateY(60%);
-    -ms-transform: translateY(60%);
-    -o-transform: translateY(60%);
-}
-
-.brandsText {
+.phraseText {
     position: relative;
     z-index: 1;
     font-family: 'Bebas Neue', sans-serif;
@@ -43,20 +26,46 @@
     color: var(--tertiary-color);
 }
 
+/* Variantes de color */
+.secondary {
+    background-color: var(--secondary-color);
+}
+
+.primary {
+    background-color: var(--primary-color);
+}
+
+/* Background pattern (opcional) */
+.backgroundPattern {
+    position: absolute;
+    right: 0;
+    width: 100%;
+    height: 90%;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    pointer-events: none;
+    top: -50%;
+    transform: translateY(60%);
+}
+
 /* MEDIA QUERIES (Bootstrap mobile-first) */
+
+/* sm - Small devices (≥576px) */
 @media (min-width: 576px) {
-    .brandsText {
+    .phraseText {
         text-align: left;
     }
 }
 
+/* md - Medium devices (≥768px) */
 @media (min-width: 768px) {
-    .brandsText {
-        font-size: 5rem;
+    .section {
+        padding: 3rem 0;
     }
 
-    .brandsSection {
-        padding: 3rem 0;
+    .phraseText {
+        font-size: 5rem;
     }
 
     .backgroundPattern {
@@ -65,19 +74,19 @@
     }
 }
 
+/* lg - Large devices (≥992px) */
 @media (min-width: 992px) {
     .backgroundPattern {
         width: 60%;
     }
 }
 
+/* xl - Extra large devices (≥1200px) */
 @media (min-width: 1200px) {
 }
 
+/* xxl - Extra extra large devices (≥1400px) */
 @media (min-width: 1400px) {
-}
-
-@media (min-width: 1600px) {
 }
 
 @media (min-width: 1700px) {
