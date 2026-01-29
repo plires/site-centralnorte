@@ -1,0 +1,85 @@
+/* Estilos base (móvil) */
+.carouselSection {
+    width: 100%;
+    overflow: hidden;
+    background-color: var(--primary-color);
+    padding: 1rem 0;
+}
+
+.carouselTrack {
+    display: flex;
+    align-items: center;
+    width: max-content;
+    animation: scroll 40s linear infinite;
+}
+
+.carouselSlide {
+    flex-shrink: 0;
+    padding: 0 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.carouselImage {
+    height: 30px;
+    width: auto;
+    object-fit: contain;
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+    transition: opacity 0.3s ease;
+}
+
+.carouselImage:hover {
+    opacity: 1;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .carouselSlide {
+        padding: 0 2rem;
+    }
+
+    .carouselImage {
+        height: 35px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .carouselSection {
+        padding: 1.25rem 0;
+    }
+
+    .carouselSlide {
+        padding: 0 2.5rem;
+    }
+
+    .carouselImage {
+        height: 40px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .carouselSlide {
+        padding: 0 3rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+}
