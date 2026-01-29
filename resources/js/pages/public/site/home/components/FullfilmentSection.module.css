@@ -34,7 +34,7 @@
 .title {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 3rem;
-    color: var(--tertiary-color);
+    color: var(--secondary-color);
     margin: 0 0 0.5rem;
     line-height: 1;
     text-transform: uppercase;
@@ -44,10 +44,10 @@
     color: var(--tertiary-color);
     font-size: 0.9rem;
     margin: 0 0 1rem;
+    font-weight: 700;
 }
 
 .description {
-    color: #666;
     font-size: 0.9rem;
     line-height: 1.6;
     margin: 0 0 1.5rem;
@@ -86,10 +86,6 @@
 
     .title {
         font-size: 3.5rem;
-    }
-
-    .hashtags {
-        font-size: 1rem;
     }
 
     .description {
@@ -167,7 +163,7 @@
     }
 
     .contentImg {
-        margin-top: -100px;
+        margin-top: -102px;
     }
 }
 
