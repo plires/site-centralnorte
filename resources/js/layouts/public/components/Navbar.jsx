@@ -1,5 +1,6 @@
 import logoSmallSrc from '@/../images/header/logo-site-header-small.svg';
 import logoSrc from '@/../images/header/logo-site-header.svg';
+import { Button } from '@/pages/public/site/components';
 import { useEffect, useState } from 'react';
 import { HiOutlineShoppingCart } from 'react-icons/hi2';
 import styles from './Navbar.module.css';
@@ -69,9 +70,9 @@ const Navbar = () => {
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>(0)</span>
                                 </a>
-                                <a href="#" className={styles.ctaButton}>
+                                <Button href="#" variant="white" size="sm">
                                     Cotizá ahora
-                                </a>
+                                </Button>
                             </div>
 
                             {/* Hamburger (mobile) */}
@@ -99,9 +100,9 @@ const Navbar = () => {
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>(0)</span>
                                 </a>
-                                <a href="#" className={styles.ctaButton} onClick={() => setMobileOpen(false)}>
+                                <Button href="#" variant="secondary" size="sm" onClick={() => setMobileOpen(false)}>
                                     Cotizá ahora
-                                </a>
+                                </Button>
                             </div>
                         </div>
                     </div>

@@ -1,3 +1,4 @@
+import { Button } from '@/pages/public/site/components';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import styles from './HeroSlider.module.css';
 
@@ -47,16 +48,15 @@ const HeroSlider = ({ slides = [] }) => {
                                     <div className={styles.slideContent}>
                                         <h2 className={styles.slideTitle}>{slide.title}</h2>
                                         {slide.link && (
-                                            <a href={slide.link} className={styles.slideLink}>
+                                            <Button href={slide.link} variant="outline-tertiary">
                                                 Consultanos
-                                            </a>
+                                            </Button>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             ))}
 

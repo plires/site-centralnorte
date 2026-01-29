@@ -120,28 +120,6 @@
     font-size: 20px;
 }
 
-.ctaButton {
-    display: inline-flex;
-    align-items: center;
-    padding: 8px 20px;
-    border: 2px solid var(--tertiary-color);
-    border-radius: 24px;
-    background: transparent;
-    color: var(--tertiary-color);
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-    transition:
-        background-color 0.3s ease,
-        color 0.3s ease;
-}
-
-.ctaButton:hover {
-    background-color: var(--tertiary-color);
-    color: #ffffff;
-}
-
 /* ===== Hamburger button (mobile) ===== */
 .hamburger {
     display: none;
