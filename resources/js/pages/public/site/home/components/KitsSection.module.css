@@ -1,0 +1,80 @@
+/* Estilos base (móvil) */
+.section {
+    background-color: #fff;
+    padding: 3rem 0;
+}
+
+.kitCard {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.kitTitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--primary-color);
+    margin: 0 0 1rem;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.imageWrapper {
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.kitImage {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.imageWrapper:hover .kitImage {
+    transform: scale(1.03);
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .kitTitle {
+        font-size: 2rem;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        padding: 4rem 0;
+    }
+
+    .kitTitle {
+        font-size: 2.2rem;
+    }
+
+    .kitCard {
+        margin-bottom: 0;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        padding: 5rem 0;
+    }
+
+    .kitTitle {
+        font-size: 2.5rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .kitTitle {
+        font-size: 2.8rem;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+}

@@ -3,6 +3,7 @@ import backgroundLogos from '@/../images/home/background.webp';
 import FullfilmentSection from './components/FullfilmentSection';
 import HeroSlider from './components/HeroSlider';
 import ImageCarousel from './components/ImageCarousel';
+import KitsSection from './components/KitsSection';
 import LogoCarousel from './components/LogoCarousel';
 import PhraseSection from './components/PhraseSection';
 
@@ -15,6 +16,7 @@ const Home = ({ slides }) => {
             <PhraseSection line1="Marcas que" line2="confían" variant="primary" backgroundImage={backgroundLogos} />
             <LogoCarousel />
             <FullfilmentSection />
+            <KitsSection />
             <p>
                 Lorem, ipsum dolor sit amet consectetur adipisicing elit. Atque necessitatibus rem commodi dolor corrupti, sapiente aut doloremque
                 quam nemo cumque modi! Vitae modi deserunt facere, distinctio sunt debitis corporis. Rerum id quasi sunt ullam aperiam sit itaque
