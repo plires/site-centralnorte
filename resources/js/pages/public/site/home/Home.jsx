@@ -1,5 +1,6 @@
 import backgroundLogos from '@/../images/home/background.webp';
 import LayoutPublic from '@/layouts/public/public-layout';
+import BenefitsSection from './components/BenefitsSection';
 import FullfilmentSection from './components/FullfilmentSection';
 import HeroSlider from './components/HeroSlider';
 import ImageCarousel from './components/ImageCarousel';
@@ -20,6 +21,7 @@ const Home = ({ slides }) => {
             <KitsSection />
             <MoveTuMarcaSection />
             <PhraseSection line1="Movilizá" line2="tu impacto" variant="white" hashtags="#Merch. #KitsDeOnboarding. #RegalosEmpresariales." />
+            <BenefitsSection />
         </>
     );
 };
