@@ -1,0 +1,172 @@
+/* Estilos base (móvil) */
+.section {
+    position: relative;
+    background-color: #fff;
+}
+
+.topBar {
+    background-color: #fff;
+    height: 20px;
+}
+
+.mainContent {
+    background-color: var(--primary-color);
+    /* padding: 2rem 0; */
+    padding: 0;
+    position: relative;
+}
+
+.bottomBar {
+    background-color: #fff;
+    height: 20px;
+}
+
+.logoImage {
+    width: 100%;
+    max-width: 300px;
+    height: auto;
+    display: block;
+    margin: 0 auto 1.5rem;
+}
+
+.productImageWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.productImage {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    display: block;
+}
+
+.wave {
+    display: none;
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .section {
+        margin-bottom: 30px;
+    }
+
+    .topBar,
+    .bottomBar {
+        height: 25px;
+    }
+
+    .logoImage {
+        max-width: 350px;
+    }
+
+    .productImage {
+        max-width: 320px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .topBar,
+    .bottomBar {
+        height: 30px;
+    }
+
+    .mainContent {
+        height: 280px;
+    }
+
+    .contenImg {
+        align-self: flex-end;
+    }
+
+    .logoImage {
+        max-width: 100%;
+        margin: 0;
+        margin-top: -43px;
+    }
+
+    .productImage {
+        max-width: 100%;
+        position: absolute;
+        height: 260px;
+        object-fit: contain;
+        bottom: 0;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        margin-bottom: 60px;
+    }
+
+    .topBar,
+    .bottomBar {
+        height: 35px;
+    }
+
+    .bottomBar {
+        height: 65px;
+    }
+
+    .mainContent {
+        height: 385px;
+    }
+
+    .productImage {
+        height: 375px;
+    }
+
+    .wave {
+        display: block;
+        position: absolute;
+        bottom: -50px;
+        left: 0;
+        width: 80%;
+        height: auto;
+        z-index: 1;
+        pointer-events: none;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .topBar,
+    .bottomBar {
+        height: 40px;
+    }
+
+    .bottomBar {
+        height: 65px;
+    }
+
+    .mainContent {
+        height: 450px;
+    }
+
+    .productImage {
+        height: 440px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .mainContent {
+        height: 550px;
+    }
+
+    .productImage {
+        height: 540px;
+    }
+
+    .logoImage {
+        margin-top: -60px;
+    }
+
+    .wave {
+        bottom: -50px;
+        width: 80%;
+    }
+}
