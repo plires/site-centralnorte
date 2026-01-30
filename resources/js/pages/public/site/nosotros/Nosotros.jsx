@@ -1,20 +1,13 @@
 import LayoutPublic from '@/layouts/public/public-layout';
+import NosotrosHeader from './components/NosotrosHeader';
 
 const Nosotros = () => {
     return (
-        <div className="container">
-            <div className="row">
-                <div className="col-md-6 offset-md-3">
-                    <h1 className="bebas display-4" data-aos="fade-up">
-                        Nosotros
-                    </h1>
-                    <p className="lead" data-aos="fade-up" data-aos-delay="200">
-                        Page de nosotros. Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptate alias iusto placeat ipsa, accusantium ab
-                        natus id. Facilis, voluptatibus fugiat sed possimus ut, deserunt iste non nobis debitis suscipit amet.
-                    </p>
-                </div>
-            </div>
-        </div>
+        <>
+            <NosotrosHeader />
+            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Accusamus quas, blanditiis magni id pariatur sit! Ab, itaque numquam quam
+            incidunt consequuntur sit nesciunt odio beatae, rerum laboriosam sunt ea mollitia?
+        </>
     );
 };
 
