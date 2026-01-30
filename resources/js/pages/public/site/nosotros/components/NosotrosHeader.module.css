@@ -2,7 +2,6 @@
     position: relative;
     width: 100%;
     overflow: visible;
-    margin-bottom: 30px;
 }
 
 .imageContainer {
@@ -70,10 +69,6 @@
 
 /* md - Medium devices (≥768px) */
 @media (min-width: 768px) {
-    .header {
-        margin-bottom: 60px;
-    }
-
     .title {
         font-size: 1.75rem;
     }
@@ -85,10 +80,6 @@
 
 /* lg - Large devices (≥992px) */
 @media (min-width: 992px) {
-    .header {
-        margin-bottom: 120px;
-    }
-
     .content {
         bottom: 60px;
     }
