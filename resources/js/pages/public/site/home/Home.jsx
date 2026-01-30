@@ -19,6 +19,7 @@ const Home = ({ slides }) => {
             <FullfilmentSection />
             <KitsSection />
             <MoveTuMarcaSection />
+            <PhraseSection line1="Movilizá" line2="tu impacto" variant="white" hashtags="#Merch. #KitsDeOnboarding. #RegalosEmpresariales." />
         </>
     );
 };

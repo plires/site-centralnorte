@@ -35,6 +35,28 @@
     background-color: var(--primary-color);
 }
 
+.white {
+    background-color: #fff;
+}
+
+.white .line1 {
+    color: var(--tertiary-color);
+}
+
+.white .line2 {
+    color: var(--secondary-color);
+}
+
+/* Hashtags */
+.hashtags {
+    position: relative;
+    z-index: 1;
+    font-size: 0.85rem;
+    color: var(--tertiary-color);
+    margin: 0.5rem 0 0;
+    text-align: center;
+}
+
 /* Background pattern (opcional) */
 .backgroundPattern {
     position: absolute;
@@ -56,6 +78,11 @@
     .phraseText {
         text-align: left;
     }
+
+    .hashtags {
+        text-align: left;
+        font-size: 0.9rem;
+    }
 }
 
 /* md - Medium devices (≥768px) */
@@ -66,6 +93,10 @@
 
     .phraseText {
         font-size: 5rem;
+    }
+
+    .hashtags {
+        font-size: 1rem;
     }
 
     .backgroundPattern {
