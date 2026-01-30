@@ -1,0 +1,188 @@
+.section {
+    position: relative;
+    border-bottom: solid 1px white;
+    margin-bottom: 30px;
+}
+
+.contentData {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    background: #354f97;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.icon {
+    font-size: 3rem;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 400;
+    color: var(--tertiary-color);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.contentLogos {
+    display: none;
+}
+
+.contentImgLogos {
+    padding: 0;
+    overflow: hidden;
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .title {
+        font-size: 3rem;
+    }
+
+    .icon {
+        font-size: 1.75rem;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        margin-bottom: 80px;
+    }
+
+    .title {
+        font-size: 56px;
+    }
+
+    .icon {
+        font-size: 56px;
+    }
+
+    .contentData {
+        position: relative;
+        text-align: left;
+        padding-left: 10%;
+    }
+
+    .contentData::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: -126px;
+        width: 126px;
+        height: 168.2px;
+        background-image: url('./../../../../../../images/nosotros/onda-superior.webp');
+        background-repeat: no-repeat;
+        background-size: contain; /* o cover */
+        background-position: center;
+    }
+
+    .contentLogos {
+        display: inline-block;
+    }
+
+    .logos {
+        max-width: 120%;
+    }
+
+    .fajaPlena {
+        background: #354f97;
+        height: 79px;
+        border-bottom: solid 2px #354f97;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .title {
+        font-size: 60px;
+    }
+
+    .icon {
+        font-size: 50px;
+        margin-bottom: 0;
+    }
+
+    .contentData::after {
+        right: -136px;
+        width: 136px;
+        height: 183px;
+    }
+
+    .logos {
+        max-width: 720px;
+    }
+
+    .fajaPlena {
+        height: 84px;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .title {
+        font-size: 85px;
+    }
+
+    .icon {
+        font-size: 56px;
+    }
+
+    .contentData::after {
+        right: -149px;
+        width: 149px;
+        height: 198px;
+    }
+
+    .fajaPlena {
+        height: 92px;
+    }
+
+    .logos {
+        max-width: 778px;
+    }
+}
+
+@media (min-width: 1600px) {
+    .contentData {
+        padding-left: 20%;
+    }
+
+    .title {
+        font-size: 100px;
+    }
+
+    .icon {
+        font-size: 65px;
+    }
+
+    .contentData::after {
+        right: -169px;
+        width: 169px;
+        height: 225px;
+    }
+
+    .fajaPlena {
+        height: 104px;
+    }
+
+    .contentImgLogos {
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+    }
+
+    .logos {
+        max-width: 830px;
+    }
+}

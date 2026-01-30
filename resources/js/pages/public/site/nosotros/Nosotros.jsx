@@ -1,6 +1,7 @@
 import LayoutPublic from '@/layouts/public/public-layout';
 import NosotrosHeader from './components/NosotrosHeader';
 import NosotrosIntro from './components/NosotrosIntro';
+import SolucionesSection from './components/SolucionesSection';
 import TeamCarousel from './components/TeamCarousel';
 
 const Nosotros = () => {
@@ -9,6 +10,7 @@ const Nosotros = () => {
             <NosotrosHeader />
             <NosotrosIntro />
             <TeamCarousel />
+            <SolucionesSection />
         </>
     );
 };
