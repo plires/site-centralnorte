@@ -1,0 +1,200 @@
+/* ===== Newsletter Section ===== */
+.section {
+    background-color: var(--secondary-color);
+    padding: 40px 0;
+}
+
+/* ===== Title ===== */
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: normal;
+    text-align: center;
+    color: #ffffff;
+    margin: 0;
+    line-height: 1;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.title span {
+    color: var(--tertiary-color);
+}
+
+.title br {
+    display: none;
+}
+
+/* ===== Form ===== */
+.contentForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.input {
+    width: 100%;
+    padding: 12px 20px;
+    border: 2px solid #ffffff;
+    border-radius: 50px;
+    background: transparent;
+    color: #ffffff;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.input:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+}
+
+.submitButton {
+    width: 100%;
+    padding: 12px 20px;
+    border: 2px solid #ffffff;
+    border-radius: 50px;
+    background: transparent;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+    background-color: #ffffff;
+    color: var(--secondary-color);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ===== Messages ===== */
+.message {
+    text-align: center;
+    font-size: 14px;
+    margin: 0;
+    padding: 8px 16px;
+    border-radius: 8px;
+}
+
+.success {
+    composes: message;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    margin-top: 1.5rem;
+}
+
+.error {
+    composes: message;
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ffffff;
+    margin-top: 1.5rem;
+}
+
+.info {
+    composes: message;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    margin-top: 1.5rem;
+}
+
+/* ===== Responsive ===== */
+
+/* sm (≥576px) */
+@media (min-width: 576px) {
+    .section {
+        padding: 48px 0;
+    }
+
+    .title {
+        font-size: 2.5rem;
+    }
+
+    .form {
+        max-width: 360px;
+    }
+}
+
+/* md (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        padding: 48px 0;
+    }
+
+    .title {
+        text-align: left;
+        font-size: 3rem;
+    }
+
+    .form {
+        flex-direction: column;
+        max-width: 300px;
+    }
+}
+
+/* lg (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        padding: 56px 0;
+    }
+
+    .title {
+        font-size: 3.5rem;
+    }
+
+    .form {
+        max-width: 340px;
+        gap: 16px;
+    }
+
+    .input,
+    .submitButton {
+        padding: 14px 24px;
+    }
+}
+
+/* xl (≥1200px) */
+@media (min-width: 1200px) {
+    .title {
+        font-size: 4rem;
+        margin-bottom: 0;
+    }
+
+    .form {
+        max-width: 380px;
+    }
+}
+
+@media (min-width: 1400px) {
+    .title {
+        font-size: 5rem;
+    }
+
+    .title br {
+        display: inline-block;
+    }
+}

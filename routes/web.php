@@ -6,6 +6,7 @@ use App\Http\Controllers\Public\Site\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
 use App\Http\Controllers\Public\Site\NosotrosController;
+use App\Http\Controllers\Public\Site\NewsletterController;
 use App\Http\Controllers\Dashboard\BudgetController;
 use App\Http\Controllers\Dashboard\ClientController;
 use App\Http\Controllers\Dashboard\ProductController;
@@ -25,6 +26,10 @@ Route::get('/', [HomeController::class, 'index'])
 
 Route::get('/nosotros', [NosotrosController::class, 'index'])
     ->name('public.nosotros');
+
+// Newsletter
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+    ->name('public.newsletter.subscribe');
 
 // Vista pública del presupuesto de Merch
 Route::prefix('presupuesto')->name('public.budget.')->group(function () {
