@@ -16,7 +16,7 @@ body {
 }
 
 p {
-    font-weight: 300;
+    font-weight: 300 !important;
     color: var(--tertiary-color);
     font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem); /* 16px → 18px aprox */
     line-height: 1.6;
