@@ -27,6 +27,8 @@
 .kitImage {
     width: 100%;
     height: auto;
+    max-height: 350px;
+    object-fit: cover;
     display: block;
     transition: transform 0.3s ease;
 }
