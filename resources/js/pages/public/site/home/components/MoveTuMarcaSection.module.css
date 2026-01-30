@@ -42,6 +42,10 @@
     display: block;
 }
 
+.contentMoveTuMarca {
+    margin-top: -55px;
+}
+
 .wave {
     display: none;
 }
@@ -93,6 +97,10 @@
         height: 260px;
         object-fit: contain;
         bottom: 0;
+    }
+
+    .contentMoveTuMarca {
+        margin-top: initial;
     }
 }
 
