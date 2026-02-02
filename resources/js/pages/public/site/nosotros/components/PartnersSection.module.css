@@ -1,6 +1,5 @@
 .section {
     position: relative;
-    border-bottom: solid 1px white;
 }
 
 .contentData {
@@ -87,7 +86,6 @@
         align-self: flex-end;
         background: #e3e3e3;
         height: 70px;
-        border-bottom: solid 2px #e3e3e3;
     }
 }
 

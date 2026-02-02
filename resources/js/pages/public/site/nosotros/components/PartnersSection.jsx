@@ -3,7 +3,7 @@ import styles from './PartnersSection.module.css';
 
 const PartnersSection = () => {
     return (
-        <section className={`${styles.section} container-fluid mb-5`}>
+        <section className={`${styles.section} container-fluid`}>
             <div className="row">
                 <div className={`col-md-6 ${styles.contentData}`}>
                     <div className="row">
