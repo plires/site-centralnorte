@@ -10,7 +10,7 @@ const navItems = [
     { label: 'Merchandising', href: '/' },
     { label: 'Co-packing', href: '/' },
     { label: 'Empresa', href: '/nosotros' },
-    { label: 'RSE', href: '/' },
+    { label: 'RSE', href: '/rse' },
     { label: 'Contacto', href: '/' },
 ];
 
