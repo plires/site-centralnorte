@@ -2,7 +2,6 @@
 .carouselSection {
     width: 100%;
     overflow: hidden;
-    background-color: var(--primary-color);
     padding: 1rem 0;
 }
 

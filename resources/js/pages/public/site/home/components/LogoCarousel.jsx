@@ -1,12 +1,12 @@
-import brandLogos from '../data/brandLogos';
+// import brandLogos from '../data/brandLogos';
 import styles from './LogoCarousel.module.css';
 
-const LogoCarousel = () => {
+const LogoCarousel = ({ background, brandLogos }) => {
     // Duplicamos los logos para crear el efecto de loop infinito
     const duplicatedLogos = [...brandLogos, ...brandLogos];
 
     return (
-        <section className={styles.carouselSection}>
+        <section className={styles.carouselSection} style={{ backgroundColor: background }}>
             <div className={styles.carouselTrack}>
                 {duplicatedLogos.map((logo, index) => (
                     <div key={index} className={styles.carouselSlide}>
