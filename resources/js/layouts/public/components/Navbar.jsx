@@ -1,16 +1,17 @@
 import logoSmallSrc from '@/../images/header/logo-site-header-small.svg';
 import logoSrc from '@/../images/header/logo-site-header.svg';
 import { Button } from '@/pages/public/site/components';
+import { Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { HiOutlineShoppingCart } from 'react-icons/hi2';
 import styles from './Navbar.module.css';
 
 const navItems = [
-    { label: 'Merchandising', href: '#' },
-    { label: 'Co-packing', href: '#' },
-    { label: 'Empresa', href: '#' },
-    { label: 'RSE', href: '#' },
-    { label: 'Contacto', href: '#' },
+    { label: 'Merchandising', href: '/' },
+    { label: 'Co-packing', href: '/' },
+    { label: 'Empresa', href: '/nosotros' },
+    { label: 'RSE', href: '/nosotros#compromiso' },
+    { label: 'Contacto', href: 'http://google.com/' },
 ];
 
 const Navbar = () => {
@@ -49,17 +50,27 @@ const Navbar = () => {
                     <div className="col">
                         <div className={styles.navbarInner}>
                             {/* Logo */}
-                            <a href="/" className={styles.logo}>
+                            <Link href="/" className={styles.logo}>
                                 <img src={scrolled || mobileOpen ? logoSmallSrc : logoSrc} alt="Central Norte" />
-                            </a>
+                            </Link>
 
                             {/* Nav links (desktop) */}
                             <ul className={styles.navList}>
                                 {navItems.map(({ label, href }) => (
                                     <li key={label}>
-                                        <a href={href} className={styles.navLink}>
-                                            {label}
-                                        </a>
+                                        {href.startsWith('http') ? (
+                                            <a href={href} className={styles.navLink} target="_blank" rel="noopener noreferrer">
+                                                {label}
+                                            </a>
+                                        ) : href.startsWith('#') ? (
+                                            <a href={href} className={styles.navLink}>
+                                                {label}
+                                            </a>
+                                        ) : (
+                                            <Link href={href} className={styles.navLink}>
+                                                {label}
+                                            </Link>
+                                        )}
                                     </li>
                                 ))}
                             </ul>
@@ -90,11 +101,28 @@ const Navbar = () => {
 
                         {/* Mobile menu */}
                         <div className={`${styles.mobileMenu} ${mobileOpen ? styles.open : ''}`}>
-                            {navItems.map(({ label, href }) => (
-                                <a key={label} href={href} className={styles.navLink} onClick={() => setMobileOpen(false)}>
-                                    {label}
-                                </a>
-                            ))}
+                            {navItems.map(({ label, href }) =>
+                                href.startsWith('http') ? (
+                                    <a
+                                        key={label}
+                                        href={href}
+                                        className={styles.navLink}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={() => setMobileOpen(false)}
+                                    >
+                                        {label}
+                                    </a>
+                                ) : href.startsWith('#') ? (
+                                    <a key={label} href={href} className={styles.navLink} onClick={() => setMobileOpen(false)}>
+                                        {label}
+                                    </a>
+                                ) : (
+                                    <Link key={label} href={href} className={styles.navLink} onClick={() => setMobileOpen(false)}>
+                                        {label}
+                                    </Link>
+                                ),
+                            )}
                             <div className={styles.mobileActions}>
                                 <a href="#" className={styles.cartLink} onClick={() => setMobileOpen(false)}>
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
