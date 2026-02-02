@@ -1,7 +1,6 @@
 .section {
     position: relative;
     border-bottom: solid 1px white;
-    margin-bottom: 30px;
 }
 
 .contentData {
@@ -52,10 +51,6 @@
 
 /* md - Medium devices (≥768px) */
 @media (min-width: 768px) {
-    .section {
-        margin-bottom: 80px;
-    }
-
     .title {
         font-size: 56px;
     }
