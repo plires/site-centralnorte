@@ -11,7 +11,7 @@ const navItems = [
     { label: 'Co-packing', href: '/' },
     { label: 'Empresa', href: '/nosotros' },
     { label: 'RSE', href: '/' },
-    { label: 'Contacto', href: 'http://google.com/' },
+    { label: 'Contacto', href: '/' },
 ];
 
 const Navbar = () => {
@@ -50,7 +50,7 @@ const Navbar = () => {
                     <div className="col">
                         <div className={styles.navbarInner}>
                             {/* Logo */}
-                            <Link href="/" className={styles.logo}>
+                            <Link onClick={() => setMobileOpen(false)} href="/" className={styles.logo}>
                                 <img src={scrolled || mobileOpen ? logoSmallSrc : logoSrc} alt="Central Norte" />
                             </Link>
 
