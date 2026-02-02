@@ -1,5 +1,6 @@
 import LayoutPublic from '@/layouts/public/public-layout';
 import LogoCarousel from '@/pages/public/site/components/LogoCarousel';
+import CompromisoSection from './components/CompromisoSection';
 import NosotrosHeader from './components/NosotrosHeader';
 import NosotrosIntro from './components/NosotrosIntro';
 import NovedadesCarousel from './components/NovedadesCarousel';
@@ -20,6 +21,7 @@ const Nosotros = ({ novedades }) => {
             <NovedadesCarousel novedades={novedades} />
             <PartnersSection />
             <LogoCarousel background="#e3e3e3" brandLogos={brandLogos} />
+            <CompromisoSection />
         </>
     );
 };

@@ -1,0 +1,168 @@
+.section {
+    position: relative;
+    padding: 60px 0;
+    overflow: hidden;
+}
+
+.backgroundLogo {
+    display: none;
+}
+
+.content {
+    position: relative;
+    z-index: 2;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 400;
+    color: var(--primary-color);
+    line-height: 0.95;
+    margin: 0 0 20px 0;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.description {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.description strong {
+    font-weight: bold;
+}
+
+.logos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+}
+
+.logo {
+    height: 75px;
+    width: auto;
+    object-fit: contain;
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .title {
+        font-size: 4rem;
+    }
+
+    .description {
+        font-size: 1rem;
+    }
+
+    .logo {
+        height: 70px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        padding: 80px 0;
+    }
+
+    .title {
+        font-size: 5rem;
+        margin-bottom: 25px;
+        text-align: left;
+    }
+
+    .description {
+        font-size: 1.05rem;
+        margin-bottom: 50px;
+    }
+
+    .logos {
+        gap: 60px;
+    }
+
+    .logo {
+        height: 80px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        padding: 100px 0;
+    }
+
+    .backgroundLogo {
+        display: block;
+        position: absolute;
+        top: 50%;
+        right: -5%;
+        transform: translateY(-50%);
+        width: 45%;
+        max-width: 600px;
+        height: auto;
+        opacity: 0.15;
+        z-index: 1;
+    }
+
+    .title {
+        font-size: 6rem;
+    }
+
+    .description {
+        font-size: 1.1rem;
+    }
+
+    .logos {
+        gap: 50px;
+    }
+
+    .logo {
+        height: 90px;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .section {
+        padding: 120px 0;
+    }
+
+    .backgroundLogo {
+        right: 0;
+        width: 40%;
+        max-width: 700px;
+    }
+
+    .title {
+        font-size: 7rem;
+    }
+
+    .logo {
+        height: 100px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .title {
+        font-size: 8rem;
+    }
+
+    .backgroundLogo {
+        max-width: 800px;
+    }
+
+    .logo {
+        height: 110px;
+    }
+}
