@@ -2,20 +2,21 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiController;
-use App\Http\Controllers\Public\Site\HomeController;
 use App\Http\Controllers\Dashboard\RoleController;
 use App\Http\Controllers\Dashboard\UserController;
-use App\Http\Controllers\Public\Site\NosotrosController;
-use App\Http\Controllers\Public\Site\NewsletterController;
+use App\Http\Controllers\Dashboard\SlideController;
+use App\Http\Controllers\Public\Site\RseController;
 use App\Http\Controllers\Dashboard\BudgetController;
 use App\Http\Controllers\Dashboard\ClientController;
+use App\Http\Controllers\Public\Site\HomeController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Public\PublicBudgetController;
-use App\Http\Controllers\Public\PublicPickingBudgetController;
+use App\Http\Controllers\Public\Site\NosotrosController;
 use App\Http\Controllers\Dashboard\ProductImageController;
-use App\Http\Controllers\Dashboard\SlideController;
+use App\Http\Controllers\Public\Site\NewsletterController;
+use App\Http\Controllers\Public\PublicPickingBudgetController;
 
 // ===========================================================================
 // RUTAS PÚBLICAS (sin autenticación)
@@ -26,6 +27,9 @@ Route::get('/', [HomeController::class, 'index'])
 
 Route::get('/nosotros', [NosotrosController::class, 'index'])
     ->name('public.nosotros');
+
+Route::get('/rse', [RseController::class, 'index'])
+    ->name('public.rse');
 
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
@@ -41,7 +45,7 @@ Route::prefix('presupuesto')->name('public.budget.')->group(function () {
     Route::post('/{token}/aprobar', [PublicBudgetController::class, 'approve'])
         ->name('approve');
     Route::post('/{token}/en-evaluacion', [PublicBudgetController::class, 'inReview'])
-    ->name('in_review');
+        ->name('in_review');
 });
 
 // Vista pública del presupuesto de Picking
@@ -54,7 +58,7 @@ Route::prefix('presupuesto-picking')->name('public.picking.budget.')->group(func
     Route::post('/{token}/aprobar', [PublicPickingBudgetController::class, 'approve'])
         ->name('approve');
     Route::post('/{token}/en-evaluacion', [PublicPickingBudgetController::class, 'inReview'])
-    ->name('in_review');
+        ->name('in_review');
 });
 
 // ===========================================================================

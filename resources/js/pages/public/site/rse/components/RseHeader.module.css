@@ -1,0 +1,127 @@
+.header {
+    position: relative;
+    width: 100%;
+    overflow: visible;
+}
+
+.imageContainer {
+    position: relative;
+    width: 100%;
+}
+
+.mainImage {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.content {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    right: 0;
+    z-index: 2;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    color: var(--tertiary-color);
+    line-height: 1;
+    margin: 0;
+    text-align: center;
+    /* text-shadow: 0px 3px 3px rgba(0, 0, 0, 0.3); */
+}
+
+.title span {
+    color: white;
+}
+
+.wave {
+    display: none;
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .title {
+        font-size: 2.75rem;
+    }
+
+    .content {
+        bottom: 10px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .title {
+        font-size: 3rem;
+        text-align: left;
+    }
+
+    .content {
+        bottom: 100px;
+    }
+
+    .wave {
+        display: block;
+        position: absolute;
+        bottom: 35px;
+        left: 0;
+        width: 40%;
+        height: auto;
+        z-index: 3;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .content {
+        bottom: 135px;
+    }
+
+    .title {
+        font-size: 4rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .title {
+        font-size: 5rem;
+    }
+
+    .content {
+        bottom: 190px;
+    }
+
+    .wave {
+        width: 35%;
+        bottom: 75px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .title {
+        font-size: 6rem;
+    }
+
+    .content {
+        bottom: 200px;
+    }
+
+    .wave {
+        bottom: 90px;
+    }
+}
+
+@media (min-width: 1700px) {
+    .content {
+        bottom: 400px;
+    }
+
+    .wave {
+        bottom: 250px;
+    }
+}
