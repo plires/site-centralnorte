@@ -24,8 +24,8 @@
     height: 30px;
     width: auto;
     object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
+    /* filter: brightness(0) invert(1); */
+    /* opacity: 0.9; */
     transition: opacity 0.3s ease;
 }
 
@@ -61,10 +61,6 @@
 
     .carouselSlide {
         padding: 0 2.5rem;
-    }
-
-    .carouselImage {
-        height: 40px;
     }
 }
 
