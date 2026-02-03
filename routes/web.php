@@ -14,6 +14,7 @@ use App\Http\Controllers\Dashboard\CategoryController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Public\PublicBudgetController;
 use App\Http\Controllers\Public\Site\NosotrosController;
+use App\Http\Controllers\Public\Site\CopackingController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 use App\Http\Controllers\Public\Site\NewsletterController;
 use App\Http\Controllers\Public\PublicPickingBudgetController;
@@ -30,6 +31,9 @@ Route::get('/nosotros', [NosotrosController::class, 'index'])
 
 Route::get('/rse', [RseController::class, 'index'])
     ->name('public.rse');
+
+Route::get('/copacking', [CopackingController::class, 'index'])
+    ->name('public.copacking');
 
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
