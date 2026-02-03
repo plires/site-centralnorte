@@ -7,11 +7,11 @@ import { HiOutlineShoppingCart } from 'react-icons/hi2';
 import styles from './Navbar.module.css';
 
 const navItems = [
-    { label: 'Merchandising', href: '/' },
-    { label: 'Co-packing', href: '/' },
+    { label: 'Merchandising', href: '/products' },
+    { label: 'Co-packing', href: '/copacking' },
     { label: 'Empresa', href: '/nosotros' },
     { label: 'RSE', href: '/rse' },
-    { label: 'Contacto', href: '/' },
+    { label: 'Contacto', href: '/contacto' },
 ];
 
 const Navbar = () => {
