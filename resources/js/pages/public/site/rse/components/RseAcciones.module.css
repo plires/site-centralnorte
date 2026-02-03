@@ -1,0 +1,275 @@
+.section {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== Content wrapper (above blue background) ===== */
+.contentWrapper {
+    position: relative;
+    z-index: 2;
+    padding: 0;
+}
+
+.waveRight {
+    display: none;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--secondary-color);
+    text-align: center;
+    margin: 0 0 1rem 0;
+    text-transform: uppercase;
+}
+
+/* ===== Images grid ===== */
+.imagesGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 20px;
+}
+
+.imageItem {
+    text-align: center;
+}
+
+.imageWrapper {
+    width: 100%;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.imageTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: var(--tertiary-color);
+    margin: 0 0 5px 0;
+}
+
+.imageDescription {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.85rem;
+    color: var(--tertiary-color);
+    margin: 0;
+}
+
+.imagesGrid .imageItem:last-child .imageTitle,
+.imagesGrid .imageItem:last-child .imageDescription {
+    color: white;
+}
+
+/* ===== Bottom section (blue background - behind images) ===== */
+.bottomSection {
+    position: relative;
+    z-index: 1;
+    background-color: var(--primary-color);
+    margin-top: -150px;
+    padding-top: 150px;
+    padding-bottom: 40px;
+}
+
+.waveTop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    transform: translateY(-99%);
+}
+
+.bottomContent {
+    text-align: center;
+    padding-top: 20px;
+}
+
+.bottomText {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.9rem;
+    color: #fff;
+    line-height: 1.7;
+    margin: 0 0 30px 0;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.bottomText strong {
+    font-weight: bold;
+}
+
+.smileyIcon {
+    width: 50px;
+    height: 50px;
+}
+
+/* ===== Responsive (Mobile First) ===== */
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .title {
+        font-size: 3.5rem;
+    }
+
+    .imagesGrid {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .imageItem {
+        flex: 0 0 calc(50% - 10px);
+    }
+
+    .imageWrapper {
+        height: 280px;
+    }
+
+    .bottomSection {
+        margin-top: -180px;
+        padding-top: 180px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .title {
+        font-size: 4rem;
+    }
+
+    .imagesGrid {
+        flex-wrap: nowrap;
+        gap: 25px;
+        padding-bottom: 30px;
+    }
+
+    .imageItem {
+        flex: 1;
+    }
+
+    .imageWrapper {
+        height: 350px;
+        margin-bottom: 20px;
+    }
+
+    .imageTitle {
+        font-size: 1rem;
+    }
+
+    .imageDescription {
+        font-size: 0.9rem;
+    }
+
+    .imageTitle,
+    .imageDescription {
+        color: white;
+    }
+
+    .bottomSection {
+        margin-top: -200px;
+        padding-top: 200px;
+        padding-bottom: 50px;
+    }
+
+    .bottomContent {
+        padding-top: 30px;
+    }
+
+    .bottomText {
+        font-size: 1rem;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .contentWrapper {
+        padding: 80px 0 0 0;
+    }
+
+    .waveRight {
+        display: block;
+        position: absolute;
+        top: 110px;
+        right: 0;
+        width: 55%;
+        height: auto;
+        z-index: 2;
+    }
+
+    .title {
+        font-size: 4.5rem;
+        text-align: left;
+    }
+
+    .imagesGrid {
+        gap: 30px;
+    }
+
+    .imageWrapper {
+        height: 420px;
+    }
+
+    .imageTitle {
+        font-size: 1.1rem;
+    }
+
+    .imageDescription {
+        font-size: 0.95rem;
+    }
+
+    .bottomSection {
+        margin-top: -250px;
+        padding-top: 250px;
+        padding-bottom: 60px;
+    }
+
+    .bottomContent {
+        padding-top: 40px;
+    }
+
+    .bottomText {
+        font-size: 1.05rem;
+    }
+
+    .smileyIcon {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .title {
+        font-size: 5rem;
+    }
+
+    .imageWrapper {
+        height: 480px;
+    }
+
+    .bottomSection {
+        margin-top: -280px;
+        padding-top: 280px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .waveRight {
+        /* width: 300px; */
+    }
+}
