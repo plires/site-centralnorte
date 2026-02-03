@@ -1,0 +1,245 @@
+.section {
+    position: relative;
+    padding: 40px 0;
+    overflow: hidden;
+}
+
+.waveDecoration {
+    display: none;
+}
+
+.intro {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.introText {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin: 0;
+}
+
+.introText strong {
+    font-weight: bold;
+}
+
+.titleWrapper {
+    position: relative;
+    margin-bottom: 40px;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 400;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.titleLine1 {
+    color: var(--primary-color);
+}
+
+.titleLine2 {
+    color: var(--tertiary-color);
+}
+
+/* ===== Grid de soluciones ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px 20px;
+}
+
+.item {
+    text-align: center;
+}
+
+.icon {
+    width: 50px;
+    height: 50px;
+    margin-bottom: 12px;
+}
+
+.itemTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin: 0 0 4px 0;
+}
+
+.itemDescription {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.8rem;
+    margin: 0 0 10px 0;
+}
+
+.itemLine {
+    width: 40px;
+    height: 3px;
+    background-color: var(--primary-color);
+    margin: 0 auto;
+}
+
+/* ===== Responsive (Mobile First) ===== */
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .introText {
+        font-size: 0.95rem;
+    }
+
+    .title {
+        font-size: 3rem;
+    }
+
+    .icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .itemTitle {
+        font-size: 0.95rem;
+    }
+
+    .itemDescription {
+        font-size: 0.85rem;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        padding: 60px 0;
+    }
+
+    .intro {
+        margin-bottom: 40px;
+    }
+
+    .introText {
+        font-size: 1rem;
+    }
+
+    .titleWrapper {
+        margin-bottom: 50px;
+    }
+
+    .title {
+        font-size: 3.5rem;
+    }
+
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px 30px;
+    }
+
+    .icon {
+        width: 70px;
+        height: 70px;
+        margin-bottom: 15px;
+    }
+
+    .itemTitle {
+        font-size: 1rem;
+    }
+
+    .itemDescription {
+        font-size: 0.9rem;
+        margin-bottom: 12px;
+    }
+
+    .itemLine {
+        width: 50px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        padding: 80px 0;
+    }
+
+    .waveDecoration {
+        display: block;
+        position: absolute;
+        top: 220px;
+        right: 0;
+        width: 45%;
+        max-width: 600px;
+        height: auto;
+        z-index: 1;
+    }
+
+    .intro {
+        text-align: left;
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 60px;
+    }
+
+    .titleWrapper {
+        position: relative;
+        z-index: 2;
+        margin-bottom: 60px;
+    }
+
+    .title {
+        font-size: 4rem;
+        text-align: left;
+    }
+
+    .grid {
+        position: relative;
+        z-index: 2;
+        gap: 50px 40px;
+    }
+
+    .icon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .itemTitle {
+        font-size: 1.05rem;
+    }
+
+    .itemDescription {
+        font-size: 0.95rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .waveDecoration {
+        top: 245px;
+        width: 50%;
+        max-width: 700px;
+    }
+
+    .title {
+        font-size: 4.5rem;
+    }
+
+    .icon {
+        width: 90px;
+        height: 90px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .waveDecoration {
+        max-width: 800px;
+    }
+
+    .title {
+        font-size: 5rem;
+    }
+}
