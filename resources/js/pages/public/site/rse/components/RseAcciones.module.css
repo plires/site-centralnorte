@@ -266,10 +266,3 @@
         padding-top: 280px;
     }
 }
-
-/* xxl - Extra extra large devices (≥1400px) */
-@media (min-width: 1400px) {
-    .waveRight {
-        /* width: 300px; */
-    }
-}
