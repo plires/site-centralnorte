@@ -39,6 +39,9 @@ Route::get('/copacking', [CopackingController::class, 'index'])
 Route::get('/contacto', [ContactoController::class, 'index'])
     ->name('public.contacto');
 
+Route::post('/contacto', [ContactoController::class, 'send'])
+    ->name('public.contacto.send');
+
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
     ->name('public.newsletter.subscribe');

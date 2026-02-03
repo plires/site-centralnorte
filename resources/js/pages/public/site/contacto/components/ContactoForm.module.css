@@ -1,0 +1,360 @@
+.section {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== Top section (white background with title) ===== */
+.topSection {
+    position: relative;
+    padding: 125px 0 0 0;
+    background-color: #fff;
+    margin-bottom: 130px;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 400;
+    color: var(--tertiary-color);
+    text-align: center;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.waveDecoration {
+    display: none;
+}
+
+/* ===== Bottom section (blue background with form) ===== */
+.bottomSection {
+    position: relative;
+    z-index: 1;
+    background-color: var(--primary-color);
+    margin-top: -50px;
+    padding-top: 50px;
+    padding-bottom: 60px;
+}
+
+.waveTop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    transform: translateY(-99%);
+}
+
+.moveTuMarca {
+    display: none;
+}
+
+/* ===== Form content ===== */
+.formWrapper {
+    position: relative;
+    z-index: 2;
+}
+
+.formTitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 400;
+    color: #fff;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+}
+
+.formDescription {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.85rem;
+    color: #fff;
+    line-height: 1.6;
+    margin: 0 0 25px 0;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.input,
+.textarea {
+    width: 100%;
+    padding: 12px 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #fff;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.input:focus,
+.textarea:focus {
+    border-bottom-color: #fff;
+}
+
+.textarea {
+    min-height: 120px;
+    resize: vertical;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.textarea:focus {
+    border-color: #fff;
+}
+
+.submitWrapper {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.errorText {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    color: #ff6b6b;
+    margin-top: 4px;
+}
+
+.successMessage,
+.errorMessage {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.successMessage {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: #90ee90;
+    border: 1px solid rgba(0, 255, 0, 0.3);
+}
+
+.errorMessage {
+    background-color: rgba(255, 0, 0, 0.1);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 0, 0, 0.3);
+}
+
+/* ===== Responsive (Mobile First) ===== */
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .topSection {
+        margin-bottom: 140px;
+    }
+
+    .title {
+        font-size: 4rem;
+    }
+
+    .formTitle {
+        font-size: 2rem;
+    }
+
+    .formDescription {
+        font-size: 0.9rem;
+    }
+
+    .row {
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .row > * {
+        flex: 1;
+    }
+
+    .bottomSection {
+        margin-top: -30px;
+        padding-top: 30px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .topSection {
+        padding: 160px 0 0 0;
+        margin-bottom: 190px;
+    }
+
+    .title {
+        font-size: 5rem;
+    }
+
+    .bottomSection {
+        margin-top: -60px;
+        padding-top: 60px;
+        padding-bottom: 80px;
+    }
+
+    .formTitle {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .formDescription {
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+    }
+
+    .form {
+        gap: 20px;
+    }
+
+    .input,
+    .textarea {
+        font-size: 0.95rem;
+        padding: 14px 0;
+    }
+
+    .textarea {
+        padding: 14px;
+        min-height: 150px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .topSection {
+        padding: 200px 0 0 0;
+        margin-bottom: 165px;
+    }
+
+    .title {
+        font-size: 6rem;
+        text-align: left;
+    }
+
+    .waveDecoration {
+        display: block;
+        position: absolute;
+        top: 225px;
+        right: 0;
+        width: 50%;
+        height: auto;
+        z-index: 2;
+    }
+
+    .bottomSection {
+        margin-top: -120px;
+        padding-top: 120px;
+        padding-bottom: 100px;
+    }
+
+    .moveTuMarca {
+        display: block;
+        position: absolute;
+        top: 155px;
+        right: 0;
+        transform: translateY(-50%);
+        width: 35%;
+        max-width: 450px;
+        height: auto;
+        opacity: 0.3;
+        z-index: 1;
+    }
+
+    .formWrapper {
+        max-width: 700px;
+    }
+
+    .formTitle {
+        font-size: 3rem;
+    }
+
+    .formDescription {
+        font-size: 1rem;
+    }
+
+    .input,
+    .textarea {
+        font-size: 1rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .topSection {
+        padding: 235px 0 0 0;
+        margin-bottom: 125px;
+    }
+
+    .title {
+        font-size: 7rem;
+    }
+
+    .waveDecoration {
+        top: 275px;
+    }
+
+    .bottomSection {
+        margin-top: -40px;
+        padding-top: 40px;
+    }
+
+    .moveTuMarca {
+        max-width: 100%;
+        top: 215px;
+    }
+
+    .formWrapper {
+        max-width: 750px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .topSection {
+        padding: 260px 0 0 0;
+        margin-bottom: 160px;
+    }
+
+    .title {
+        font-size: 8rem;
+    }
+
+    .waveDecoration {
+        top: 320px;
+    }
+
+    .moveTuMarca {
+        width: 610px;
+        top: 260px;
+    }
+}
+
+@media (min-width: 1700px) {
+    .topSection {
+        padding: 290px 0 0 0;
+        margin-bottom: 190px;
+    }
+
+    .waveDecoration {
+        top: 350px;
+    }
+
+    .moveTuMarca {
+        width: 685px;
+        top: 270px;
+    }
+}
