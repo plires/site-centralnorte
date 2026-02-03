@@ -1,0 +1,253 @@
+.section {
+    position: relative;
+    overflow: hidden;
+}
+
+/* ===== Top section (blue background - behind images) ===== */
+.topSection {
+    position: relative;
+    z-index: 1;
+    background-color: var(--primary-color);
+    padding: 40px 0 150px 0;
+}
+
+.waveBottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: block;
+    transform: translateY(99%);
+}
+
+.logosDecoration {
+    display: none;
+}
+
+.titleWrapper {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.icon {
+    font-size: 2.5rem;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    font-weight: 400;
+    line-height: 1;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.titleLine1 {
+    color: var(--tertiary-color);
+}
+
+.titleLine2 {
+    color: var(--tertiary-color);
+}
+
+.introText {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.9rem;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.introText strong {
+    font-weight: bold;
+}
+
+/* ===== Content wrapper (above blue background) ===== */
+.contentWrapper {
+    position: relative;
+    z-index: 2;
+    margin-top: -150px;
+    padding-bottom: 20px;
+}
+
+.imagesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+
+.imageItem {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.image {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    display: block;
+}
+
+/* ===== Responsive (Mobile First) ===== */
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .topSection {
+        padding-bottom: 180px;
+    }
+
+    .contentWrapper {
+        margin-top: -180px;
+        padding-bottom: 40px;
+    }
+
+    .title {
+        font-size: 3.5rem;
+    }
+
+    .introText {
+        font-size: 0.95rem;
+    }
+
+    .image {
+        height: 350px;
+    }
+
+    .imagesGrid {
+        gap: 15px;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .topSection {
+        padding: 60px 0 200px 0;
+    }
+
+    .contentWrapper {
+        margin-top: -200px;
+        padding-bottom: 50px;
+    }
+
+    .titleWrapper {
+        margin-bottom: 25px;
+    }
+
+    .title {
+        font-size: 4rem;
+    }
+
+    .icon {
+        font-size: 3rem;
+    }
+
+    .introText {
+        font-size: 1rem;
+    }
+
+    .imagesGrid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .topSection {
+        padding: 80px 0 250px 0;
+    }
+
+    .contentWrapper {
+        margin-top: -250px;
+        padding-bottom: 60px;
+    }
+
+    .logosDecoration {
+        display: block;
+        position: absolute;
+        top: 70px;
+        right: 0;
+        width: 45%;
+        max-width: 550px;
+        height: auto;
+        z-index: 1;
+    }
+
+    .content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .titleWrapper {
+        text-align: left;
+        padding-top: 30px;
+    }
+
+    .title {
+        font-size: 4.5rem;
+    }
+
+    .introText {
+        text-align: center;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .imagesGrid {
+        gap: 25px;
+    }
+
+    .image {
+        height: 420px;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .topSection {
+        padding-bottom: 280px;
+    }
+
+    .contentWrapper {
+        margin-top: -280px;
+    }
+
+    .logosDecoration {
+        width: 50%;
+        max-width: 650px;
+        top: 40px;
+    }
+
+    .titleWrapper {
+        margin-bottom: 20px;
+        padding-top: 45px;
+    }
+
+    .title {
+        font-size: 5rem;
+    }
+
+    .image {
+        height: 480px;
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .logosDecoration {
+        max-width: 750px;
+    }
+
+    .introText {
+        margin-top: 4rem;
+    }
+
+    .image {
+        height: 520px;
+    }
+}

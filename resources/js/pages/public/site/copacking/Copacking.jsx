@@ -1,5 +1,6 @@
 import LayoutPublic from '@/layouts/public/public-layout';
 import NewsletterSection from '@/pages/public/site/components/NewsletterSection';
+import CopackingDesarrollos from './components/CopackingDesarrollos';
 import CopackingHeader from './components/CopackingHeader';
 import CopackingSoluciones from './components/CopackingSoluciones';
 
@@ -8,6 +9,7 @@ const Copacking = () => {
         <>
             <CopackingHeader />
             <CopackingSoluciones />
+            <CopackingDesarrollos />
             <NewsletterSection />
         </>
     );
