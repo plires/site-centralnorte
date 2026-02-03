@@ -3,7 +3,7 @@ import headerMobile from '@/../images/rse/header-mobile.webp';
 import ondaImage from '@/../images/rse/onda.webp';
 import styles from './RseHeader.module.css';
 
-const NosotrosHeader = () => {
+const RseHeader = () => {
     return (
         <header className={styles.header}>
             <div className={styles.imageContainer}>
@@ -29,4 +29,4 @@ const NosotrosHeader = () => {
     );
 };
 
-export default NosotrosHeader;
+export default RseHeader;
