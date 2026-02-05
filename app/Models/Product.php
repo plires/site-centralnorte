@@ -24,6 +24,11 @@ class Product extends Model
         'category_id',
         'last_price',
         'origin',
+        'is_visible_in_front',
+    ];
+
+    protected $casts = [
+        'is_visible_in_front' => 'boolean',
     ];
 
     /* Configuracion para datos externos start */
@@ -96,6 +101,11 @@ class Product extends Model
     public function scopeLocal($query)
     {
         return $query->where('origin', self::ORIGIN_LOCAL);
+    }
+
+    public function scopeVisibleInFront($query)
+    {
+        return $query->where('is_visible_in_front', true);
     }
     /* Configuracion para datos externos end */
 
