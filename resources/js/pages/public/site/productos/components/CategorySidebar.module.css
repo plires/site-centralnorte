@@ -1,0 +1,175 @@
+/* Botón toggle mobile */
+.mobileToggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 14px 16px;
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: background-color 0.2s ease;
+}
+
+.mobileToggle:hover {
+    background-color: var(--primary-color-dark, #2c3a6e);
+}
+
+.filterIcon {
+    font-size: 18px;
+    margin-right: 10px;
+}
+
+.toggleText {
+    flex: 1;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.chevron {
+    font-size: 18px;
+    transition: transform 0.3s ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+/* Overlay mobile */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+/* Sidebar */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100%;
+    background-color: #fff;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+}
+
+.sidebarOpen {
+    transform: translateX(0);
+}
+
+/* Header mobile del sidebar */
+.sidebarHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #e9ecef;
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
+.sidebarTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.closeButton {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Navegación */
+.nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.categoryItem {
+    display: block;
+    padding: 14px 20px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: #333;
+    text-decoration: none;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.categoryItem:hover {
+    background-color: #f8f9fa;
+    color: var(--primary-color);
+}
+
+.categoryItem.active {
+    background-color: rgba(61, 80, 149, 0.1);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Desktop */
+@media (min-width: 992px) {
+    .mobileToggle {
+        display: none;
+    }
+
+    .overlay {
+        display: none;
+    }
+
+    .sidebar {
+        position: static;
+        transform: none;
+        width: 100%;
+        height: auto;
+        box-shadow: none;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .sidebarHeader {
+        padding: 16px 20px;
+    }
+
+    .closeButton {
+        display: none;
+    }
+
+    .nav {
+        max-height: none;
+    }
+
+    .categoryItem {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+}

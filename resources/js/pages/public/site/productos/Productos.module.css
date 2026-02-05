@@ -1,0 +1,152 @@
+.section {
+    padding: 125px 0 60px;
+    background-color: #f8f9fa;
+    min-height: calc(100vh - 200px);
+}
+
+.pageHeader {
+    margin-bottom: 24px;
+}
+
+.pageTitle {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    color: var(--primary-color);
+    margin: 0 0 8px 0;
+    letter-spacing: 1px;
+}
+
+.productCount,
+.categoryDescription {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    color: #666;
+    margin-top: -10px;
+    margin-bottom: 2rem;
+}
+
+.categoryDescription {
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.sidebarColumn {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.contentColumn {
+    width: 100%;
+}
+
+.productsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.emptyState {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 40px;
+}
+
+.emptyText {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    color: #666;
+    text-align: center;
+    margin: 0;
+}
+
+/* Small devices (576px and up) */
+@media (min-width: 576px) {
+    .productsGrid {
+        gap: 20px;
+    }
+}
+
+/* Medium devices (768px and up) */
+@media (min-width: 768px) {
+    .section {
+        padding: 160px 0 80px;
+    }
+
+    .pageTitle {
+        font-size: 38px;
+    }
+
+    .productsGrid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+    }
+}
+
+/* Large devices (992px and up) */
+@media (min-width: 992px) {
+    .section {
+        padding: 200px 0 80px;
+    }
+
+    .pageHeader {
+        text-align: center;
+    }
+
+    .categoryDescription {
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .productCount {
+        margin-top: -15px;
+    }
+
+    .layout {
+        flex-direction: row;
+        gap: 30px;
+    }
+
+    .sidebarColumn {
+        width: 250px;
+        flex-shrink: 0;
+    }
+
+    .contentColumn {
+        flex: 1;
+    }
+
+    .pageHeader {
+        margin-bottom: 30px;
+    }
+
+    .pageTitle {
+        font-size: 42px;
+    }
+}
+
+/* Extra large devices (1200px and up) */
+@media (min-width: 1200px) {
+    .categoryDescription {
+        font-size: 1rem;
+        max-width: 800px;
+    }
+
+    .sidebarColumn {
+        width: 280px;
+    }
+
+    .productsGrid {
+        gap: 28px;
+    }
+}

@@ -16,6 +16,7 @@ use App\Http\Controllers\Public\PublicBudgetController;
 use App\Http\Controllers\Public\Site\ContactoController;
 use App\Http\Controllers\Public\Site\NosotrosController;
 use App\Http\Controllers\Public\Site\CopackingController;
+use App\Http\Controllers\Public\Site\ProductosController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 use App\Http\Controllers\Public\Site\NewsletterController;
 use App\Http\Controllers\Public\PublicPickingBudgetController;
@@ -41,6 +42,9 @@ Route::get('/contacto', [ContactoController::class, 'index'])
 
 Route::post('/contacto', [ContactoController::class, 'send'])
     ->name('public.contacto.send');
+
+Route::get('/products', [ProductosController::class, 'index'])
+    ->name('public.products');
 
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])

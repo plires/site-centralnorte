@@ -1,0 +1,138 @@
+.wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
+.circle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    box-shadow: 0 0 0 1px #e0e0e0;
+}
+
+.circle:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 1px var(--primary-color), 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.circle:focus {
+    box-shadow: 0 0 0 1px var(--primary-color), 0 0 0 3px rgba(61, 80, 149, 0.25);
+}
+
+.circle.active {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px var(--primary-color), 0 2px 8px rgba(61, 80, 149, 0.3);
+}
+
+/* Tooltip base */
+.tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    animation: fadeIn 0.15s ease forwards;
+}
+
+/* Flecha del tooltip - base */
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    border: 6px solid transparent;
+    border-top-color: #fff;
+}
+
+.tooltip::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    border: 7px solid transparent;
+    border-top-color: #e0e0e0;
+}
+
+/* Tooltip centrado (default) */
+.tooltipCenter {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.tooltipCenter::after,
+.tooltipCenter::before {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Tooltip alineado a la izquierda */
+.tooltipLeft {
+    left: 0;
+    transform: translateX(0);
+}
+
+.tooltipLeft::after {
+    left: 10px;
+    transform: none;
+}
+
+.tooltipLeft::before {
+    left: 9px;
+    transform: none;
+}
+
+/* Tooltip alineado a la derecha */
+.tooltipRight {
+    right: 0;
+    left: auto;
+    transform: translateX(0);
+}
+
+.tooltipRight::after {
+    right: 10px;
+    left: auto;
+    transform: none;
+}
+
+.tooltipRight::before {
+    right: 9px;
+    left: auto;
+    transform: none;
+}
+
+.tooltipTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.tooltipStock {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-color, #19ac90);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
