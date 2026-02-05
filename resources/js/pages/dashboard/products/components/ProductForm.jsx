@@ -7,8 +7,9 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Check, ChevronDown, Package, Save } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Eye, EyeOff, Package, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import ProductAttributesSection from './ProductAttributesSection';
 import ProductVariantsSection from './ProductVariantsSection';
@@ -189,6 +190,32 @@ export default function ProductForm({ data, setData, handleSubmit, processing, e
                                         onChange={(vars) => setData('variants', vars)}
                                         errors={errors}
                                     />
+
+                                    {/* Visibilidad en el sitio público */}
+                                    {isEditing && (
+                                        <div className="flex items-center justify-between rounded-lg border p-4">
+                                            <div className="space-y-0.5">
+                                                <Label htmlFor="is_visible_in_front" className="flex items-center gap-2">
+                                                    {data.is_visible_in_front ? (
+                                                        <Eye className="h-4 w-4 text-green-600" />
+                                                    ) : (
+                                                        <EyeOff className="h-4 w-4 text-gray-400" />
+                                                    )}
+                                                    Visible en el sitio web
+                                                </Label>
+                                                <p className="text-muted-foreground text-sm">
+                                                    {data.is_visible_in_front
+                                                        ? 'El producto se mostrará en el sitio público'
+                                                        : 'El producto está oculto en el sitio público'}
+                                                </p>
+                                            </div>
+                                            <Switch
+                                                id="is_visible_in_front"
+                                                checked={data.is_visible_in_front}
+                                                onCheckedChange={(checked) => setData('is_visible_in_front', checked)}
+                                            />
+                                        </div>
+                                    )}
 
                                     {/* Botones */}
                                     <div className="flex items-center justify-end space-x-4 pt-6">

@@ -256,6 +256,7 @@ class ProductController extends Controller
             'proveedor' => 'nullable|string|max:255',
             'category_ids' => 'required|array|min:1',
             'category_ids.*' => 'exists:categories,id',
+            'is_visible_in_front' => 'boolean',
             // VALIDACIONES PARA ATRIBUTOS
             'attributes' => 'nullable|array',
             'attributes.*.attribute_name' => 'required_with:attributes|string|max:255',
@@ -282,6 +283,7 @@ class ProductController extends Controller
                 'name' => $validated['name'],
                 'description' => $validated['description'],
                 'proveedor' => $validated['proveedor'],
+                'is_visible_in_front' => $validated['is_visible_in_front'] ?? $product->is_visible_in_front,
             ]);
 
             // Sincronizar categorías (reemplaza todas)

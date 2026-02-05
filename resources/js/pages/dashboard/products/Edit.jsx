@@ -17,6 +17,7 @@ export default function Edit({ product, categories, selected_category_ids }) {
         category_ids: selected_category_ids || [],
         attributes: product.attributes || [],
         variants: product.variants || [],
+        is_visible_in_front: product.is_visible_in_front ?? true,
     });
 
     const { handleResponse } = useInertiaResponse();
