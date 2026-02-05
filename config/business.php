@@ -56,4 +56,14 @@ return [
     'linkedin' => env('SOCIAL_LINKEDIN', ''),
   ],
 
+  /*
+    |--------------------------------------------------------------------------
+    | Admin Email
+    |--------------------------------------------------------------------------
+    |
+    | Email address where contact form notifications will be sent.
+    |
+    */
+  'admin_email' => env('ADMIN_EMAIL', env('MAIL_FROM_ADDRESS', 'andrea@centralnortesrl.com')),
+
 ];

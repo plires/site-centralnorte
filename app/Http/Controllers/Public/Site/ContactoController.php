@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use App\Models\ContactMessage;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ContactMessageReceivedMail;
 use App\Http\Requests\Public\ContactMessageRequest;
 
 class ContactoController extends Controller
@@ -18,7 +20,11 @@ class ContactoController extends Controller
     public function send(ContactMessageRequest $request)
     {
         try {
-            ContactMessage::create($request->validated());
+            $contactMessage = ContactMessage::create($request->validated());
+
+            // Enviar email de notificación al administrador
+            $adminEmail = config('business.admin_email', config('mail.from.address'));
+            Mail::to($adminEmail)->queue(new ContactMessageReceivedMail($contactMessage));
 
             return back()->with('success', '¡Gracias por contactarnos! Te responderemos a la brevedad.');
         } catch (\Exception $e) {
