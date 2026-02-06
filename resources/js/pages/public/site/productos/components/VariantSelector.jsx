@@ -119,7 +119,7 @@ const VariantSelector = ({ variants, images, onVariantSelect }) => {
                 className={styles.colorCircle}
                 style={{
                     background: variant.secondary_color
-                        ? `linear-gradient(135deg, ${variant.primary_color} 50%, ${variant.secondary_color} 50%)`
+                        ? `linear-gradient(90deg, ${variant.primary_color} 50%, ${variant.secondary_color} 50%)`
                         : variant.primary_color,
                 }}
             />
