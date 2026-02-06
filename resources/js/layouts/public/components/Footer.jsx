@@ -1,15 +1,15 @@
 import Logo from '@/../images/footer/logo-site-footer.svg';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok, FaXTwitter } from 'react-icons/fa6';
 
 import styles from './Footer.module.css';
 
 const navItems = [
-    { label: 'Merchandising', href: '#' },
-    { label: 'Co-packing', href: '#' },
-    { label: 'Empresa', href: '#' },
-    { label: 'RSE', href: '#' },
-    { label: 'Contacto', href: '#' },
+    { label: 'Merchandising', href: '/products' },
+    { label: 'Co-packing', href: '/copacking' },
+    { label: 'Empresa', href: '/nosotros' },
+    { label: 'RSE', href: '/rse' },
+    { label: 'Contacto', href: '/contacto' },
 ];
 
 const socialNetworks = [
@@ -19,6 +19,30 @@ const socialNetworks = [
     { key: 'twitter', icon: FaXTwitter, label: 'X' },
     { key: 'linkedin', icon: FaLinkedinIn, label: 'LinkedIn' },
 ];
+
+const NavLink = ({ href, className, children }) => {
+    if (href.startsWith('http')) {
+        return (
+            <a href={href} className={className} target="_blank" rel="noopener noreferrer">
+                {children}
+            </a>
+        );
+    }
+
+    if (href.startsWith('#')) {
+        return (
+            <a href={href} className={className}>
+                {children}
+            </a>
+        );
+    }
+
+    return (
+        <Link href={href} className={className}>
+            {children}
+        </Link>
+    );
+};
 
 const Footer = () => {
     const { socialLinks = {} } = usePage().props;
@@ -30,16 +54,16 @@ const Footer = () => {
                 <div className="row">
                     <div className="col">
                         <div className={styles.topRow}>
-                            <a href="/" className={styles.logo}>
+                            <Link href="/" className={styles.logo}>
                                 <img src={Logo} alt="Central Norte" />
-                            </a>
+                            </Link>
                             <nav>
                                 <ul className={styles.navList}>
                                     {navItems.map(({ label, href }) => (
                                         <li key={label}>
-                                            <a href={href} className={styles.navLink}>
+                                            <NavLink href={href} className={styles.navLink}>
                                                 {label}
-                                            </a>
+                                            </NavLink>
                                         </li>
                                     ))}
                                 </ul>
