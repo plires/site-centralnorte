@@ -15,7 +15,6 @@ const ProductCard = ({ product }) => {
 
     // Handler para cambiar la imagen al hacer clic en un círculo de color
     const handleColorClick = (variant, index) => {
-        console.log(variant);
         setCurrentImage(variant.image || defaultImage);
         setActiveIndex(index);
     };
