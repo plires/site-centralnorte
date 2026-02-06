@@ -13,15 +13,6 @@ const Productos = ({ products, categories, selectedCategory }) => {
     return (
         <section className={styles.section}>
             <div className="container">
-                {/* Título de la página */}
-                <div className={styles.pageHeader}>
-                    <h1 className={styles.pageTitle}>{pageTitle}</h1>
-                    <p className={styles.productCount}>
-                        {total} producto{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
-                    </p>
-                    <p className={styles.categoryDescription}>{selectedCategoryDescription}</p>
-                </div>
-
                 <div className={styles.layout}>
                     {/* Sidebar de categorías */}
                     <div className={styles.sidebarColumn}>
@@ -30,6 +21,15 @@ const Productos = ({ products, categories, selectedCategory }) => {
 
                     {/* Grid de productos */}
                     <div className={styles.contentColumn}>
+                        {/* Título de la página */}
+                        <div className={styles.pageHeader}>
+                            <h1 className={styles.pageTitle}>{pageTitle}</h1>
+                            <p className={styles.productCount}>
+                                {total} producto{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}
+                            </p>
+                            <p className={styles.categoryDescription}>{selectedCategoryDescription}</p>
+                        </div>
+
                         {data.length > 0 ? (
                             <>
                                 <div className={styles.productsGrid}>
