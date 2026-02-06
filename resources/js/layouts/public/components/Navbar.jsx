@@ -5,6 +5,7 @@ import { Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { HiOutlineShoppingCart } from 'react-icons/hi2';
 import styles from './Navbar.module.css';
+import SearchBar from './SearchBar';
 
 const navItems = [
     { label: 'Merchandising', href: '/products' },
@@ -77,6 +78,7 @@ const Navbar = () => {
 
                             {/* Right actions (desktop) */}
                             <div className={`${styles.actions} ${styles.desktopActions}`}>
+                                <SearchBar />
                                 <a href="#" className={styles.cartLink}>
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>(0)</span>
@@ -124,6 +126,7 @@ const Navbar = () => {
                                 ),
                             )}
                             <div className={styles.mobileActions}>
+                                <SearchBar onClose={() => setMobileOpen(false)} />
                                 <a href="#" className={styles.cartLink} onClick={() => setMobileOpen(false)}>
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>(0)</span>

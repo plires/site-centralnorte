@@ -4,10 +4,10 @@ import Pagination from './components/Pagination';
 import ProductCard from './components/ProductCard';
 import styles from './Productos.module.css';
 
-const Productos = ({ products, categories, selectedCategory }) => {
+const Productos = ({ products, categories, selectedCategory, searchTerm }) => {
     const { data, links, current_page, last_page, total } = products;
 
-    const pageTitle = selectedCategory ? selectedCategory.name : 'Todos los productos';
+    const pageTitle = searchTerm ? `Resultados para "${searchTerm}"` : selectedCategory ? selectedCategory.name : 'Todos los productos';
     const selectedCategoryDescription = selectedCategory?.description || null;
 
     return (
@@ -43,7 +43,12 @@ const Productos = ({ products, categories, selectedCategory }) => {
                             </>
                         ) : (
                             <div className={styles.emptyState}>
-                                <p className={styles.emptyText}>No se encontraron productos en esta categoría.</p>
+                                <p className={styles.emptyText}>
+                                    {searchTerm
+                                        ? `No encontramos resultados para "${searchTerm}"`
+                                        : 'No se encontraron productos en esta categoría.'}
+                                </p>
+                                {searchTerm && <p className={styles.emptyHint}>Intentá con otro término de búsqueda</p>}
                             </div>
                         )}
                     </div>

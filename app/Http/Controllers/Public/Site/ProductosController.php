@@ -10,6 +10,189 @@ use App\Http\Controllers\Controller;
 
 class ProductosController extends Controller
 {
+    /**
+     * API de búsqueda de productos con fuzzy matching
+     */
+    public function search(Request $request)
+    {
+        $query = trim($request->get('q', ''));
+
+        if (strlen($query) < 2) {
+            return response()->json([
+                'products' => [],
+                'categories' => [],
+            ]);
+        }
+
+        // Buscar productos con fuzzy matching
+        $products = $this->searchProductsFuzzy($query);
+
+        // Buscar categorías
+        $categories = $this->searchCategoriesFuzzy($query);
+
+        return response()->json([
+            'products' => $products,
+            'categories' => $categories,
+        ]);
+    }
+
+    /**
+     * Busca productos usando LIKE y SOUNDEX para fuzzy matching
+     */
+    private function searchProductsFuzzy(string $query): array
+    {
+        $searchTerms = $this->generateSearchVariants($query);
+
+        $products = Product::visibleInFront()
+            ->with(['featuredImage', 'categories'])
+            ->where(function ($q) use ($query, $searchTerms) {
+                // Búsqueda exacta (mayor prioridad)
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('sku', 'like', "%{$query}%");
+
+                // Búsqueda por variantes fuzzy
+                foreach ($searchTerms as $term) {
+                    $q->orWhere('name', 'like', "%{$term}%");
+                }
+
+                // Búsqueda por SOUNDEX (fonética)
+                $q->orWhereRaw('SOUNDEX(name) = SOUNDEX(?)', [$query]);
+            })
+            ->orderByRaw("
+                CASE
+                    WHEN name LIKE ? THEN 1
+                    WHEN name LIKE ? THEN 2
+                    ELSE 3
+                END
+            ", ["{$query}%", "%{$query}%"])
+            ->limit(8)
+            ->get()
+            ->map(function ($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'image' => $product->featuredImage?->full_url ?? config('business.product.placeholder_image'),
+                    'category' => $product->categories->first()?->name,
+                ];
+            });
+
+        return $products->toArray();
+    }
+
+    /**
+     * Busca categorías visibles con fuzzy matching
+     */
+    private function searchCategoriesFuzzy(string $query): array
+    {
+        $searchTerms = $this->generateSearchVariants($query);
+
+        $categories = Category::visible()
+            ->where(function ($q) use ($query, $searchTerms) {
+                $q->where('name', 'like', "%{$query}%");
+
+                foreach ($searchTerms as $term) {
+                    $q->orWhere('name', 'like', "%{$term}%");
+                }
+            })
+            ->orderBy('name')
+            ->limit(4)
+            ->get(['id', 'name', 'icon_url']);
+
+        return $categories->toArray();
+    }
+
+    /**
+     * Genera variantes de búsqueda para fuzzy matching
+     */
+    private function generateSearchVariants(string $query): array
+    {
+        $variants = [];
+        $query = mb_strtolower($query);
+
+        $replacements = [
+            'a' => ['á', 'à'],
+            'e' => ['é', 'è'],
+            'i' => ['í', 'ì', 'y'],
+            'o' => ['ó', 'ò'],
+            'u' => ['ú', 'ù', 'ü'],
+            'á' => ['a'],
+            'é' => ['e'],
+            'í' => ['i'],
+            'ó' => ['o'],
+            'ú' => ['u'],
+            'ü' => ['u'],
+            'b' => ['v'],
+            'v' => ['b'],
+            'c' => ['s', 'k', 'z'],
+            's' => ['c', 'z'],
+            'z' => ['s', 'c'],
+            'k' => ['c', 'q'],
+            'q' => ['k', 'c'],
+            'g' => ['j'],
+            'j' => ['g'],
+            'n' => ['ñ', 'm'],
+            'ñ' => ['n', 'ni'],
+            'm' => ['n'],
+            'll' => ['y', 'l'],
+            'y' => ['ll', 'i'],
+            'r' => ['t', 'e'],
+            't' => ['r', 'y'],
+            'h' => ['g', 'j'],
+            'l' => ['k', 'ñ'],
+        ];
+
+        foreach ($replacements as $char => $alternatives) {
+            if (mb_strpos($query, $char) !== false) {
+                foreach ($alternatives as $alt) {
+                    $variant = str_replace($char, $alt, $query);
+                    if ($variant !== $query) {
+                        $variants[] = $variant;
+                    }
+                }
+            }
+        }
+
+        $normalized = $this->removeAccents($query);
+        if ($normalized !== $query) {
+            $variants[] = $normalized;
+        }
+
+        return array_slice(array_unique($variants), 0, 10);
+    }
+
+    /**
+     * Remueve acentos de una cadena
+     */
+    private function removeAccents(string $string): string
+    {
+        $accents = [
+            'á' => 'a',
+            'é' => 'e',
+            'í' => 'i',
+            'ó' => 'o',
+            'ú' => 'u',
+            'à' => 'a',
+            'è' => 'e',
+            'ì' => 'i',
+            'ò' => 'o',
+            'ù' => 'u',
+            'ä' => 'a',
+            'ë' => 'e',
+            'ï' => 'i',
+            'ö' => 'o',
+            'ü' => 'u',
+            'â' => 'a',
+            'ê' => 'e',
+            'î' => 'i',
+            'ô' => 'o',
+            'û' => 'u',
+            'ñ' => 'n',
+        ];
+
+        return strtr($string, $accents);
+    }
+
     public function index(Request $request)
     {
         // Obtener categorías visibles para el sidebar
@@ -20,6 +203,26 @@ class ProductosController extends Controller
         // Query base de productos visibles
         $query = Product::visibleInFront()
             ->with(['featuredImage', 'categories', 'variants', 'images']);
+
+        // Búsqueda por término
+        $searchTerm = $request->get('search');
+        if ($request->filled('search')) {
+            $searchTerms = $this->generateSearchVariants($searchTerm);
+
+            $query->where(function ($q) use ($searchTerm, $searchTerms) {
+                // Búsqueda exacta
+                $q->where('name', 'like', "%{$searchTerm}%")
+                    ->orWhere('sku', 'like', "%{$searchTerm}%");
+
+                // Búsqueda fuzzy
+                foreach ($searchTerms as $term) {
+                    $q->orWhere('name', 'like', "%{$term}%");
+                }
+
+                // Búsqueda fonética
+                $q->orWhereRaw('SOUNDEX(name) = SOUNDEX(?)', [$searchTerm]);
+            });
+        }
 
         // Filtrar por categoría si se especifica
         if ($request->filled('category')) {
@@ -49,6 +252,7 @@ class ProductosController extends Controller
             'products' => $products,
             'categories' => $categories,
             'selectedCategory' => $selectedCategory,
+            'searchTerm' => $searchTerm,
         ]);
     }
 

@@ -46,6 +46,9 @@ Route::post('/contacto', [ContactoController::class, 'send'])
 Route::get('/products', [ProductosController::class, 'index'])
     ->name('public.products');
 
+Route::get('/products/search', [ProductosController::class, 'search'])
+    ->name('public.products.search');
+
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
     ->name('public.newsletter.subscribe');
