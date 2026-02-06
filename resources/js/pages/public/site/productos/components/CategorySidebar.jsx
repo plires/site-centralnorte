@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { useState } from 'react';
-import { FiChevronDown, FiFilter, FiX } from 'react-icons/fi';
+import { FiChevronDown, FiFilter, FiGrid, FiX } from 'react-icons/fi';
 import styles from './CategorySidebar.module.css';
 
 const CategorySidebar = ({ categories, selectedCategory }) => {
@@ -57,7 +57,12 @@ const CategorySidebar = ({ categories, selectedCategory }) => {
                             className={`${styles.categoryItem} ${selectedCategory?.id === category.id ? styles.active : ''}`}
                             onClick={closeSidebar}
                         >
-                            {category.name}
+                            {category.icon_url ? (
+                                <img src={category.icon_url} alt="" className={styles.categoryIcon} />
+                            ) : (
+                                <FiGrid className={styles.categoryIcon} strokeWidth={1} />
+                            )}
+                            <span>{category.name}</span>
                         </Link>
                     ))}
                 </nav>

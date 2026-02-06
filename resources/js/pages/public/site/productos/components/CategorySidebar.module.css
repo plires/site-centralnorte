@@ -112,7 +112,9 @@
 }
 
 .categoryItem {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     padding: 14px 20px;
     font-family: 'Montserrat', sans-serif;
     font-size: 14px;
@@ -121,6 +123,20 @@
     text-decoration: none;
     border-left: 4px solid transparent;
     transition: all 0.2s ease;
+}
+
+.categoryIcon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    flex-shrink: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.categoryItem:hover .categoryIcon,
+.categoryItem.active .categoryIcon {
+    opacity: 1;
 }
 
 .categoryItem:hover {
