@@ -11,6 +11,85 @@ use App\Http\Controllers\Controller;
 class ProductosController extends Controller
 {
     /**
+     * Muestra el detalle de un producto
+     */
+    public function show(Product $product)
+    {
+
+        // Verificar que el producto sea visible
+        if (!$product->is_visible_in_front) {
+            abort(404);
+        }
+
+        // Cargar todas las relaciones necesarias
+        $product->load([
+            'images' => fn($q) => $q->orderByDesc('is_featured'),
+            'variants' => fn($q) => $q->orderBy('stock', 'desc'),
+            'attributes',
+            'categories' => fn($q) => $q->visible(),
+        ]);
+
+        // Obtener la categoría inicial para el breadcrumb
+        $mainCategory = $product->categories->first();
+
+        // Transformar las imágenes
+        $images = $product->images->map(fn($img) => [
+            'id' => $img->id,
+            'url' => $img->full_url,
+            'is_featured' => $img->is_featured,
+            'variant' => $img->variant,
+        ])->toArray();
+
+        // Si no hay imágenes, usar placeholder
+        if (empty($images)) {
+            $images = [[
+                'id' => 0,
+                'url' => config('business.product.placeholder_image'),
+                'is_featured' => true,
+                'variant' => null,
+            ]];
+        }
+
+        // Transformar las variantes
+        $variants = $product->variants->map(fn($v) => [
+            'id' => $v->id,
+            'sku' => $v->sku,
+            'description' => $v->full_description,
+            'stock' => $v->stock,
+            'primary_color' => $v->primary_color,
+            'secondary_color' => $v->secondary_color,
+            'variant_type' => $v->variant_type,
+            'size' => $v->size,
+            'color' => $v->color,
+            'primary_color_text' => $v->primary_color_text,
+            'secondary_color_text' => $v->secondary_color_text,
+            'material_text' => $v->material_text,
+        ])->toArray();
+
+        // Agrupar atributos por nombre
+        $attributes = $product->getRelation('attributes')
+            ->groupBy('attribute_name')
+            ->map(fn($group) => $group->pluck('value')->unique()->values()->toArray())
+            ->toArray();
+
+        return Inertia::render('public/site/productos/ProductoDetalle', [
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'description' => $product->description,
+                'images' => $images,
+                'variants' => $variants,
+                'attributes' => $attributes,
+            ],
+            'mainCategory' => $mainCategory ? [
+                'id' => $mainCategory->id,
+                'name' => $mainCategory->name,
+            ] : null,
+        ]);
+    }
+
+    /**
      * API de búsqueda de productos con fuzzy matching
      */
     public function search(Request $request)

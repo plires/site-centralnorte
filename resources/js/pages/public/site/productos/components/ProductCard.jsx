@@ -1,9 +1,10 @@
+import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 import ColorCircle from './ColorCircle';
 import styles from './ProductCard.module.css';
 
 const ProductCard = ({ product }) => {
-    const { name, defaultImage, categories, colorVariants } = product;
+    const { id, name, defaultImage, categories, colorVariants } = product;
 
     // Estado para la imagen actual y el índice del círculo activo
     const [currentImage, setCurrentImage] = useState(defaultImage);
@@ -20,7 +21,7 @@ const ProductCard = ({ product }) => {
     };
 
     return (
-        <div className={styles.card}>
+        <Link href={`/products/${id}`} className={styles.card}>
             <div className={styles.imageContainer}>
                 <img src={currentImage} alt={name} className={styles.image} loading="lazy" />
             </div>
@@ -37,10 +38,12 @@ const ProductCard = ({ product }) => {
                                 title={variant.title}
                                 stock={variant.stock}
                                 isActive={activeIndex === index}
-                                onClick={() => handleColorClick(variant, index)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    handleColorClick(variant, index);
+                                }}
                             />
                         ))}
-                        {/* {colorVariants.length > 8 && <span className={styles.moreColors}>+{colorVariants.length - 8}</span>} */}
                     </div>
                 )}
 
@@ -52,7 +55,7 @@ const ProductCard = ({ product }) => {
                     {categoriesText}
                 </p>
             </div>
-        </div>
+        </Link>
     );
 };
 

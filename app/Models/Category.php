@@ -104,12 +104,12 @@ class Category extends Model
     // Scope para obtener solo categorías visibles
     public function scopeVisible($query)
     {
-        return $query->where('show', true);
+        return $query->where('categories.show', true);
     }
 
     // Scope para obtener categorías ocultas
     public function scopeHidden($query)
     {
-        return $query->where('show', false);
+        return $query->where('categories.show', false);
     }
 }

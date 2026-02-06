@@ -79,20 +79,35 @@ class ProductVariant extends Model
   public function getFullDescriptionAttribute(): string
   {
     if ($this->variant_type === self::TYPE_APPAREL) {
-      $parts = array_filter([
-        $this->size,
-        $this->color,
-      ]);
+      $parts = array_filter(
+        [$this->size, $this->color],
+        fn($value) => $this->isValidTextValue($value)
+      );
       return implode(' - ', $parts);
     }
 
     // Para standard, unir los 3 elementos
-    $parts = array_filter([
-      $this->primary_color_text,
-      $this->secondary_color_text,
-      $this->material_text,
-    ]);
+    $parts = array_filter(
+      [$this->primary_color_text, $this->secondary_color_text, $this->material_text],
+      fn($value) => $this->isValidTextValue($value)
+    );
     return implode(' / ', $parts);
+  }
+
+  /**
+   * Verifica si un valor de texto es válido (no vacío, no solo puntos)
+   */
+  private function isValidTextValue(?string $value): bool
+  {
+    if (empty($value)) {
+      return false;
+    }
+
+    // Eliminar espacios y verificar si solo contiene puntos
+    $trimmed = trim($value);
+    $withoutDots = str_replace('.', '', $trimmed);
+
+    return !empty($withoutDots);
   }
 
   /**

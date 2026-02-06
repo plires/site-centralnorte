@@ -1,0 +1,154 @@
+.section {
+    padding: 120px 0 60px;
+    background-color: #fff;
+    min-height: calc(100vh - 200px);
+}
+
+/* Main Content Layout */
+.mainContent {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 20px;
+}
+
+.galleryColumn {
+    width: 100%;
+}
+
+.infoColumn {
+    width: 100%;
+}
+
+/* Product Name */
+.productName {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--tertiary-color);
+    margin: 0 0 8px 0;
+    line-height: 1.3;
+}
+
+.sku {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px;
+    color: #999;
+    margin: 0 0 24px 0;
+}
+
+/* Details Section */
+.detailsSection {
+    margin-top: 50px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding-top: 40px;
+    border-top: 1px solid #eee;
+}
+
+.sectionTitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tertiary-color);
+    margin: 0 0 16px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--primary-color);
+    display: inline-block;
+}
+
+.descriptionBlock,
+.attributesBlock {
+    min-width: 0;
+}
+
+.description {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #555;
+}
+
+.description p {
+    margin: 0 0 12px 0;
+}
+
+.description p:last-child {
+    margin-bottom: 0;
+}
+
+/* Medium devices (768px and up) */
+@media (min-width: 768px) {
+    .section {
+        padding: 160px 0 80px;
+    }
+
+    .mainContent {
+        flex-direction: row;
+        gap: 40px;
+    }
+
+    .galleryColumn {
+        width: 55%;
+        flex-shrink: 0;
+    }
+
+    .infoColumn {
+        width: 45%;
+    }
+
+    .productName {
+        font-size: 28px;
+    }
+
+    .detailsSection {
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+    }
+}
+
+/* Large devices (992px and up) */
+@media (min-width: 992px) {
+    .section {
+        padding: 180px 0 80px;
+    }
+
+    .mainContent {
+        gap: 50px;
+    }
+
+    .galleryColumn {
+        width: 58%;
+    }
+
+    .infoColumn {
+        width: 42%;
+    }
+
+    .contentInfo {
+        position: sticky;
+        top: 80px;
+        max-height: calc(100vh - 80px);
+        /* overflow: auto; */
+    }
+
+    .productName {
+        font-size: 32px;
+    }
+}
+
+/* Extra large devices (1200px and up) */
+@media (min-width: 1200px) {
+    .mainContent {
+        gap: 60px;
+    }
+
+    .galleryColumn {
+        width: 60%;
+    }
+
+    .infoColumn {
+        width: 40%;
+    }
+}

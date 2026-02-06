@@ -189,7 +189,7 @@ const SearchBar = ({ onClose }) => {
                                     <div className={styles.section}>
                                         <h4 className={styles.sectionTitle}>Productos</h4>
                                         {results.products.map((product) => (
-                                            <Link key={`prod-${product.id}`} href="#" className={styles.productItem} onClick={handleResultClick}>
+                                            <Link key={`prod-${product.id}`} href={`/products/${product.id}`} className={styles.productItem} onClick={handleResultClick}>
                                                 <div className={styles.productImage}>
                                                     <img src={product.image} alt={product.name} />
                                                 </div>
