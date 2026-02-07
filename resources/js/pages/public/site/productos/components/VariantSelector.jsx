@@ -1,11 +1,15 @@
+import { useQuoteCart } from '@/contexts/QuoteCartContext';
 import { useState } from 'react';
-import { FiChevronDown, FiShoppingCart } from 'react-icons/fi';
+import { FiCheck, FiChevronDown, FiShoppingCart } from 'react-icons/fi';
 import styles from './VariantSelector.module.css';
 
-const VariantSelector = ({ variants, images, onVariantSelect }) => {
+const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
+    const { addItem } = useQuoteCart();
     const [selectedVariant, setSelectedVariant] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null);
     const [quantity, setQuantity] = useState(1);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [addedFeedback, setAddedFeedback] = useState(false);
 
     const hasVariants = variants && variants.length > 0;
 
@@ -65,9 +69,11 @@ const VariantSelector = ({ variants, images, onVariantSelect }) => {
         setSelectedVariant(variant);
         setIsDropdownOpen(false);
         setQuantity(1);
+        setAddedFeedback(false);
 
         // Buscar imagen que coincida y notificar al padre
         const matchingImage = findMatchingImage(variant);
+        setSelectedImage(matchingImage);
         if (onVariantSelect) {
             onVariantSelect(variant, matchingImage);
         }
@@ -104,11 +110,17 @@ const VariantSelector = ({ variants, images, onVariantSelect }) => {
     };
 
     const handleAddToQuote = () => {
-        // TODO: Implementar funcionalidad de agregar al presupuesto
-        console.log('Agregar al presupuesto:', {
-            variant: selectedVariant,
-            quantity,
-        });
+        if (!selectedVariant || !product) return;
+
+        // Obtener la URL de la imagen (la seleccionada o la primera del producto)
+        const imageUrl = selectedImage?.url || images?.[0]?.url || null;
+
+        // Agregar al carrito
+        addItem(product, selectedVariant, quantity, imageUrl);
+
+        // Mostrar feedback
+        setAddedFeedback(true);
+        setTimeout(() => setAddedFeedback(false), 2000);
     };
 
     const renderColorCircle = (variant) => {
@@ -216,9 +228,23 @@ const VariantSelector = ({ variants, images, onVariantSelect }) => {
             </div>
 
             {/* Add to Quote Button */}
-            <button className={styles.addButton} onClick={handleAddToQuote} disabled={!selectedVariant} type="button">
-                <FiShoppingCart strokeWidth={1.5} />
-                <span>Sumar al presupuesto</span>
+            <button
+                className={`${styles.addButton} ${addedFeedback ? styles.addButtonSuccess : ''}`}
+                onClick={handleAddToQuote}
+                disabled={!selectedVariant}
+                type="button"
+            >
+                {addedFeedback ? (
+                    <>
+                        <FiCheck strokeWidth={2} />
+                        <span>Agregado al carrito</span>
+                    </>
+                ) : (
+                    <>
+                        <FiShoppingCart strokeWidth={1.5} />
+                        <span>Sumar al presupuesto</span>
+                    </>
+                )}
             </button>
 
             {/* Stock Info */}

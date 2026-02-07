@@ -1,5 +1,6 @@
 import logoSmallSrc from '@/../images/header/logo-site-header-small.svg';
 import logoSrc from '@/../images/header/logo-site-header.svg';
+import { useQuoteCart } from '@/contexts/QuoteCartContext';
 import { Button } from '@/pages/public/site/components';
 import { Link } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ const navItems = [
 ];
 
 const Navbar = () => {
+    const { totalItems, toggleDrawer } = useQuoteCart();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -79,11 +81,16 @@ const Navbar = () => {
                             {/* Right actions (desktop) */}
                             <div className={`${styles.actions} ${styles.desktopActions}`}>
                                 <SearchBar />
-                                <a href="#" className={styles.cartLink}>
+                                <button
+                                    type="button"
+                                    className={styles.cartLink}
+                                    onClick={toggleDrawer}
+                                    aria-label="Ver carrito de cotización"
+                                >
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
-                                    <span>(0)</span>
-                                </a>
-                                <Button href="#" variant="white" size="sm">
+                                    <span>({totalItems})</span>
+                                </button>
+                                <Button href="/carrito" variant="white" size="sm">
                                     Cotizá ahora
                                 </Button>
                             </div>
@@ -127,11 +134,19 @@ const Navbar = () => {
                             )}
                             <div className={styles.mobileActions}>
                                 <SearchBar onClose={() => setMobileOpen(false)} />
-                                <a href="#" className={styles.cartLink} onClick={() => setMobileOpen(false)}>
+                                <button
+                                    type="button"
+                                    className={styles.cartLink}
+                                    onClick={() => {
+                                        setMobileOpen(false);
+                                        toggleDrawer();
+                                    }}
+                                    aria-label="Ver carrito de cotización"
+                                >
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
-                                    <span>(0)</span>
-                                </a>
-                                <Button href="#" variant="white" size="sm" onClick={() => setMobileOpen(false)}>
+                                    <span>({totalItems})</span>
+                                </button>
+                                <Button href="/carrito" variant="white" size="sm" onClick={() => setMobileOpen(false)}>
                                     Cotizá ahora
                                 </Button>
                             </div>

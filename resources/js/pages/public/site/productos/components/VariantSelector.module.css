@@ -230,6 +230,14 @@
     transform: scale(0.98);
 }
 
+.addButton.addButtonSuccess {
+    background: #16a34a;
+}
+
+.addButton.addButtonSuccess:hover {
+    background: #15803d;
+}
+
 .addButton:disabled {
     background: #ccc;
     cursor: not-allowed;

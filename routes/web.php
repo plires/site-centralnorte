@@ -17,6 +17,8 @@ use App\Http\Controllers\Public\Site\ContactoController;
 use App\Http\Controllers\Public\Site\NosotrosController;
 use App\Http\Controllers\Public\Site\CopackingController;
 use App\Http\Controllers\Public\Site\ProductosController;
+use App\Http\Controllers\Public\Site\CarritoController;
+use App\Http\Controllers\Public\Site\SolicitarPresupuestoController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 use App\Http\Controllers\Public\Site\NewsletterController;
 use App\Http\Controllers\Public\PublicPickingBudgetController;
@@ -51,6 +53,18 @@ Route::get('/products/search', [ProductosController::class, 'search'])
 
 Route::get('/products/{product}', [ProductosController::class, 'show'])
     ->name('public.products.show');
+
+// Carrito de presupuesto
+Route::get('/carrito', [CarritoController::class, 'index'])
+    ->name('public.cart');
+
+// Solicitar presupuesto (checkout)
+Route::get('/solicitar-presupuesto', [SolicitarPresupuestoController::class, 'index'])
+    ->name('public.quote.request');
+Route::post('/solicitar-presupuesto', [SolicitarPresupuestoController::class, 'store'])
+    ->name('public.quote.store');
+Route::get('/presupuesto-enviado', [SolicitarPresupuestoController::class, 'success'])
+    ->name('public.quote.success');
 
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])

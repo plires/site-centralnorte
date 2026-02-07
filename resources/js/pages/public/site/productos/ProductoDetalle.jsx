@@ -36,7 +36,7 @@ const ProductoDetalle = ({ product, mainCategory }) => {
                             {product.sku && <p className={styles.sku}>SKU: {product.sku}</p>}
 
                             {/* Variant Selector */}
-                            <VariantSelector variants={product.variants} images={product.images} onVariantSelect={handleVariantSelect} />
+                            <VariantSelector product={product} variants={product.variants} images={product.images} onVariantSelect={handleVariantSelect} />
                         </div>
                     </div>
                 </div>

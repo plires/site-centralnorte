@@ -118,6 +118,10 @@
     font-size: 15px;
     font-weight: 500;
     transition: color 0.3s ease;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
 }
 
 .cartLink:hover {

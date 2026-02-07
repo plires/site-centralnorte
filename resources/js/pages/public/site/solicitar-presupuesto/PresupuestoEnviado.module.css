@@ -1,0 +1,212 @@
+/* ===== Section ===== */
+.section {
+    padding: 120px 0 60px;
+    min-height: 100vh;
+    background-color: var(--neutral-color);
+    display: flex;
+    align-items: center;
+}
+
+/* ===== Content ===== */
+.content {
+    display: flex;
+    justify-content: center;
+}
+
+/* ===== Success Card ===== */
+.successCard {
+    background: white;
+    border-radius: 16px;
+    padding: 40px 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+}
+
+/* ===== Icon ===== */
+.iconWrapper {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #14b8a6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    box-shadow: 0 4px 16px rgba(25, 172, 144, 0.3);
+}
+
+.checkIcon {
+    font-size: 40px;
+    color: white;
+    stroke-width: 2.5;
+}
+
+/* ===== Title ===== */
+.title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--tertiary-color);
+    margin: 0 0 16px;
+}
+
+/* ===== Budget Number ===== */
+.budgetNumber {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    background-color: #f3f4f6;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 24px;
+}
+
+.budgetLabel {
+    font-size: 12px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.budgetValue {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* ===== Message ===== */
+.message {
+    font-size: 16px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0 0 32px;
+}
+
+/* ===== Info Cards ===== */
+.infoCards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.infoCard {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: left;
+}
+
+.infoIcon {
+    font-size: 24px;
+    color: var(--secondary-color);
+    flex-shrink: 0;
+}
+
+.infoText {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.infoText strong {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--tertiary-color);
+}
+
+.infoText span {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* ===== Actions ===== */
+.actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.primaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+    background-color: var(--secondary-color);
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease;
+}
+
+.primaryButton:hover {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.primaryButton:active {
+    transform: scale(0.98);
+}
+
+.secondaryButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--tertiary-color);
+    background-color: transparent;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.secondaryButton:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* ===== Responsive ===== */
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .section {
+        padding: 140px 0 80px;
+    }
+
+    .successCard {
+        padding: 48px 48px;
+    }
+
+    .title {
+        font-size: 32px;
+    }
+
+    .actions {
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .primaryButton,
+    .secondaryButton {
+        flex: 0 0 auto;
+    }
+}
