@@ -184,6 +184,7 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_categorias'])->pref
     Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::get('/categories/{category}/catalog-pdf', [CategoryController::class, 'downloadCatalogPdf'])->name('categories.catalog-pdf');
 });
 
 // Presupuestos de Merchandising

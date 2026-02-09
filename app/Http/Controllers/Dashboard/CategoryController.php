@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use Inertia\Inertia;
 use App\Models\Category;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use App\Traits\ExportsToExcel;
 use Illuminate\Support\Facades\Log;
@@ -273,5 +274,187 @@ class CategoryController extends Controller
             // Si es navegación normal, redirect con error
             return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
         }
+    }
+
+    /**
+     * Descargar catálogo de productos de una categoría en PDF
+     */
+    public function downloadCatalogPdf(Category $category)
+    {
+        try {
+            // Cargar productos de la categoría con su imagen principal
+            $category->load(['products' => function ($query) {
+                $query->with('featuredImage')
+                    ->orderBy('name');
+            }]);
+
+            // Verificar si hay productos
+            if ($category->products->isEmpty()) {
+                return redirect()->back()->with('error', 'Esta categoría no tiene productos para generar el catálogo.');
+            }
+
+            // Procesar productos con sus imágenes
+            $products = $category->products->map(function ($product) {
+                $imageData = null;
+
+                if ($product->featuredImage) {
+                    $fullUrl = $product->featuredImage->full_url;
+
+                    if ($fullUrl && !empty($product->featuredImage->url)) {
+                        $imageData = $this->processImageForPdf($fullUrl);
+                    }
+                }
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'description' => $product->description,
+                    'image' => $imageData,
+                ];
+            });
+
+            $pdf = Pdf::loadView('pdf.category-catalog', [
+                'category' => $category,
+                'products' => $products,
+            ]);
+
+            $pdf->setPaper('a4', 'portrait');
+
+            // Generar nombre de archivo limpio
+            $filename = 'catalogo-' . \Illuminate\Support\Str::slug($category->name) . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Error al generar catálogo PDF', [
+                'category_id' => $category->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Error al generar el catálogo PDF. Por favor, inténtalo de nuevo.');
+        }
+    }
+
+    /**
+     * Procesa una imagen para ser compatible con DomPDF
+     * Convierte WebP y otros formatos a base64 JPEG
+     * DomPDF no soporta WebP, por lo que se convierte a JPEG
+     */
+    private function processImageForPdf(string $imageUrl): ?string
+    {
+        try {
+            $imageContent = null;
+            $isWebp = false;
+
+            // Si es una URL externa
+            if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
+                $imageContent = @file_get_contents($imageUrl);
+                if ($imageContent === false) {
+                    return null;
+                }
+                $isWebp = str_ends_with(strtolower($imageUrl), '.webp');
+            } else {
+                // Si es una ruta local
+                $localPath = public_path('storage/' . ltrim($imageUrl, '/'));
+                if (!file_exists($localPath)) {
+                    return null;
+                }
+                $imageContent = file_get_contents($localPath);
+                $isWebp = str_ends_with(strtolower($localPath), '.webp');
+            }
+
+            // Si es WebP, usar herramientas de línea de comandos para convertir
+            if ($isWebp) {
+                return $this->convertWebpToJpegBase64($imageContent);
+            }
+
+            // Para otros formatos, intentar con GD directamente
+            $gdImage = @imagecreatefromstring($imageContent);
+            if ($gdImage) {
+                return $this->gdImageToJpegBase64($gdImage, 200);
+            }
+
+            return null;
+        } catch (\Exception $e) {
+            Log::warning('Error procesando imagen para PDF', [
+                'url' => $imageUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return null;
+        }
+    }
+
+    /**
+     * Convierte una imagen WebP (incluyendo animadas) a JPEG base64
+     * Usa webpmux y dwebp para manejar WebP animados
+     */
+    private function convertWebpToJpegBase64(string $webpContent): ?string
+    {
+        $tempWebp = sys_get_temp_dir() . '/catalog_' . uniqid() . '.webp';
+        $tempFrame = sys_get_temp_dir() . '/catalog_' . uniqid() . '_frame.webp';
+        $tempPng = sys_get_temp_dir() . '/catalog_' . uniqid() . '.png';
+
+        try {
+            file_put_contents($tempWebp, $webpContent);
+
+            // Primero intentar extraer frame (para WebP animados)
+            exec('webpmux -get frame 1 "' . $tempWebp . '" -o "' . $tempFrame . '" 2>&1', $output, $returnCode);
+
+            $sourceFile = $returnCode === 0 && file_exists($tempFrame) ? $tempFrame : $tempWebp;
+
+            // Convertir a PNG
+            exec('dwebp "' . $sourceFile . '" -o "' . $tempPng . '" 2>&1', $output2, $returnCode2);
+
+            if ($returnCode2 !== 0 || !file_exists($tempPng)) {
+                return null;
+            }
+
+            // Cargar con GD y convertir a JPEG base64
+            $gdImage = @imagecreatefrompng($tempPng);
+            if (!$gdImage) {
+                return null;
+            }
+
+            return $this->gdImageToJpegBase64($gdImage, 200);
+        } finally {
+            // Limpiar archivos temporales
+            @unlink($tempWebp);
+            @unlink($tempFrame);
+            @unlink($tempPng);
+        }
+    }
+
+    /**
+     * Convierte una imagen GD a JPEG base64 con resize
+     */
+    private function gdImageToJpegBase64($gdImage, int $maxWidth): string
+    {
+        $originalWidth = imagesx($gdImage);
+        $originalHeight = imagesy($gdImage);
+
+        // Calcular nuevas dimensiones manteniendo proporción
+        $ratio = $maxWidth / $originalWidth;
+        $newWidth = $maxWidth;
+        $newHeight = (int) ($originalHeight * $ratio);
+
+        // Crear imagen redimensionada
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+        // Fondo blanco (para transparencias)
+        $white = imagecolorallocate($resized, 255, 255, 255);
+        imagefill($resized, 0, 0, $white);
+
+        imagecopyresampled($resized, $gdImage, 0, 0, 0, 0, $newWidth, $newHeight, $originalWidth, $originalHeight);
+
+        // Convertir a JPEG
+        ob_start();
+        imagejpeg($resized, null, 80);
+        $jpegData = ob_get_clean();
+
+        imagedestroy($gdImage);
+        imagedestroy($resized);
+
+        return 'data:image/jpeg;base64,' . base64_encode($jpegData);
     }
 }

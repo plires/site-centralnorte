@@ -54,7 +54,12 @@ export default function Index({ auth, categories, filters = {} }) {
         }
     };
 
-    const actions = { view: handleView, edit: handleEdit, delete: handleDelete };
+    const handleDownloadCatalog = (categoryId) => {
+        // Abrir en nueva pestaña para descargar el PDF
+        window.open(route('dashboard.categories.catalog-pdf', categoryId), '_blank');
+    };
+
+    const actions = { view: handleView, edit: handleEdit, delete: handleDelete, downloadCatalog: handleDownloadCatalog };
     const columns = categoryColumns(actions, isDeleting);
 
     return (

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Edit, Eye, MoreHorizontal, Trash2 } from 'lucide-react';
+import { Edit, Eye, FileDown, MoreHorizontal, Trash2 } from 'lucide-react';
 
 // Componente reutilizable para acciones
 const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false }) => (
@@ -29,17 +29,30 @@ const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false 
                 </>
             )}
 
+            {actions.downloadCatalog && (
+                <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => actions.downloadCatalog(row.id)}>
+                        <FileDown className="mr-2 h-4 w-4" />
+                        Descargar Catálogo PDF
+                    </DropdownMenuItem>
+                </>
+            )}
+
             {actions.delete && !isExternal && (
-                <DropdownMenuItem
-                    onClick={(e) => {
-                        e.stopPropagation(); // Por seguridad adicional
-                        actions.delete(row.id, row.name || row.title);
-                    }}
-                    className="text-red-600 focus:text-red-600"
-                >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    {isDeleting ? 'Eliminando...' : 'Eliminar'}
-                </DropdownMenuItem>
+                <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        onClick={(e) => {
+                            e.stopPropagation(); // Por seguridad adicional
+                            actions.delete(row.id, row.name || row.title);
+                        }}
+                        className="text-red-600 focus:text-red-600"
+                    >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                    </DropdownMenuItem>
+                </>
             )}
         </DropdownMenuContent>
     </DropdownMenu>
