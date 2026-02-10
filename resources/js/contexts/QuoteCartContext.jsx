@@ -30,14 +30,16 @@ export const QuoteCartProvider = ({ children }) => {
     // Agregar item al carrito
     const addItem = useCallback(
         (product, variant, quantity, image) => {
+            const variantId = variant?.id || null;
+
             setItems((prev) => {
                 // Verificar si ya existe este producto + variante
-                const existingIndex = prev.findIndex((item) => item.productId === product.id && item.variantId === variant.id);
+                const existingIndex = prev.findIndex((item) => item.productId === product.id && item.variantId === variantId);
 
                 if (existingIndex >= 0) {
                     // Actualizar cantidad del existente
                     const updated = [...prev];
-                    const maxQty = variant.stock > 0 ? variant.stock : 100;
+                    const maxQty = variant?.stock > 0 ? variant.stock : 100;
                     const newQty = Math.min(updated[existingIndex].quantity + quantity, maxQty);
                     updated[existingIndex] = {
                         ...updated[existingIndex],
@@ -50,16 +52,16 @@ export const QuoteCartProvider = ({ children }) => {
                 return [
                     ...prev,
                     {
-                        id: `${product.id}-${variant.id}-${Date.now()}`,
+                        id: `${product.id}-${variantId || 'no-variant'}-${Date.now()}`,
                         productId: product.id,
                         productName: product.name,
                         productSku: product.sku,
-                        variantId: variant.id,
-                        variantSku: variant.sku,
-                        variantDescription: variant.description,
-                        variantStock: variant.stock,
-                        primaryColor: variant.primary_color,
-                        secondaryColor: variant.secondary_color,
+                        variantId: variantId,
+                        variantSku: variant?.sku || null,
+                        variantDescription: variant?.description || null,
+                        variantStock: variant?.stock ?? 0,
+                        primaryColor: variant?.primary_color || null,
+                        secondaryColor: variant?.secondary_color || null,
                         quantity,
                         image: image || null,
                     },

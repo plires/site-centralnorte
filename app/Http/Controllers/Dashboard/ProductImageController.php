@@ -25,6 +25,7 @@ class ProductImageController extends Controller
 
             $request->validate([
                 'image' => 'required|image|max:5120', // máx 5MB
+                'variant' => 'nullable|string|max:255',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->validator)->withInput();
@@ -52,6 +53,7 @@ class ProductImageController extends Controller
             $productImage->product_id = $product->id;
             $productImage->url = $path;
             $productImage->is_featured = ($product->images()->count() === 0);
+            $productImage->variant = $this->normalizeVariant($request->input('variant'));
             $productImage->save();
 
             return back()->with('success', 'Las imágenes fueron subidas correctamente.');
@@ -123,5 +125,58 @@ class ProductImageController extends Controller
 
             return back()->with('error', 'Ocurrió un error al actualizar la imagen destacada. Intenta nuevamente.');
         }
+    }
+
+    public function updateVariant(Request $request, Product $product, ProductImage $image)
+    {
+        try {
+            if ($image->product_id !== $product->id) {
+                return back()->with('error', 'La imagen no pertenece a este producto.');
+            }
+
+            $request->validate([
+                'variant' => 'nullable|string|max:255',
+            ]);
+
+            $image->variant = $this->normalizeVariant($request->input('variant'));
+            $image->save();
+
+            return back()->with('success', 'Variante actualizada correctamente.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->validator)->withInput();
+        } catch (\Exception $e) {
+            Log::error('Error al actualizar variante: ' . $e->getMessage());
+            return back()->with('error', 'Ocurrió un error al actualizar la variante. Intenta nuevamente.');
+        }
+    }
+
+    /**
+     * Normaliza el campo variant separando los términos con " / ".
+     * Acepta comas, espacios, guiones y "y" como separadores.
+     * Ej: "Rojo, Azul y Verde" → "Rojo / Azul / Verde"
+     */
+    private function normalizeVariant(?string $variant): ?string
+    {
+        if (empty($variant)) {
+            return null;
+        }
+
+        // Separar por comas, guiones, barras, " y ", "Y", o múltiples espacios
+        $parts = preg_split('/\s*[,\-\/]\s*|\s+y\s+/iu', $variant);
+
+        // Si no se separó por los delimitadores anteriores, intentar separar por espacios
+        // (caso "Rojo Azul Verde" sin delimitadores explícitos)
+        if (count($parts) === 1) {
+            $parts = preg_split('/\s+/', trim($variant));
+        }
+
+        // Limpiar espacios y filtrar vacíos, capitalizar cada término
+        $parts = array_filter(array_map(function ($part) {
+            return mb_convert_case(trim($part), MB_CASE_TITLE, 'UTF-8');
+        }, $parts), fn($part) => $part !== '');
+
+        $result = implode(' / ', $parts);
+
+        return $result ?: null;
     }
 }

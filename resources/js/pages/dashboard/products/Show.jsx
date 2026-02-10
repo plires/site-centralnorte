@@ -2,7 +2,7 @@ import PageHeader from '@/components/PageHeader';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 // Componentes extraídos
@@ -35,10 +35,36 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
 
     const { data, setData, post, processing, errors, reset } = useForm({
         image: '',
+        variant: '',
         product: product?.toString() || '',
     });
 
     const { handleResponse } = useInertiaResponse();
+
+    // Generar opciones de variante a partir de las variantes del producto
+    const variantOptions = useMemo(() => {
+        if (!product.variants || product.variants.length === 0) return [];
+
+        return product.variants
+            .map((v) => {
+                if (v.variant_type === 'apparel') {
+                    return v.color || null;
+                }
+                // standard
+                const primary = v.primary_color_text?.trim();
+                const secondary = v.secondary_color_text?.trim();
+                if (primary && secondary && primary !== secondary) {
+                    return `${primary} / ${secondary}`;
+                }
+                return primary || secondary || null;
+            })
+            .filter(Boolean);
+    }, [product.variants]);
+
+    // Variantes ya asignadas a imágenes (para deshabilitar en el select)
+    const usedVariants = useMemo(() => {
+        return product.images.filter((img) => img.variant).map((img) => img.variant);
+    }, [product.images]);
 
     // Interceptar flash messages en el destino de la navegación
     useEffect(() => {
@@ -105,6 +131,16 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
         );
     };
 
+    const handleUpdateVariant = (productId, imageId, variant) => {
+        router.patch(
+            route('dashboard.products.images.update-variant', { product: productId, image: imageId }),
+            { variant },
+            handleResponse(() => {
+                // No cerrar el modal para permitir seguir viendo la imagen
+            }),
+        );
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Producto - ${product.name}`} />
@@ -143,6 +179,7 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
                                         onImageClick={setSelectedImage}
                                         onDeleteImage={handleDeleteImage}
                                         onSetFeaturedImage={handleSetFeaturedImage}
+                                        data={data}
                                         setData={setData}
                                         handleSubmit={handleSubmit}
                                         processing={processing}
@@ -150,6 +187,8 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
                                         preview={preview}
                                         handleImageChange={handleImageChange}
                                         fileInputRef={fileInputRef}
+                                        variantOptions={variantOptions}
+                                        usedVariants={usedVariants}
                                     />
                                 </div>
                             )}
@@ -164,7 +203,14 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
             </div>
 
             {/* Modal de vista previa de imagen */}
-            <ImagePreviewDialog selectedImage={selectedImage} onClose={() => setSelectedImage(null)} />
+            <ImagePreviewDialog
+                selectedImage={selectedImage}
+                onClose={() => setSelectedImage(null)}
+                onUpdateVariant={handleUpdateVariant}
+                productId={product.id}
+                variantOptions={variantOptions}
+                usedVariants={usedVariants}
+            />
         </AppLayout>
     );
 }

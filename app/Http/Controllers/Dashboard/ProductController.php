@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use Inertia\Inertia;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use App\Traits\ExportsToExcel;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Services\ProductSyncService;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -169,7 +171,13 @@ class ProductController extends Controller
             'attributes.*.value' => 'required_with:attributes|string|max:255',
             // VALIDACIONES PARA VARIANTES
             'variants' => 'nullable|array',
-            'variants.*.sku' => 'required_with:variants|string|max:255|unique:product_variants,sku',
+            'variants.*.sku' => [
+                'required_with:variants',
+                'string',
+                'max:255',
+                'distinct',
+                Rule::unique('product_variants', 'sku')->whereNull('deleted_at'),
+            ],
             'variants.*.variant_type' => 'required_with:variants|in:apparel,standard',
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.size' => 'nullable|string|max:50',
@@ -181,6 +189,16 @@ class ProductController extends Controller
             'variants.*.secondary_color' => 'nullable|string|max:50',
         ]);
 
+        // Validar que no se mezclen tipos de variantes
+        if (!empty($validated['variants'])) {
+            $types = collect($validated['variants'])->pluck('variant_type')->unique();
+            if ($types->count() > 1) {
+                return redirect()->back()
+                    ->withErrors(['variants' => 'No se pueden mezclar variantes de tipo Apparel y Standard en un mismo producto.'])
+                    ->withInput();
+            }
+        }
+
         try {
 
             DB::beginTransaction();
@@ -190,15 +208,19 @@ class ProductController extends Controller
 
             // Crear variantes
             if (!empty($validated['variants'])) {
+                // Eliminar definitivamente variantes soft-deleted con SKUs que se van a reusar
+                $incomingSkus = collect($validated['variants'])->pluck('sku')->toArray();
+                ProductVariant::onlyTrashed()->whereIn('sku', $incomingSkus)->forceDelete();
+
                 foreach ($validated['variants'] as $variantData) {
                     $product->variants()->create([
                         'sku' => $variantData['sku'],
                         'variant_type' => $variantData['variant_type'],
                         'stock' => $variantData['stock'] ?? 0,
                         'size' => $variantData['size'] ?? null,
-                        'color' => $variantData['color'] ?? null,
-                        'primary_color_text' => $variantData['primary_color_text'] ?? null,
-                        'secondary_color_text' => $variantData['secondary_color_text'] ?? null,
+                        'color' => $this->normalizeColorText($variantData['color'] ?? null),
+                        'primary_color_text' => $this->capitalizeText($variantData['primary_color_text'] ?? null),
+                        'secondary_color_text' => $this->capitalizeText($variantData['secondary_color_text'] ?? null),
                         'material_text' => $variantData['material_text'] ?? null,
                         'primary_color' => $variantData['primary_color'] ?? null,
                         'secondary_color' => $variantData['secondary_color'] ?? null,
@@ -249,6 +271,9 @@ class ProductController extends Controller
                 ->with('error', 'No puedes editar productos sincronizados desde la API externa.');
         }
 
+        // IDs de variantes que pertenecen a este producto (para excluirlas del unique)
+        $ownVariantIds = $product->variants()->pluck('id')->toArray();
+
         $validated = $request->validate([
             'sku' => 'required|string|max:255|unique:products,sku,' . $product->id,
             'name' => ['required', 'string', 'max:255'],
@@ -263,7 +288,15 @@ class ProductController extends Controller
             'attributes.*.value' => 'required_with:attributes|string|max:255',
             // VALIDACIONES PARA VARIANTES
             'variants' => 'nullable|array',
-            'variants.*.sku' => 'required_with:variants|string|max:255',
+            'variants.*.sku' => [
+                'required_with:variants',
+                'string',
+                'max:255',
+                'distinct',
+                Rule::unique('product_variants', 'sku')
+                    ->whereNull('deleted_at')
+                    ->whereNotIn('id', $ownVariantIds),
+            ],
             'variants.*.variant_type' => 'required_with:variants|in:apparel,standard',
             'variants.*.stock' => 'nullable|integer|min:0',
             'variants.*.size' => 'nullable|string|max:50',
@@ -274,6 +307,16 @@ class ProductController extends Controller
             'variants.*.primary_color' => 'nullable|string|max:50',
             'variants.*.secondary_color' => 'nullable|string|max:50',
         ]);
+
+        // Validar que no se mezclen tipos de variantes
+        if (!empty($validated['variants'])) {
+            $types = collect($validated['variants'])->pluck('variant_type')->unique();
+            if ($types->count() > 1) {
+                return redirect()->back()
+                    ->withErrors(['variants' => 'No se pueden mezclar variantes de tipo Apparel y Standard en un mismo producto.'])
+                    ->withInput();
+            }
+        }
 
         try {
             DB::beginTransaction();
@@ -309,26 +352,60 @@ class ProductController extends Controller
             // Eliminar variantes que ya no están
             $skusToDelete = array_diff($existingSkus, $newSkus);
             if (!empty($skusToDelete)) {
+                // Obtener los labels de variante de las variantes a eliminar
+                // para limpiar las imágenes asociadas
+                $variantsToDelete = $product->variants()->whereIn('sku', $skusToDelete)->get();
+                $variantLabels = $variantsToDelete->map(function ($v) {
+                    return $this->buildVariantImageLabel($v->toArray());
+                })->filter()->values()->toArray();
+
+                // Limpiar el campo variant de las imágenes asociadas
+                if (!empty($variantLabels)) {
+                    $product->images()->whereIn('variant', $variantLabels)->update(['variant' => null]);
+                }
+
                 $product->variants()->whereIn('sku', $skusToDelete)->delete();
             }
 
             // Actualizar o crear variantes
             if (!empty($validated['variants'])) {
+                // Eliminar definitivamente variantes soft-deleted con SKUs que se van a reusar
+                $incomingSkus = collect($validated['variants'])->pluck('sku')->toArray();
+                ProductVariant::onlyTrashed()->whereIn('sku', $incomingSkus)->forceDelete();
+
                 foreach ($validated['variants'] as $variantData) {
+                    // Obtener el label anterior de la variante (si ya existía) para actualizar imágenes
+                    $existingVariant = $product->variants()->where('sku', $variantData['sku'])->first();
+                    $oldLabel = null;
+                    if ($existingVariant) {
+                        $oldLabel = $this->buildVariantImageLabel($existingVariant->toArray());
+                    }
+
+                    // Normalizar y capitalizar los campos de texto de color
+                    $variantData['color'] = $this->normalizeColorText($variantData['color'] ?? null);
+                    $variantData['primary_color_text'] = $this->capitalizeText($variantData['primary_color_text'] ?? null);
+                    $variantData['secondary_color_text'] = $this->capitalizeText($variantData['secondary_color_text'] ?? null);
+
                     $product->variants()->updateOrCreate(
                         ['sku' => $variantData['sku']],
                         [
                             'variant_type' => $variantData['variant_type'],
                             'stock' => $variantData['stock'] ?? 0,
                             'size' => $variantData['size'] ?? null,
-                            'color' => $variantData['color'] ?? null,
-                            'primary_color_text' => $variantData['primary_color_text'] ?? null,
-                            'secondary_color_text' => $variantData['secondary_color_text'] ?? null,
+                            'color' => $variantData['color'],
+                            'primary_color_text' => $variantData['primary_color_text'],
+                            'secondary_color_text' => $variantData['secondary_color_text'],
                             'material_text' => $variantData['material_text'] ?? null,
                             'primary_color' => $variantData['primary_color'] ?? null,
                             'secondary_color' => $variantData['secondary_color'] ?? null,
                         ]
                     );
+
+                    // Si el label cambió, actualizar las imágenes enlazadas
+                    $newLabel = $this->buildVariantImageLabel($variantData);
+                    if ($oldLabel && $oldLabel !== $newLabel) {
+                        $product->images()->where('variant', $oldLabel)->update(['variant' => $newLabel]);
+                    }
                 }
             }
 
@@ -460,5 +537,66 @@ class ProductController extends Controller
             // Si es navegación normal, redirect con error
             return redirect()->back()->with('error', 'Error al generar el archivo de exportación. Por favor, inténtalo de nuevo.');
         }
+    }
+
+    /**
+     * Capitaliza un valor de texto con mb_convert_case.
+     */
+    private function capitalizeText(?string $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        return mb_convert_case(trim($value), MB_CASE_TITLE, 'UTF-8');
+    }
+
+    /**
+     * Normaliza un texto de colores separando los términos con " / " y capitalizando.
+     * Acepta comas, guiones, barras, "y" o espacios como separadores.
+     * Ej: "rojo, azul y verde" → "Rojo / Azul / Verde"
+     */
+    private function normalizeColorText(?string $value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        // Separar por comas, guiones, barras, " y " / "Y"
+        $parts = preg_split('/\s*[,\-\/]\s*|\s+y\s+/iu', $value);
+
+        // Si no se separó, intentar separar por espacios (caso "Rojo Azul")
+        if (count($parts) === 1) {
+            $parts = preg_split('/\s+/', trim($value));
+        }
+
+        // Limpiar, capitalizar y filtrar vacíos
+        $parts = array_filter(array_map(function ($part) {
+            return mb_convert_case(trim($part), MB_CASE_TITLE, 'UTF-8');
+        }, $parts), fn($part) => $part !== '');
+
+        $result = implode(' / ', $parts);
+
+        return $result ?: null;
+    }
+
+    /**
+     * Genera el label de variante para product_images.variant
+     * a partir de los datos de una variante.
+     */
+    private function buildVariantImageLabel(array $variantData): ?string
+    {
+        if (($variantData['variant_type'] ?? '') === 'apparel') {
+            return $this->normalizeColorText($variantData['color'] ?? null);
+        }
+
+        $primary = $this->capitalizeText($variantData['primary_color_text'] ?? null);
+        $secondary = $this->capitalizeText($variantData['secondary_color_text'] ?? null);
+
+        if ($primary && $secondary && $primary !== $secondary) {
+            return "{$primary} / {$secondary}";
+        }
+
+        return $primary ?: $secondary ?: null;
     }
 }

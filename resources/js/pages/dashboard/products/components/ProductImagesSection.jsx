@@ -8,6 +8,7 @@ export default function ProductImagesSection({
     onDeleteImage,
     onSetFeaturedImage,
     // Props del form de upload
+    data,
     setData,
     handleSubmit,
     processing,
@@ -15,6 +16,8 @@ export default function ProductImagesSection({
     preview,
     handleImageChange,
     fileInputRef,
+    variantOptions,
+    usedVariants,
 }) {
     return (
         <Card>
@@ -47,6 +50,7 @@ export default function ProductImagesSection({
                 )}
 
                 <UploadProductImagesForm
+                    data={data}
                     setData={setData}
                     handleSubmit={handleSubmit}
                     processing={processing}
@@ -54,6 +58,8 @@ export default function ProductImagesSection({
                     preview={preview}
                     handleImageChange={handleImageChange}
                     fileInputRef={fileInputRef}
+                    variantOptions={variantOptions}
+                    usedVariants={usedVariants}
                 />
             </CardContent>
         </Card>

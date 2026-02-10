@@ -109,6 +109,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'verified', 'permission:gestionar_imagenes_de_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {
     Route::delete('/products/images/{product}/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
     Route::patch('/products/images/{product}/{image}/set-featured', [ProductImageController::class, 'setFeatured'])->name('products.images.set-featured');
+    Route::patch('/products/images/{product}/{image}/update-variant', [ProductImageController::class, 'updateVariant'])->name('products.images.update-variant');
     Route::post('/products/images/{product}', [ProductImageController::class, 'store'])->name('products.images.store');
 });
 

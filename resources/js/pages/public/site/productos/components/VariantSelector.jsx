@@ -42,8 +42,9 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
 
             // Verificar coincidencias
             for (const text of variantTexts) {
-                if (imageSegments.some((seg) => seg.toLowerCase() === text.toLowerCase())) {
+                if (imageSegments.some((seg) => seg.toLowerCase() == text.toLowerCase())) {
                     score++;
+                    debugger;
                 }
             }
 
@@ -110,12 +111,13 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
     };
 
     const handleAddToQuote = () => {
-        if (!selectedVariant || !product) return;
+        if (!product) return;
+        if (hasVariants && !selectedVariant) return;
 
         // Obtener la URL de la imagen (la seleccionada o la primera del producto)
         const imageUrl = selectedImage?.url || images?.[0]?.url || null;
 
-        // Agregar al carrito
+        // Agregar al carrito (con variante null si el producto no tiene variantes)
         addItem(product, selectedVariant, quantity, imageUrl);
 
         // Mostrar feedback
@@ -145,62 +147,59 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
         return <span className={`${styles.stockBadge} ${styles.noStock}`}>A pedido</span>;
     };
 
-    if (!hasVariants) {
-        return (
-            <div className={styles.noVariants}>
-                <p>Este producto no tiene variantes disponibles.</p>
-            </div>
-        );
-    }
+    // Botón deshabilitado solo si hay variantes y no se seleccionó ninguna
+    const isAddDisabled = hasVariants && !selectedVariant;
 
     return (
         <div className={styles.container}>
-            {/* Variant Dropdown */}
-            <div className={styles.dropdownContainer}>
-                <label className={styles.label}>Elegir variante</label>
-                <button
-                    className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.open : ''}`}
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    type="button"
-                >
-                    {selectedVariant ? (
-                        <span className={styles.selectedValue}>
-                            {renderColorCircle(selectedVariant)}
-                            <span className={styles.variantText}>{selectedVariant.description}</span>
-                            {renderStockBadge(selectedVariant)}
-                        </span>
-                    ) : (
-                        <span className={styles.placeholder}>Seleccionar una opción</span>
-                    )}
-                    <FiChevronDown className={`${styles.chevron} ${isDropdownOpen ? styles.rotated : ''}`} strokeWidth={1.5} />
-                </button>
+            {/* Variant Dropdown - Solo si hay variantes */}
+            {hasVariants && (
+                <div className={styles.dropdownContainer}>
+                    <label className={styles.label}>Elegir variante</label>
+                    <button
+                        className={`${styles.dropdownTrigger} ${isDropdownOpen ? styles.open : ''}`}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        type="button"
+                    >
+                        {selectedVariant ? (
+                            <span className={styles.selectedValue}>
+                                {renderColorCircle(selectedVariant)}
+                                <span className={styles.variantText}>{selectedVariant.description}</span>
+                                {renderStockBadge(selectedVariant)}
+                            </span>
+                        ) : (
+                            <span className={styles.placeholder}>Seleccionar una opción</span>
+                        )}
+                        <FiChevronDown className={`${styles.chevron} ${isDropdownOpen ? styles.rotated : ''}`} strokeWidth={1.5} />
+                    </button>
 
-                {isDropdownOpen && (
-                    <div className={styles.dropdownMenu}>
-                        {variants.map((variant) => (
-                            <button
-                                key={variant.id}
-                                className={`${styles.dropdownItem} ${variant.stock <= 0 ? styles.lowStock : ''} ${selectedVariant?.id === variant.id ? styles.selected : ''}`}
-                                onClick={() => handleVariantSelect(variant)}
-                                type="button"
-                            >
-                                {renderColorCircle(variant)}
-                                <span className={styles.variantText}>{variant.description}</span>
-                                {renderStockBadge(variant)}
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </div>
+                    {isDropdownOpen && (
+                        <div className={styles.dropdownMenu}>
+                            {variants.map((variant) => (
+                                <button
+                                    key={variant.id}
+                                    className={`${styles.dropdownItem} ${variant.stock <= 0 ? styles.lowStock : ''} ${selectedVariant?.id === variant.id ? styles.selected : ''}`}
+                                    onClick={() => handleVariantSelect(variant)}
+                                    type="button"
+                                >
+                                    {renderColorCircle(variant)}
+                                    <span className={styles.variantText}>{variant.description}</span>
+                                    {renderStockBadge(variant)}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Quantity Selector */}
-            <div className={`${styles.quantityContainer} ${!selectedVariant ? styles.disabled : ''}`}>
+            <div className={`${styles.quantityContainer} ${isAddDisabled ? styles.disabled : ''}`}>
                 <label className={styles.label}>Cantidad</label>
                 <div className={styles.quantityWrapper}>
                     <button
                         className={styles.quantityButton}
                         onClick={decrementQuantity}
-                        disabled={!selectedVariant || quantity <= 1}
+                        disabled={isAddDisabled || quantity <= 1}
                         type="button"
                         aria-label="Reducir cantidad"
                     >
@@ -211,14 +210,14 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
                         className={styles.quantityInput}
                         value={quantity}
                         onChange={handleQuantityChange}
-                        disabled={!selectedVariant}
+                        disabled={isAddDisabled}
                         min={1}
                         max={getMaxQuantity(selectedVariant)}
                     />
                     <button
                         className={styles.quantityButton}
                         onClick={incrementQuantity}
-                        disabled={!selectedVariant || quantity >= getMaxQuantity(selectedVariant)}
+                        disabled={isAddDisabled || quantity >= getMaxQuantity(selectedVariant)}
                         type="button"
                         aria-label="Aumentar cantidad"
                     >
@@ -231,7 +230,7 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
             <button
                 className={`${styles.addButton} ${addedFeedback ? styles.addButtonSuccess : ''}`}
                 onClick={handleAddToQuote}
-                disabled={!selectedVariant}
+                disabled={isAddDisabled}
                 type="button"
             >
                 {addedFeedback ? (

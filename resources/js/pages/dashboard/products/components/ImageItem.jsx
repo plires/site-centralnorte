@@ -33,7 +33,7 @@ export default function ImageItem({ image, product, isFeatured, onImageClick, on
                 height={300}
                 alt={`Imagen del producto ${product.name}`}
                 className="h-auto w-full cursor-pointer rounded-md object-cover transition hover:scale-105 hover:shadow-lg"
-                onClick={() => onImageClick(image.full_url)}
+                onClick={() => onImageClick(image)}
             />
 
             {/* Botón Eliminar con AlertDialog - Solo para productos NO externos */}
@@ -98,6 +98,13 @@ export default function ImageItem({ image, product, isFeatured, onImageClick, on
                 >
                     {isFeatured ? <Star className="h-4 w-4 fill-white" /> : <StarOff className="h-4 w-4" />}
                 </Button>
+            )}
+
+            {/* Nombre de variante */}
+            {image.variant && (
+                <p className="text-muted-foreground mt-1 truncate px-1 text-center text-xs" title={image.variant}>
+                    Variante: {image.variant}
+                </p>
             )}
         </div>
     );

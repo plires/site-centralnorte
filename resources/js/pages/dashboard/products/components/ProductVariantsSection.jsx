@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Grid3x3, Plus, Trash2 } from 'lucide-react';
+import { AlertCircle, Grid3x3, Plus, Trash2 } from 'lucide-react';
 
 export default function ProductVariantsSection({ variants, onChange, errors = {} }) {
     const addVariant = (type) => {
@@ -42,6 +42,10 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
     const apparelVariants = variants.filter((v) => v.variant_type === 'apparel');
     const standardVariants = variants.filter((v) => v.variant_type === 'standard');
 
+    // No se pueden mezclar tipos: si hay apparel, se bloquea standard y viceversa
+    const isApparelLocked = standardVariants.length > 0;
+    const isStandardLocked = apparelVariants.length > 0;
+
     return (
         <Card>
             <CardHeader>
@@ -78,6 +82,8 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                             <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center">
                                 <Grid3x3 className="mx-auto h-12 w-12 text-gray-400" />
                                 <p className="mt-2 text-sm text-gray-500">
+                                    Existen dos tipos de variantes: Apparel (todo lo que es indumentaria) y Standard: (lo que no es indumentaria){' '}
+                                    <br />
                                     No hay variantes tipo Apparel. Haz clic en "Agregar Variante Apparel" para comenzar.
                                 </p>
                             </div>
@@ -149,21 +155,37 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                             {/* Color Primario */}
                                             <div className="space-y-2">
                                                 <Label>Color Primario</Label>
-                                                <Input
-                                                    value={variant.primary_color || ''}
-                                                    onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
-                                                    placeholder="#000000"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={variant.primary_color || '#000000'}
+                                                        onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
+                                                        className="border-input h-9 w-9 cursor-pointer rounded-md border p-0.5"
+                                                    />
+                                                    <Input
+                                                        value={variant.primary_color || ''}
+                                                        onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
+                                                        placeholder="#000000"
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Color Secundario */}
                                             <div className="space-y-2">
                                                 <Label>Color Secundario</Label>
-                                                <Input
-                                                    value={variant.secondary_color || ''}
-                                                    onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
-                                                    placeholder="#FFFFFF"
-                                                />
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={variant.secondary_color || '#FFFFFF'}
+                                                        onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
+                                                        className="border-input h-9 w-9 cursor-pointer rounded-md border p-0.5"
+                                                    />
+                                                    <Input
+                                                        value={variant.secondary_color || ''}
+                                                        onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
+                                                        placeholder="#FFFFFF"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -171,10 +193,17 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                             })
                         )}
 
-                        <Button type="button" variant="outline" onClick={() => addVariant('apparel')} className="w-full">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Agregar Variante Apparel
-                        </Button>
+                        {isApparelLocked ? (
+                            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <span>No se pueden agregar variantes Apparel porque ya existen variantes Standard. Eliminá las variantes Standard primero.</span>
+                            </div>
+                        ) : (
+                            <Button type="button" variant="outline" onClick={() => addVariant('apparel')} className="w-full">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar Variante Apparel
+                            </Button>
+                        )}
                     </TabsContent>
 
                     {/* Tab Standard */}
@@ -183,7 +212,9 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                             <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center">
                                 <Grid3x3 className="mx-auto h-12 w-12 text-gray-400" />
                                 <p className="mt-2 text-sm text-gray-500">
-                                    No hay variantes tipo Standard (no apparel). Haz clic en "Agregar Variante Standard" para comenzar.
+                                    Existen dos tipos de variantes: Apparel (todo lo que es indumentaria) y Standard: (lo que no es indumentaria){' '}
+                                    <br />
+                                    No hay variantes tipo Standard. Haz clic en "Agregar Variante Standard" para comenzar.
                                 </p>
                             </div>
                         ) : (
@@ -229,14 +260,22 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                 />
                                             </div>
 
-                                            {/* Nombre color secundario */}
+                                            {/* Color Primario */}
                                             <div className="space-y-2">
-                                                <Label>Nombre color secundario</Label>
-                                                <Input
-                                                    value={variant.secondary_color_text || ''}
-                                                    onChange={(e) => updateVariant(index, 'secondary_color_text', e.target.value)}
-                                                    placeholder="Nombre color secundario"
-                                                />
+                                                <Label>Color Primario</Label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={variant.primary_color || '#000000'}
+                                                        onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
+                                                        className="border-input h-9 w-9 cursor-pointer rounded-md border p-0.5"
+                                                    />
+                                                    <Input
+                                                        value={variant.primary_color || ''}
+                                                        onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
+                                                        placeholder="#000000"
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Material */}
@@ -247,6 +286,34 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     onChange={(e) => updateVariant(index, 'material_text', e.target.value)}
                                                     placeholder="Material"
                                                 />
+                                            </div>
+
+                                            {/* Nombre color secundario */}
+                                            <div className="space-y-2">
+                                                <Label>Nombre color secundario</Label>
+                                                <Input
+                                                    value={variant.secondary_color_text || ''}
+                                                    onChange={(e) => updateVariant(index, 'secondary_color_text', e.target.value)}
+                                                    placeholder="Nombre color secundario"
+                                                />
+                                            </div>
+
+                                            {/* Color Secundario */}
+                                            <div className="space-y-2">
+                                                <Label>Color Secundario</Label>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="color"
+                                                        value={variant.secondary_color || '#FFFFFF'}
+                                                        onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
+                                                        className="border-input h-9 w-9 cursor-pointer rounded-md border p-0.5"
+                                                    />
+                                                    <Input
+                                                        value={variant.secondary_color || ''}
+                                                        onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
+                                                        placeholder="#FFFFFF"
+                                                    />
+                                                </div>
                                             </div>
 
                                             {/* Stock */}
@@ -260,36 +327,23 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     min="0"
                                                 />
                                             </div>
-
-                                            {/* Color Primario */}
-                                            <div className="space-y-2">
-                                                <Label>Color Primario</Label>
-                                                <Input
-                                                    value={variant.primary_color || ''}
-                                                    onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
-                                                    placeholder="#000000"
-                                                />
-                                            </div>
-
-                                            {/* Color Secundario */}
-                                            <div className="space-y-2">
-                                                <Label>Color Secundario</Label>
-                                                <Input
-                                                    value={variant.secondary_color || ''}
-                                                    onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
-                                                    placeholder="#FFFFFF"
-                                                />
-                                            </div>
                                         </div>
                                     </div>
                                 );
                             })
                         )}
 
-                        <Button type="button" variant="outline" onClick={() => addVariant('standard')} className="w-full">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Agregar Variante Standard (no Apparel)
-                        </Button>
+                        {isStandardLocked ? (
+                            <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                                <AlertCircle className="h-4 w-4 shrink-0" />
+                                <span>No se pueden agregar variantes Standard porque ya existen variantes Apparel. Eliminá las variantes Apparel primero.</span>
+                            </div>
+                        ) : (
+                            <Button type="button" variant="outline" onClick={() => addVariant('standard')} className="w-full">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Agregar Variante Standard (no Apparel)
+                            </Button>
+                        )}
                     </TabsContent>
                 </Tabs>
 
