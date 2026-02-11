@@ -42,9 +42,16 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
 
             // Verificar coincidencias
             for (const text of variantTexts) {
-                if (imageSegments.some((seg) => seg.toLowerCase() == text.toLowerCase())) {
+                // Un texto de variante puede ser compuesto ("Beige / Kaki"), en ese caso
+                // lo spliteamos y comparamos cada sub-segmento contra los segmentos de la imagen.
+                const textSegments = text
+                    .split('/')
+                    .map((s) => s.trim())
+                    .filter((s) => s && !isOnlyDots(s));
+
+                const matched = textSegments.every((ts) => imageSegments.some((seg) => seg.toLowerCase() === ts.toLowerCase()));
+                if (matched) {
                     score++;
-                    debugger;
                 }
             }
 

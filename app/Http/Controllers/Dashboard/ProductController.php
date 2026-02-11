@@ -553,7 +553,7 @@ class ProductController extends Controller
 
     /**
      * Normaliza un texto de colores separando los términos con " / " y capitalizando.
-     * Acepta comas, guiones, barras, "y" o espacios como separadores.
+     * Acepta comas, guiones y barras como separadores.
      * Ej: "rojo, azul y verde" → "Rojo / Azul / Verde"
      */
     private function normalizeColorText(?string $value): ?string
@@ -564,11 +564,6 @@ class ProductController extends Controller
 
         // Separar por comas, guiones, barras, " y " / "Y"
         $parts = preg_split('/\s*[,\-\/]\s*|\s+y\s+/iu', $value);
-
-        // Si no se separó, intentar separar por espacios (caso "Rojo Azul")
-        if (count($parts) === 1) {
-            $parts = preg_split('/\s+/', trim($value));
-        }
 
         // Limpiar, capitalizar y filtrar vacíos
         $parts = array_filter(array_map(function ($part) {

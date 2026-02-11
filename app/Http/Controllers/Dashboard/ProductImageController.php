@@ -152,7 +152,7 @@ class ProductImageController extends Controller
 
     /**
      * Normaliza el campo variant separando los términos con " / ".
-     * Acepta comas, espacios, guiones y "y" como separadores.
+     * Acepta comas, guiones y "y" como separadores.
      * Ej: "Rojo, Azul y Verde" → "Rojo / Azul / Verde"
      */
     private function normalizeVariant(?string $variant): ?string
@@ -161,14 +161,8 @@ class ProductImageController extends Controller
             return null;
         }
 
-        // Separar por comas, guiones, barras, " y ", "Y", o múltiples espacios
+        // Separar por comas, guiones, barras, " y ", "Y"
         $parts = preg_split('/\s*[,\-\/]\s*|\s+y\s+/iu', $variant);
-
-        // Si no se separó por los delimitadores anteriores, intentar separar por espacios
-        // (caso "Rojo Azul Verde" sin delimitadores explícitos)
-        if (count($parts) === 1) {
-            $parts = preg_split('/\s+/', trim($variant));
-        }
 
         // Limpiar espacios y filtrar vacíos, capitalizar cada término
         $parts = array_filter(array_map(function ($part) {
