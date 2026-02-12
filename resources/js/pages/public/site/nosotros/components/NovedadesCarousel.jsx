@@ -63,7 +63,7 @@ const NovedadesCarousel = ({ novedades = [] }) => {
                     <div className={styles.track}>
                         {novedades.map((product) => (
                             <div key={product.id} className={styles.slide}>
-                                <a href={`#producto-${product.id}`} className={styles.slideLink}>
+                                <a href={`/products/${product.id}`} className={styles.slideLink}>
                                     <div className={styles.imageWrapper}>
                                         {product.image ? (
                                             <img src={product.image} alt={product.name} className={styles.image} loading="lazy" decoding="async" />
