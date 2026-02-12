@@ -36,7 +36,7 @@ class ProductImageController extends Controller
 
             // 1. Leer y procesar: recortar+redimensionar a 800×800
             $image = Image::read($file)
-                ->pad(800, 800, 'fff') // color blanco
+                ->cover(800, 800) // escala y recorta centrado
                 ->encodeByExtension('webp', 85);
 
             // 2. Nombre único
