@@ -65,7 +65,7 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
                                 <h3 className="text-lg font-medium">Lista de Productos</h3>
                                 {/* Grupo de botones */}
                                 <div className="flex gap-2">
-                                    {/* Botón Sincronizar - Solo para admins */}
+                                    {/* Botón Exportar - Solo para admins */}
                                     {isAdmin && (
                                         <ButtonCustom
                                             onClick={() => handleExport(route('dashboard.products.export'), 'prducts_export.xlsx')}
