@@ -106,28 +106,16 @@ class ProductController extends Controller
     }
 
     /**
-     * Sincronizar productos desde la API externa
+     * Sincronizar productos desde la API externa (se ejecuta en background vía queue)
      */
     public function sync(Request $request)
     {
-        try {
-            $stats = $this->syncService->syncAll();
+        \App\Jobs\SyncProductsJob::dispatch();
 
-            if ($stats['errors'] > 0) {
-                return redirect()->back()->with(
-                    'warning',
-                    "Sincronización completada con errores: {$stats['created']} creados, {$stats['updated']} actualizados, {$stats['errors']} errores. Revisa los logs."
-                );
-            }
-
-            return redirect()->back()->with(
-                'success',
-                "Sincronización exitosa: {$stats['created']} productos creados, {$stats['updated']} actualizados, {$stats['images_synced']} imágenes, {$stats['attributes_synced']} atributos y {$stats['variants_synced']} variantes sincronizadas."
-            );
-        } catch (\Exception $e) {
-            Log::error('Error en sincronización manual de productos: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error al sincronizar productos. Revisa los logs.');
-        }
+        return redirect()->back()->with(
+            'success',
+            'La sincronización fue enviada a la cola y se ejecutará en segundo plano. Podés seguir usando la aplicación con normalidad.'
+        );
     }
 
     /**
