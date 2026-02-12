@@ -23,3 +23,5 @@ yarn-error.log
 /.vscode
 /.zed
 .DS_Store
+/images_productos
+products_upload.xlsx
