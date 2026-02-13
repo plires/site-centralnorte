@@ -11,7 +11,6 @@ use App\Http\Controllers\Dashboard\ClientController;
 use App\Http\Controllers\Public\Site\HomeController;
 use App\Http\Controllers\Dashboard\ProductController;
 use App\Http\Controllers\Dashboard\CategoryController;
-use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Public\PublicBudgetController;
 use App\Http\Controllers\Public\Site\ContactoController;
 use App\Http\Controllers\Public\Site\NosotrosController;
@@ -99,11 +98,6 @@ Route::prefix('presupuesto-picking')->name('public.picking.budget.')->group(func
 // ===========================================================================
 // DASHBOARD - Rutas autenticadas
 // ===========================================================================
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard.home');
-});
 
 // Images Products
 Route::middleware(['auth', 'verified', 'permission:gestionar_imagenes_de_productos'])->prefix('dashboard')->name('dashboard.')->group(function () {

@@ -5,7 +5,6 @@ import {
     Contact,
     DollarSign,
     Layers,
-    LayoutGrid,
     NotebookText,
     Package,
     Settings,
@@ -16,11 +15,6 @@ import {
 
 // Definiciones de items de sidebar dashboard
 export const mainNavItems = () => [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
     {
         title: 'Gestionar Usuarios',
         url: '/dashboard/users',
