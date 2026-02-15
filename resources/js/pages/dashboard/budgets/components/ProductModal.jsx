@@ -458,7 +458,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
                                     <SelectItem className="py-2" key={product.id} value={product.id.toString()}>
                                         {!product.deleted_at && (
                                             <div className="flex items-center gap-3">
-                                                {product.images && product.images.length > 0 ? (
+                                                {product.featured_image ? (
                                                     <img
                                                         src={product.featured_image.full_url}
                                                         alt={product.name}
