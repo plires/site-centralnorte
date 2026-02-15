@@ -163,6 +163,10 @@ class BudgetController extends Controller
             if ($user->role->name !== 'admin') {
                 $budgetOwner = $user->id;
             } else {
+                if (!$request->has('user_id')) {
+                    return redirect()->back()->withInput()
+                        ->with('error', 'Debe asignar un vendedor al presupuesto.');
+                }
                 $budgetOwner = $request->user_id;
             }
 

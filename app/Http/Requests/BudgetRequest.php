@@ -60,7 +60,7 @@ class BudgetRequest extends FormRequest
         ];
 
         // Si es admin y está editando, permitir cambiar el user_id
-        if ($isAdmin && $isEditing) {
+        if ($isAdmin) {
             $rules['user_id'] = [
                 'required',
                 'exists:users,id',
