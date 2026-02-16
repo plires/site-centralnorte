@@ -8,6 +8,8 @@ use App\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 
 class RoleController extends Controller
 {
@@ -37,15 +39,10 @@ class RoleController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|unique:roles,name',
-            'permissions' => 'array'
-        ]);
-
         try {
-            $role = Role::create($validated);
+            $role = Role::create($request->validated());
 
             return redirect()->back()->with('success', "Role '{$role->name}' creado correctamente.");
         } catch (\Exception $e) {
@@ -71,7 +68,7 @@ class RoleController extends Controller
     }
 
 
-    public function update(Request $request, Role $role)
+    public function update(UpdateRoleRequest $request, Role $role)
     {
         // Verificar si el rol es de sistema y se intenta cambiar el nombre
         if ($role->is_system && $request->name !== $role->name) {
@@ -81,14 +78,10 @@ class RoleController extends Controller
             );
         }
 
-        $request->validate([
-            'name' => 'required|unique:roles,name,' . $role->id,
-            'permissions' => 'array'
-        ]);
-
         try {
-            $role->update(['name' => $request->name]);
-            $role->permissions()->sync($request->permissions);
+            $validated = $request->validated();
+            $role->update(['name' => $validated['name']]);
+            $role->permissions()->sync($validated['permissions'] ?? []);
             return redirect()->back()->with('success', "Rol '{$role->name}' actualizado correctamente.");
         } catch (\Throwable $e) {
             Log::error('Error al actualizar rol: ' . $e->getMessage());
