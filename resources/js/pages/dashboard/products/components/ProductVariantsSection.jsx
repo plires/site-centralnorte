@@ -127,7 +127,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     value={variant.size || ''}
                                                     onChange={(e) => updateVariant(index, 'size', e.target.value)}
                                                     placeholder="Ej: M, L, XL"
+                                                    className={errors[`variants.${index}.size`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.size`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.size`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Color */}
@@ -137,7 +141,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     value={variant.color || ''}
                                                     onChange={(e) => updateVariant(index, 'color', e.target.value)}
                                                     placeholder="Ej: Rojo, Azul"
+                                                    className={errors[`variants.${index}.color`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.color`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.color`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Stock */}
@@ -149,7 +157,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
                                                     placeholder="0"
                                                     min="0"
+                                                    className={errors[`variants.${index}.stock`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.stock`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.stock`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Color Primario */}
@@ -166,8 +178,12 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                         value={variant.primary_color || ''}
                                                         onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
                                                         placeholder="#000000"
+                                                        className={errors[`variants.${index}.primary_color`] ? 'border-red-500' : ''}
                                                     />
                                                 </div>
+                                                {errors[`variants.${index}.primary_color`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.primary_color`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Color Secundario */}
@@ -184,8 +200,12 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                         value={variant.secondary_color || ''}
                                                         onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
                                                         placeholder="#FFFFFF"
+                                                        className={errors[`variants.${index}.secondary_color`] ? 'border-red-500' : ''}
                                                     />
                                                 </div>
+                                                {errors[`variants.${index}.secondary_color`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.secondary_color`]}</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -257,7 +277,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     value={variant.primary_color_text || ''}
                                                     onChange={(e) => updateVariant(index, 'primary_color_text', e.target.value)}
                                                     placeholder="Nombre color primario"
+                                                    className={errors[`variants.${index}.primary_color_text`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.primary_color_text`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.primary_color_text`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Color Primario */}
@@ -274,8 +298,12 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                         value={variant.primary_color || ''}
                                                         onChange={(e) => updateVariant(index, 'primary_color', e.target.value)}
                                                         placeholder="#000000"
+                                                        className={errors[`variants.${index}.primary_color`] ? 'border-red-500' : ''}
                                                     />
                                                 </div>
+                                                {errors[`variants.${index}.primary_color`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.primary_color`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Material */}
@@ -285,7 +313,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     value={variant.material_text || ''}
                                                     onChange={(e) => updateVariant(index, 'material_text', e.target.value)}
                                                     placeholder="Material"
+                                                    className={errors[`variants.${index}.material_text`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.material_text`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.material_text`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Nombre color secundario */}
@@ -295,7 +327,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     value={variant.secondary_color_text || ''}
                                                     onChange={(e) => updateVariant(index, 'secondary_color_text', e.target.value)}
                                                     placeholder="Nombre color secundario"
+                                                    className={errors[`variants.${index}.secondary_color_text`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.secondary_color_text`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.secondary_color_text`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Color Secundario */}
@@ -312,8 +348,12 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                         value={variant.secondary_color || ''}
                                                         onChange={(e) => updateVariant(index, 'secondary_color', e.target.value)}
                                                         placeholder="#FFFFFF"
+                                                        className={errors[`variants.${index}.secondary_color`] ? 'border-red-500' : ''}
                                                     />
                                                 </div>
+                                                {errors[`variants.${index}.secondary_color`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.secondary_color`]}</span>
+                                                )}
                                             </div>
 
                                             {/* Stock */}
@@ -325,7 +365,11 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                                                     onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
                                                     placeholder="0"
                                                     min="0"
+                                                    className={errors[`variants.${index}.stock`] ? 'border-red-500' : ''}
                                                 />
+                                                {errors[`variants.${index}.stock`] && (
+                                                    <span className="text-xs text-red-500">{errors[`variants.${index}.stock`]}</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
