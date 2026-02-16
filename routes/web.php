@@ -207,6 +207,7 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_presupuestos_merch'
     Route::get('/budgets/{budget}/duplicate', [BudgetController::class, 'duplicate'])->name('budgets.duplicate');
     Route::post('/budgets/{budget}/send-email', [BudgetController::class, 'sendEmail'])->name('budgets.send-email');
     Route::patch('/budgets/{budget}/status', [BudgetController::class, 'updateStatus'])->name('budgets.update-status');
+    Route::get('/budgets/{budget}/pdf', [BudgetController::class, 'downloadPdf'])->name('budgets.pdf');
 });
 
 // Slides (carrusel)

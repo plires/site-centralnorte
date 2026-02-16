@@ -770,6 +770,19 @@ class BudgetController extends Controller
     }
 
     /**
+     * Descargar PDF del presupuesto desde el dashboard
+     */
+    public function downloadPdf(Budget $budget)
+    {
+        $pdf = $this->generatePdf($budget);
+
+        $safeTitle = \Illuminate\Support\Str::slug($budget->title, '-');
+        $filename = "presupuesto-{$safeTitle}-{$budget->id}.pdf";
+
+        return $pdf->download($filename);
+    }
+
+    /**
      * Generar PDF del presupuesto
      */
     private function generatePdf(Budget $budget)
