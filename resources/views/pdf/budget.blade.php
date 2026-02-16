@@ -454,7 +454,7 @@
                 <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
                 <small style="color: #6b7280;">
                     @php
-                        2 % ($paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0));
+                        $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
                     @endphp
                     @if ($paymentPercentage > 0)
                         Se ha aplicado un <strong style="color: #dc2626;">recargo del
