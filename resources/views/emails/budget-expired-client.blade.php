@@ -199,6 +199,11 @@
                     class="button">Contactar Vendedor</a>
             </div>
 
+            @if($vendedor && $vendedor->email)
+                <p>Si tiene alguna pregunta, no dude en contactar a su vendedor en
+                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                </p>
+            @endif
             <p>Nuestro equipo estará encantado de ayudarle a generar un nuevo presupuesto actualizado con las mejores
                 condiciones disponibles.</p>
 

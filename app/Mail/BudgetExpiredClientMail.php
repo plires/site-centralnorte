@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Budget;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -24,8 +25,13 @@ class BudgetExpiredClientMail extends Mailable
 
   public function envelope(): Envelope
   {
+    $replyTo = $this->budget->user
+      ? [new Address($this->budget->user->email, $this->budget->user->name)]
+      : [];
+
     return new Envelope(
       subject: '❌ Su presupuesto ha vencido: ' . $this->budget->title,
+      replyTo: $replyTo,
     );
   }
 

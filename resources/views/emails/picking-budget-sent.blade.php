@@ -166,6 +166,12 @@
                 <p><strong>Fecha de emisión:</strong> {{ $budget->created_at->format('d/m/Y') }}</p>
                 <p><strong>Válido hasta:</strong> {{ $budget->valid_until->format('d/m/Y') }}</p>
                 <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+                @if (is_object($vendedor) && $vendedor->email)
+                    <p><strong>Email del vendedor:</strong>
+                        <a href="mailto:{{ $vendedor->email }}"
+                            style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>
+                    </p>
+                @endif
                 <p><strong>Cantidad de kits:</strong> {{ number_format($budget->total_kits) }}</p>
                 <p><strong>Componentes por kit:</strong> {{ $budget->total_components_per_kit }}</p>
                 <p><strong>Tiempo de producción:</strong> {{ $budget->production_time }}</p>
@@ -184,7 +190,6 @@
             <p>En la página del presupuesto podrás:</p>
             <ul class="info-list">
                 <li>Ver todos los productos incluidos con sus imágenes</li>
-                <li>Seleccionar entre las diferentes opciones disponibles (si existen)</li>
                 <li>Descargar una versión en PDF</li>
                 <li>Aprobar / evaluar el presupuesto</li>
             </ul>
@@ -198,10 +203,14 @@
                 </div>
             @endif
 
-            <div class="divider"></div>
-
-            <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en
-                contactarnos.</p>
+            @if (is_object($vendedor) && $vendedor->email)
+                <p>Si tenés alguna pregunta, no dudes en contactar a tu vendedor en
+                    <a href="mailto:{{ $vendedor->email }}"
+                        style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                </p>
+            @else
+                <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
+            @endif
 
             <p style="text-align: center;"><strong>¡Gracias por confiar en nosotros!</strong></p>
 

@@ -43,7 +43,16 @@ class BudgetCreatedMail extends Mailable
             ? 'Reenvío de Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte'
             : 'Nuevo Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte';
 
-        return new Envelope(subject: $subject);
+        $envelope = new Envelope(subject: $subject);
+
+        if ($this->budget->user) {
+            $envelope->replyTo(
+                address: $this->budget->user->email,
+                name: $this->budget->user->name,
+            );
+        }
+
+        return $envelope;
     }
 
     /**

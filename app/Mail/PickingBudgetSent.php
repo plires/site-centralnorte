@@ -5,9 +5,10 @@ namespace App\Mail;
 use App\Models\PickingBudget;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Queue\SerializesModels;
 
 class PickingBudgetSent extends Mailable
@@ -28,8 +29,13 @@ class PickingBudgetSent extends Mailable
      */
     public function envelope(): Envelope
     {
+        $replyTo = $this->budget->vendor
+            ? [new Address($this->budget->vendor->email, $this->budget->vendor->name)]
+            : [];
+
         return new Envelope(
             subject: "Presupuesto de Picking #{$this->budget->budget_number} - Central Norte",
+            replyTo: $replyTo,
         );
     }
 

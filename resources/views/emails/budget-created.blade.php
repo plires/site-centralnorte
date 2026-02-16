@@ -178,6 +178,11 @@
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date->format('d/m/Y') }}</p>
                 <p><strong>Válido hasta:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
                 <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+                @if(is_object($vendedor) && $vendedor->email)
+                    <p><strong>Email del vendedor:</strong>
+                        <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>
+                    </p>
+                @endif
                 <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
@@ -208,8 +213,13 @@
 
             <div class="divider"></div>
 
-            <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en
-                contactarnos.</p>
+            @if(is_object($vendedor) && $vendedor->email)
+                <p>Si tenés alguna pregunta, no dudes en contactar a tu vendedor en
+                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                </p>
+            @else
+                <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
+            @endif
 
             <p style="text-align: center;"><strong>¡Gracias por confiar en nosotros!</strong></p>
         </div>

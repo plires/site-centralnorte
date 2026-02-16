@@ -169,8 +169,13 @@
                 @endif
             </div>
 
-            <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactar a su vendedor.
-            </p>
+            @if($vendedor && $vendedor->email)
+                <p>Si tiene alguna pregunta, no dude en contactar a su vendedor en
+                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                </p>
+            @else
+                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactar a su vendedor.</p>
+            @endif
 
             <p>Le recomendamos revisar el presupuesto antes de la fecha de vencimiento para aprovechar las condiciones
                 ofrecidas.</p>
