@@ -9,6 +9,7 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\PostTooLargeException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -88,5 +89,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ->runInBackground();
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (PostTooLargeException $e, $request) {
+            return back()
+                ->withErrors(['image' => 'El archivo es demasiado grande. El servidor no acepta archivos mayores a 5 MB. Reducí el tamaño de la imagen antes de subirla.'])
+                ->withInput();
+        });
     })->create();
