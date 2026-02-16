@@ -63,9 +63,23 @@ export default function BudgetInfoCard({ budget }) {
                         <div>
                             <p className="font-medium text-gray-700">Vendedor:</p>
                             <p className="text-gray-900">{budget.user?.name || 'Central Norte'}</p>
+                            {budget.user?.email && (
+                                <a href={`mailto:${budget.user.email}`} className="text-xs text-blue-600 hover:underline">
+                                    {budget.user.email}
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>
+                {budget.user?.email && (
+                    <p className="mt-4 text-sm text-gray-600">
+                        Si tenés alguna pregunta, no dudes en contactar a tu vendedor en{' '}
+                        <a href={`mailto:${budget.user.email}`} className="text-blue-600 hover:underline">
+                            {budget.user.email}
+                        </a>
+                        .
+                    </p>
+                )}
             </CardContent>
         </Card>
     );

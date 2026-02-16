@@ -47,6 +47,11 @@ export default function PickingBudgetInfoCard({ budget }) {
                         <div>
                             <p className="font-medium text-gray-700">Vendedor:</p>
                             <p className="text-gray-900">{budget.vendor?.name || 'N/A'}</p>
+                            {budget.vendor?.email && (
+                                <a href={`mailto:${budget.vendor.email}`} className="text-xs text-blue-600 hover:underline">
+                                    {budget.vendor.email}
+                                </a>
+                            )}
                         </div>
                     </div>
 
@@ -95,6 +100,15 @@ export default function PickingBudgetInfoCard({ budget }) {
                         </div>
                     </div>
                 </div>
+                {budget.vendor?.email && (
+                    <p className="mt-4 text-sm text-gray-600">
+                        Si tenés alguna pregunta, no dudes en contactar a tu vendedor en{' '}
+                        <a href={`mailto:${budget.vendor.email}`} className="text-blue-600 hover:underline">
+                            {budget.vendor.email}
+                        </a>
+                        .
+                    </p>
+                )}
             </CardContent>
         </Card>
     );

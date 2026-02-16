@@ -79,9 +79,10 @@ class PublicBudgetController extends Controller
                         'name' => $budget->client->name,
                         'company' => $budget->client->company,
                     ],
-                    'user' => [
+                    'user' => $budget->user ? [
                         'name' => $budget->user->name,
-                    ],
+                        'email' => $budget->user->email,
+                    ] : null,
                     'grouped_items' => $groupedItems,
                     'variant_groups' => $budget->getVariantGroups(),
                     'has_variants' => $budget->hasVariants(),
