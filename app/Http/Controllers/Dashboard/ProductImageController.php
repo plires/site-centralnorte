@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Dashboard;
 use App\Models\Product;
 use Illuminate\Support\Str;
 use App\Models\ProductImage;
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductImageRequest;
+use App\Http\Requests\UpdateProductImageVariantRequest;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Laravel\Facades\Image;
 use Illuminate\Support\Facades\Log;
@@ -14,21 +15,10 @@ use Illuminate\Support\Facades\Log;
 class ProductImageController extends Controller
 {
 
-    public function store(Request $request, Product $product)
+    public function store(StoreProductImageRequest $request, Product $product)
     {
-
-        try {
-
-            if (!$request->hasFile('image')) {
-                return back()->with('error', 'No se recibió ninguna imagen o excede el límite permitido.')->withInput();
-            }
-
-            $request->validate([
-                'image' => 'required|image|max:5120', // máx 5MB
-                'variant' => 'nullable|string|max:255',
-            ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->validator)->withInput();
+        if (!$request->hasFile('image')) {
+            return back()->with('error', 'No se recibió ninguna imagen o excede el límite permitido.')->withInput();
         }
 
         try {
@@ -127,23 +117,17 @@ class ProductImageController extends Controller
         }
     }
 
-    public function updateVariant(Request $request, Product $product, ProductImage $image)
+    public function updateVariant(UpdateProductImageVariantRequest $request, Product $product, ProductImage $image)
     {
         try {
             if ($image->product_id !== $product->id) {
                 return back()->with('error', 'La imagen no pertenece a este producto.');
             }
 
-            $request->validate([
-                'variant' => 'nullable|string|max:255',
-            ]);
-
             $image->variant = $this->normalizeVariant($request->input('variant'));
             $image->save();
 
             return back()->with('success', 'Variante actualizada correctamente.');
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             Log::error('Error al actualizar variante: ' . $e->getMessage());
             return back()->with('error', 'Ocurrió un error al actualizar la variante. Intenta nuevamente.');

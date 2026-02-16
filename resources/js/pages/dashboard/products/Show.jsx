@@ -104,11 +104,26 @@ export default function Show({ auth, product, is_readonly, last_sync_info }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         post(route('dashboard.products.images.store', product), {
-            ...handleResponse(() => {
-                reset();
-                resetFile();
-            }),
             forceFormData: true,
+            onSuccess: (page) => {
+                const flashSuccess = page.props.flash?.success;
+                const flashError = page.props.flash?.error;
+                if (flashSuccess) {
+                    toast.success(flashSuccess);
+                    reset();
+                    resetFile();
+                } else if (flashError) {
+                    toast.error(flashError);
+                }
+            },
+            onError: (errs) => {
+                // Si hay un error de imagen o de tamaño, mostrarlo como toast además del span inline
+                if (errs.image) {
+                    toast.error(errs.image);
+                } else {
+                    toast.error('Ocurrió un error al procesar la solicitud.');
+                }
+            },
         });
     };
 

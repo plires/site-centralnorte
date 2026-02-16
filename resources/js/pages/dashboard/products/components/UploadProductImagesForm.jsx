@@ -28,13 +28,13 @@ export default function UploadProductImagesForm({
                     }}
                     type="file"
                     name="image"
-                    accept="image/*"
+                    accept=".jpg,.jpeg,.png,.gif,.webp"
                 />
 
                 {/* Texto informativo con ícono */}
                 <div className="text-muted-foreground mt-1 flex items-center text-xs">
                     <Info className="mr-1 h-3.5 w-3.5 text-blue-500" />
-                    <span>Solo imágenes (JPG, PNG, GIF) y menores a 5MB.</span>
+                    <span>Solo imágenes (JPG, PNG, GIF, WEBP) y menores a 5MB.</span>
                 </div>
 
                 {/* Error de validación */}
