@@ -1,5 +1,8 @@
 // resources/js/pages/dashboard/picking/Show.jsx
-import BudgetStatusBadge, { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
+
+import ContextualInformationOfTheState from '@/components/budgets/ContextualInformationOfTheState';
+import StatusBudget from '@/components/budgets/StatusBudget';
+import { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import {
     AlertDialog,
@@ -13,31 +16,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import {
-    Box,
-    Calendar,
-    CheckCircle,
-    Clock,
-    Copy,
-    DollarSign,
-    Download,
-    Edit,
-    ExternalLink,
-    FileEdit,
-    FileText,
-    Loader2,
-    Mail,
-    Package,
-    PackagePlus,
-    Send,
-    User,
-    XCircle,
-} from 'lucide-react';
+import { Box, Calendar, Copy, DollarSign, Download, Edit, ExternalLink, Loader2, Mail, Package, PackagePlus, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
@@ -270,83 +252,11 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     )}
 
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                                <Label className="text-sm font-medium">Estado del Presupuesto</Label>
-                                <p className="text-muted-foreground text-sm">Cambia el estado para controlar la visibilidad y acciones disponibles</p>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Select value={budget.status} onValueChange={handleStatusChange} disabled={isUpdatingStatus}>
-                                    <SelectTrigger className="w-[180px]">
-                                        {isUpdatingStatus ? (
-                                            <div className="flex items-center gap-2">
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                <span>Actualizando...</span>
-                                            </div>
-                                        ) : (
-                                            <SelectValue>
-                                                <BudgetStatusBadge status={budget.status} size="sm" />
-                                            </SelectValue>
-                                        )}
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {budgetStatusOptions.map((option) => (
-                                            <SelectItem key={option.value} value={option.value}>
-                                                <BudgetStatusBadge status={option.value} size="sm" />
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
+                        {/* Estado */}
+                        <StatusBudget budget={budget} handleStatusChange={handleStatusChange} isUpdatingStatus={isUpdatingStatus} />
 
-                        {/* Información contextual según el estado */}
-                        <div className="rounded-lg bg-gray-50 p-3 text-sm">
-                            {budget.status === 'unsent' && (
-                                <p className="text-gray-600">
-                                    <FileEdit className="mr-1 inline h-4 w-4" />
-                                    El presupuesto aún no ha sido enviado al cliente. Puedes editarlo libremente.
-                                </p>
-                            )}
-                            {budget.status === 'draft' && (
-                                <p className="text-gray-600">
-                                    <FileText className="mr-1 inline h-4 w-4" />
-                                    Este es un borrador (copia de otro presupuesto). Puedes editarlo antes de enviarlo.
-                                </p>
-                            )}
-                            {budget.status === 'sent' && (
-                                <p className="text-blue-600">
-                                    <Send className="mr-1 inline h-4 w-4" />
-                                    El presupuesto está visible para el cliente. Puede aprobarlo o colocarlo en evaluación.
-                                </p>
-                            )}
-                            {budget.status === 'approved' && (
-                                <p className="text-green-600">
-                                    <CheckCircle className="mr-1 inline h-4 w-4" />
-                                    ¡El cliente aprobó este presupuesto! Coordina los siguientes pasos.
-                                </p>
-                            )}
-                            {budget.status === 'rejected' && (
-                                <div className="space-y-2">
-                                    <p className="text-red-600">
-                                        <XCircle className="mr-1 inline h-4 w-4" />
-                                        El vendedor rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
-                                    </p>
-                                    {budget.rejection_comments && (
-                                        <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-4">
-                                            <p className="mb-1 text-sm font-medium text-red-800">Motivo del rechazo:</p>
-                                            <p className="text-sm whitespace-pre-wrap text-red-700">{budget.rejection_comments}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                            {budget.status === 'expired' && (
-                                <p className="text-orange-600">
-                                    <Clock className="mr-1 inline h-4 w-4" />
-                                    Este presupuesto venció. Puedes duplicarlo para crear uno nuevo con fechas actualizadas.
-                                </p>
-                            )}
-                        </div>
+                        {/* Información contextual del estado */}
+                        <ContextualInformationOfTheState budget={budget} />
                     </div>
 
                     {warnings.length > 0 && (
