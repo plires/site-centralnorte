@@ -330,7 +330,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                                 <div className="space-y-2">
                                     <p className="text-red-600">
                                         <XCircle className="mr-1 inline h-4 w-4" />
-                                        El cliente rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
+                                        El vendedor rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
                                     </p>
                                     {budget.rejection_comments && (
                                         <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-4">
@@ -407,21 +407,6 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
 
                     {/* Grid de información */}
                     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <Card className={`${budget?.vendor?.deleted_at ? 'border-2 border-red-800' : ''}`}>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                                        <User className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Vendedor</p>
-                                        <p className={`font-semibold ${budget?.vendor?.deleted_at ? 'text-red-800' : ''}`}>
-                                            {budget?.vendor?.deleted_at ? budget.vendor.name + ' - No disponible' : budget.vendor.name}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
                         <Card className={`${budget?.client?.deleted_at ? 'border-2 border-red-800' : ''}`}>
                             <CardContent className="pt-6">
                                 <div className="flex items-center gap-3">
@@ -432,6 +417,22 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                                         <p className="text-sm text-gray-600">Cliente</p>
                                         <p className={`font-semibold ${budget?.client?.deleted_at ? 'text-red-800' : ''}`}>
                                             {budget?.client?.deleted_at ? budget.client.name + ' - No disponible' : budget.client.name}
+                                        </p>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className={`${budget?.vendor?.deleted_at ? 'border-2 border-red-800' : ''}`}>
+                            <CardContent className="pt-6">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                                        <User className="h-5 w-5 text-blue-600" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm text-gray-600">Vendedor</p>
+                                        <p className={`font-semibold ${budget?.vendor?.deleted_at ? 'text-red-800' : ''}`}>
+                                            {budget?.vendor?.deleted_at ? budget.vendor.name + ' - No disponible' : budget.vendor.name}
                                         </p>
                                     </div>
                                 </div>

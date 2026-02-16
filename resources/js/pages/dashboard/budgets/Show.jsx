@@ -19,19 +19,17 @@ import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
-    Calendar,
     CheckCircle,
     Clock,
     Copy,
     Download,
-    ExternalLink,
     Edit,
+    ExternalLink,
     FileEdit,
     FileText,
     Loader2,
     Mail,
     Send,
-    User,
     XCircle,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -311,12 +309,12 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
                                 <div className="space-y-2">
                                     <p className="text-red-600">
                                         <XCircle className="mr-1 inline h-4 w-4" />
-                                        El cliente rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
+                                        El vendedor rechazó este presupuesto. Puedes duplicarlo y hacer una nueva propuesta.
                                     </p>
                                     {budget.rejection_comments && (
                                         <div className="mt-3 rounded-md border border-red-200 bg-red-50 p-4">
                                             <p className="mb-1 text-sm font-medium text-red-800">Motivo del rechazo:</p>
-                                            <p className="whitespace-pre-wrap text-sm text-red-700">{budget.rejection_comments}</p>
+                                            <p className="text-sm whitespace-pre-wrap text-red-700">{budget.rejection_comments}</p>
                                         </div>
                                     )}
                                 </div>
