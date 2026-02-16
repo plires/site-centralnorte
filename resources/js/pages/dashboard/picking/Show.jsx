@@ -251,7 +251,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                 <div className="mx-auto max-w-7xl">
                     {/* Header con título y estado */}
                     <div className="mb-6 flex items-center justify-between">
-                        <div>
+                        <div className="border-l-4 pl-4" style={{ borderColor: '#1FAC9E' }}>
                             <h1 className="mb-3 text-2xl font-bold text-gray-900">Título {budget.title}</h1>
                             <h2 className="text-1xl font-bold text-gray-600">Presupuesto {budget.budget_number}</h2>
                             <p className="text-sm text-gray-600">Detalles del presupuesto de picking / armado de kits</p>
@@ -549,17 +549,25 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                                                 const isDeleted = box.picking_box && box.picking_box.deleted_at;
                                                 return (
                                                     <tr key={index} className={`border-b last:border-0 ${isDeleted ? 'bg-red-50' : ''}`}>
-                                                        <td className={`px-3 py-3 text-sm ${isDeleted ? 'text-red-700 font-semibold' : 'text-gray-900'}`}>
+                                                        <td
+                                                            className={`px-3 py-3 text-sm ${isDeleted ? 'font-semibold text-red-700' : 'text-gray-900'}`}
+                                                        >
                                                             {box.box_dimensions}
                                                             {isDeleted && ' (ELIMINADA)'}
                                                         </td>
-                                                        <td className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                        <td
+                                                            className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}
+                                                        >
                                                             {box.quantity.toLocaleString('es-AR')}
                                                         </td>
-                                                        <td className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                        <td
+                                                            className={`px-3 py-3 text-right text-sm ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}
+                                                        >
                                                             {formatCurrency(box.box_unit_cost)}
                                                         </td>
-                                                        <td className={`px-3 py-3 text-right text-sm font-medium ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}>
+                                                        <td
+                                                            className={`px-3 py-3 text-right text-sm font-medium ${isDeleted ? 'text-red-700' : 'text-gray-900'}`}
+                                                        >
                                                             {formatCurrency(box.subtotal)}
                                                         </td>
                                                     </tr>

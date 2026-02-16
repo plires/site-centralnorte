@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { formatDateTime } from '@/utils/dateUtils';
-import { Building2, CalendarDays, User } from 'lucide-react';
+import { Calendar, FileText, User } from 'lucide-react';
 
 export default function BudgetInfoSection({ budget }) {
     const getExpiryStatus = () => {
@@ -20,93 +20,108 @@ export default function BudgetInfoSection({ budget }) {
     };
 
     return (
-        <>
-            {/* Información básica del presupuesto */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <User className="h-5 w-5" />
-                            Información del Cliente
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <>
-                            {!budget.client.deleted_at ? (
-                                <>
-                                    <div>
-                                        <dt className="text-sm font-medium text-gray-500">Nombre</dt>
-                                        <dd className="text-sm text-gray-900">{budget.client.name || 'No disponible'}</dd>
-                                    </div>
-                                    {budget.client.company && (
-                                        <div>
-                                            <dt className="text-sm font-medium text-gray-500">Empresa</dt>
-                                            <dd className="text-sm text-gray-900">{budget.client.company || 'No disponible'}</dd>
-                                        </div>
-                                    )}
-                                    <div>
-                                        <dt className="text-sm font-medium text-gray-500">Email</dt>
-                                        <dd className="text-sm text-gray-900">{budget.client.email || 'No disponible'}</dd>
-                                    </div>
-                                </>
-                            ) : (
-                                <div className={budget?.client?.deleted_at ? 'border-l-4 border-red-500 bg-red-50 p-4' : ''}>
-                                    <span className="text-sm font-medium text-orange-800"> {budget.client.name} - (Eliminado)</span>
-                                </div>
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {/* Cliente */}
+            <Card className={`${budget?.client?.deleted_at ? 'border-2 border-red-800' : ''}`}>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                            <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Cliente</p>
+                            <p className={`font-semibold ${budget?.client?.deleted_at ? 'text-red-800' : ''}`}>
+                                {budget?.client?.deleted_at
+                                    ? (budget.client.name || 'Sin nombre') + ' - No disponible'
+                                    : budget.client?.name || 'No disponible'}
+                            </p>
+                            {!budget?.client?.deleted_at && budget.client?.company && (
+                                <p className="text-xs text-gray-500">{budget.client.company}</p>
                             )}
-                        </>
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <CalendarDays className="h-5 w-5" />
-                            Fechas
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Fecha de emisión</dt>
-                            <dd className="text-sm text-gray-900">{budget.issue_date_short}</dd>
                         </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Fecha de vencimiento</dt>
-                            <dd className="text-sm text-gray-900">{budget.expiry_date_short}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Última modificación</dt>
-                            <dd className="text-sm text-gray-900">{formatDateTime(budget.updated_at)}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-sm font-medium text-gray-500">Vencimiento del presupuesto</dt>
-                            <dd className="text-sm text-gray-900">{getExpiryStatus()}</dd>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* Vendedor */}
-            <Card>
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Building2 className="h-5 w-5" />
-                        Vendedor Asignado
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className={budget?.user?.deleted_at ? 'border-l-4 border-red-500 bg-red-50 p-4' : ''}>
-                        <dt className="text-sm font-medium text-gray-500">Nombre</dt>
-                        <dd className="text-sm text-gray-900">
-                            {!budget.user.deleted_at ? (
-                                budget.user.name
-                            ) : (
-                                <span className="font-medium text-orange-800"> {budget.user.name} - (Eliminado)</span>
-                            )}
-                        </dd>
                     </div>
                 </CardContent>
             </Card>
-        </>
+
+            {/* Vendedor */}
+            <Card className={`${budget?.user?.deleted_at ? 'border-2 border-red-800' : ''}`}>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+                            <User className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Vendedor</p>
+                            <p className={`font-semibold ${budget?.user?.deleted_at ? 'text-red-800' : ''}`}>
+                                {budget?.user?.deleted_at
+                                    ? (budget.user.name || 'Sin nombre') + ' - No disponible'
+                                    : budget.user?.name || 'No disponible'}
+                            </p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Número de presupuesto */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
+                            <FileText className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">N° de Presupuesto</p>
+                            <p className="font-semibold">{budget.budget_merch_number || 'N/A'}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Fecha de emisión */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                            <Calendar className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Fecha de emisión</p>
+                            <p className="font-semibold">{budget.issue_date_short || 'N/A'}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Fecha de vencimiento */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
+                            <Calendar className="h-5 w-5 text-amber-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Válido hasta</p>
+                            <p className="font-semibold">{budget.expiry_date_short || 'N/A'}</p>
+                            <p className="text-xs">{getExpiryStatus()}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Última modificación */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+                            <Calendar className="h-5 w-5 text-gray-600" />
+                        </div>
+                        <div>
+                            <p className="text-sm text-gray-600">Última modificación</p>
+                            <p className="font-semibold">{formatDateTime(budget.updated_at)}</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

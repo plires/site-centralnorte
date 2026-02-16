@@ -7,7 +7,6 @@ import { Head, useForm, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import BudgetForm from './components/BudgetForm';
-import BudgetStatusSwitch from './components/BudgetStatusSwitch';
 
 export default function Edit({ budget, warnings, clients, products, paymentConditions, user, vendors = [], businessConfig }) {
     const { flash } = usePage().props;
@@ -73,39 +72,33 @@ export default function Edit({ budget, warnings, clients, products, paymentCondi
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Editar Presupuesto - ${budget.title}`} />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    {/* Banner de Advertencias Globales */}
-                    {warnings.length > 0 && (
-                        <GlobalWarningsBanner
-                            warnings={warnings}
-                            title="Atención: Existen registros históricos eliminados."
-                            subtitle="Te recomendamos editar los registros que ya no estan disponibles marcados en rojo y enviar el presupuesto
-                            nuevamente."
-                        />
-                    )}
-                    {/* Switch de estado */}
-                    <BudgetStatusSwitch className="mb-5" budget={budget} />
+            {/* Banner de Advertencias Globales */}
+            {warnings.length > 0 && (
+                <GlobalWarningsBanner
+                    warnings={warnings}
+                    title="Atención: Existen registros históricos eliminados."
+                    subtitle="Te recomendamos editar los registros que ya no estan disponibles marcados en rojo y enviar el presupuesto
+                    nuevamente."
+                />
+            )}
 
-                    {/* Formulario */}
-                    <BudgetForm
-                        data={data}
-                        setData={setData}
-                        handleSubmit={handleSubmit}
-                        processing={processing}
-                        errors={errors}
-                        clients={clients}
-                        products={products}
-                        paymentConditions={paymentConditions}
-                        user={user}
-                        vendors={vendors}
-                        businessConfig={businessConfig}
-                        isEditing={true}
-                        originalBudget={budget}
-                        warnings={warnings}
-                    />
-                </div>
-            </div>
+            {/* Formulario */}
+            <BudgetForm
+                data={data}
+                setData={setData}
+                handleSubmit={handleSubmit}
+                processing={processing}
+                errors={errors}
+                clients={clients}
+                products={products}
+                paymentConditions={paymentConditions}
+                user={user}
+                vendors={vendors}
+                businessConfig={businessConfig}
+                isEditing={true}
+                originalBudget={budget}
+                warnings={warnings}
+            />
         </AppLayout>
     );
 }
