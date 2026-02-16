@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use App\Traits\ExportsToExcel;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Validation\Rule;
+use App\Http\Requests\StoreCategoryRequest;
+use App\Http\Requests\UpdateCategoryRequest;
 use Illuminate\Support\Facades\Auth;
 
 class CategoryController extends Controller
@@ -80,7 +81,7 @@ class CategoryController extends Controller
     }
 
 
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
 
         // No permitir editar categorías externas
@@ -90,23 +91,8 @@ class CategoryController extends Controller
                 ->with('error', 'No puedes editar categorías sincronizadas desde la API externa.');
         }
 
-        $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('categories', 'name')->ignore($category->id),
-            ],
-            'description' => 'nullable|string',
-            'show' => 'required|boolean',
-        ]);
-
         try {
-            $category->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'show' => $request->show
-            ]);
+            $category->update($request->validated());
 
             return redirect()->back()->with('success', "Categoría '{$category->name}' actualizada correctamente.");
         } catch (\Throwable $e) {
@@ -120,17 +106,11 @@ class CategoryController extends Controller
         return Inertia::render('dashboard/categories/Create');
     }
 
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:categories,name'],
-            'description' => 'nullable|string',
-            'show' => 'required|boolean',
-        ]);
-
         try {
             $category = Category::create([
-                ...$validated,
+                ...$request->validated(),
                 'origin' => Category::ORIGIN_LOCAL,
             ]);
 
