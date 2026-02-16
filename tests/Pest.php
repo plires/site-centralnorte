@@ -45,3 +45,25 @@ function something()
 {
     // ..
 }
+
+/**
+ * Crea un usuario con rol admin y todos los permisos del sistema.
+ * Llamar $this->seed([RoleSeeder::class, PermissionSeeder::class]) antes de usar.
+ */
+function createAdmin(): \App\Models\User
+{
+    $role = \App\Models\Role::where('name', 'admin')->firstOrFail();
+
+    return \App\Models\User::factory()->create(['role_id' => $role->id]);
+}
+
+/**
+ * Crea un usuario con rol vendedor (productos, categorías, imágenes, presupuestos merch/pick).
+ * Llamar $this->seed([RoleSeeder::class, PermissionSeeder::class]) antes de usar.
+ */
+function createVendor(): \App\Models\User
+{
+    $role = \App\Models\Role::where('name', 'vendedor')->firstOrFail();
+
+    return \App\Models\User::factory()->create(['role_id' => $role->id]);
+}
