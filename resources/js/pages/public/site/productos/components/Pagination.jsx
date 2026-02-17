@@ -5,12 +5,10 @@ import styles from './Pagination.module.css';
 const Pagination = ({ links, currentPage, lastPage }) => {
     if (lastPage <= 1) return null;
 
-    // Filtrar links de navegación (excluir Previous y Next)
-    const pageLinks = links.filter((link) => !link.label.includes('Previous') && !link.label.includes('Next'));
-
-    // Obtener links de Previous y Next
-    const prevLink = links.find((link) => link.label.includes('Previous'));
-    const nextLink = links.find((link) => link.label.includes('Next'));
+    // El primer link siempre es "anterior" y el último siempre es "siguiente" (independiente del idioma)
+    const prevLink = links[0];
+    const nextLink = links[links.length - 1];
+    const pageLinks = links.slice(1, -1);
 
     return (
         <nav className={styles.pagination} aria-label="Paginación de productos">
