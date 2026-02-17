@@ -41,7 +41,6 @@ const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false 
 
             {actions.delete && !isExternal && (
                 <>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem
                         onClick={(e) => {
                             e.stopPropagation(); // Por seguridad adicional
