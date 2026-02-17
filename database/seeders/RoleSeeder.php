@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class RoleSeeder extends Seeder
 {
@@ -13,23 +12,22 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-
         // Crear rol admin
-        Role::factory(1)->create([
-            'name' => 'admin',
-            'is_system' => true,
-        ]);
+        Role::updateOrCreate(
+            ['name' => 'admin'],
+            ['is_system' => true]
+        );
 
         // Crear rol vendedor
-        Role::factory(1)->create([
-            'name' => 'vendedor',
-            'is_system' => true,
-        ]);
+        Role::updateOrCreate(
+            ['name' => 'vendedor'],
+            ['is_system' => true]
+        );
 
         // Crear rol diseñador
-        Role::factory(1)->create([
-            'name' => 'design',
-            'is_system' => true,
-        ]);
+        Role::updateOrCreate(
+            ['name' => 'design'],
+            ['is_system' => true]
+        );
     }
 }
