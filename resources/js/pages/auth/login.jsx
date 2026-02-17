@@ -24,13 +24,13 @@ export default function Login({ status, canResetPassword }) {
     };
 
     return (
-        <AuthLayout title="Log in to your account" description="Enter your email and password below to log in">
+        <AuthLayout title="Inicia sesión en tu cuenta" description="Ingrese su correo electrónico y contraseña a continuación para iniciar sesión">
             <Head title="Log in" />
 
             <form className="flex flex-col gap-6" onSubmit={submit}>
                 <div className="grid gap-6">
                     <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
                             type="email"
@@ -75,7 +75,7 @@ export default function Login({ status, canResetPassword }) {
                             onClick={() => setData('remember', !data.remember)}
                             tabIndex={3}
                         />
-                        <Label htmlFor="remember">Remember me</Label>
+                        <Label htmlFor="remember">Recordarme</Label>
                     </div>
 
                     <Button type="submit" className="mt-4 w-full" tabIndex={4} disabled={processing}>
@@ -83,7 +83,6 @@ export default function Login({ status, canResetPassword }) {
                         Log in
                     </Button>
                 </div>
-
             </form>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
