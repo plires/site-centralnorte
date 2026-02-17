@@ -1,27 +1,16 @@
 // resources/js/pages/dashboard/budgets/Show.jsx
 
+import { SendEmailDialog, StatusChangeDialog } from '@/components/budgets';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
 import ContextualInformationOfTheState from '@/components/budgets/ContextualInformationOfTheState';
 import StatusBudget from '@/components/budgets/StatusBudget';
-import { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
+import { canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
-import { Button } from '@/components/ui/button';
 import BudgetCommentsDisplay from './components/BudgetCommentsDisplay';
 import BudgetInfoSection from './components/BudgetInfoSection';
 import BudgetTotalsSection from './components/BudgetTotalsSection';
@@ -57,12 +46,6 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
     const canSendEmail = canSendStatus(budget.status) || budget.status === 'sent';
     const isEditable = isEditableStatus(budget.status);
     const isPubliclyVisible = isPubliclyVisibleStatus(budget.status);
-
-    // Obtener etiqueta del estado
-    const getStatusLabel = (status) => {
-        const option = budgetStatusOptions.find((o) => o.value === status);
-        return option?.label || status;
-    };
 
     // Obtener configuración de IVA
     const ivaRate = businessConfig?.iva_rate ?? 0.21;
@@ -296,87 +279,23 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
             </div>
 
             {/* Dialog de envío de email */}
-            <AlertDialog open={isEmailDialogOpen} onOpenChange={setIsEmailDialogOpen}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>{budget.email_sent ? 'Reenviar presupuesto' : 'Enviar presupuesto'}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {budget.email_sent ? (
-                                <>
-                                    Este presupuesto ya fue enviado previamente el{' '}
-                                    <strong>
-                                        {new Date(budget.email_sent_at).toLocaleString('es-AR', {
-                                            day: '2-digit',
-                                            month: '2-digit',
-                                            year: 'numeric',
-                                            hour: '2-digit',
-                                            minute: '2-digit',
-                                        })}
-                                    </strong>
-                                    . ¿Deseas reenviar a <strong>{budget.client?.email}</strong>?
-                                </>
-                            ) : (
-                                <>
-                                    ¿Estás seguro de que quieres enviar el email del presupuesto a <strong>{budget.client?.email}</strong>?
-                                    <br />
-                                    <br />
-                                    El cliente recibirá un link para visualizar el presupuesto online.
-                                    {budget.status !== 'sent' && (
-                                        <span className="mt-2 block text-blue-600">El estado del presupuesto cambiará a "Enviado".</span>
-                                    )}
-                                </>
-                            )}
-                            {!budget.client?.email && (
-                                <div className="mt-3 flex items-center gap-2 text-amber-600">
-                                    <AlertTriangle className="h-4 w-4" />
-                                    El cliente no tiene email configurado.
-                                </div>
-                            )}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSendEmailConfirm} disabled={!budget.client?.email}>
-                            {budget.email_sent ? 'Reenviar' : 'Enviar'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <SendEmailDialog
+                open={isEmailDialogOpen}
+                onOpenChange={setIsEmailDialogOpen}
+                onConfirm={handleSendEmailConfirm}
+                budget={budget}
+                budgetNumber={budget.budget_merch_number}
+            />
 
             {/* Dialog de confirmación de cambio de estado */}
-            <AlertDialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Cambiar estado del presupuesto?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Estás por cambiar el estado de <strong>{getStatusLabel(budget.status)}</strong> a{' '}
-                            <strong>{getStatusLabel(pendingStatus)}</strong>.
-                            {pendingStatus === 'sent' && (
-                                <span className="mt-2 block text-blue-600">Esto hará el presupuesto visible para el cliente.</span>
-                            )}
-                            {pendingStatus === 'expired' && (
-                                <span className="mt-2 block text-orange-600">El cliente ya no podrá ver el presupuesto.</span>
-                            )}
-                            {pendingStatus === 'approved' && (
-                                <span className="mt-2 block text-green-600">Esto marcará el presupuesto como aprobado manualmente.</span>
-                            )}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isUpdatingStatus}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmStatusChange} disabled={isUpdatingStatus}>
-                            {isUpdatingStatus ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Actualizando...
-                                </>
-                            ) : (
-                                'Confirmar cambio'
-                            )}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <StatusChangeDialog
+                open={showStatusConfirm}
+                onOpenChange={setShowStatusConfirm}
+                onConfirm={confirmStatusChange}
+                currentStatus={budget.status}
+                pendingStatus={pendingStatus}
+                isLoading={isUpdatingStatus}
+            />
         </AppLayout>
     );
 }

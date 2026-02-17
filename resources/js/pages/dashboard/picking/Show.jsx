@@ -2,7 +2,8 @@
 
 import ContextualInformationOfTheState from '@/components/budgets/ContextualInformationOfTheState';
 import StatusBudget from '@/components/budgets/StatusBudget';
-import { budgetStatusOptions, canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
+import { SendEmailDialog, StatusChangeDialog } from '@/components/budgets';
+import { canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import {
     AlertDialog,
@@ -20,7 +21,8 @@ import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
 import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
-import { Box, Calendar, DollarSign, Loader2, Package, PackagePlus, User } from 'lucide-react';
+import PickingInfoSection from './components/PickingInfoSection';
+import { Box, DollarSign, Loader2, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
@@ -39,12 +41,6 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
     const canSendEmail = canSendStatus(budget.status) || budget.status === 'sent';
     const isEditable = isEditableStatus(budget.status);
     const isPubliclyVisible = isPubliclyVisibleStatus(budget.status);
-
-    // Obtener etiqueta del estado
-    const getStatusLabel = (status) => {
-        const option = budgetStatusOptions.find((o) => o.value === status);
-        return option?.label || status;
-    };
 
     // Estado para totales calculados
     const [calculatedTotals, setCalculatedTotals] = useState({
@@ -284,103 +280,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     />
 
                     {/* Grid de información */}
-                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <Card className={`${budget?.client?.deleted_at ? 'border-2 border-red-800' : ''}`}>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                                        <User className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Cliente</p>
-                                        <p className={`font-semibold ${budget?.client?.deleted_at ? 'text-red-800' : ''}`}>
-                                            {budget?.client?.deleted_at ? budget.client.name + ' - No disponible' : budget.client.name}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className={`${budget?.vendor?.deleted_at ? 'border-2 border-red-800' : ''}`}>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                                        <User className="h-5 w-5 text-blue-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Vendedor</p>
-                                        <p className={`font-semibold ${budget?.vendor?.deleted_at ? 'text-red-800' : ''}`}>
-                                            {budget?.vendor?.deleted_at ? budget.vendor.name + ' - No disponible' : budget.vendor.name}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100">
-                                        <Calendar className="h-5 w-5 text-amber-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Fecha</p>
-                                        <p className="font-semibold">{new Date(budget.created_at).toLocaleDateString('es-AR')}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                                        <Package className="h-5 w-5 text-gray-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Tipo de Armado</p>
-                                        {budget.services &&
-                                            budget.services.length > 0 &&
-                                            (() => {
-                                                const assemblyService = budget.services.find((s) => s.service_type === 'assembly');
-                                                if (assemblyService) {
-                                                    return <p className="font-semibold">{assemblyService.service_description}</p>;
-                                                }
-                                                return <p className="text-sm text-gray-500">No especificado</p>;
-                                            })()}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100">
-                                        <Package className="h-5 w-5 text-green-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Total de Kits</p>
-                                        <p className="font-semibold">{budget.total_kits.toLocaleString('es-AR')}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardContent className="pt-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">
-                                        <PackagePlus className="h-5 w-5 text-purple-600" />
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-600">Componentes por Kit</p>
-                                        <p className="font-semibold">{budget.total_components_per_kit}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                    <PickingInfoSection budget={budget} />
 
                     {/* Información de precio unitario */}
                     <Card className="mb-6">
@@ -545,56 +445,24 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
             </AlertDialog>
 
             {/* Dialog de confirmación de envío de email */}
-            <AlertDialog open={showSendDialog} onOpenChange={setShowSendDialog}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Enviar presupuesto por email?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Se enviará el presupuesto {budget.budget_number} a {budget.client.email}. El presupuesto se marcará como enviado.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isSending}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleSendEmail} disabled={isSending}>
-                            {isSending ? 'Enviando...' : 'Enviar'}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            <SendEmailDialog
+                open={showSendDialog}
+                onOpenChange={setShowSendDialog}
+                onConfirm={handleSendEmail}
+                budget={budget}
+                budgetNumber={budget.budget_number}
+                isLoading={isSending}
+            />
 
-            <AlertDialog open={showStatusConfirm} onOpenChange={setShowStatusConfirm}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>¿Cambiar estado del presupuesto?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Estás por cambiar el estado de <strong>{getStatusLabel(budget.status)}</strong> a{' '}
-                            <strong>{getStatusLabel(pendingStatus)}</strong>.
-                            {pendingStatus === 'sent' && (
-                                <span className="mt-2 block text-blue-600">Esto hará el presupuesto visible para el cliente.</span>
-                            )}
-                            {pendingStatus === 'expired' && (
-                                <span className="mt-2 block text-orange-600">El cliente ya no podrá ver el presupuesto.</span>
-                            )}
-                            {pendingStatus === 'approved' && (
-                                <span className="mt-2 block text-green-600">Esto marcará el presupuesto como aprobado manualmente.</span>
-                            )}
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isUpdatingStatus}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmStatusChange} disabled={isUpdatingStatus}>
-                            {isUpdatingStatus ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Actualizando...
-                                </>
-                            ) : (
-                                'Confirmar cambio'
-                            )}
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+            {/* Dialog de confirmación de cambio de estado */}
+            <StatusChangeDialog
+                open={showStatusConfirm}
+                onOpenChange={setShowStatusConfirm}
+                onConfirm={confirmStatusChange}
+                currentStatus={budget.status}
+                pendingStatus={pendingStatus}
+                isLoading={isUpdatingStatus}
+            />
         </AppLayout>
     );
 }
