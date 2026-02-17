@@ -19,7 +19,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { Box, Calendar, Copy, DollarSign, Download, Edit, ExternalLink, Loader2, Mail, Package, PackagePlus, User } from 'lucide-react';
+import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
+import { Box, Calendar, DollarSign, Loader2, Package, PackagePlus, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
@@ -269,51 +270,18 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     )}
 
                     {/* Botones de acción */}
-                    <div className="mb-6 flex flex-wrap gap-2">
-                        {(warnings.length > 0 || isEditable) && (
-                            <Button
-                                variant={warnings.length > 0 ? 'destructive' : 'outline'}
-                                size="sm"
-                                onClick={() => router.visit(route('dashboard.picking.budgets.edit', budget.id))}
-                            >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar
-                            </Button>
-                        )}
-
-                        <Button variant="outline" size="sm" onClick={handleDownload}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Descargar PDF
-                        </Button>
-
-                        {canSendEmail && warnings.length === 0 && (
-                            <Button variant="outline" size="sm" onClick={() => setShowSendDialog(true)}>
-                                <Mail className="mr-2 h-4 w-4" />
-                                Enviar por Email
-                            </Button>
-                        )}
-
-                        {warnings.length === 0 && (
-                            <Button variant="outline" size="sm" onClick={handleDuplicate}>
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicar
-                            </Button>
-                        )}
-
-                        {/* Ver público - Solo si está enviado */}
-                        {isPubliclyVisible && (
-                            <Button
-                                onClick={handleViewPublic}
-                                variant="outline"
-                                size="sm"
-                                disabled={!isPubliclyVisible}
-                                title={!isPubliclyVisible ? 'El presupuesto debe estar enviado para ser visible públicamente' : ''}
-                            >
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                Ver Público
-                            </Button>
-                        )}
-                    </div>
+                    <BudgetActionButtons
+                        isEditable={isEditable}
+                        canSendEmail={canSendEmail}
+                        isPubliclyVisible={isPubliclyVisible}
+                        hasWarnings={warnings.length > 0}
+                        emailSent={budget.email_sent}
+                        onEdit={() => router.visit(route('dashboard.picking.budgets.edit', budget.id))}
+                        onDownload={handleDownload}
+                        onSendEmail={() => setShowSendDialog(true)}
+                        onDuplicate={handleDuplicate}
+                        onViewPublic={handleViewPublic}
+                    />
 
                     {/* Grid de información */}
                     <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">

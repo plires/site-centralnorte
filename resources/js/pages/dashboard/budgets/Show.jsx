@@ -2,7 +2,7 @@
 
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import { AlertTriangle, Copy, Download, Edit, ExternalLink, Loader2, Mail, Send } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -20,6 +20,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
 import { Button } from '@/components/ui/button';
 import BudgetCommentsDisplay from './components/BudgetCommentsDisplay';
 import BudgetInfoSection from './components/BudgetInfoSection';
@@ -253,54 +254,18 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
                     )}
 
                     {/* Botones de acción */}
-                    <div className="mb-6 flex flex-wrap gap-2">
-                        {(warnings.length > 0 || isEditable) && (
-                            <Button
-                                variant={warnings.length > 0 ? 'destructive' : 'outline'}
-                                size="sm"
-                                onClick={handleEdit}
-                                title={!isEditable ? 'Solo se pueden editar presupuestos sin enviar o en borrador' : ''}
-                            >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Editar
-                            </Button>
-                        )}
-
-                        <Button variant="outline" size="sm" onClick={handleDownload}>
-                            <Download className="mr-2 h-4 w-4" />
-                            Descargar PDF
-                        </Button>
-
-                        {warnings.length === 0 && (
-                            <Button onClick={handleDuplicate} variant="outline" size="sm">
-                                <Copy className="mr-2 h-4 w-4" />
-                                Duplicar
-                            </Button>
-                        )}
-
-                        {canSendEmail && warnings.length === 0 && (
-                            <Button variant="outline" size="sm" onClick={() => setIsEmailDialogOpen(true)}>
-                                {budget.email_sent ? (
-                                    <>
-                                        <Mail className="mr-2 h-4 w-4" />
-                                        Reenviar Email
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="mr-2 h-4 w-4" />
-                                        Enviar Email
-                                    </>
-                                )}
-                            </Button>
-                        )}
-
-                        {isPubliclyVisible && (
-                            <Button onClick={handleViewPublic} variant="outline" size="sm">
-                                <ExternalLink className="mr-2 h-4 w-4" />
-                                Ver Público
-                            </Button>
-                        )}
-                    </div>
+                    <BudgetActionButtons
+                        isEditable={isEditable}
+                        canSendEmail={canSendEmail}
+                        isPubliclyVisible={isPubliclyVisible}
+                        hasWarnings={warnings.length > 0}
+                        emailSent={budget.email_sent}
+                        onEdit={handleEdit}
+                        onDownload={handleDownload}
+                        onSendEmail={() => setIsEmailDialogOpen(true)}
+                        onDuplicate={handleDuplicate}
+                        onViewPublic={handleViewPublic}
+                    />
 
                     {/* Grid de info cards */}
                     <BudgetInfoSection budget={budget} />

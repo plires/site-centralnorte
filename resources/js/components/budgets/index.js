@@ -12,3 +12,5 @@ export {
 export { BudgetStatusSelector } from './BudgetStatusSelector';
 
 export { ClientBudgetActions } from './ClientBudgetActions';
+
+export { default as BudgetActionButtons } from './BudgetActionButtons';
