@@ -20,11 +20,9 @@ export const useBudgetVariants = (budget) => {
                 const selectedItem = items.find((item) => item.is_selected === true);
                 if (selectedItem) {
                     initialVariants[group] = selectedItem.id;
-                    console.log(`Public Budget: Grupo ${group} - item seleccionado desde BD: ${selectedItem.id}`);
                 } else {
                     // Fallback: si ninguno está marcado, seleccionar el primero
                     initialVariants[group] = items[0].id;
-                    console.log(`Public Budget: Grupo ${group} - usando fallback: ${items[0].id}`);
                 }
             }
         });

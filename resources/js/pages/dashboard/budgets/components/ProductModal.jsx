@@ -375,8 +375,6 @@ export default function ProductModal({ products, existingItems = [], editingItem
                 : `variant_${selectedProduct.name}_${Date.now()}`
             : null;
 
-        console.log('Modal: Generando items con variant_group:', variantGroup);
-
         const itemsToReturn = variants.map((variant, index) => {
             const quantity = parseInt(variant.quantity);
             const unitPrice = parseFloat(variant.unit_price);
@@ -414,18 +412,8 @@ export default function ProductModal({ products, existingItems = [], editingItem
                 is_selected: isVariantMode ? index === 0 : true,
             };
 
-            console.log(`Modal enviando item ${item.id}: variant_group=${item.variant_group}, is_selected=${item.is_selected}, index=${index}`);
             return item;
         });
-
-        console.log(
-            'Modal: Items finales a enviar:',
-            itemsToReturn.map((item) => ({
-                id: item.id,
-                variant_group: item.variant_group,
-                is_selected: item.is_selected,
-            })),
-        );
 
         onSubmit(itemsToReturn);
     };

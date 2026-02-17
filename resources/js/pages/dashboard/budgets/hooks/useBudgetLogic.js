@@ -35,16 +35,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
                 variantGroups[item.variant_group].push(item);
             });
 
-        // Debug: mostrar cómo se organizaron los items
-        console.log('Items organizados:', {
-            regular: regular.length,
-            variantGroups: Object.keys(variantGroups).map((group) => ({
-                group,
-                count: variantGroups[group].length,
-                items: variantGroups[group].map((item) => ({ id: item.id, is_selected: item.is_selected })),
-            })),
-        });
-
         return { regular, variantGroups };
     };
 
@@ -77,9 +67,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
                     // Si no hay ninguna marcada como seleccionada, seleccionar la primera
                     if (!selectedItem && groupItems.length > 0) {
                         selectedItem = groupItems[0];
-                        console.log(`FIX: Grupo ${group} - No hay item seleccionado, usando el primero: ${selectedItem?.id}`);
-                    } else if (selectedItem) {
-                        console.log(`Grupo ${group} - Item previamente seleccionado: ${selectedItem.id}`);
                     }
 
                     // Solo actualizar si es un grupo nuevo o si la selección actual no existe en el grupo
@@ -89,7 +76,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
                     if (!currentSelectedExists || !newSelectedVariants[group]) {
                         if (selectedItem) {
                             newSelectedVariants[group] = selectedItem.id;
-                            console.log(`FIX: Actualizando selección para grupo ${group}: ${selectedItem.id}`);
                         }
                     }
                 });
@@ -98,7 +84,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
                 Object.keys(newSelectedVariants).forEach((group) => {
                     if (!variantGroups[group]) {
                         delete newSelectedVariants[group];
-                        console.log(`FIX: Removiendo grupo inexistente: ${group}`);
                     }
                 });
 
@@ -108,7 +93,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
                     Object.keys(variantGroups).length !== Object.keys(selectedVariants).length;
 
                 if (hasRealChanges || !isInitialized.current) {
-                    console.log('FIX: Actualizando selectedVariants:', newSelectedVariants);
                     setSelectedVariants(newSelectedVariants);
 
                     // Forzar recálculo de totales después de inicializar
@@ -122,7 +106,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
             } else {
                 // Si no hay grupos de variantes, limpiar selectedVariants
                 if (Object.keys(selectedVariants).length > 0) {
-                    console.log('FIX: Limpiando selectedVariants porque no hay grupos');
                     setSelectedVariants({});
                 }
             }
@@ -134,7 +117,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
 
     // Función para cambiar variante seleccionada
     const handleVariantChange = (group, itemId) => {
-        console.log(`Cambiando variante en grupo ${group} a item ${itemId}`);
         setSelectedVariants((prev) => ({
             ...prev,
             [group]: itemId,
@@ -192,7 +174,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
     // Recalcular totales cuando cambien las selecciones - pero no disparar constantemente
     useEffect(() => {
         if (isInitialized.current) {
-            console.log('Recalculando totales por cambio en selectedVariants:', selectedVariants);
             const timeoutId = setTimeout(() => {
                 calculateTotals();
             }, 10); // Pequeño delay para asegurar que el state esté actualizado
@@ -204,7 +185,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
     // Recalcular cuando cambien los items pero evitar bucles
     useEffect(() => {
         if (isInitialized.current) {
-            console.log('Recalculando totales por cambio en items');
             const timeoutId = setTimeout(() => {
                 calculateTotals();
             }, 10);
@@ -216,7 +196,6 @@ export function useBudgetLogic(items = [], businessConfig = null, paymentConditi
     // Recalcular cuando cambie la condición de pago
     useEffect(() => {
         if (isInitialized.current) {
-            console.log('Recalculando totales por cambio en condición de pago');
             const timeoutId = setTimeout(() => {
                 calculateTotals();
             }, 10);

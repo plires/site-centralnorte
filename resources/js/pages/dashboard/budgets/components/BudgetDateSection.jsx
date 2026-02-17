@@ -10,7 +10,6 @@ export default function BudgetDateSection({ data, setData, errors, user, vendors
 
     // Verificar si el usuario actual es admin
     const isAdmin = user?.role?.name === 'admin';
-    console.log(user);
 
     const getMinIssueDate = () => {
         // Si está editando, no aplicar restricción mínima (aunque no debería ser editable)

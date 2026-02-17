@@ -63,7 +63,6 @@ export default function Edit({ budget, warnings, clients, products, paymentCondi
             route('dashboard.budgets.update', budget.id),
             handleResponse(() => {
                 // Callback de éxito para edición
-                console.log('Presupuesto actualizado exitosamente');
             }),
         );
     };
