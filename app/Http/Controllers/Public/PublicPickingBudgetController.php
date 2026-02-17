@@ -108,7 +108,7 @@ class PublicPickingBudgetController extends Controller
         try {
             $budget = PickingBudget::where('token', $token)->firstOrFail();
 
-            if (!$budget->allowsClientAction()) {
+            if (!$budget->allowsInReviewAction()) {
                 return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
             }
 
