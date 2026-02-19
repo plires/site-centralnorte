@@ -278,10 +278,14 @@ class CategoryController extends Controller
                 $imageData = null;
 
                 if ($product->featuredImage) {
+                    $rawUrl = $product->featuredImage->url;
                     $fullUrl = $product->featuredImage->full_url;
 
-                    if ($fullUrl && !empty($product->featuredImage->url)) {
-                        $imageData = $this->processImageForPdf($fullUrl);
+                    if (!empty($rawUrl)) {
+                        // Pasar rawUrl para detectar si es local o externa sin depender
+                        // de full_url, que para imágenes locales genera una URL http://...
+                        // que causaría un request al propio servidor y puede bloquearse.
+                        $imageData = $this->processImageForPdf($rawUrl, $fullUrl);
                     }
                 }
 
@@ -320,24 +324,31 @@ class CategoryController extends Controller
      * Convierte WebP y otros formatos a base64 JPEG
      * DomPDF no soporta WebP, por lo que se convierte a JPEG
      */
-    private function processImageForPdf(string $imageUrl): ?string
+    private function processImageForPdf(string $rawUrl, string $fullUrl = ''): ?string
     {
         try {
             $imageContent = null;
             $isWebp = false;
 
-            // Si es una URL externa
-            if (str_starts_with($imageUrl, 'http://') || str_starts_with($imageUrl, 'https://')) {
-                $imageContent = @file_get_contents($imageUrl);
+            // Determinar si la imagen es externa usando el rawUrl original de la BD,
+            // no el full_url (que para imágenes locales genera una URL http://...
+            // que podría bloquearse al hacer un request al propio servidor).
+            if (str_starts_with($rawUrl, 'http://') || str_starts_with($rawUrl, 'https://')) {
+                // URL externa real (ej: imágenes de Zecat)
+                $imageContent = @file_get_contents($rawUrl);
                 if ($imageContent === false) {
                     return null;
                 }
-                $isWebp = str_ends_with(strtolower($imageUrl), '.webp');
+                $isWebp = str_ends_with(strtolower($rawUrl), '.webp');
             } else {
-                // Si es una ruta local
-                $localPath = public_path('storage/' . ltrim($imageUrl, '/'));
+                // Ruta local — leer directamente del filesystem
+                $localPath = storage_path('app/public/' . ltrim($rawUrl, '/'));
                 if (!file_exists($localPath)) {
-                    return null;
+                    // Fallback a public_path/storage por si el symlink apunta ahí
+                    $localPath = public_path('storage/' . ltrim($rawUrl, '/'));
+                    if (!file_exists($localPath)) {
+                        return null;
+                    }
                 }
                 $imageContent = file_get_contents($localPath);
                 $isWebp = str_ends_with(strtolower($localPath), '.webp');
