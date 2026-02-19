@@ -99,7 +99,7 @@ export default function BudgetTotalsCard({ budget, calculatedTotals, ivaRate, ap
                     {/* Total */}
                     <div className="border-t pt-3">
                         <div className="flex justify-between text-lg font-bold">
-                            <span>Total:</span>
+                            <span>Total Presupuesto:</span>
                             <span className="text-black-600">{formatCurrency(calculatedTotals.total)}</span>
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 // resources/js/pages/public/picking/components/PickingBudgetTotalsCard.jsx
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { DollarSign, TrendingUp, Info } from 'lucide-react';
+import { DollarSign, Info, TrendingUp } from 'lucide-react';
 
 /**
  * Card con el resumen de totales del presupuesto de picking
@@ -47,9 +47,13 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
     const adjustmentBgColor = isPositiveAdjustment ? 'bg-red-50' : 'bg-green-50';
     const adjustmentBorderColor = isPositiveAdjustment ? 'border-red-200' : 'border-green-200';
 
-    // Calcular IVA si aplica
-    const ivaAmount = applyIva ? total * ivaRate : 0;
-    const totalWithIva = total + ivaAmount;
+    // Reconstruir subtotal antes de IVA para calcular IVA correctamente
+    // (budget.total ya incluye IVA, no se puede usar como base)
+    const subtotalBase = subtotalWithIncrement + boxTotal;
+    const subtotalWithPayment = subtotalBase + paymentConditionAmount;
+    const ivaAmount = applyIva ? subtotalWithPayment * ivaRate : 0;
+    // El total almacenado ya incluye IVA, es el total final
+    const totalWithIva = total;
 
     return (
         <Card className="mb-6">
@@ -90,15 +94,15 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
                     {/* Subtotal con incremento */}
                     {hasComponentIncrement && (
                         <div className="flex justify-between text-gray-700">
-                            <span className="font-medium">Subtotal con incremento:</span>
-                            <span className="font-semibold">{formatCurrency(subtotalWithIncrement)}</span>
+                            <span>Subtotal con incremento:</span>
+                            <span>{formatCurrency(subtotalWithIncrement)}</span>
                         </div>
                     )}
 
                     {/* Costo de cajas */}
                     <div className="flex justify-between text-gray-600">
                         <span>Costo de cajas:</span>
-                        <span className="font-medium">{formatCurrency(boxTotal)}</span>
+                        <span>{formatCurrency(boxTotal)}</span>
                     </div>
 
                     {/* Ajuste por condición de pago */}
@@ -109,11 +113,7 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
                                     <span className="flex items-center gap-2 font-medium">
                                         <span className="text-sm">Condición de pago:</span>
                                         <span className="text-sm">{budget.payment_condition_description}</span>
-                                        {isPositiveAdjustment ? (
-                                            <TrendingUp className="h-4 w-4" />
-                                        ) : (
-                                            <TrendingUp className="h-4 w-4 rotate-180" />
-                                        )}
+                                        {isPositiveAdjustment ? <TrendingUp className="h-4 w-4" /> : <TrendingUp className="h-4 w-4 rotate-180" />}
                                     </span>
                                     <span className="font-semibold">{formatPercentage(budget.payment_condition_percentage)}</span>
                                 </div>
@@ -128,15 +128,9 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
                     <div className="my-4 border-t border-gray-200"></div>
 
                     {/* Total sin IVA */}
-                    <div className="flex justify-between text-lg font-bold text-gray-900">
-                        <span>Total:</span>
-                        <span>{formatCurrency(total)}</span>
-                    </div>
-
-                    {/* Precio unitario por kit */}
-                    <div className="flex justify-between rounded-md bg-blue-50 p-3 text-sm text-blue-800">
-                        <span className="font-medium">Precio por kit:</span>
-                        <span className="font-semibold">{formatCurrency(unitPricePerKit)}</span>
+                    <div className="flex justify-between text-gray-600">
+                        <span>Subtotal Presupuesto{applyIva}:</span>
+                        <span className="font-semibold text-gray-500">{formatCurrency(applyIva ? subtotalWithPayment : total)}</span>
                     </div>
 
                     {/* IVA si aplica */}
@@ -144,14 +138,20 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
                         <>
                             <div className="flex justify-between text-gray-600">
                                 <span>IVA ({(ivaRate * 100).toFixed(0)}%):</span>
-                                <span className="font-medium">{formatCurrency(ivaAmount)}</span>
+                                <span className="font-semibold text-gray-500">{formatCurrency(ivaAmount)}</span>
                             </div>
-                            <div className="flex justify-between text-xl font-bold text-green-600">
-                                <span>Total con IVA:</span>
+                            <div className="flex justify-between text-lg font-bold">
+                                <span>Total Presupuesto:</span>
                                 <span>{formatCurrency(totalWithIva)}</span>
                             </div>
                         </>
                     )}
+
+                    {/* Precio unitario por kit */}
+                    <div className="flex justify-between rounded-md bg-blue-50 p-3 text-sm text-blue-800">
+                        <span className="font-medium">Precio por kit:</span>
+                        <span className="font-semibold">{formatCurrency(unitPricePerKit)}</span>
+                    </div>
                 </div>
             </CardContent>
         </Card>
