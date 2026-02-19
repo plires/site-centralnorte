@@ -31,6 +31,7 @@
         }
     </style>
 
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
     <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
