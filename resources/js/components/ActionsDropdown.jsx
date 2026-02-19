@@ -31,11 +31,13 @@ const ActionsDropdown = ({ isExternal = false, row, actions, isDeleting = false 
 
             {actions.downloadCatalog && (
                 <>
-                    <DropdownMenuSeparator />
+                    {isExternal && <DropdownMenuSeparator />}
+
                     <DropdownMenuItem onClick={() => actions.downloadCatalog(row.id)}>
                         <FileDown className="mr-2 h-4 w-4" />
                         Descargar Catálogo PDF
                     </DropdownMenuItem>
+                    {!isExternal && <DropdownMenuSeparator />}
                 </>
             )}
 
