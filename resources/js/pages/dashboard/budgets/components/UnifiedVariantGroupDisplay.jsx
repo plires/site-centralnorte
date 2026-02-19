@@ -11,7 +11,8 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
     };
 
     const firstVariant = items[0];
-    const productImage = items[0].product?.featured_image;
+    const rawImage = items[0].product?.featured_image;
+    const productImage = rawImage ? (typeof rawImage === 'string' ? rawImage : rawImage.full_url || rawImage.url || null) : null;
 
     return (
         <div className="mt-6">
@@ -21,7 +22,7 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
                         {/* Imagen del producto */}
                         {productImage ? (
                             <img
-                                src={productImage.full_url || productImage.url}
+                                src={productImage}
                                 alt={firstVariant.product.name}
                                 className="h-16 w-16 rounded object-cover"
                             />

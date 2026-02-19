@@ -226,6 +226,7 @@ Route::middleware(['auth', 'verified', 'permission:gestionar_slides'])->prefix('
 // API para selects dinámicos (requiere autenticación)
 Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(function () {
     Route::get('/products/search', [ApiController::class, 'searchProducts'])->name('products.search');
+    Route::get('/products/{id}', [ApiController::class, 'getProduct'])->name('products.show');
     Route::get('/clients/search', [ApiController::class, 'searchClients'])->name('clients.search');
 });
 

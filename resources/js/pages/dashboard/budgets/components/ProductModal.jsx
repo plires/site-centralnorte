@@ -3,13 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle, CheckCircle, Package, Plus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { AlertTriangle, CheckCircle, Loader2, Package, Plus, Search, X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import ProductVariantSelector from './ProductVariantSelector';
 import VariantForm from './VariantForm';
 
-export default function ProductModal({ products, existingItems = [], editingItem = null, onClose, onSubmit, checkForDuplicates = null }) {
+export default function ProductModal({ initialProducts = [], existingItems = [], editingItem = null, onClose, onSubmit, checkForDuplicates = null }) {
     // Estados principales
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isVariantMode, setIsVariantMode] = useState(false);
@@ -17,6 +16,14 @@ export default function ProductModal({ products, existingItems = [], editingItem
     const [variants, setVariants] = useState([]);
     const [errors, setErrors] = useState([]);
     const [warnings, setWarnings] = useState([]);
+
+    // Estados del combobox async
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const debounceTimer = useRef(null);
+    const comboboxRef = useRef(null);
 
     useEffect(() => {
         if (selectedProduct || variants.length > 0) {
@@ -31,16 +38,61 @@ export default function ProductModal({ products, existingItems = [], editingItem
         } else {
             initializeCreateMode();
         }
-    }, [editingItem, products]);
+    }, [editingItem, initialProducts]);
+
+    // Cerrar dropdown al hacer click fuera
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (comboboxRef.current && !comboboxRef.current.contains(e.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Búsqueda debounced de productos
+    const handleSearchInput = useCallback((value) => {
+        setSearchQuery(value);
+        setSelectedProduct(null);
+        setIsDropdownOpen(true);
+
+        if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+        if (!value.trim()) {
+            setSearchResults([]);
+            setIsSearching(false);
+            return;
+        }
+
+        setIsSearching(true);
+        debounceTimer.current = setTimeout(async () => {
+            try {
+                const res = await fetch(`/api/products/search?search=${encodeURIComponent(value)}&limit=20`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                const json = await res.json();
+                if (json.success) {
+                    setSearchResults(json.data.map((item) => item.data));
+                }
+            } catch {
+                setSearchResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+    }, []);
 
     const initializeEditMode = () => {
         if (editingItem.isVariantGroup) {
             // Editando grupo de variantes
             const firstItem = editingItem.items[0];
-            const product = products.find((p) => p.id === firstItem.product_id);
+            const product = initialProducts.find((p) => p.id === firstItem.product_id) || firstItem.product;
 
             if (product) {
                 setSelectedProduct(product);
+                setSearchQuery(product.name || '');
                 setIsVariantMode(true);
 
                 const variantData = editingItem.items.map((item, index) => ({
@@ -55,10 +107,11 @@ export default function ProductModal({ products, existingItems = [], editingItem
             }
         } else {
             // Editando item individual
-            const product = products.find((p) => p.id === editingItem.product_id);
+            const product = initialProducts.find((p) => p.id === editingItem.product_id) || editingItem.product;
 
             if (product) {
                 setSelectedProduct(product);
+                setSearchQuery(product.name || '');
                 setIsVariantMode(false);
                 setSelectedProductVariantId(editingItem.product_variant_id || null);
 
@@ -93,11 +146,13 @@ export default function ProductModal({ products, existingItems = [], editingItem
     });
 
     // Función mejorada para manejar selección de producto
-    const handleProductSelect = (productId) => {
-        const product = products.find((p) => p.id == productId);
+    const handleProductSelect = (product) => {
         if (!product) return;
 
         setSelectedProduct(product);
+        setSearchQuery(product.name);
+        setIsDropdownOpen(false);
+        setSearchResults([]);
 
         // Auto-seleccionar primera variante si el producto tiene variantes
         if (product.variants && product.variants.length > 0) {
@@ -422,7 +477,7 @@ export default function ProductModal({ products, existingItems = [], editingItem
 
     return (
         <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-            <Card className="max-h-[90vh] w-full max-w-4xl overflow-y-auto">
+            <Card className="h-[70vh] max-h-[95vh] w-full max-w-4xl overflow-y-auto">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <Package className="h-5 w-5" />
@@ -434,41 +489,113 @@ export default function ProductModal({ products, existingItems = [], editingItem
                 </CardHeader>
 
                 <CardContent className="space-y-6">
-                    {/* Selector de producto */}
+                    {/* Selector de producto — combobox async */}
                     <div>
                         <Label className="text-base font-medium">Producto *</Label>
-                        <Select className="py-5" value={selectedProduct?.id?.toString() || ''} onValueChange={handleProductSelect}>
-                            <SelectTrigger className="mt-2 min-h-[50px]">
-                                <SelectValue placeholder="Seleccionar producto..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {products.map((product) => (
-                                    <SelectItem className="py-2" key={product.id} value={product.id.toString()}>
-                                        {!product.deleted_at && (
-                                            <div className="flex items-center gap-3">
-                                                {product.featured_image ? (
-                                                    <img
-                                                        src={product.featured_image.full_url}
-                                                        alt={product.name}
-                                                        className="h-10 w-10 rounded object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
-                                                        <Package className="h-5 w-5 text-gray-400" />
-                                                    </div>
-                                                )}
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium">{product.name}</span>
-                                                    {product.last_price && (
-                                                        <span className="text-sm text-gray-500">{formatCurrency(product.last_price)}</span>
-                                                    )}
-                                                </div>
-                                            </div>
+                        <div className="relative mt-2" ref={comboboxRef}>
+                            {/* Input de búsqueda */}
+                            <div className="relative">
+                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => handleSearchInput(e.target.value)}
+                                    onFocus={() => {
+                                        if (searchQuery && !selectedProduct) setIsDropdownOpen(true);
+                                    }}
+                                    placeholder="Buscar producto por nombre o SKU..."
+                                    className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring w-full rounded-md border py-2 pr-10 pl-9 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                                />
+                                {isSearching && <Loader2 className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin text-gray-400" />}
+                                {selectedProduct && !isSearching && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setSelectedProduct(null);
+                                            setSearchQuery('');
+                                            setSearchResults([]);
+                                            setVariants([createEmptyVariant()]);
+                                            setErrors([]);
+                                            setWarnings([]);
+                                        }}
+                                        className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Producto seleccionado — chip */}
+                            {selectedProduct && (
+                                <div className="mt-2 flex items-center gap-3 rounded-md border border-green-200 bg-green-50 p-2">
+                                    {selectedProduct.featured_image ? (
+                                        <img
+                                            src={
+                                                typeof selectedProduct.featured_image === 'string'
+                                                    ? selectedProduct.featured_image
+                                                    : selectedProduct.featured_image?.full_url
+                                            }
+                                            alt={selectedProduct.name}
+                                            className="h-10 w-10 rounded object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
+                                            <Package className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-medium text-green-900">{selectedProduct.name}</span>
+                                        {selectedProduct.last_price && (
+                                            <span className="text-xs text-green-700">{formatCurrency(selectedProduct.last_price)}</span>
                                         )}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Dropdown de resultados */}
+                            {isDropdownOpen && searchResults.length > 0 && (
+                                <div className="border-border absolute z-50 mt-1 max-h-72 w-full overflow-y-auto rounded-md border bg-white shadow-lg">
+                                    {searchResults.map((product) => (
+                                        <button
+                                            key={product.id}
+                                            type="button"
+                                            onClick={() => handleProductSelect(product)}
+                                            className="hover:bg-accent flex w-full items-center gap-3 px-3 py-2 text-left"
+                                        >
+                                            {product.featured_image ? (
+                                                <img
+                                                    src={
+                                                        typeof product.featured_image === 'string'
+                                                            ? product.featured_image
+                                                            : product.featured_image?.full_url
+                                                    }
+                                                    alt={product.name}
+                                                    className="h-10 w-10 flex-shrink-0 rounded object-cover"
+                                                />
+                                            ) : (
+                                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100">
+                                                    <Package className="h-5 w-5 text-gray-400" />
+                                                </div>
+                                            )}
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium">{product.name}</span>
+                                                <span className="text-muted-foreground text-xs">
+                                                    {product.sku}
+                                                    {product.last_price ? ` · ${formatCurrency(product.last_price)}` : ''}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* Estado vacío al buscar sin resultados */}
+                            {isDropdownOpen && !isSearching && searchQuery.trim() && searchResults.length === 0 && (
+                                <div className="border-border text-muted-foreground absolute z-50 mt-1 w-full rounded-md border bg-white p-4 text-center text-sm shadow-lg">
+                                    No se encontraron productos para "{searchQuery}"
+                                </div>
+                            )}
+                        </div>
                         {errors.some((e) => e.field === 'product') && (
                             <p className="mt-1 text-sm text-red-600">{errors.find((e) => e.field === 'product').message}</p>
                         )}

@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 import { toast } from 'sonner';
 import BudgetForm from './components/BudgetForm';
 
-export default function Edit({ budget, warnings, clients, products, paymentConditions, user, vendors = [], businessConfig }) {
+export default function Edit({ budget, warnings, clients, currentProducts = [], paymentConditions, user, vendors = [], businessConfig }) {
     const { flash } = usePage().props;
 
     const breadcrumbs = [
@@ -89,7 +89,7 @@ export default function Edit({ budget, warnings, clients, products, paymentCondi
                 processing={processing}
                 errors={errors}
                 clients={clients}
-                products={products}
+                initialProducts={currentProducts}
                 paymentConditions={paymentConditions}
                 user={user}
                 vendors={vendors}

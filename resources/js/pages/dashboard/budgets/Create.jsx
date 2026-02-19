@@ -15,7 +15,7 @@ const breadcrumbs = [
     },
 ];
 
-export default function Create({ clients, products, paymentConditions, user, businessConfig, budget = null, vendors = [] }) {
+export default function Create({ clients, paymentConditions, user, businessConfig, budget = null, vendors = [] }) {
     const isEditing = !!budget;
 
     // Obtener días de validez desde la configuración del backend
@@ -25,13 +25,12 @@ export default function Create({ clients, products, paymentConditions, user, bus
         title: budget?.title || '',
         client_id: budget?.client_id?.toString() || '',
         picking_payment_condition_id: budget?.picking_payment_condition_id || null,
-        // Usar la función que respeta la zona horaria local
         issue_date: budget?.issue_date || getTodayISO(),
-        // Usar configuración de días de validez desde el backend
         expiry_date: budget?.expiry_date || getDatePlusDaysISO(validityDays),
         send_email_to_client: budget?.send_email_to_client || false,
         footer_comments: budget?.footer_comments || '',
         items: budget?.items || [],
+        user_id: budget?.user_id || user?.id || null,
     });
 
     const { handleResponse } = useInertiaResponse();
@@ -78,7 +77,6 @@ export default function Create({ clients, products, paymentConditions, user, bus
                 processing={processing}
                 errors={errors}
                 clients={clients}
-                products={products}
                 paymentConditions={paymentConditions}
                 user={user}
                 businessConfig={businessConfig}

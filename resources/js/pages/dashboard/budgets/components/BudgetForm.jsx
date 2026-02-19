@@ -30,7 +30,7 @@ export default function BudgetForm({
     processing,
     errors,
     clients,
-    products,
+    initialProducts = [],
     paymentConditions,
     user,
     vendors = [],
@@ -116,7 +116,7 @@ export default function BudgetForm({
                     <BudgetItemsSection
                         data={data}
                         setData={setData}
-                        products={products}
+                        initialProducts={initialProducts}
                         selectedVariants={selectedVariants}
                         onVariantChange={handleVariantChangeAndUpdate}
                         onItemsChange={handleItemsChange}

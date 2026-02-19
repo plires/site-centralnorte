@@ -3,7 +3,7 @@ import { useBudgetItems } from '../hooks/useBudgetItems';
 import ProductModal from './ProductModal';
 import UnifiedBudgetItemsSection from './UnifiedBudgetItemsSection';
 
-export default function BudgetItemsSection({ data, setData, products, selectedVariants, onVariantChange, onItemsChange }) {
+export default function BudgetItemsSection({ data, setData, initialProducts = [], selectedVariants, onVariantChange, onItemsChange }) {
     const [showProductModal, setShowProductModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
@@ -60,7 +60,7 @@ export default function BudgetItemsSection({ data, setData, products, selectedVa
 
             {showProductModal && (
                 <ProductModal
-                    products={products}
+                    initialProducts={initialProducts}
                     existingItems={data.items}
                     editingItem={editingItem}
                     onClose={closeModal}

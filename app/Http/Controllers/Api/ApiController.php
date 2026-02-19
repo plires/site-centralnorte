@@ -61,7 +61,7 @@ class ApiController extends Controller
         $search = $request->get('search', '');
         $limit = $request->get('limit', 20);
 
-        $query = Product::with(['categories', 'featuredImage']);
+        $query = Product::with(['categories', 'featuredImage', 'variants']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -91,10 +91,10 @@ class ApiController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'last_price' => $product->last_price,
-                    // Devuelve array de nombres de categorías
                     'categories' => $categoryNames,
-                    'category_display' => $categoryDisplay, // Para mostrar en UI
+                    'category_display' => $categoryDisplay,
                     'featured_image' => $product->featuredImage ? $product->featuredImage->full_url : null,
+                    'variants' => $product->variants,
                 ]
             ];
         });
@@ -111,7 +111,7 @@ class ApiController extends Controller
     public function getProduct($id)
     {
         try {
-            $product = Product::with(['categories', 'featuredImage'])
+            $product = Product::with(['categories', 'featuredImage', 'variants'])
                 ->findOrFail($id);
 
             // Manejar múltiples categorías
@@ -127,10 +127,10 @@ class ApiController extends Controller
                     'name' => $product->name,
                     'sku' => $product->sku,
                     'last_price' => $product->last_price,
-                    // Devolver array de categorías
                     'categories' => $categoryNames,
                     'category_display' => $categoryDisplay,
                     'featured_image' => $product->featuredImage ? $product->featuredImage->full_url : null,
+                    'variants' => $product->variants,
                 ]
             ]);
         } catch (\Exception $e) {

@@ -13,15 +13,21 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
         }).format(amount);
     };
 
+    const productImageUrl = (() => {
+        const fi = item.product?.featured_image;
+        if (!fi) return null;
+        return typeof fi === 'string' ? fi : fi.full_url || fi.url || null;
+    })();
+
     return (
         <div className={`rounded-lg border p-4 ${item.is_product_deleted ? 'bg-red-50' : ''}`}>
             <div className="flex justify-between">
                 {/* Lado izquierdo: Imagen + Contenido */}
                 <div className="flex flex-1 gap-4">
                     {/* Imagen del producto */}
-                    {item.product?.featured_image?.full_url ? (
+                    {productImageUrl ? (
                         <img
-                            src={item.product.featured_image.full_url}
+                            src={productImageUrl}
                             alt={item.product?.name ?? 'Producto'}
                             className="h-16 w-16 rounded object-cover"
                         />

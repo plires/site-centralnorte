@@ -117,10 +117,6 @@ class BudgetController extends Controller
                 ];
             });
 
-        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
-            ->orderBy('name')
-            ->get();
-
         // Cargar condiciones de pago activas
         $paymentConditions = PickingPaymentCondition::active()
             ->orderBy('description')
@@ -145,7 +141,6 @@ class BudgetController extends Controller
 
         return Inertia::render('dashboard/budgets/Create', [
             'clients' => $clients,
-            'products' => $products,
             'paymentConditions' => $paymentConditions,
             'vendors' => $vendors,
             'user' => $user,
@@ -163,10 +158,6 @@ class BudgetController extends Controller
             if ($user->role->name !== 'admin') {
                 $budgetOwner = $user->id;
             } else {
-                if (!$request->has('user_id')) {
-                    return redirect()->back()->withInput()
-                        ->with('error', 'Debe asignar un vendedor al presupuesto.');
-                }
                 $budgetOwner = $request->user_id;
             }
 
@@ -380,19 +371,19 @@ class BudgetController extends Controller
                 ];
             });
 
-        // 4. Cargar lista de PRODUCTOS (Activos + Actuales en uso)
-        $products = Product::with(['categories', 'featuredImage', 'images', 'variants'])
+        // 4. Cargar solo los PRODUCTOS actualmente en uso en este presupuesto
+        // (el combobox async del frontend se encarga de buscar nuevos productos)
+        $currentProducts = empty($currentProductIds) ? collect() : Product::with(['categories', 'featuredImage', 'variants'])
             ->withTrashed()
-            ->where(function ($q) use ($currentProductIds) {
-                $q->whereNull('deleted_at')->orWhereIn('id', $currentProductIds);
-            })
-            ->orderBy('name')
+            ->whereIn('id', $currentProductIds)
             ->get()
             ->map(function ($product) {
+                $categoryNames = $product->categories->pluck('name')->toArray();
                 $product->is_deleted = $product->trashed();
                 if ($product->trashed()) {
                     $product->name .= " (NO DISPONIBLE)";
                 }
+                $product->featured_image = $product->featuredImage ? $product->featuredImage->full_url : null;
                 return $product;
             });
 
@@ -479,7 +470,7 @@ class BudgetController extends Controller
             'regularItems' => $regularItems,
             'variantGroups' => $variantGroups,
             'clients' => $clients,
-            'products' => $products,
+            'currentProducts' => $currentProducts,
             'paymentConditions' => $paymentConditions,
             'user' => $user,
             'vendors' => $vendors,
@@ -509,11 +500,6 @@ class BudgetController extends Controller
             if (!$budget->isEditable()) {
                 return redirect()->route('dashboard.budgets.show', $budget)
                     ->with('error', 'Solo se pueden editar presupuestos sin enviar o en borrador. Cambie el estado a borrador y luego edite.');
-            }
-
-            if ($user->role->name === 'admin' && !$request->has('user_id')) {
-                return redirect()->back()->withInput()
-                    ->with('error', 'Debe asignar un vendedor al presupuesto.');
             }
 
             $paymentConditionData = [
