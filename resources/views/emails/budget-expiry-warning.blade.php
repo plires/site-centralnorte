@@ -136,7 +136,8 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte" class="logo">
+            <img src="{{ asset(env('LOGO_PATH', '/images/logo-central-norte-email.png')) }}" alt="Central Norte"
+                class="logo">
             <h1>⚠️ Presupuesto Próximo a Vencer</h1>
         </div>
 
@@ -144,7 +145,8 @@
             <div class="warning-box">
                 <strong>⏰ Recordatorio de Vencimiento</strong>
                 <p style="margin: 10px 0 0 0;">El siguiente presupuesto vencerá en
-                    <strong>{{ $daysUntilExpiry }}</strong> {{ $daysUntilExpiry == 1 ? 'día' : 'días' }}</p>
+                    <strong>{{ $daysUntilExpiry }}</strong> {{ $daysUntilExpiry == 1 ? 'día' : 'días' }}
+                </p>
             </div>
 
             <div class="budget-details">

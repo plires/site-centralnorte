@@ -149,7 +149,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte"
+            <img src="{{ asset(env('LOGO_PATH', '/images/logo-central-norte-email.png')) }}" alt="Central Norte"
                 class="logo">
             <h1>📦 Presupuesto de Picking/Armado de Kit</h1>
         </div>

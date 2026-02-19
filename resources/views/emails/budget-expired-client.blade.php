@@ -145,7 +145,8 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte" class="logo">
+            <img src="{{ asset(env('LOGO_PATH', '/images/logo-central-norte-email.png')) }}" alt="Central Norte"
+                class="logo">
             <h1>❌ Su Presupuesto ha Vencido</h1>
         </div>
 
@@ -199,9 +200,10 @@
                     class="button">Contactar Vendedor</a>
             </div>
 
-            @if($vendedor && $vendedor->email)
+            @if ($vendedor && $vendedor->email)
                 <p>Si tiene alguna pregunta, no dude en contactar a su vendedor en
-                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                    <a href="mailto:{{ $vendedor->email }}"
+                        style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
                 </p>
             @endif
             <p>Nuestro equipo estará encantado de ayudarle a generar un nuevo presupuesto actualizado con las mejores

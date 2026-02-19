@@ -136,7 +136,8 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte" class="logo">
+            <img src="{{ asset(env('LOGO_PATH', '/images/logo-central-norte-email.png')) }}" alt="Central Norte"
+                class="logo">
             <h1>❌ Presupuesto Vencido</h1>
         </div>
 
@@ -144,7 +145,8 @@
             <div class="alert-box">
                 <strong>⚠️ Notificación de Vencimiento</strong>
                 <p style="margin: 10px 0 0 0;">El siguiente presupuesto ha alcanzado su fecha de vencimiento:
-                    <strong>{{ $budget->expiry_date_formatted }}</strong></p>
+                    <strong>{{ $budget->expiry_date_formatted }}</strong>
+                </p>
             </div>
 
             <div class="budget-details">

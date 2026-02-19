@@ -157,7 +157,7 @@
 <body>
     <div class="email-container">
         <div class="header">
-            <img src="{{ asset(env('LOGO_PATH', '/images/product-placeholder.jpg')) }}" alt="Central Norte"
+            <img src="{{ asset(env('LOGO_PATH', '/images/logo-central-norte-email.png')) }}" alt="Central Norte"
                 class="logo">
             <h1>{{ $isResend ? '📤 Te reenviamos tu presupuesto' : '🎉 ¡Tienes un nuevo presupuesto!' }}</h1>
             @if ($isResend)
@@ -178,9 +178,10 @@
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date->format('d/m/Y') }}</p>
                 <p><strong>Válido hasta:</strong> {{ $budget->expiry_date->format('d/m/Y') }}</p>
                 <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
-                @if(is_object($vendedor) && $vendedor->email)
+                @if (is_object($vendedor) && $vendedor->email)
                     <p><strong>Email del vendedor:</strong>
-                        <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>
+                        <a href="mailto:{{ $vendedor->email }}"
+                            style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>
                     </p>
                 @endif
                 <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
@@ -213,9 +214,10 @@
 
             <div class="divider"></div>
 
-            @if(is_object($vendedor) && $vendedor->email)
+            @if (is_object($vendedor) && $vendedor->email)
                 <p>Si tenés alguna pregunta, no dudes en contactar a tu vendedor en
-                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                    <a href="mailto:{{ $vendedor->email }}"
+                        style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
                 </p>
             @else
                 <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
