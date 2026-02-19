@@ -1,5 +1,5 @@
 import ButtonCustom from '@/components/ButtonCustom';
-import DataTable from '@/Components/DataTable';
+import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { categoryColumns } from '@/config/tableColumns';
 import { useExcelExport } from '@/hooks/use-excel-export';

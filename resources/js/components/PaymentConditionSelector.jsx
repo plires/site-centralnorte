@@ -1,8 +1,8 @@
 // resources/js/components/PaymentConditionSelector.jsx
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
-import { Label } from '@/Components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DollarSign, Info, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function PaymentConditionSelector({ value, onChange, paymentConditions, disabled = false, showInfo = true, errors = {} }) {

@@ -1,5 +1,5 @@
 import ButtonCustom from '@/components/ButtonCustom';
-import DataTable from '@/Components/DataTable';
+import DataTable from '@/components/DataTable';
 import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
 import { userColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
