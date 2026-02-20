@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
-use App\Models\Client;
 use App\Enums\BudgetStatus;
-use Illuminate\Support\Str;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PickingBudget extends Model
 {
@@ -345,14 +346,24 @@ class PickingBudget extends Model
     {
         $year = now()->year;
 
-        // Tomamos el último presupuesto por ID
-        $lastBudget = self::orderBy('id', 'desc')->first();
+        // Usamos SELECT ... FOR UPDATE para serializar la generación bajo
+        // concurrencia: ninguna otra transacción puede leer/escribir la misma
+        // fila hasta que esta transacción haga commit.
+        // Incluye soft-deleted (DB::table bypasea el global scope de SoftDeletes)
+        // garantizando unicidad aunque el presupuesto haya sido eliminado.
+        DB::table('picking_budgets')
+            ->where('budget_number', 'like', "PK-{$year}-%")
+            ->lockForUpdate()
+            ->count(); // ejecuta el lock sin traer datos innecesarios
 
-        // El próximo ID será el último id + 1, o 1 si no hay registros
-        $nextId = $lastBudget ? $lastBudget->id + 1 : 1;
+        $lastNumber = DB::table('picking_budgets')
+            ->where('budget_number', 'like', "PK-{$year}-%")
+            ->selectRaw('MAX(CAST(SUBSTRING_INDEX(budget_number, \'-\', -1) AS UNSIGNED)) as max_seq')
+            ->value('max_seq');
 
-        // Formato: PK-2025-123 (sin padding fijo)
-        return sprintf('PK-%d-%d', $year, $nextId);
+        $nextSeq = ($lastNumber ?? 0) + 1;
+
+        return sprintf('PK-%d-%d', $year, $nextSeq);
     }
 
     public function calculateTotals(): void

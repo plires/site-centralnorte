@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use App\Enums\BudgetStatus;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Budget extends Model
@@ -232,14 +233,24 @@ class Budget extends Model
     {
         $year = now()->year;
 
-        // Tomamos el último presupuesto por ID
-        $lastBudget = self::orderBy('id', 'desc')->first();
+        // Usamos SELECT ... FOR UPDATE para serializar la generación bajo
+        // concurrencia: ninguna otra transacción puede leer/escribir la misma
+        // fila hasta que esta transacción haga commit.
+        // Incluye soft-deleted (DB::table bypasea el global scope de SoftDeletes)
+        // garantizando unicidad aunque el presupuesto haya sido eliminado.
+        DB::table('budgets')
+            ->where('budget_merch_number', 'like', "MC-{$year}-%")
+            ->lockForUpdate()
+            ->count(); // ejecuta el lock sin traer datos innecesarios
 
-        // El próximo ID será el último id + 1, o 1 si no hay registros
-        $nextId = $lastBudget ? $lastBudget->id + 1 : 1;
+        $lastNumber = DB::table('budgets')
+            ->where('budget_merch_number', 'like', "MC-{$year}-%")
+            ->selectRaw('MAX(CAST(SUBSTRING_INDEX(budget_merch_number, \'-\', -1) AS UNSIGNED)) as max_seq')
+            ->value('max_seq');
 
-        // Formato: PK-2025-123 (sin padding fijo)
-        return sprintf('MC-%d-%d', $year, $nextId);
+        $nextSeq = ($lastNumber ?? 0) + 1;
+
+        return sprintf('MC-%d-%d', $year, $nextSeq);
     }
 
     /**
