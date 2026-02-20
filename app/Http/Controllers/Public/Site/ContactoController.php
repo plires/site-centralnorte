@@ -24,7 +24,7 @@ class ContactoController extends Controller
 
             // Enviar email de notificación al administrador
             $adminEmail = config('business.admin_email', config('mail.from.address'));
-            Mail::to($adminEmail)->queue(new ContactMessageReceivedMail($contactMessage));
+            Mail::to($adminEmail)->send(new ContactMessageReceivedMail($contactMessage));
 
             return back()->with('success', '¡Gracias por contactarnos! Te responderemos a la brevedad.');
         } catch (\Exception $e) {
