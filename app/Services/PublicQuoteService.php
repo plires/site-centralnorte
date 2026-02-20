@@ -144,7 +144,7 @@ class PublicQuoteService
         try {
             $dashboardUrl = route('dashboard.budgets.show', $budget);
 
-            Mail::to($seller->email)->queue(
+            Mail::to($seller->email)->send(
                 new NewQuoteRequestMail($budget, $dashboardUrl)
             );
 

@@ -345,7 +345,6 @@ Email templates are in `resources/views/emails/`. To send emails:
 1. Create Mailable: `php artisan make:mail MailableName`
 2. Define in `app/Mail/MailableName.php`
 3. Send via: `Mail::to($user)->send(new MailableName($data))`
-4. Queue emails for better performance: `Mail::to($user)->queue(new MailableName($data))`
 
 ### PDF Generation
 PDFs are generated using dompdf. Example in controllers:
