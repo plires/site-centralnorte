@@ -165,7 +165,9 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->created_at->format('d/m/Y') }}</p>
                 <p><strong>Válido hasta:</strong> {{ $budget->valid_until->format('d/m/Y') }}</p>
-                <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+                @if (is_object($vendedor) && $vendedor->name)
+                    <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
+                @endif
                 @if (is_object($vendedor) && $vendedor->email)
                     <p><strong>Email del vendedor:</strong>
                         <a href="mailto:{{ $vendedor->email }}"
@@ -209,7 +211,10 @@
                         style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
                 </p>
             @else
-                <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos.</p>
+                <p>Si tenés alguna consulta o necesitás modificaciones, no dudes en contactarnos -
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}</a>.
+                </p>
             @endif
 
             <p style="text-align: center;"><strong>¡Gracias por confiar en nosotros!</strong></p>
@@ -218,11 +223,17 @@
 
         <div class="footer">
             <p><strong>{{ env('COMPANY_NAME', 'Central Norte') }}</strong></p>
-            <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
+            <p>{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }} |
+                {{ env('COMPANY_PHONE', '+54 11 7840-0401') }}
             </p>
             <p style="margin-top: 15px;">Este es un email automático. Para consultas, contactá directamente con
-                <a href="mailto:{{ $vendedor->email }}"
-                    style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ $vendedor->name }}</a>
+                @if (is_object($vendedor) && $vendedor->email)
+                    <a href="mailto:{{ $vendedor->email }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ $vendedor->name }}</a>
+                @else
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}</a>
+                @endif
             </p>
         </div>
     </div>

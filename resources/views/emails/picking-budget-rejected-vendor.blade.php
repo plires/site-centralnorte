@@ -241,7 +241,8 @@
 
         <div class="footer">
             <p><strong>Central Norte</strong></p>
-            <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
+            <p>{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }} |
+                {{ env('COMPANY_PHONE', '+54 11 7840-0401') }}
             </p>
             <p style="margin-top: 15px;">Este es un mensaje automático de notificación sobre el rechazo del
                 presupuesto de picking.</p>

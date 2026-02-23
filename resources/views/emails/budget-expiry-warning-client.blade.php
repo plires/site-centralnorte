@@ -147,8 +147,9 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p style="font-size: 18px; color: {{ env('SECONDARY_COLOR', '#19ac90') }};"><strong>Total:
-                        ${{ number_format($budget->total, 2, ',', '.') }}</strong></p>
+                <p style="font-size: 18px; color: {{ env('SECONDARY_COLOR', '#19ac90') }};">
+                    <strong>Total: ${{ number_format($budget->total, 2, ',', '.') }}</strong>
+                </p>
             </div>
 
             <p>Para ver el presupuesto completo y todos sus detalles, puede acceder haciendo clic en el siguiente
@@ -159,14 +160,18 @@
             </div>
 
             <div class="contact-info">
-                <h4>📞 Información de Contacto</h4>
-                <p><strong>Su vendedor:</strong> {{ $vendedor->name }}</p>
-                @if ($vendedor->email)
-                    <p><strong>Email:</strong> <a href="mailto:{{ $vendedor->email }}"
-                            style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a></p>
-                @endif
-                @if ($vendedor->phone)
-                    <p><strong>Teléfono:</strong> {{ $vendedor->phone }}</p>
+                @if (is_object($vendedor) && $vendedor->email)
+                    <h4>📞 Información de Contacto</h4>
+                    <p><strong>Su vendedor:</strong> {{ $vendedor->name }} - </p>
+                    <a href="mailto:{{ $vendedor->email }}" style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">
+                        {{ $vendedor->email }}
+                    </a>
+                @else
+                    <h4>📞 Información de Contacto</h4>
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">
+                        {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}
+                    </a>
                 @endif
             </div>
 
@@ -176,8 +181,11 @@
                         style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
                 </p>
             @else
-                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactar a su
-                    vendedor.</p>
+                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactarnos - </p>
+                <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                    style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">
+                    {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}
+                </a>
             @endif
 
             <p>Le recomendamos revisar el presupuesto antes de la fecha de vencimiento para aprovechar las condiciones
@@ -186,7 +194,8 @@
 
         <div class="footer">
             <p><strong>Central Norte</strong></p>
-            <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
+            <p>{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }} |
+                {{ env('COMPANY_PHONE', '+54 11 7840-0401') }}
             </p>
             <p style="margin-top: 15px;">Este es un mensaje automático para recordarle sobre el vencimiento de su
                 presupuesto.</p>

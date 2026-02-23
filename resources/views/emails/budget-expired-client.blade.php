@@ -184,26 +184,41 @@
             </div>
 
             <div class="contact-info">
-                <h4>📞 Contacte a su Vendedor</h4>
-                <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
-                @if ($vendedor->email)
+                @if ($vendedor && $vendedor->email)
+                    <h4>📞 Contacte a su Vendedor</h4>
+                    <p><strong>Vendedor:</strong> {{ $vendedor->name }}</p>
                     <p><strong>Email:</strong> <a href="mailto:{{ $vendedor->email }}"
                             style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a></p>
-                @endif
-                @if ($vendedor->phone)
-                    <p><strong>Teléfono:</strong> {{ $vendedor->phone }}</p>
+                    @if ($vendedor->phone)
+                        <p><strong>Teléfono:</strong> {{ $vendedor->phone }}</p>
+                    @endif
+                @else
+                    <h4>📞 Contáctenos</h4>
+                    <p><a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                            style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}</a>
+                    </p>
                 @endif
             </div>
 
             <div style="text-align: center;">
-                <a href="mailto:{{ $vendedor->email }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}"
-                    class="button">Contactar Vendedor</a>
+                @if ($vendedor && $vendedor->email)
+                    <a href="mailto:{{ $vendedor->email }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}"
+                        class="button">Contactar Vendedor</a>
+                @else
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}"
+                        class="button">Contactarnos</a>
+                @endif
             </div>
 
             @if ($vendedor && $vendedor->email)
                 <p>Si tiene alguna pregunta, no dude en contactar a su vendedor en
                     <a href="mailto:{{ $vendedor->email }}"
                         style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
+                </p>
+            @else
+                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactarnos -
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}</a>.
                 </p>
             @endif
             <p>Nuestro equipo estará encantado de ayudarle a generar un nuevo presupuesto actualizado con las mejores
@@ -214,7 +229,8 @@
 
         <div class="footer">
             <p><strong>Central Norte</strong></p>
-            <p>{{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }} | {{ env('COMPANY_PHONE', '+54 11 2479-7281') }}
+            <p>{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }} |
+                {{ env('COMPANY_PHONE', '+54 11 7840-0401') }}
             </p>
             <p style="margin-top: 15px;">Este es un mensaje automático para informarle sobre el vencimiento de su
                 presupuesto.</p>

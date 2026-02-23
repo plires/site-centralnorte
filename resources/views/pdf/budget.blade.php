@@ -567,8 +567,8 @@
                 <div class="footer-company">{{ env('APP_NAME', 'Central Norte') }}</div>
                 <div class="footer-details">
                     {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}<br>
-                    Tel: {{ env('COMPANY_PHONE', '+54 11 2479-7281') }} |
-                    Email: {{ env('COMPANY_EMAIL', 'info@centralnortesrl.com') }}<br>
+                    Tel: {{ env('COMPANY_PHONE', '+54 11 7840-0401') }} |
+                    Email: {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}<br>
                     @if (env('COMPANY_WEBSITE'))
                         Web: {{ env('COMPANY_WEBSITE') }}
                     @endif
