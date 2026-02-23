@@ -51,7 +51,7 @@ export default function BudgetVariantGroups({
         for (const [group, items] of Object.entries(variantGroups)) {
             const item = items.find((item) => `variant-${group}-${item.id}` === selectedImageKey);
             if (item) {
-                modalProductName = item.product.name;
+                modalProductName = item.product?.name ?? 'Producto eliminado';
                 break;
             }
         }
@@ -67,12 +67,20 @@ export default function BudgetVariantGroups({
                 const currentIndex = currentImageIndexes[productImageKey] || 0;
 
                 return (
-                    <Card key={group} className="mb-6">
+                    <Card key={group} className={`mb-6 ${!firstItem.product ? 'border-red-200' : ''}`}>
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ChartBarStacked className="h-5 w-5 text-blue-600" />
-                                Opciones para {firstItem.product.name}
+                                {firstItem.product ? `Opciones para ${firstItem.product.name}` : 'Opciones — Producto no disponible'}
                             </CardTitle>
+                            {!firstItem.product && (
+                                <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-100 px-3 py-2 text-sm text-red-700">
+                                    <span className="mt-0.5 flex-shrink-0">⚠️</span>
+                                    <span>
+                                        <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos para más información.
+                                    </span>
+                                </div>
+                            )}
                             {/* Imagen del producto - Una sola vez, mismo layout que productos regulares */}
                             <div className="mb-4 rounded-lg p-4">
                                 <div className="flex flex-col items-center gap-4 sm:flex-row">
@@ -86,7 +94,7 @@ export default function BudgetVariantGroups({
                                                 >
                                                     <img
                                                         src={images[currentIndex].full_url}
-                                                        alt={firstItem.product.name}
+                                                        alt={firstItem.product?.name ?? 'Producto eliminado'}
                                                         className="h-full w-full rounded-md object-cover transition-opacity group-hover:opacity-75"
                                                     />
                                                     {/* Overlay de zoom al hacer hover */}
@@ -139,8 +147,10 @@ export default function BudgetVariantGroups({
                                     {/* Información básica del producto */}
                                     <div className="flex-1 text-center sm:text-left">
                                         <div className="mb-2">
-                                            <h3 className="mb-1 text-lg font-semibold text-gray-900">{firstItem.product.name}</h3>
-                                            {firstItem.product.description && (
+                                            <h3 className={`mb-1 text-lg font-semibold ${firstItem.product ? 'text-gray-900' : 'text-red-500 italic'}`}>
+                                                {firstItem.product?.name ?? 'Producto eliminado'}
+                                            </h3>
+                                            {firstItem.product?.description && (
                                                 <p className="mb-2 text-sm text-gray-700" style={{ textTransform: 'lowercase', display: 'block' }}>
                                                     <span style={{ textTransform: 'capitalize' }}>{firstItem.product.description.toLowerCase()}</span>
                                                 </p>

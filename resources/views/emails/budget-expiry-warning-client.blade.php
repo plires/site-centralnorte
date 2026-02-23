@@ -147,9 +147,6 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p style="font-size: 18px; color: {{ env('SECONDARY_COLOR', '#19ac90') }};">
-                    <strong>Total: ${{ number_format($budget->total, 2, ',', '.') }}</strong>
-                </p>
             </div>
 
             <p>Para ver el presupuesto completo y todos sus detalles, puede acceder haciendo clic en el siguiente
@@ -181,11 +178,12 @@
                         style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $vendedor->email }}</a>.
                 </p>
             @else
-                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactarnos - </p>
-                <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
-                    style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">
-                    {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}
-                </a>
+                <p>Si tiene alguna consulta o necesita modificaciones en el presupuesto, no dude en contactarnos -
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}"
+                        style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">
+                        {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}
+                    </a>
+                </p>
             @endif
 
             <p>Le recomendamos revisar el presupuesto antes de la fecha de vencimiento para aprovechar las condiciones

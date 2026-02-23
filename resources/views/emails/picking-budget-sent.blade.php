@@ -177,8 +177,9 @@
                 <p><strong>Cantidad de kits:</strong> {{ number_format($budget->total_kits) }}</p>
                 <p><strong>Componentes por kit:</strong> {{ $budget->total_components_per_kit }}</p>
                 <p><strong>Tiempo de producción:</strong> {{ $budget->production_time }}</p>
-                <p><strong>Precio por kit:</strong> ${{ number_format($budget->unit_price_per_kit, 2, ',', '.') }}</p>
                 <p class="total-amount">Total: ${{ number_format($budget->total, 2, ',', '.') }}</p>
+                <p class="total-amount">Precio por kit: ${{ number_format($budget->unit_price_per_kit, 2, ',', '.') }}
+                </p>
             </div>
 
             <p>Encontrarás el detalle completo en el PDF adjunto a este correo.</p>

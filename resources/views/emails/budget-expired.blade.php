@@ -154,20 +154,27 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p><strong>Total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
             <div class="client-info">
                 <h4>📋 Información del Cliente</h4>
-                <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
-                @if ($budget->client->company)
-                    <p><strong>Empresa:</strong> {{ $budget->client->company }}</p>
-                @endif
-                @if ($budget->client->email)
-                    <p><strong>Email:</strong> {{ $budget->client->email }}</p>
-                @endif
-                @if ($budget->client->phone)
-                    <p><strong>Teléfono:</strong> {{ $budget->client->phone }}</p>
+                @if ($budget->client)
+                    <p><strong>Cliente:</strong> {{ $budget->client->name }}</p>
+                    @if ($budget->client->company)
+                        <p><strong>Empresa:</strong> {{ $budget->client->company }}</p>
+                    @endif
+                    @if ($budget->client->email)
+                        <p><strong>Email:</strong> {{ $budget->client->email }}</p>
+                    @endif
+                    @if ($budget->client->phone)
+                        <p><strong>Teléfono:</strong> {{ $budget->client->phone }}</p>
+                    @endif
+                @else
+                    <p
+                        style="color: #856404; background-color: #fff3cd; padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                        ⚠️ El cliente asociado a este presupuesto ya no se encuentra disponible en el sistema. Consultá
+                        el dashboard para más detalles.
+                    </p>
                 @endif
             </div>
 

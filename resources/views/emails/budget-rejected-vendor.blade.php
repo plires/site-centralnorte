@@ -196,19 +196,27 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p><strong>Monto total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
             <div class="client-info">
                 <h4>👤 Información del Cliente</h4>
-                <p><strong>Nombre:</strong> {{ $budget->client->name }}</p>
-                @if ($budget->client->company)
-                    <p><strong>Empresa:</strong> {{ $budget->client->company }}</p>
-                @endif
-                <p><strong>Email:</strong> <a href="mailto:{{ $budget->client->email }}"
-                        style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $budget->client->email }}</a></p>
-                @if ($budget->client->phone)
-                    <p><strong>Teléfono:</strong> {{ $budget->client->phone }}</p>
+                @if ($budget->client)
+                    <p><strong>Nombre:</strong> {{ $budget->client->name }}</p>
+                    @if ($budget->client->company)
+                        <p><strong>Empresa:</strong> {{ $budget->client->company }}</p>
+                    @endif
+                    <p><strong>Email:</strong> <a href="mailto:{{ $budget->client->email }}"
+                            style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $budget->client->email }}</a>
+                    </p>
+                    @if ($budget->client->phone)
+                        <p><strong>Teléfono:</strong> {{ $budget->client->phone }}</p>
+                    @endif
+                @else
+                    <p
+                        style="color: #856404; background-color: #fff3cd; padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                        ⚠️ El cliente asociado a este presupuesto ya no se encuentra disponible en el sistema. Consultá
+                        el dashboard para más detalles.
+                    </p>
                 @endif
             </div>
 

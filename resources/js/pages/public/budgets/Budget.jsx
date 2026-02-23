@@ -7,6 +7,7 @@ import { Toaster, toast } from 'sonner';
 import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
+import BudgetUnavailableActionsBlock from '@/pages/public/components/BudgetUnavailableActionsBlock';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
 import Header from '@/pages/public/components/Header';
 
@@ -74,6 +75,23 @@ export default function Budget({ budget, businessConfig }) {
     // Obtener nombre de la empresa desde .env
     const appName = import.meta.env.VITE_APP_NAME || 'Central Norte';
 
+    // Detectar entidades críticas faltantes
+    const criticalIssueReasons = [];
+    if (!budget.client) {
+        criticalIssueReasons.push('Los datos del cliente ya no están disponibles en el sistema.');
+    }
+    const allItems = [
+        ...(budget.grouped_items?.regular || []),
+        ...Object.values(budget.grouped_items?.variants || {}).flat(),
+    ];
+    if (allItems.some((item) => !item.product)) {
+        criticalIssueReasons.push('Uno o más productos de este presupuesto ya no están disponibles en el catálogo.');
+    }
+    if (budget.payment_condition_deleted) {
+        criticalIssueReasons.push('La condición de pago aplicada ya no se encuentra disponible en el sistema.');
+    }
+    const hasCriticalIssues = criticalIssueReasons.length > 0;
+
     return (
         <div className="min-h-screen bg-gray-50">
             <Toaster richColors position="top-right" />
@@ -113,24 +131,32 @@ export default function Budget({ budget, businessConfig }) {
                 />
 
                 {/* Totales */}
-                <BudgetTotalsCard budget={budget} calculatedTotals={calculatedTotals} ivaRate={ivaRate} applyIva={applyIva} />
+                <BudgetTotalsCard budget={budget} calculatedTotals={calculatedTotals} ivaRate={ivaRate} applyIva={applyIva} businessConfig={businessConfig} />
 
                 {/* Comentarios del pie */}
                 <BudgetComments budget={budget} />
 
-                {/* Acciones del cliente (aprobar/rechazar) - Solo si está en estado 'sent' */}
+                {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
                 {budget.allows_client_action && (
-                    <div className="mt-8 mb-8">
-                        <ClientBudgetActions 
-                            token={budget.token} 
-                            approveRoute="public.budget.approve" 
-                            inReviewRoute="public.budget.in_review" 
-                            currentStatus={budget.status} 
+                    hasCriticalIssues ? (
+                        <BudgetUnavailableActionsBlock
+                            vendor={budget.user}
+                            businessConfig={businessConfig}
+                            reasons={criticalIssueReasons}
                         />
-                    </div>
+                    ) : (
+                        <div className="mt-8 mb-8">
+                            <ClientBudgetActions
+                                token={budget.token}
+                                approveRoute="public.budget.approve"
+                                inReviewRoute="public.budget.in_review"
+                                currentStatus={budget.status}
+                            />
+                        </div>
+                    )
                 )}
 
-                {selectedVariants && Object.keys(selectedVariants).length > 0 && budget.allows_client_action && (
+                {selectedVariants && Object.keys(selectedVariants).length > 0 && budget.allows_client_action && !hasCriticalIssues && (
                     <>
                         {/* Botón de descarga */}
                         <BudgetDownloadButton budget={budget} selectedVariants={selectedVariants} />

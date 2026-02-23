@@ -34,7 +34,7 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
     // Obtener datos del modal actual
     const modalImages = selectedImageKey ? imageGalleries[selectedImageKey] || [] : [];
     const modalCurrentIndex = selectedImageKey ? currentImageIndexes[selectedImageKey] || 0 : 0;
-    const modalProductName = selectedImageKey ? items.find((item) => `regular-${item.id}` === selectedImageKey)?.product.name : '';
+    const modalProductName = selectedImageKey ? (items.find((item) => `regular-${item.id}` === selectedImageKey)?.product?.name ?? 'Producto eliminado') : '';
 
     return (
         <Card className="mb-6">
@@ -52,7 +52,16 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                         const currentIndex = currentImageIndexes[imageKey] || 0;
 
                         return (
-                            <div key={item.id} className="rounded-lg border p-4">
+                            <div key={item.id} className={`rounded-lg border p-4 ${!item.product ? 'border-red-200 bg-red-50' : ''}`}>
+                                {/* Aviso si el producto fue eliminado */}
+                                {!item.product && (
+                                    <div className="mb-3 flex items-start gap-2 rounded-md border border-red-200 bg-red-100 px-3 py-2 text-sm text-red-700">
+                                        <span className="mt-0.5 flex-shrink-0">⚠️</span>
+                                        <span>
+                                            <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos para más información.
+                                        </span>
+                                    </div>
+                                )}
                                 {/* Layout responsivo: flex-col en móvil, flex-row en desktop */}
                                 <div className="flex flex-col items-center gap-4 sm:flex-row">
                                     {/* Imagen del producto */}
@@ -62,7 +71,7 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                                 <div onClick={() => openModal(imageKey)} className="group relative h-full w-full cursor-pointer">
                                                     <img
                                                         src={images[currentIndex].full_url}
-                                                        alt={item.product.name}
+                                                        alt={item.product?.name ?? 'Producto eliminado'}
                                                         className="h-full w-full rounded-md object-cover transition-opacity group-hover:opacity-75"
                                                     />
                                                     {/* Overlay de zoom al hacer hover */}
@@ -117,8 +126,10 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                         {/* Detalles del producto */}
                                         <div className="flex-1">
                                             <div className="mb-2 border-b-1">
-                                                <h3 className="mb-1 font-semibold text-gray-900">{item.product.name}</h3>
-                                                {item.product.description && (
+                                                <h3 className={`mb-1 font-semibold ${item.product ? 'text-gray-900' : 'text-red-500 italic'}`}>
+                                                    {item.product?.name ?? 'Producto eliminado'}
+                                                </h3>
+                                                {item.product?.description && (
                                                     <p className="mb-2 text-sm text-gray-700">Descripción: {item.product.description}</p>
                                                 )}
                                             </div>

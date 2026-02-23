@@ -22,6 +22,7 @@ use App\Http\Controllers\Public\Site\SolicitarPresupuestoController;
 use App\Http\Controllers\Dashboard\ProductImageController;
 use App\Http\Controllers\Public\Site\NewsletterController;
 use App\Http\Controllers\Public\PublicPickingBudgetController;
+use App\Http\Controllers\Dev\MailPreviewController;
 
 // ===========================================================================
 // RUTAS PÚBLICAS (sin autenticación)
@@ -233,3 +234,40 @@ Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(func
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
 require __DIR__ . '/picking.php';
+
+// ===========================================================================
+// PREVIEW DE EMAILS — solo entorno local
+// ===========================================================================
+
+if (app()->environment('local')) {
+
+
+    Route::prefix('dev/mails')->name('dev.mails.')->group(function () {
+        Route::get('/', [MailPreviewController::class, 'index'])->name('index');
+
+        // Merchandising — Cliente
+        Route::get('/budget-created', [MailPreviewController::class, 'budgetCreated'])->name('budget-created');
+        Route::get('/budget-created-resend', [MailPreviewController::class, 'budgetCreatedResend'])->name('budget-created-resend');
+        Route::get('/budget-expiry-warning-client', [MailPreviewController::class, 'budgetExpiryWarningClient'])->name('budget-expiry-warning-client');
+        Route::get('/budget-expired-client', [MailPreviewController::class, 'budgetExpiredClient'])->name('budget-expired-client');
+
+        // Merchandising — Vendedor
+        Route::get('/budget-approved-vendor', [MailPreviewController::class, 'budgetApprovedVendor'])->name('budget-approved-vendor');
+        Route::get('/budget-rejected-vendor', [MailPreviewController::class, 'budgetRejectedVendor'])->name('budget-rejected-vendor');
+        Route::get('/budget-in-review-vendor', [MailPreviewController::class, 'budgetInReviewVendor'])->name('budget-in-review-vendor');
+        Route::get('/budget-expiry-warning', [MailPreviewController::class, 'budgetExpiryWarning'])->name('budget-expiry-warning');
+        Route::get('/budget-expired', [MailPreviewController::class, 'budgetExpired'])->name('budget-expired');
+
+        // Picking — Cliente
+        Route::get('/picking-budget-sent', [MailPreviewController::class, 'pickingBudgetSent'])->name('picking-budget-sent');
+
+        // Picking — Vendedor
+        Route::get('/picking-budget-approved-vendor', [MailPreviewController::class, 'pickingBudgetApprovedVendor'])->name('picking-budget-approved-vendor');
+        Route::get('/picking-budget-rejected-vendor', [MailPreviewController::class, 'pickingBudgetRejectedVendor'])->name('picking-budget-rejected-vendor');
+        Route::get('/picking-budget-in-review-vendor', [MailPreviewController::class, 'pickingBudgetInReviewVendor'])->name('picking-budget-in-review-vendor');
+
+        // Otros
+        Route::get('/contact-message-received', [MailPreviewController::class, 'contactMessageReceived'])->name('contact-message-received');
+        Route::get('/new-quote-request', [MailPreviewController::class, 'newQuoteRequest'])->name('new-quote-request');
+    });
+}

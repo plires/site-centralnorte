@@ -10,7 +10,8 @@ import { DollarSign, Info, TrendingUp } from 'lucide-react';
  * @param {boolean} applyIva - Si aplica IVA
  * @returns {JSX.Element} - Componente Card de totales
  */
-export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
+export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva, businessConfig }) {
+    const companyEmail = businessConfig?.company_email;
     const formatCurrency = (value) => {
         const num = parseFloat(value) || 0;
         return new Intl.NumberFormat('es-AR', {
@@ -104,6 +105,24 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva }) {
                         <span>Costo de cajas:</span>
                         <span>{formatCurrency(boxTotal)}</span>
                     </div>
+
+                    {/* Aviso condición de pago eliminada */}
+                    {budget.payment_condition_deleted && (
+                        <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            <span className="mt-0.5 flex-shrink-0">⚠️</span>
+                            <span>
+                                La condición de pago aplicada a este presupuesto ya no se encuentra disponible en el sistema. Los montos reflejados son los acordados originalmente.{' '}
+                                {companyEmail && (
+                                    <>
+                                        Ante cualquier duda consultá a{' '}
+                                        <a href={`mailto:${companyEmail}`} className="font-medium underline hover:text-amber-900">
+                                            {companyEmail}
+                                        </a>.
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    )}
 
                     {/* Ajuste por condición de pago */}
                     {hasPaymentCondition && (

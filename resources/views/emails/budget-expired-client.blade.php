@@ -168,7 +168,6 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p><strong>Total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
             <div class="next-steps">
@@ -202,10 +201,10 @@
 
             <div style="text-align: center;">
                 @if ($vendedor && $vendedor->email)
-                    <a href="mailto:{{ $vendedor->email }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}"
+                    <a href="mailto:{{ $vendedor->email }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}  - {{ $budget->budget_merch_number }}"
                         class="button">Contactar Vendedor</a>
                 @else
-                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }}"
+                    <a href="mailto:{{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}?subject=Consulta sobre presupuesto vencido: {{ $budget->title }} - {{ $budget->budget_merch_number }}"
                         class="button">Contactarnos</a>
                 @endif
             </div>

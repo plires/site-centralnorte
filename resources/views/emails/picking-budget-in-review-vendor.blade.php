@@ -187,15 +187,21 @@
 
             <div class="client-info">
                 <h4>👤 Información del Cliente</h4>
-                <p><strong>Cliente:</strong> {{ $cliente->name }}</p>
-                @if($cliente->company)
-                    <p><strong>Empresa:</strong> {{ $cliente->company }}</p>
-                @endif
-                @if($cliente->email)
-                    <p><strong>Email:</strong> {{ $cliente->email }}</p>
-                @endif
-                @if($cliente->phone)
-                    <p><strong>Teléfono:</strong> {{ $cliente->phone }}</p>
+                @if ($cliente)
+                    <p><strong>Cliente:</strong> {{ $cliente->name }}</p>
+                    @if ($cliente->company)
+                        <p><strong>Empresa:</strong> {{ $cliente->company }}</p>
+                    @endif
+                    @if ($cliente->email)
+                        <p><strong>Email:</strong> {{ $cliente->email }}</p>
+                    @endif
+                    @if ($cliente->phone)
+                        <p><strong>Teléfono:</strong> {{ $cliente->phone }}</p>
+                    @endif
+                @else
+                    <p style="color: #856404; background-color: #fff3cd; padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                        ⚠️ El cliente asociado a este presupuesto ya no se encuentra disponible en el sistema. Consultá el dashboard para más detalles.
+                    </p>
                 @endif
             </div>
 

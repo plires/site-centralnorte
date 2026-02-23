@@ -53,6 +53,8 @@ class PublicBudgetController extends Controller
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
+                'company_email' => env('COMPANY_EMAIL', 'consultas@centralnortesrl.com'),
+                'company_phone' => env('COMPANY_PHONE', '+54 11 7840-0401'),
             ];
 
             return Inertia::render('public/budgets/Budget', [
@@ -67,6 +69,7 @@ class PublicBudgetController extends Controller
                     'picking_payment_condition_id' => $budget->picking_payment_condition_id,
                     'payment_condition_description' => $budget->payment_condition_description,
                     'payment_condition_percentage' => $budget->payment_condition_percentage,
+                    'payment_condition_deleted' => $budget->picking_payment_condition_id && !$budget->paymentCondition,
                     'issue_date_formatted' => $budget->issue_date_formatted,
                     'expiry_date_formatted' => $budget->expiry_date_formatted,
                     'issue_date_short' => $budget->issue_date_short,
@@ -74,10 +77,10 @@ class PublicBudgetController extends Controller
                     'footer_comments' => $budget->footer_comments,
                     'subtotal' => $budget->subtotal,
                     'total' => $budget->total,
-                    'client' => [
+                    'client' => $budget->client ? [
                         'name' => $budget->client->name,
                         'company' => $budget->client->company,
-                    ],
+                    ] : null,
                     'user' => $budget->user ? [
                         'name' => $budget->user->name,
                         'email' => $budget->user->email,

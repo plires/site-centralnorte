@@ -225,17 +225,23 @@
 
             <div class="client-info">
                 <h3>👤 Datos del Cliente</h3>
-                <p><strong>Nombre:</strong> {{ $client->name }}</p>
-                @if ($client->company)
-                    <p><strong>Empresa:</strong> {{ $client->company }}</p>
-                @endif
-                <p><strong>Email:</strong> <a href="mailto:{{ $client->email }}"
-                        style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $client->email }}</a></p>
-                @if ($client->phone)
-                    <p><strong>Teléfono:</strong> {{ $client->phone }}</p>
-                @endif
-                @if ($client->address)
-                    <p><strong>Dirección:</strong> {{ $client->address }}</p>
+                @if ($client)
+                    <p><strong>Nombre:</strong> {{ $client->name }}</p>
+                    @if ($client->company)
+                        <p><strong>Empresa:</strong> {{ $client->company }}</p>
+                    @endif
+                    <p><strong>Email:</strong> <a href="mailto:{{ $client->email }}"
+                            style="color: {{ env('SECONDARY_COLOR', '#19ac90') }};">{{ $client->email }}</a></p>
+                    @if ($client->phone)
+                        <p><strong>Teléfono:</strong> {{ $client->phone }}</p>
+                    @endif
+                    @if ($client->address)
+                        <p><strong>Dirección:</strong> {{ $client->address }}</p>
+                    @endif
+                @else
+                    <p style="color: #856404; background-color: #fff3cd; padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                        ⚠️ El cliente asociado a este presupuesto ya no se encuentra disponible en el sistema. Consultá el dashboard para más detalles.
+                    </p>
                 @endif
             </div>
 
@@ -259,25 +265,36 @@
                 </thead>
                 <tbody>
                     @foreach ($items as $item)
-                        <tr>
-                            <td>
-                                <strong>{{ $item->product->name ?? 'Producto' }}</strong>
-                                @if ($item->product?->sku)
-                                    <br><small style="color: #6c757d;">SKU: {{ $item->product->sku }}</small>
-                                @endif
-                            </td>
-                            <td>
-                                @if ($item->productVariant)
-                                    {{ $item->productVariant->description ?? '-' }}
-                                    @if ($item->productVariant->sku)
-                                        <br><small style="color: #6c757d;">{{ $item->productVariant->sku }}</small>
+                        @if (!$item->product)
+                            <tr style="background-color: #fff0f0;">
+                                <td colspan="3" style="color: #721c24; background-color: #f8d7da; padding: 10px 12px; font-size: 13px;">
+                                    ⚠️ <strong>Producto eliminado del sistema</strong> — Este ítem ya no se encuentra disponible. Revisá el presupuesto en el dashboard para actualizarlo.
+                                </td>
+                            </tr>
+                        @else
+                            <tr>
+                                <td>
+                                    <strong>{{ $item->product->name }}</strong>
+                                    @if ($item->product->sku)
+                                        <br><small style="color: #6c757d;">SKU: {{ $item->product->sku }}</small>
                                     @endif
-                                @else
-                                    -
-                                @endif
-                            </td>
-                            <td style="text-align: center;">{{ $item->quantity }}</td>
-                        </tr>
+                                </td>
+                                <td>
+                                    @if ($item->productVariant)
+                                        {{ $item->productVariant->description ?? '-' }}
+                                        @if ($item->productVariant->sku)
+                                            <br><small style="color: #6c757d;">{{ $item->productVariant->sku }}</small>
+                                        @endif
+                                    @elseif ($item->product_variant_id)
+                                        {{-- Tenía variante asignada pero fue eliminada --}}
+                                        <span style="color: #721c24; font-size: 12px;">⚠️ Variante eliminada del sistema</span>
+                                    @else
+                                        -
+                                    @endif
+                                </td>
+                                <td style="text-align: center;">{{ $item->quantity }}</td>
+                            </tr>
+                        @endif
                     @endforeach
                 </tbody>
             </table>

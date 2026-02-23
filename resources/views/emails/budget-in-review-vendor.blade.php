@@ -170,7 +170,8 @@
 
             <div class="info-box">
                 <strong>El cliente está evaluando tu presupuesto</strong>
-                <p>El cliente ha marcado el presupuesto como "En Evaluación", lo que indica que está considerando tu propuesta.</p>
+                <p>El cliente ha marcado el presupuesto como "En Evaluación", lo que indica que está considerando tu
+                    propuesta.</p>
             </div>
 
             <div class="budget-details">
@@ -178,20 +179,27 @@
                 <p><strong>Título:</strong> {{ $budget->title }}</p>
                 <p><strong>Fecha de emisión:</strong> {{ $budget->issue_date_formatted }}</p>
                 <p><strong>Fecha de vencimiento:</strong> {{ $budget->expiry_date_formatted }}</p>
-                <p><strong>Monto total:</strong> ${{ number_format($budget->total, 2, ',', '.') }}</p>
             </div>
 
             <div class="client-info">
                 <h4>👤 Información del Cliente</h4>
-                <p><strong>Cliente:</strong> {{ $cliente->name }}</p>
-                @if($cliente->company)
-                    <p><strong>Empresa:</strong> {{ $cliente->company }}</p>
-                @endif
-                @if($cliente->email)
-                    <p><strong>Email:</strong> {{ $cliente->email }}</p>
-                @endif
-                @if($cliente->phone)
-                    <p><strong>Teléfono:</strong> {{ $cliente->phone }}</p>
+                @if ($cliente)
+                    <p><strong>Cliente:</strong> {{ $cliente->name }}</p>
+                    @if ($cliente->company)
+                        <p><strong>Empresa:</strong> {{ $cliente->company }}</p>
+                    @endif
+                    @if ($cliente->email)
+                        <p><strong>Email:</strong> {{ $cliente->email }}</p>
+                    @endif
+                    @if ($cliente->phone)
+                        <p><strong>Teléfono:</strong> {{ $cliente->phone }}</p>
+                    @endif
+                @else
+                    <p
+                        style="color: #856404; background-color: #fff3cd; padding: 8px 12px; border-radius: 4px; font-size: 13px;">
+                        ⚠️ El cliente asociado a este presupuesto ya no se encuentra disponible en el sistema. Consultá
+                        el dashboard para más detalles.
+                    </p>
                 @endif
             </div>
 
@@ -225,7 +233,8 @@
 
             <p style="margin-top: 30px; color: #666;">
                 Saludos cordiales,<br>
-                <strong style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('APP_NAME', 'Central Norte') }}</strong>
+                <strong
+                    style="color: {{ env('PRIMARY_COLOR', '#3d5095') }};">{{ env('APP_NAME', 'Central Norte') }}</strong>
             </p>
         </div>
 

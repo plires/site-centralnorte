@@ -48,10 +48,14 @@ class PublicPickingBudgetController extends Controller
             $businessConfig = [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
+                'company_email' => env('COMPANY_EMAIL', 'consultas@centralnortesrl.com'),
+                'company_phone' => env('COMPANY_PHONE', '+54 11 7840-0401'),
             ];
 
             return Inertia::render('public/picking/PickingBudget', [
-                'budget' => array_merge($budget->toArray(), $statusData),
+                'budget' => array_merge($budget->toArray(), $statusData, [
+                    'payment_condition_deleted' => $budget->picking_payment_condition_id && !$budget->paymentCondition,
+                ]),
                 'businessConfig' => $businessConfig,
             ]);
         } catch (\Exception $e) {

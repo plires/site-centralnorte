@@ -7,6 +7,7 @@ import { Toaster, toast } from 'sonner';
 import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
+import BudgetUnavailableActionsBlock from '@/pages/public/components/BudgetUnavailableActionsBlock';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
 import Header from '@/pages/public/components/Header';
 
@@ -40,6 +41,16 @@ export default function PickingBudget({ budget, businessConfig }) {
 
     const allowsAction = budget.allows_client_action === true || budget.allows_client_action === 1;
     const isSent = budget.status === 'sent';
+
+    // Detectar entidades críticas faltantes
+    const criticalIssueReasons = [];
+    if (!budget.client) {
+        criticalIssueReasons.push('Los datos del cliente ya no están disponibles en el sistema.');
+    }
+    if (budget.payment_condition_deleted) {
+        criticalIssueReasons.push('La condición de pago aplicada ya no se encuentra disponible en el sistema.');
+    }
+    const hasCriticalIssues = criticalIssueReasons.length > 0;
 
     // Verificación de seguridad - El presupuesto debe estar visible públicamente
     const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
@@ -93,21 +104,29 @@ export default function PickingBudget({ budget, businessConfig }) {
                 <PickingBudgetBoxesCard boxes={budget.boxes} />
 
                 {/* Totales */}
-                <PickingBudgetTotalsCard budget={budget} ivaRate={ivaRate} applyIva={applyIva} />
+                <PickingBudgetTotalsCard budget={budget} ivaRate={ivaRate} applyIva={applyIva} businessConfig={businessConfig} />
 
                 {/* Comentarios/Notas */}
                 <PickingBudgetComments budget={budget} />
 
-                {/* Acciones del cliente (aprobar/rechazar) - Solo si está en estado 'sent' */}
+                {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
                 {(allowsAction || isSent) && (
-                    <div className="mt-8 mb-8">
-                        <ClientBudgetActions
-                            token={budget.token}
-                            approveRoute="public.picking.budget.approve"
-                            inReviewRoute="public.picking.budget.in_review"
-                            currentStatus={budget.status}
+                    hasCriticalIssues ? (
+                        <BudgetUnavailableActionsBlock
+                            vendor={budget.vendor}
+                            businessConfig={businessConfig}
+                            reasons={criticalIssueReasons}
                         />
-                    </div>
+                    ) : (
+                        <div className="mt-8 mb-8">
+                            <ClientBudgetActions
+                                token={budget.token}
+                                approveRoute="public.picking.budget.approve"
+                                inReviewRoute="public.picking.budget.in_review"
+                                currentStatus={budget.status}
+                            />
+                        </div>
+                    )
                 )}
             </div>
         </div>
