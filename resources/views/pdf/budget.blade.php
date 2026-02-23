@@ -111,18 +111,18 @@
 
         .product-image {
             text-align: center;
-            padding: 2px 0 !important;
+            padding: 4px 2px !important;
         }
 
         .product-image img {
-            max-width: 100%;
-            max-height: 100%;
+            width: 120px !important;
+            height: 120px !important;
             object-fit: contain;
         }
 
         .product-image-placeholder {
-            width: 50px;
-            height: 50px;
+            width: 120px !important;
+            height: 120px !important;
             background-color: #f0f0f0;
             display: flex;
             align-items: center;
@@ -238,7 +238,6 @@
         .institutional-footer {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 30px;
             background: {{ env('SECONDARY_COLOR', '#19ac90') }};
             color: white;
             padding: 20px;
@@ -264,6 +263,26 @@
         .footer-right {
             text-align: right;
             opacity: 0.9;
+        }
+
+        /* LEGALES */
+        .legal-notes {
+            margin: 0 2%;
+            padding: 12px 15px;
+            border-top: 1px solid #e5e7eb;
+            clear: both;
+            margin-top: 30px;
+        }
+
+        .legal-notes p {
+            font-size: 8px;
+            color: #9ca3af;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .legal-notes p::before {
+            content: '* ';
         }
 
         @page {
@@ -329,7 +348,7 @@
             <table class="products-table">
                 <thead>
                     <tr>
-                        <th style="width: 60px;">Imagen</th>
+                        <th style="width: 125px;">Imagen</th>
                         <th style="width: 40px;">Cant.</th>
                         <th>Producto</th>
                         <th style="width: 80px;">Precio Unit.</th>
@@ -343,7 +362,8 @@
                         <tr>
                             <td class="product-image">
                                 @if (isset($item['featured_image']['file_path']))
-                                    <img src="{{ $item['featured_image']['file_path'] }}" alt="producto" />
+                                    <img src="{{ $item['featured_image']['file_path'] }}"
+                                        alt="{{ 'producto - ' . $item['id'] }}"" />
                                 @else
                                     <div class="product-image-placeholder">Sin imagen</div>
                                 @endif
@@ -368,7 +388,7 @@
                             </td>
                             <td class="text-center">
                                 @if (isset($item['logo_printing']))
-                                    {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                    {{ $item['logo_printing'] }}
                                 @else
                                     -
                                 @endif
@@ -390,7 +410,7 @@
                 <table class="products-table">
                     <thead>
                         <tr>
-                            <th style="width: 60px;">Imagen</th>
+                            <th style="width: 85px;">Imagen</th>
                             <th style="width: 40px;">Cant.</th>
                             <th>Producto</th>
                             <th style="width: 80px;">Precio Unit.</th>
@@ -531,6 +551,14 @@
     </div>
 
     <div class="clear"></div>
+
+    <!-- LEGALES -->
+    <div class="legal-notes">
+        <p>Los plazos de entregregir luego de la aprobación del boceto digital.</p>
+        <p>Sujeto a disponibilidad de stock disponible al momento de la confirmación.</p>
+        <p>Incluye envío y entrega a domicilio según la dirección especificada dentro del ámbito de CABA y GBA hasta 30
+            kms.</p>
+    </div>
 
     <!-- FOOTER INSTITUCIONAL -->
     <table class="institutional-footer">
