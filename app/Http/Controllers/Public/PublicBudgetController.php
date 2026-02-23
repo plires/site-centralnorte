@@ -11,7 +11,6 @@ use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 use App\Mail\BudgetApprovedVendorMail;
-use App\Mail\BudgetRejectedVendorMail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\BudgetInReviewVendorMail;
 
