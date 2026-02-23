@@ -88,7 +88,7 @@ const VariantSelector = ({ product, variants, images, onVariantSelect }) => {
     };
 
     const getMaxQuantity = (variant) => {
-        if (!variant) return 1;
+        if (!variant) return hasVariants ? 1 : 1000;
         return variant.stock > 0 ? variant.stock : 100;
     };
 
