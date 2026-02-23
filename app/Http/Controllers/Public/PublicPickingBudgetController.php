@@ -3,14 +3,13 @@
 namespace App\Http\Controllers\Public;
 
 use Inertia\Inertia;
-use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Models\PickingBudget;
 use App\Enums\BudgetStatus;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use App\Mail\PickingBudgetApprovedVendorMail;
-use App\Mail\PickingBudgetRejectedVendorMail;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\PickingBudgetInReviewVendorMail;
 
@@ -72,7 +71,7 @@ class PublicPickingBudgetController extends Controller
     {
         try {
             $budget = PickingBudget::where('token', $token)->firstOrFail();
-            
+
             if (!$budget->allowsClientAction()) {
                 return back()->with('error', 'Este presupuesto no permite realizar esta acción.');
             }
@@ -172,7 +171,9 @@ class PublicPickingBudgetController extends Controller
 
             $pdf->setPaper('a4', 'portrait');
 
-            return $pdf->download("presupuesto-picking-{$budget->budget_number}.pdf");
+            $safeTitle = Str::slug($budget->title, '-');
+            $filename = "presupuesto-picking-{$budget->budget_number}-{$safeTitle}.pdf";
+            return $pdf->download($filename);
         } catch (\Exception $e) {
             Log::error('Error al generar PDF de picking público: ' . $e->getMessage());
             abort(404, 'Error al generar el PDF');

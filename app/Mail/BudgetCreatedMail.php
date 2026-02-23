@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Models\Budget;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Str;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Attachment;
@@ -82,10 +83,13 @@ class BudgetCreatedMail extends Mailable
     {
         // Si hay PDF, adjuntarlo
         if ($this->pdf) {
+            $safeTitle = Str::slug($this->budget->title, '-');
+            $filename = "presupuesto-merch-{$this->budget->budget_merch_number}-{$safeTitle}.pdf";
+
             return [
                 Attachment::fromData(
                     fn() => $this->pdf->output(),
-                    "presupuesto-{$this->budget->id}.pdf"
+                    $filename
                 )->withMime('application/pdf'),
             ];
         }

@@ -257,8 +257,7 @@ class PublicBudgetController extends Controller
             $pdf->setPaper('a4', 'portrait');
 
             $safeTitle = Str::slug($budget->title, '-');
-            $filename = "presupuesto-{$safeTitle}-{$budget->id}.pdf";
-
+            $filename = "presupuesto-merch-{$budget->budget_merch_number}-{$safeTitle}.pdf";
             return $pdf->download($filename);
         } catch (\Exception $e) {
             Log::error('Error al generar PDF público: ' . $e->getMessage());

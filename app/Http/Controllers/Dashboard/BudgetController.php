@@ -2,23 +2,24 @@
 
 namespace App\Http\Controllers\Dashboard;
 
-use Inertia\Inertia;
+use App\Enums\BudgetStatus;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\BudgetRequest;
+use App\Mail\BudgetCreatedMail;
 use App\Models\Budget;
 use App\Models\Client;
+use App\Models\PickingPaymentCondition;
 use App\Models\Product;
+use App\Models\User;
 use App\Traits\ExportsToExcel;
 use Barryvdh\DomPDF\Facade\Pdf;
-use App\Enums\BudgetStatus;
 use Illuminate\Http\Request;
-use App\Mail\BudgetCreatedMail;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Http\Requests\BudgetRequest;
-use App\Models\PickingPaymentCondition;
-use App\Models\User;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class BudgetController extends Controller
 {
@@ -762,9 +763,8 @@ class BudgetController extends Controller
     {
         $pdf = $this->generatePdf($budget);
 
-        $safeTitle = \Illuminate\Support\Str::slug($budget->title, '-');
-        $filename = "presupuesto-{$safeTitle}-{$budget->id}.pdf";
-
+        $safeTitle = Str::slug($budget->title, '-');
+        $filename = "presupuesto-merch-{$budget->budget_merch_number}-{$safeTitle}.pdf";
         return $pdf->download($filename);
     }
 

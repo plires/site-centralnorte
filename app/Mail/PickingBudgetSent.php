@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\PickingBudget;
 use Illuminate\Bus\Queueable;
+use Illuminate\Support\Str;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
@@ -61,7 +62,7 @@ class PickingBudgetSent extends Mailable
     public function attachments(): array
     {
         return [
-            Attachment::fromData(fn() => $this->pdf->output(), "presupuesto-{$this->budget->budget_number}.pdf")
+            Attachment::fromData(fn() => $this->pdf->output(), 'presupuesto-picking-' . $this->budget->budget_number . '-' . Str::slug($this->budget->title, '-') . '.pdf')
                 ->withMime('application/pdf'),
         ];
     }

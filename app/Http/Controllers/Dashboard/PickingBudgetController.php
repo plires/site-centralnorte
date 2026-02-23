@@ -20,6 +20,7 @@ use App\Models\PickingBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use App\Models\PickingPaymentCondition;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\StorePickingBudgetRequest;
@@ -736,7 +737,10 @@ class PickingBudgetController extends Controller
         $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
         $pdf = $this->generatePdf($pickingBudget);
 
-        return $pdf->download("presupuesto-picking-{$pickingBudget->budget_number}.pdf");
+        $safeTitle = Str::slug($pickingBudget->title, '-');
+        $filename = "presupuesto-picking-{$pickingBudget->budget_number}-{$safeTitle}.pdf";
+
+        return $pdf->download($filename);
     }
 
     private function generatePdf(PickingBudget $pickingBudget)
