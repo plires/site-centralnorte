@@ -64,13 +64,13 @@ export default function BudgetDownloadButton({ budget, selectedVariants }) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <MessageSquare className="h-5 w-5 text-blue-600" />
-                    ¿Preferís generar tu propio presupuesto?
+                    ¿Preferís descargar tu presupuesto?
                 </CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="mb-4 text-sm text-gray-600">
-                    Tu vendedor te preparó lineas variables para algunos items de este presupuesto. Si lo preferís podés seleccionar las que mejor se
-                    ajustan, descargar tu PDF y enviarlo a tu vendedor.
+                    Tu vendedor te preparo algunos items para este presupuesto, si necesitas cambiarlo o agregarle cantidad descargá tu PDF y
+                    envíaselo a tu vendedor. ¡Que con gusto podrá editarlo para vos!
                 </p>
 
                 <div className="text-center">
