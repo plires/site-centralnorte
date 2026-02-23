@@ -14,7 +14,8 @@ export default function BudgetHeader({ budget }) {
                     <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
                         <span>Cliente: {budget.client?.name || 'N/A'}</span>
                         <span>•</span>
-                        <span>Vendedor: {budget.vendor?.name || 'Central Norte'}</span>
+                        {budget.budget_number && <span>Vendedor: {budget.vendor?.name || 'Central Norte'}</span>}
+                        {budget.budget_merch_number && <span>Vendedor: {budget.user?.name || 'Central Norte'}</span>}
                     </div>
                 </div>
             </div>
