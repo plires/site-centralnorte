@@ -116,7 +116,12 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                     <div className="flex flex-1 flex-col gap-4 sm:flex-row sm:justify-between">
                                         {/* Detalles del producto */}
                                         <div className="flex-1">
-                                            <h3 className="mb-2 font-semibold text-gray-900">{item.product.name}</h3>
+                                            <div className="mb-2 border-b-1">
+                                                <h3 className="mb-1 font-semibold text-gray-900">{item.product.name}</h3>
+                                                {item.product.description && (
+                                                    <p className="mb-2 text-sm text-gray-700">Descripción: {item.product.description}</p>
+                                                )}
+                                            </div>
                                             <div className="grid grid-cols-1 gap-1 text-sm text-gray-600">
                                                 <p>
                                                     <span className="font-medium">Cantidad:</span> {item.quantity}
