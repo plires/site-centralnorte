@@ -227,6 +227,7 @@ class PublicBudgetController extends Controller
 
             $budgetData = array_merge([
                 'id' => $budget->id,
+                'budget_merch_number' => $budget->budget_merch_number,
                 'title' => $budget->title,
                 'token' => $budget->token,
                 'issue_date_formatted' => $budget->issue_date_formatted,
