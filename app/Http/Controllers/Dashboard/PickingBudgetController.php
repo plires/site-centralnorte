@@ -645,6 +645,10 @@ class PickingBudgetController extends Controller
             return back()->withErrors(['error' => 'Este presupuesto no puede ser enviado.']);
         }
 
+        if ($this->hasInvalidEntitiesForPdf($pickingBudget)) {
+            return back()->with('error', 'No se puede enviar el email: el presupuesto tiene entidades faltantes o eliminadas.');
+        }
+
         $pickingBudget->load('client');
 
         if (!$pickingBudget->client || !$pickingBudget->client->email) {
@@ -734,6 +738,10 @@ class PickingBudgetController extends Controller
             abort(403, 'No tienes permiso para descargar este presupuesto.');
         }
 
+        if ($this->hasInvalidEntitiesForPdf($pickingBudget)) {
+            return redirect()->back()->with('error', 'No se puede generar el PDF: el presupuesto tiene entidades faltantes o eliminadas.');
+        }
+
         $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
         $pdf = $this->generatePdf($pickingBudget);
 
@@ -741,6 +749,33 @@ class PickingBudgetController extends Controller
         $filename = "presupuesto-picking-{$pickingBudget->budget_number}-{$safeTitle}.pdf";
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Verifica si el presupuesto de picking tiene entidades críticas faltantes o eliminadas
+     * que impidan generar el PDF o enviar el email.
+     */
+    private function hasInvalidEntitiesForPdf(PickingBudget $pickingBudget): bool
+    {
+        $pickingBudget->load([
+            'client' => fn($q) => $q->withTrashed(),
+            'vendor' => fn($q) => $q->withTrashed(),
+            'paymentCondition' => fn($q) => $q->withTrashed(),
+        ]);
+
+        if (! $pickingBudget->client || $pickingBudget->client->trashed()) {
+            return true;
+        }
+
+        if (! $pickingBudget->vendor || $pickingBudget->vendor->trashed()) {
+            return true;
+        }
+
+        if ($pickingBudget->picking_payment_condition_id && (! $pickingBudget->paymentCondition || $pickingBudget->paymentCondition->trashed())) {
+            return true;
+        }
+
+        return false;
     }
 
     private function generatePdf(PickingBudget $pickingBudget)

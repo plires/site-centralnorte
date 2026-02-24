@@ -621,6 +621,10 @@ class BudgetController extends Controller
                 abort(403, 'No tienes permisos para enviar este presupuesto.');
             }
 
+            if ($this->hasInvalidEntitiesForPdf($budget)) {
+                return redirect()->back()->with('error', 'No se puede enviar el email: el presupuesto tiene entidades faltantes o eliminadas.');
+            }
+
             if (!$budget->canBeSent() && $budget->status !== BudgetStatus::SENT) {
                 return redirect()->back()->with('error', 'Este presupuesto no puede ser enviado.');
             }
@@ -761,11 +765,49 @@ class BudgetController extends Controller
      */
     public function downloadPdf(Budget $budget)
     {
+        if ($this->hasInvalidEntitiesForPdf($budget)) {
+            return redirect()->back()->with('error', 'No se puede generar el PDF: el presupuesto tiene entidades faltantes o eliminadas.');
+        }
+
         $pdf = $this->generatePdf($budget);
 
         $safeTitle = Str::slug($budget->title, '-');
         $filename = "presupuesto-merch-{$budget->budget_merch_number}-{$safeTitle}.pdf";
         return $pdf->download($filename);
+    }
+
+    /**
+     * Verifica si el presupuesto tiene entidades críticas faltantes o eliminadas
+     * que impidan generar el PDF o enviar el email.
+     */
+    private function hasInvalidEntitiesForPdf(Budget $budget): bool
+    {
+        $budget->load([
+            'client' => fn($q) => $q->withTrashed(),
+            'user' => fn($q) => $q->withTrashed(),
+            'paymentCondition' => fn($q) => $q->withTrashed(),
+            'items.product' => fn($q) => $q->withTrashed(),
+        ]);
+
+        if (! $budget->client || $budget->client->trashed()) {
+            return true;
+        }
+
+        if (! $budget->user || $budget->user->trashed()) {
+            return true;
+        }
+
+        if ($budget->picking_payment_condition_id && (! $budget->paymentCondition || $budget->paymentCondition->trashed())) {
+            return true;
+        }
+
+        foreach ($budget->items as $item) {
+            if (! $item->product || $item->product->trashed()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

@@ -43,10 +43,12 @@ export default function BudgetActionButtons({
                 </Button>
             )}
 
-            <Button variant="outline" size="sm" onClick={onDownload}>
-                <Download className="mr-2 h-4 w-4" />
-                Descargar PDF
-            </Button>
+            {!hasWarnings && (
+                <Button variant="outline" size="sm" onClick={onDownload}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Descargar PDF
+                </Button>
+            )}
 
             {!hasWarnings && (
                 <Button variant="outline" size="sm" onClick={onDuplicate}>
