@@ -85,7 +85,7 @@ export default function PickingBudget({ budget, businessConfig }) {
             <Head title={`Presupuesto de Picking #${budget.budget_number}`} />
 
             {/* Header visual con logo */}
-            <Header appName={appName} title="Presupuesto de Picking/Armado de Kit" backgroundColor={import.meta.env.VITE_SECONDARY_COLOR} />
+            <Header appName={appName} title="Presupuesto de Picking/Armado de Kit" backgroundColor={import.meta.env.VITE_PRIMARY_COLOR} />
 
             {/* Header del presupuesto */}
             <BudgetHeader budget={budget} />
