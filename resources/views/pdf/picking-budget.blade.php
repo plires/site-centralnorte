@@ -109,8 +109,6 @@
             padding: 5px 0;
         }
 
-
-
         .services-table {
             width: 100%;
             border-collapse: collapse;
@@ -215,20 +213,46 @@
             margin-top: 20px;
         }
 
-        .footer {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            text-align: center;
-            font-size: 10px;
-            color: #6b7280;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
-        }
-
         .page-break {
             page-break-after: always;
+        }
+
+        /* FOOTER INSTITUCIONAL */
+        .institutional-footer {
+            width: 100%;
+            border-collapse: collapse;
+            background: {{ env('SECONDARY_COLOR', '#19ac90') }};
+            color: white;
+            padding: 20px;
+        }
+
+        .institutional-footer td {
+            padding: 15px;
+            font-size: 10px;
+            vertical-align: top;
+        }
+
+        .footer-company {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .footer-details {
+            line-height: 1.6;
+            opacity: 0.95;
+        }
+
+        .footer-right {
+            text-align: right;
+            opacity: 0.9;
+        }
+
+        /* TERMINOS */
+        .terminos {
+            border-top: 1px solid #e5e7eb;
+            clear: both;
+            margin-top: 30px;
         }
     </style>
 </head>
@@ -476,25 +500,49 @@
         @endif
 
         <!-- TÉRMINOS Y CONDICIONES -->
-        <div class="info-section" style="margin-top: 30px; font-size: 10px; color: #6b7280;">
-            <h2 style="font-size: 12px;">Términos y Condiciones</h2>
+        <div class="info-section terminos" style="margin-top: 30px; font-size: 10px; color: #6b7280;">
             <ul style="margin-left: 20px; margin-top: 10px;">
-                <li>Este presupuesto es válido hasta la fecha indicada.</li>
-                <li>Los tiempos de producción son estimativos y pueden variar según disponibilidad.</li>
-                <li>Los precios están sujetos a cambios sin previo aviso una vez vencido el presupuesto.</li>
-                <li>Se requiere confirmación por escrito para iniciar la producción.</li>
-                @if ($applyIva)
-                    <li>Todos los precios incluyen IVA ({{ number_format($ivaRate * 100, 0) }}%).</li>
-                @endif
+                <li>La empresa no recibirá mercadería sin previo aviso.</li>
+                <li>No recibirá ni recepcionará productos sin el remito debidamente detallado y adecuado para su
+                    correcto control.</li>
+                <li>Una vez aceptado el servicio vía mail u orden de compra, Central Norte enviará una foto para la
+                    aprobación del armado. Esto deberá ser confirmado vía mail, sin posibilidad de cambios días
+                    posteriores a esta
+                    aprobación.
+                    Cualquier cambio que se solicite con posterioridad a esta aprobación, una vez finalizado el kit,
+                    será objeto
+                    de una nueva cotización.</li>
+                <li>La empresa no se responsabiliza por rotura y/o pérdida de los kits o de algunos de sus componentes,
+                    una vez
+                    entregados para su entrega o distribución.</li>
+                <li>No será responsable ni emitirá notas de crédito por mala manipulación de personas ajenas a la
+                    empresa y/o por
+                    servicios de distribución y logística de proveedores externos.</li>
             </ul>
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <div class="footer">
-        <strong>CENTRAL NORTE</strong> - Merchandising y Productos Promocionales<br>
-        Email: contacto@centralnorte.com | Tel: (011) 1234-5678 | www.centralnorte.com
-    </div>
+    <!-- FOOTER INSTITUCIONAL -->
+    <table class="institutional-footer">
+        <tr>
+            <td style="width: 60%;">
+                <div class="footer-company">{{ env('APP_NAME', 'Central Norte') }}</div>
+                <div class="footer-details">
+                    {{ env('COMPANY_ADDRESS', 'Buenos Aires, Argentina') }}<br>
+                    Tel: {{ env('COMPANY_PHONE', '+54 11 7840-0401') }} |
+                    Email: {{ env('COMPANY_EMAIL', 'consultas@centralnortesrl.com') }}<br>
+                    @if (env('COMPANY_WEBSITE'))
+                        Web: {{ env('COMPANY_WEBSITE') }}
+                    @endif
+                </div>
+            </td>
+            <td class="footer-right" style="width: 40%;">
+                <strong>Presupuesto generado</strong><br>
+                <em>{{ date('d/m/Y H:i') }}</em><br>
+                <small>Documento generado automáticamente</small>
+            </td>
+        </tr>
+    </table>
 </body>
 
 </html>

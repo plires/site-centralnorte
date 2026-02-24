@@ -253,25 +253,47 @@
             opacity: 0.9;
         }
 
-        /* LEGALES */
-        .legal-notes {
-            margin: 0 2%;
-            padding: 12px 15px;
+        /* TERMINOS */
+        .terminos {
             border-top: 1px solid #e5e7eb;
             clear: both;
             margin-top: 30px;
         }
 
-        .legal-notes p {
-            font-size: 8px;
-            color: #9ca3af;
-            line-height: 1.6;
-            margin: 0;
+        .info-section {
+            margin-bottom: 20px;
         }
 
-        .legal-notes p::before {
-            content: '* ';
+        .info-section h2 {
+            background-color: {{ env('PRIMARY_COLOR', '#19ac90') }};
+            color: white;
+            padding: 8px 12px;
+            font-size: 14px;
+            margin-bottom: 10px;
         }
+
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .info-row {
+            display: table-row;
+        }
+
+        .info-label {
+            display: table-cell;
+            font-weight: bold;
+            padding: 5px 10px 5px 0;
+            width: 40%;
+        }
+
+        .info-value {
+            display: table-cell;
+            padding: 5px 0;
+        }
+
 
         @page {
             margin-top: 3.5cm;
@@ -540,12 +562,15 @@
 
     <div class="clear"></div>
 
-    <!-- LEGALES -->
-    <div class="legal-notes">
-        <p>Los plazos de entregregir luego de la aprobación del boceto digital.</p>
-        <p>Sujeto a disponibilidad de stock disponible al momento de la confirmación.</p>
-        <p>Incluye envío y entrega a domicilio según la dirección especificada dentro del ámbito de CABA y GBA hasta 30
-            kms.</p>
+    <!-- TÉRMINOS Y CONDICIONES -->
+    <div class="info-section terminos" style="margin-top: 30px; font-size: 10px; color: #6b7280;">
+        <ul style="margin-left: 20px; margin-top: 10px;">
+            <li>Los plazos de entrega comienzan a regir luego de la aprobación del boceto digital.</li>
+            <li>Sujeto a disponibilidad de stock disponible al momento de la confirmación.</li>
+            <li>Incluye envío y entrega a domicilio según la dirección especificada dentro del ámbito de CABA y GBA
+                hasta 30
+                kms.</li>
+        </ul>
     </div>
 
     <!-- FOOTER INSTITUCIONAL -->
