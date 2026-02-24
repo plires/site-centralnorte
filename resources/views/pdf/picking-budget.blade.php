@@ -22,21 +22,57 @@
             padding: 20px;
         }
 
-        .header {
-            margin-bottom: 30px;
-            border-bottom: 3px solid {{ env('PRIMARY_COLOR', '#19ac90') }};
-            padding-bottom: 15px;
+        /* HEADER INSTITUCIONAL */
+        .institutional-header {
+            width: 100%;
+            top: 0;
+            background: {{ env('PRIMARY_COLOR', '#3d5095') }};
+            padding: 30px 20px;
+            text-align: center;
         }
 
-        .header h1 {
-            color: {{ env('PRIMARY_COLOR', '#19ac90') }};
-            font-size: 24px;
-            margin-bottom: 5px;
+        .company-logo {
+            text-align: center;
+            margin-bottom: 15px;
         }
 
-        .header .subtitle {
+        .company-logo img {
+            max-width: 320px;
+            height: auto;
+            display: inline-block;
+        }
+
+        .header-title {
+            background: {{ env('SECONDARY_COLOR', '#3d5095') }};
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            padding: 5px 2%;
+        }
+
+        /* INFO GENERAL DEL PRESUPUESTO */
+        .budget-info-header {
+            width: 100%;
+            margin-bottom: 20px;
             color: #6b7280;
-            font-size: 12px;
+            background-color: white;
+            border-bottom: 4px solid {{ env('SECONDARY_COLOR', '#3d5095') }};
+        }
+
+        .budget-info-header td {
+            padding: 10px 15px;
+            vertical-align: top;
+            font-size: 10px;
+        }
+
+        .header-col {
+            width: 50%;
+        }
+
+        .label {
+            font-weight: bold;
+            color: {{ env('PRIMARY_COLOR', '#3d5095') }};
         }
 
         .info-section {
@@ -73,14 +109,7 @@
             padding: 5px 0;
         }
 
-        .budget-number {
-            float: right;
-            background-color: #f3f4f6;
-            padding: 10px 15px;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-        }
+
 
         .services-table {
             width: 100%;
@@ -205,44 +234,49 @@
 </head>
 
 <body>
-    <div class="container">
-        <!-- HEADER -->
-        <div class="header">
-            <div class="budget-number">{{ $budget->budget_number }}</div>
-            <h1>CENTRAL NORTE</h1>
-            <div class="subtitle">Presupuesto de Picking / Armado de Kits</div>
-            <div class="subtitle" style="margin-top: 5px;">
-                Fecha: {{ $budget->created_at->format('d/m/Y') }} |
-                Válido hasta: {{ $budget->valid_until->format('d/m/Y') }}
-            </div>
+    <!-- HEADER INSTITUCIONAL -->
+    <div class="institutional-header">
+        <div class="company-logo">
+            @php
+                $logoPath = public_path('images/logo-central-norte-header-email.png');
+                $logoExists = file_exists($logoPath);
+            @endphp
+            @if ($logoExists)
+                <img src="{{ $logoPath }}" alt="Logo">
+            @else
+                <div style="font-size: 32px; font-weight: bold; color: white;">
+                    {{ env('APP_NAME', 'Central Norte') }}
+                </div>
+            @endif
         </div>
+    </div>
+    <div class="header-title">PRESUPUESTO DE PICKING - {{ $budget['title'] }}</div>
 
-        <!-- DATOS DEL CLIENTE -->
-        <div class="info-section">
-            <h2>Datos del Cliente</h2>
-            <div class="info-grid">
-                <div class="info-row">
-                    <div class="info-label">Cliente:</div>
-                    <div class="info-value">{{ $budget->client->name }}</div>
-                </div>
-                @if ($budget->client->email)
-                    <div class="info-row">
-                        <div class="info-label">Email:</div>
-                        <div class="info-value">{{ $budget->client->email }}</div>
-                    </div>
+    <!-- INFO GENERAL DEL PRESUPUESTO -->
+    <table class="budget-info-header">
+        <tr>
+            <td class="header-col">
+                <div><span class="label">Presupuesto N°: </span>#{{ $budget->budget_number }}</div>
+                <div><span class="label">Cliente: </span>{{ $budget->client->name }}</div>
+                @if (!empty($budget->client->company))
+                    <div><span class="label">Empresa: </span>{{ $budget->client->company }}</div>
                 @endif
-                @if ($budget->client->phone)
-                    <div class="info-row">
-                        <div class="info-label">Teléfono:</div>
-                        <div class="info-value">{{ $budget->client->phone }}</div>
-                    </div>
+                <div><span class="label">Fecha de emisión: </span>
+                    {{ $budget->issue_date_formatted ?? $budget->issue_date_short }}</div>
+                <div><span class="label">Válido hasta: </span>
+                    {{ $budget->valid_until_formatted ?? $budget->valid_until_short }}</div>
+            </td>
+            <td class="header-col">
+                <div><span class="label">Vendedor: </span>{{ $budget->vendor->name }}</div>
+                @if (!empty($budget->vendor->email))
+                    <div><span class="label">Email: </span>{{ $budget->vendor->email }}</div>
                 @endif
-                <div class="info-row">
-                    <div class="info-label">Vendedor:</div>
-                    <div class="info-value">{{ $budget->vendor->name }}</div>
-                </div>
-            </div>
-        </div>
+                <div><span class="label">Estado: </span>{{ $budget->status_label }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div class="container">
 
         <!-- CONFIGURACIÓN DEL PEDIDO -->
         <div class="info-section">

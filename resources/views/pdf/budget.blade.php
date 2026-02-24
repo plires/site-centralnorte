@@ -37,6 +37,7 @@
             max-width: 320px;
             height: auto;
             display: inline-block;
+            PRESUPUESTO DE MERCH -
         }
 
         .header-title {
@@ -44,22 +45,9 @@
             color: white;
             font-size: 18px;
             font-weight: bold;
-            margin-bottom: 5px;
             text-align: center;
             padding: 5px 2%;
         }
-
-        .header-subtitle {
-            color: rgba(255, 255, 255, 0.9);
-            background: {{ env('SECONDARY_COLOR', '#3d5095') }};
-            font-size: 14px;
-            text-align: center;
-        }
-
-        /* .main-content {
-            margin-top: 350px;
-            margin-bottom: 350px;
-        } */
 
         /* INFO GENERAL */
         .budget-info-header {
@@ -313,7 +301,7 @@
             @endif
         </div>
     </div>
-    <div class="header-title">{{ $budget['title'] }}</div>
+    <div class="header-title">PRESUPUESTO DE MERCH - {{ $budget['title'] }}</div>
 
     <div class="main-content">
 
@@ -321,7 +309,7 @@
         <table class="budget-info-header">
             <tr>
                 <td class="header-col">
-                    <div><span class="label">Presupuesto N°: </span>#{{ $budget['id'] }}</div>
+                    <div><span class="label">Presupuesto N°: </span>#{{ $budget['budget_merch_number'] }}</div>
                     <div><span class="label">Cliente: </span>{{ $budget['client']['name'] }}</div>
                     @if (!empty($budget['client']['company']))
                         <div><span class="label">Empresa: </span>{{ $budget['client']['company'] }}</div>

@@ -75,6 +75,8 @@ class PickingBudget extends Model
         'status_badge_class',
         'valid_until_formatted',
         'valid_until_short',
+        'issue_date_formatted',
+        'issue_date_short',
     ];
 
     protected static function boot()
@@ -120,6 +122,20 @@ class PickingBudget extends Model
     public function getValidUntilShortAttribute()
     {
         return $this->valid_until ? $this->valid_until->format('d/m/Y') : null;
+    }
+
+    public function getIssueDateFormattedAttribute(): ?string
+    {
+        return $this->created_at
+            ? $this->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY')
+            : null;
+    }
+
+    public function getIssueDateShortAttribute(): ?string
+    {
+        return $this->created_at
+            ? $this->created_at->format('d/m/Y')
+            : null;
     }
 
     public function getEmailSentAtFormattedAttribute()

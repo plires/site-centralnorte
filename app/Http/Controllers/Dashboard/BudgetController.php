@@ -797,6 +797,7 @@ class BudgetController extends Controller
         // Preparar datos del presupuesto con la estructura correcta
         $budgetData = array_merge([
             'id' => $budget->id,
+            'budget_merch_number' => $budget->budget_merch_number,
             'title' => $budget->title,
             'token' => $budget->token,
             'status' => $budget->status?->value,
