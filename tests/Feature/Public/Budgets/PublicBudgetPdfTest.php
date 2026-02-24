@@ -86,7 +86,8 @@ it('PDF incluye Content-Disposition con el nombre correcto del archivo', functio
     $response = $this->get(route('public.budget.pdf', $budget->token))
         ->assertOk();
 
-    // Verifica que el header Content-Disposition contiene el ID del presupuesto
+    // Verifica que el header Content-Disposition contiene el número de presupuesto y el título
     $contentDisposition = $response->headers->get('Content-Disposition');
-    expect($contentDisposition)->toContain((string) $budget->id);
+    expect($contentDisposition)->toContain($budget->budget_merch_number);
+    expect($contentDisposition)->toContain('mi-presupuesto-test');
 });
