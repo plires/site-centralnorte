@@ -27,6 +27,9 @@ class UpdatePickingBudgetRequest extends FormRequest
             // Titulo del presupuesto
             'title' => ['required', 'string', 'max:255'],
 
+            // Fecha de vencimiento (emisión no se puede modificar)
+            'valid_until' => ['required', 'date', 'after:today'],
+
             // Cliente - Ahora usa client_id desde el ClientCombobox
             'client_id' => [
                 'required',
@@ -80,6 +83,7 @@ class UpdatePickingBudgetRequest extends FormRequest
     {
         return [
             'title' => 'título',
+            'valid_until' => 'fecha de vencimiento',
             'client_id' => 'cliente',
             'total_kits' => 'cantidad de kits',
             'total_components_per_kit' => 'componentes por kit',
@@ -106,6 +110,10 @@ class UpdatePickingBudgetRequest extends FormRequest
             'title.required' => 'Debe ingresar un título para el presupuesto.',
             'title.string' => 'El título para el presupuesto deben ser texto válido.',
             'title.max' => 'El Título no puede superar los 255 caracteres.',
+
+            'valid_until.required' => 'La fecha de vencimiento es obligatoria.',
+            'valid_until.date' => 'La fecha de vencimiento no es válida.',
+            'valid_until.after' => 'La fecha de vencimiento debe ser una fecha futura.',
 
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',

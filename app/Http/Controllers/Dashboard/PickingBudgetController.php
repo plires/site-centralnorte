@@ -135,6 +135,7 @@ class PickingBudgetController extends Controller
             'businessConfig' => [
                 'iva_rate' => config('business.tax.iva_rate', 0.21),
                 'apply_iva' => config('business.tax.apply_iva', true),
+                'default_validity_days' => config('business.budget.default_validity_days', 30),
             ],
         ]);
     }
@@ -185,6 +186,7 @@ class PickingBudgetController extends Controller
             $budget = PickingBudget::create(array_merge([
                 'budget_number' => PickingBudget::generateBudgetNumber(),
                 'title' => $validated['title'],
+                'issue_date' => $validated['issue_date'],
                 'vendor_id' => $vendorId,
                 'client_id' => $validated['client_id'],
                 'total_kits' => $validated['total_kits'],
@@ -201,7 +203,7 @@ class PickingBudgetController extends Controller
                 'total' => 0,
                 'unit_price_per_kit' => 0,
                 'status' => BudgetStatus::UNSENT,
-                'valid_until' => now()->addDays(30),
+                'valid_until' => $validated['valid_until'],
                 'notes' => $validated['notes'] ?? null,
             ], $paymentConditionData));
 
@@ -462,6 +464,11 @@ class PickingBudgetController extends Controller
             'vendors' => $vendors,
             'user' => $user,
             'warnings' => $warnings,
+            'businessConfig' => [
+                'iva_rate' => config('business.tax.iva_rate', 0.21),
+                'apply_iva' => config('business.tax.apply_iva', true),
+                'default_validity_days' => config('business.budget.default_validity_days', 30),
+            ],
         ]);
     }
 
@@ -599,7 +606,8 @@ class PickingBudgetController extends Controller
             $newBudget->budget_number = PickingBudget::generateBudgetNumber();
             $newBudget->title = $pickingBudget->title . ' (copia)';
             $newBudget->status = BudgetStatus::DRAFT;
-            $newBudget->valid_until = now()->addDays(30);
+            $newBudget->issue_date = now()->toDateString();
+            $newBudget->valid_until = now()->addDays(config('business.budget.default_validity_days', 30));
             $newBudget->vendor_id = Auth::id();
             $newBudget->email_sent = false;
             $newBudget->email_sent_at = null;

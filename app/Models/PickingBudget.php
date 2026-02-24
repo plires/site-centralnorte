@@ -19,6 +19,7 @@ class PickingBudget extends Model
     protected $fillable = [
         'budget_number',
         'title',
+        'issue_date',
         'token',
         'vendor_id',
         'client_id',
@@ -61,6 +62,7 @@ class PickingBudget extends Model
         'box_total' => 'decimal:2',
         'total' => 'decimal:2',
         'unit_price_per_kit' => 'decimal:2',
+        'issue_date' => 'date',
         'status' => BudgetStatus::class,
         'email_sent' => 'boolean',
         'email_sent_at' => 'datetime',
@@ -126,15 +128,19 @@ class PickingBudget extends Model
 
     public function getIssueDateFormattedAttribute(): ?string
     {
-        return $this->created_at
-            ? $this->created_at->locale('es')->isoFormat('D [de] MMMM [de] YYYY')
+        $date = $this->issue_date ?? $this->created_at;
+
+        return $date
+            ? $date->locale('es')->isoFormat('D [de] MMMM [de] YYYY')
             : null;
     }
 
     public function getIssueDateShortAttribute(): ?string
     {
-        return $this->created_at
-            ? $this->created_at->format('d/m/Y')
+        $date = $this->issue_date ?? $this->created_at;
+
+        return $date
+            ? $date->format('d/m/Y')
             : null;
     }
 

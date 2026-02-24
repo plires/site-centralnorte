@@ -26,6 +26,10 @@ class StorePickingBudgetRequest extends FormRequest
             // Titulo del presupuesto
             'title' => ['required', 'string', 'max:255'],
 
+            // Fechas
+            'issue_date' => ['required', 'date', 'date_equals:today'],
+            'valid_until' => ['required', 'date', 'after:issue_date'],
+
             // Cliente - Ahora usa client_id desde el ClientCombobox
             'client_id' => ['required', 'exists:clients,id'],
 
@@ -73,6 +77,8 @@ class StorePickingBudgetRequest extends FormRequest
     {
         return [
             'title' => 'título',
+            'issue_date' => 'fecha de emisión',
+            'valid_until' => 'fecha de vencimiento',
             'client_id' => 'cliente',
             'total_kits' => 'cantidad de kits',
             'total_components_per_kit' => 'componentes por kit',
@@ -100,6 +106,14 @@ class StorePickingBudgetRequest extends FormRequest
             'title.required' => 'Debe ingresar un título para el presupuesto.',
             'title.string' => 'El título para el presupuesto deben ser texto válido.',
             'title.max' => 'El Título no puede superar los 255 caracteres.',
+
+            'issue_date.required' => 'La fecha de emisión es obligatoria.',
+            'issue_date.date' => 'La fecha de emisión no es válida.',
+            'issue_date.date_equals' => 'La fecha de emisión debe ser la fecha de hoy.',
+
+            'valid_until.required' => 'La fecha de vencimiento es obligatoria.',
+            'valid_until.date' => 'La fecha de vencimiento no es válida.',
+            'valid_until.after' => 'La fecha de vencimiento debe ser posterior a la fecha de emisión.',
 
             'client_id.required' => 'Debe seleccionar un cliente.',
             'client_id.exists' => 'El cliente seleccionado no existe.',

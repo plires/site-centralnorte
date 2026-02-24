@@ -22,6 +22,7 @@ import { usePickingBudgetLogic } from '../hooks/usePickingBudgetLogic';
 import PickingBoxesSection from './PickingBoxesSection';
 import PickingBudgetTotalsSection from './PickingBudgetTotalsSection';
 import PickingClientSection from './PickingClientSection';
+import PickingDateSection from './PickingDateSection';
 import PickingNotesSection from './PickingNotesSection';
 import PickingQuantitiesSection from './PickingQuantitiesSection';
 import PickingServicesSection from './PickingServicesSection';
@@ -388,15 +389,23 @@ export default function PickingBudgetForm({
                 <PageHeader backRoute={route('dashboard.picking.budgets.index')} backText="Volver" onBack={handleExit} />
 
                 <form onSubmit={handleFormSubmit} className="space-y-6 p-6">
-                    {/* Información del Cliente y Vendedor */}
+                    {/* Información del Cliente */}
                     <PickingClientSection
                         data={data}
                         setData={setData}
                         clients={clients}
-                        vendors={vendors}
-                        user={user}
                         errors={errors}
                         processing={processing}
+                    />
+
+                    {/* Fechas y Vendedor */}
+                    <PickingDateSection
+                        data={data}
+                        setData={setData}
+                        errors={errors}
+                        user={user}
+                        vendors={vendors}
+                        isEditing={isEditing}
                     />
 
                     {/* Cantidades */}

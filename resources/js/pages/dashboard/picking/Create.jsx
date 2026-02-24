@@ -2,6 +2,7 @@
 
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
+import { getDatePlusDaysISO, getTodayISO } from '@/utils/dateUtils';
 import { Head, useForm } from '@inertiajs/react';
 import PickingBudgetForm from './components/PickingBudgetForm';
 
@@ -10,10 +11,14 @@ import PickingBudgetForm from './components/PickingBudgetForm';
  * Renderiza el PickingBudgetForm con datos vacíos
  */
 export default function Create({ auth, boxes, costScales, clients, componentIncrements, paymentConditions, vendors, user, businessConfig }) {
+    const validityDays = businessConfig?.default_validity_days || 30;
+
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         title: '',
         vendor_id: user.id, // Por defecto, el usuario actual
+        issue_date: getTodayISO(),
+        valid_until: getDatePlusDaysISO(validityDays),
         picking_payment_condition_id: '',
         total_kits: '',
         total_components_per_kit: '',
