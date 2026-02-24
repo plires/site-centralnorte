@@ -75,7 +75,7 @@ class User extends Authenticatable
     public function scopeVendedores($query)
     {
         return $query->whereHas('role', function ($q) {
-            $q->where('name', 'vendedor');
+            $q->whereIn('name', ['vendedor', 'admin']);
         });
     }
 }
