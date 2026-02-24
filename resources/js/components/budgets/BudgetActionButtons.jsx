@@ -1,7 +1,7 @@
 // resources/js/components/budgets/BudgetActionButtons.jsx
 
 import { Button } from '@/components/ui/button';
-import { Copy, Download, Edit, ExternalLink, Mail, Send } from 'lucide-react';
+import { Copy, Download, Edit, ExternalLink, Mail, MessageCircle, Send } from 'lucide-react';
 
 /**
  * Botones de acción reutilizables para vistas Show de presupuestos (merch y picking).
@@ -17,6 +17,7 @@ import { Copy, Download, Edit, ExternalLink, Mail, Send } from 'lucide-react';
  * - onSendEmail: fn
  * - onDuplicate: fn
  * - onViewPublic: fn
+ * - onWhatsapp: fn — abre WhatsApp con el link del presupuesto pre-cargado
  */
 export default function BudgetActionButtons({
     isEditable,
@@ -29,6 +30,7 @@ export default function BudgetActionButtons({
     onSendEmail,
     onDuplicate,
     onViewPublic,
+    onWhatsapp,
 }) {
     return (
         <div className="mb-6 flex flex-wrap gap-2">
@@ -77,6 +79,18 @@ export default function BudgetActionButtons({
                 <Button variant="outline" size="sm" onClick={onViewPublic}>
                     <ExternalLink className="mr-2 h-4 w-4" />
                     Ver Público
+                </Button>
+            )}
+
+            {isPubliclyVisible && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onWhatsapp}
+                    className="border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+                >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Enviar por WhatsApp
                 </Button>
             )}
         </div>

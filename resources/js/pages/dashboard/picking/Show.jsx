@@ -82,6 +82,12 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
         window.open(publicUrl, '_blank');
     };
 
+    const handleWhatsapp = () => {
+        const publicUrl = route('public.picking.budget.show', budget.token);
+        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_number}):\n${publicUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
     // Hook para manejar respuestas de Inertia
     const { handleCrudResponse } = useInertiaResponse();
 
@@ -277,6 +283,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                         onSendEmail={() => setShowSendDialog(true)}
                         onDuplicate={handleDuplicate}
                         onViewPublic={handleViewPublic}
+                        onWhatsapp={handleWhatsapp}
                     />
 
                     {/* Grid de información */}

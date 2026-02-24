@@ -168,6 +168,12 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
         window.open(publicUrl, '_blank');
     };
 
+    const handleWhatsapp = () => {
+        const publicUrl = route('public.budget.show', budget.token);
+        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_merch_number}):\n${publicUrl}`;
+        window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
     const handleStatusChange = (newStatus) => {
         if (newStatus === budget.status) return;
         setPendingStatus(newStatus);
@@ -248,6 +254,7 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
                         onSendEmail={() => setIsEmailDialogOpen(true)}
                         onDuplicate={handleDuplicate}
                         onViewPublic={handleViewPublic}
+                        onWhatsapp={handleWhatsapp}
                     />
 
                     {/* Grid de info cards */}
