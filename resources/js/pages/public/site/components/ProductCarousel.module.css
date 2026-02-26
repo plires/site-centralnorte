@@ -1,0 +1,307 @@
+/* Estilos base (móvil) */
+.section {
+    background-color: var(--neutral-color);
+    padding-bottom: 40px;
+    position: relative;
+    width: 100%;
+}
+
+.contentWave {
+    position: relative;
+    background: white;
+    margin-top: 3rem;
+}
+
+.contentWave :global(.container) {
+    position: relative;
+}
+
+.wave {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.title {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    text-align: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 400;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    margin-top: -4.5rem;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.carouselContainer {
+    position: relative;
+    padding: 0 50px;
+    padding-top: 3rem;
+}
+
+.carouselWrapper {
+    overflow: hidden;
+}
+
+.track {
+    display: flex;
+    gap: 16px;
+}
+
+.slide {
+    flex: 0 0 calc(50% - 8px);
+    min-width: 0;
+    text-align: center;
+    padding: 10px;
+    transition: transform 0.3s ease;
+    -webkit-transition: transform 0.3s ease;
+}
+
+.slide:hover {
+    transform: translateY(-5px);
+}
+
+.slideLink {
+    text-decoration: none;
+    display: block;
+}
+
+.imageWrapper {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background-color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+}
+
+.slide:hover .imageWrapper {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.imageNoProduct {
+    width: 48px;
+    height: 48px;
+    color: #ccc;
+}
+
+.name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    margin: 0 0 4px;
+    transition: color 0.3s ease;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.slide:hover .name {
+    color: var(--secondary-color);
+}
+
+.description {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    font-size: 0.75rem;
+    color: var(--tertiary-color);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+/* Navigation buttons */
+.navButton {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background-color 0.3s ease,
+        opacity 0.3s ease;
+    z-index: 2;
+}
+
+.navButton svg {
+    font-size: 11px;
+}
+
+.navButton:hover {
+    background-color: var(--secondary-color);
+}
+
+.navButton:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.navButtonPrev {
+    left: 0;
+}
+
+.navButtonNext {
+    right: 0;
+}
+
+/* sm - Small devices (≥576px) */
+@media (min-width: 576px) {
+    .title {
+        text-align: left;
+    }
+
+    .slide {
+        flex: 0 0 calc(33.333% - 11px);
+    }
+
+    .track {
+        gap: 16px;
+    }
+
+    .name {
+        font-size: 0.85rem;
+    }
+}
+
+/* md - Medium devices (≥768px) */
+@media (min-width: 768px) {
+    .carouselContainer {
+        padding: 0 55px;
+    }
+
+    .slide {
+        flex: 0 0 calc(25% - 18px);
+        padding: 12px;
+    }
+
+    .track {
+        gap: 24px;
+    }
+
+    .name {
+        font-size: 0.9rem;
+    }
+
+    .description {
+        font-size: 0.8rem;
+    }
+
+    .navButton {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+/* lg - Large devices (≥992px) */
+@media (min-width: 992px) {
+    .section {
+        padding-bottom: 70px;
+    }
+
+    .title {
+        font-size: 2.3rem;
+    }
+
+    .carouselContainer {
+        padding: 0 65px;
+    }
+
+    .slide {
+        flex: 0 0 calc(20% - 26px);
+        padding: 14px;
+    }
+
+    .track {
+        gap: 32px;
+    }
+
+    .imageWrapper {
+        margin-bottom: 16px;
+    }
+
+    .navButton {
+        width: 32px;
+        height: 32px;
+    }
+
+    .name {
+        font-size: 0.95rem;
+    }
+
+    .description {
+        font-size: 0.85rem;
+    }
+}
+
+/* xl - Extra large devices (≥1200px) */
+@media (min-width: 1200px) {
+    .carouselContainer {
+        padding: 0 75px;
+    }
+
+    .slide {
+        flex: 0 0 calc(16.666% - 27px);
+    }
+}
+
+/* xxl - Extra extra large devices (≥1400px) */
+@media (min-width: 1400px) {
+    .title {
+        font-size: 3rem;
+    }
+
+    .contentWave :global(.container) {
+        margin-top: -40px;
+        padding-bottom: 40px;
+    }
+}
+
+@media (min-width: 1700px) {
+    .ondaImg {
+        width: fit-content;
+    }
+
+    .title {
+        width: fit-content;
+        padding-left: 0;
+    }
+}
+
+@media (min-width: 2400px) {
+    .contentWave :global(.container) {
+        margin-top: -80px;
+        padding-bottom: 80px;
+    }
+}

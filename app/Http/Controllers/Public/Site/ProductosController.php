@@ -72,6 +72,24 @@ class ProductosController extends Controller
             ->map(fn($group) => $group->pluck('value')->unique()->values()->toArray())
             ->toArray();
 
+        // Obtener productos relacionados (misma categoría, excluye el actual)
+        $relatedProducts = collect();
+        if ($mainCategory) {
+            $relatedProducts = Product::visibleInFront()
+                ->whereHas('categories', fn($q) => $q->where('categories.id', $mainCategory->id))
+                ->where('id', '!=', $product->id)
+                ->with('featuredImage')
+                ->inRandomOrder()
+                ->limit(12)
+                ->get()
+                ->map(fn($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'image' => $p->featuredImage?->full_url ?? config('business.product.placeholder_image'),
+                    'description' => null,
+                ]);
+        }
+
         return Inertia::render('public/site/productos/ProductoDetalle', [
             'product' => [
                 'id' => $product->id,
@@ -86,6 +104,7 @@ class ProductosController extends Controller
                 'id' => $mainCategory->id,
                 'name' => $mainCategory->name,
             ] : null,
+            'relatedProducts' => $relatedProducts->values()->toArray(),
         ]);
     }
 
