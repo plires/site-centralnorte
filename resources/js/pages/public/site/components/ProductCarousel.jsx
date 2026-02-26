@@ -12,8 +12,9 @@ import styles from './ProductCarousel.module.css';
  * @param {Array}  products  - Lista de productos: [{ id, name, image, description }]
  */
 const ProductCarousel = ({ title, products = [] }) => {
-    // Deshabilitar loop si hay pocos productos para evitar clones visibles en pantalla
-    const shouldLoop = products.length > 3;
+    // Loop solo cuando hay suficientes productos para desbordar el viewport en todos los breakpoints
+    // (xxl muestra 5 por fila → necesitamos más de 5 para garantizar overflow)
+    const shouldLoop = products.length > 5;
 
     const [emblaRef, emblaApi] = useEmblaCarousel(
         {
@@ -49,7 +50,9 @@ const ProductCarousel = ({ title, products = [] }) => {
         emblaApi.on('reInit', onSelect);
     }, [emblaApi, onSelect]);
 
-    if (products.length === 0) {
+    // No renderizar si hay menos de 6 productos: con pocos productos el carrusel
+    // no desborda el viewport en pantallas grandes y el espaciado queda desigual
+    if (products.length < 6) {
         return null;
     }
 
@@ -59,7 +62,7 @@ const ProductCarousel = ({ title, products = [] }) => {
                 <div className={styles.contentWave}>
                     <img src={ondaImg} alt="onda" aria-hidden="true" className={styles.wave} />
                     <div className="container">
-                        <h3 className={styles.title}>PRODUCTOS RELACIONADOS</h3>
+                        <h3 className={styles.title}>{title}</h3>
                     </div>
                 </div>
                 <div className="container">

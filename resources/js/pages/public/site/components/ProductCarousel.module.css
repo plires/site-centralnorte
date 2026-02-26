@@ -239,7 +239,8 @@
     }
 
     .slide {
-        flex: 0 0 calc(20% - 26px);
+        /* 4 slides por fila: 5 slides = 125% del viewport → siempre desborda → loop funciona */
+        flex: 0 0 calc(25% - 24px);
         padding: 14px;
     }
 
@@ -272,12 +273,17 @@
     }
 
     .slide {
-        flex: 0 0 calc(16.666% - 27px);
+        /* Mantiene 4 slides por fila para garantizar overflow con pocos productos */
+        flex: 0 0 calc(25% - 27px);
     }
 }
 
-/* xxl - Extra extra large devices (≥1400px) */
+/* xxl - Extra extra large devices (≥1400px): pasa a 5 slides por fila */
 @media (min-width: 1400px) {
+    .slide {
+        flex: 0 0 calc(20% - 32px);
+    }
+
     .title {
         font-size: 3rem;
     }
@@ -295,7 +301,7 @@
 
     .title {
         width: fit-content;
-        padding-left: 0;
+        padding-left: 12px;
     }
 }
 
