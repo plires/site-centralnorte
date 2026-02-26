@@ -35,7 +35,7 @@ const FullfilmentSection = () => {
                                     <br />
                                     Solo envianos los productos, nosotros hacemos el resto.
                                 </p>
-                                <Button href={`contacto/`} variant="outline-tertiary" size="lg">
+                                <Button href={`contacto/`} variant="outline-secondary" size="lg">
                                     Cotizar
                                 </Button>
                             </div>

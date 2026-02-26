@@ -34,7 +34,7 @@ const KitsSection = () => {
                                 <div className={styles.imageWrapper}>
                                     <img src={kit.image} alt={kit.title} className={styles.kitImage} />
                                 </div>
-                                <Button href={`contacto/`} variant="outline-primary" size="md">
+                                <Button href={`contacto/`} variant="outline-secondary" size="md">
                                     Consultar
                                 </Button>
                             </div>

@@ -81,16 +81,11 @@ const Navbar = () => {
                             {/* Right actions (desktop) */}
                             <div className={`${styles.actions} ${styles.desktopActions}`}>
                                 <SearchBar />
-                                <button
-                                    type="button"
-                                    className={styles.cartLink}
-                                    onClick={toggleDrawer}
-                                    aria-label="Ver carrito de cotización"
-                                >
+                                <button type="button" className={styles.cartLink} onClick={toggleDrawer} aria-label="Ver carrito de cotización">
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>({totalItems})</span>
                                 </button>
-                                <Button href="/carrito" variant="white" size="sm">
+                                <Button href="/carrito" variant="secondary" size="sm">
                                     Cotizá ahora
                                 </Button>
                             </div>
@@ -146,7 +141,7 @@ const Navbar = () => {
                                     <HiOutlineShoppingCart className={styles.cartIcon} />
                                     <span>({totalItems})</span>
                                 </button>
-                                <Button href="/carrito" variant="white" size="sm" onClick={() => setMobileOpen(false)}>
+                                <Button href="/carrito" variant="secondary" size="sm" onClick={() => setMobileOpen(false)}>
                                     Cotizá ahora
                                 </Button>
                             </div>
