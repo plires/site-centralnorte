@@ -71,9 +71,7 @@ const ProductoDetalle = ({ product, mainCategory, relatedProducts = [] }) => {
                 </div>
             </section>
 
-            {relatedProducts.length > 0 && (
-                <ProductCarousel title={mainCategory ? `Más de ${mainCategory.name}` : 'Productos relacionados'} products={relatedProducts} />
-            )}
+            {relatedProducts.length > 0 && <ProductCarousel title="Productos relacionados" products={relatedProducts} />}
             <NewsletterSection />
         </>
     );

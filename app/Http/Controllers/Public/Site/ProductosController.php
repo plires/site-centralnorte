@@ -6,6 +6,7 @@ use Inertia\Inertia;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 
 class ProductosController extends Controller
@@ -346,11 +347,36 @@ class ProductosController extends Controller
             ? Category::find($request->category)
             : null;
 
+        // IDs de productos más seleccionados en presupuestos de merch
+        $popularProductIds = DB::table('budget_items')
+            ->join('budgets', 'budget_items.budget_id', '=', 'budgets.id')
+            ->whereNull('budget_items.deleted_at')
+            ->whereNull('budgets.deleted_at')
+            ->where('budget_items.is_selected', true)
+            ->groupBy('budget_items.product_id')
+            ->orderByRaw('COUNT(*) DESC')
+            ->limit(12)
+            ->pluck('budget_items.product_id');
+
+        $popularProducts = Product::visibleInFront()
+            ->whereIn('id', $popularProductIds)
+            ->with('featuredImage')
+            ->get()
+            ->sortBy(fn($p) => $popularProductIds->search($p->id))
+            ->values()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'image' => $p->featuredImage?->full_url ?? config('business.product.placeholder_image'),
+                'description' => null,
+            ]);
+
         return Inertia::render('public/site/productos/Productos', [
             'products' => $products,
             'categories' => $categories,
             'selectedCategory' => $selectedCategory,
             'searchTerm' => $searchTerm,
+            'popularProducts' => $popularProducts->toArray(),
         ]);
     }
 

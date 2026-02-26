@@ -4,6 +4,10 @@
     min-height: calc(100vh - 200px);
 }
 
+:global(.contentProductosList) {
+    margin-bottom: 100px;
+}
+
 .pageHeader {
     margin-bottom: 24px;
 }
@@ -89,6 +93,10 @@
 
 /* Medium devices (768px and up) */
 @media (min-width: 768px) {
+    :global(.contentProductosList) {
+        margin-bottom: 200px;
+    }
+
     .section {
         padding: 160px 0 80px;
     }
