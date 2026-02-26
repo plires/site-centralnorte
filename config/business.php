@@ -52,7 +52,6 @@ return [
     'facebook' => env('SOCIAL_FACEBOOK', ''),
     'instagram' => env('SOCIAL_INSTAGRAM', ''),
     'tiktok' => env('SOCIAL_TIKTOK', ''),
-    'twitter' => env('SOCIAL_TWITTER', ''),
     'linkedin' => env('SOCIAL_LINKEDIN', ''),
   ],
 

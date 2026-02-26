@@ -1,6 +1,6 @@
 import Logo from '@/../images/footer/logo-site-footer.svg';
 import { Link, usePage } from '@inertiajs/react';
-import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok, FaXTwitter } from 'react-icons/fa6';
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaTiktok } from 'react-icons/fa6';
 
 import styles from './Footer.module.css';
 
@@ -16,7 +16,6 @@ const socialNetworks = [
     { key: 'facebook', icon: FaFacebookF, label: 'Facebook' },
     { key: 'instagram', icon: FaInstagram, label: 'Instagram' },
     { key: 'tiktok', icon: FaTiktok, label: 'TikTok' },
-    { key: 'twitter', icon: FaXTwitter, label: 'X' },
     { key: 'linkedin', icon: FaLinkedinIn, label: 'LinkedIn' },
 ];
 
