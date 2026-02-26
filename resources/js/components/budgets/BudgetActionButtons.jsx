@@ -1,7 +1,8 @@
 // resources/js/components/budgets/BudgetActionButtons.jsx
 
 import { Button } from '@/components/ui/button';
-import { Copy, Download, Edit, ExternalLink, Mail, MessageCircle, Send } from 'lucide-react';
+import { Check, Copy, Download, Edit, ExternalLink, Link, Mail, MessageCircle, Send } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Botones de acción reutilizables para vistas Show de presupuestos (merch y picking).
@@ -18,6 +19,7 @@ import { Copy, Download, Edit, ExternalLink, Mail, MessageCircle, Send } from 'l
  * - onDuplicate: fn
  * - onViewPublic: fn
  * - onWhatsapp: fn — abre WhatsApp con el link del presupuesto pre-cargado
+ * - onCopyLink: fn (async) — obtiene la URL corta y la copia al portapapeles
  */
 export default function BudgetActionButtons({
     isEditable,
@@ -31,7 +33,16 @@ export default function BudgetActionButtons({
     onDuplicate,
     onViewPublic,
     onWhatsapp,
+    onCopyLink,
 }) {
+    const [isCopied, setIsCopied] = useState(false);
+
+    const handleCopyClick = async () => {
+        await onCopyLink?.();
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+    };
+
     return (
         <div className="mb-6 flex flex-wrap gap-2">
             {(hasWarnings || isEditable) && (
@@ -91,6 +102,18 @@ export default function BudgetActionButtons({
                 >
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Enviar por WhatsApp
+                </Button>
+            )}
+
+            {isPubliclyVisible && (
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyClick}
+                    className={isCopied ? 'border-green-600 text-green-700' : ''}
+                    title="Copiar enlace del presupuesto"
+                >
+                    {isCopied ? <Check className="h-4 w-4" /> : <Link className="h-4 w-4" />}
                 </Button>
             )}
         </div>

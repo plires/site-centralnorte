@@ -82,25 +82,33 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
         window.open(publicUrl, '_blank');
     };
 
-    const handleWhatsapp = async () => {
-        const publicUrl = route('public.picking.budget.show', budget.token);
-        let shortUrl = publicUrl;
-
+    const getShortUrl = async (url) => {
         try {
             const xsrfToken = decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
             const response = await fetch(route('api.shorten-url'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken },
-                body: JSON.stringify({ url: publicUrl }),
+                body: JSON.stringify({ url }),
             });
             const data = await response.json();
-            if (data.success) shortUrl = data.short_url;
+            if (data.success) return data.short_url;
         } catch {
             // Fallback a URL original si falla
         }
+        return url;
+    };
 
+    const handleWhatsapp = async () => {
+        const publicUrl = route('public.picking.budget.show', budget.token);
+        const shortUrl = await getShortUrl(publicUrl);
         const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_number}):\n${shortUrl}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    const handleCopyLink = async () => {
+        const publicUrl = route('public.picking.budget.show', budget.token);
+        const shortUrl = await getShortUrl(publicUrl);
+        await navigator.clipboard.writeText(shortUrl);
     };
 
     // Hook para manejar respuestas de Inertia
@@ -299,6 +307,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                         onDuplicate={handleDuplicate}
                         onViewPublic={handleViewPublic}
                         onWhatsapp={handleWhatsapp}
+                        onCopyLink={handleCopyLink}
                     />
 
                     {/* Grid de información */}
