@@ -16,7 +16,7 @@ export function UserMenuContent({ user }) {
             {},
             {
                 onFinish: () => {
-                    window.location.href = '/'; // Forzar recarga completa
+                    window.location.href = '/login'; // Forzar recarga completa
                 },
             },
         );
