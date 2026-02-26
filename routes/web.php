@@ -229,6 +229,7 @@ Route::middleware(['auth', 'verified'])->prefix('api')->name('api.')->group(func
     Route::get('/products/search', [ApiController::class, 'searchProducts'])->name('products.search');
     Route::get('/products/{id}', [ApiController::class, 'getProduct'])->name('products.show');
     Route::get('/clients/search', [ApiController::class, 'searchClients'])->name('clients.search');
+    Route::post('/shorten-url', [ApiController::class, 'shortenUrl'])->name('shorten-url');
 });
 
 require __DIR__ . '/settings.php';

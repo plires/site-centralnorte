@@ -168,9 +168,25 @@ export default function Show({ budget, warnings, regularItems, variantGroups, ha
         window.open(publicUrl, '_blank');
     };
 
-    const handleWhatsapp = () => {
+    const handleWhatsapp = async () => {
         const publicUrl = route('public.budget.show', budget.token);
-        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_merch_number}):\n${publicUrl}`;
+        let shortUrl = publicUrl;
+
+        try {
+            const xsrfToken = decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
+            const response = await fetch(route('api.shorten-url'), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken },
+                body: JSON.stringify({ url: publicUrl }),
+            });
+            const data = await response.json();
+            if (data.success) shortUrl = data.short_url;
+        } catch {
+            // Fallback a URL original si falla
+            console.log('error');
+        }
+
+        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_merch_number}):\n${shortUrl}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
