@@ -368,7 +368,6 @@ class CategoryController extends Controller
             return null;
         } catch (\Exception $e) {
             Log::warning('Error procesando imagen para PDF', [
-                'url' => $imageUrl,
                 'error' => $e->getMessage(),
             ]);
 

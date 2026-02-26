@@ -26,7 +26,7 @@ class ProductosController extends Controller
             'images' => fn($q) => $q->orderByDesc('is_featured'),
             'variants' => fn($q) => $q->orderBy('stock', 'desc'),
             'attributes',
-            'categories' => fn($q) => $q->visible(),
+            'categories' => fn($q) => $q->publicVisible(),
         ]);
 
         // Obtener la categoría inicial para el breadcrumb
@@ -123,7 +123,7 @@ class ProductosController extends Controller
         $searchTerms = $this->generateSearchVariants($query);
 
         $products = Product::visibleInFront()
-            ->with(['featuredImage', 'categories'])
+            ->with(['featuredImage', 'categories' => fn($q) => $q->publicVisible()])
             ->where(function ($q) use ($query, $searchTerms) {
                 // Búsqueda exacta (mayor prioridad)
                 $q->where('name', 'like', "%{$query}%")
@@ -166,7 +166,7 @@ class ProductosController extends Controller
     {
         $searchTerms = $this->generateSearchVariants($query);
 
-        $categories = Category::visible()
+        $categories = Category::publicVisible()
             ->where(function ($q) use ($query, $searchTerms) {
                 $q->where('name', 'like', "%{$query}%");
 
@@ -274,14 +274,14 @@ class ProductosController extends Controller
 
     public function index(Request $request)
     {
-        // Obtener categorías visibles para el sidebar
-        $categories = Category::visible()
+        // Obtener categorías visibles para el sidebar (excluye las ocultas en público)
+        $categories = Category::publicVisible()
             ->orderBy('name')
             ->get(['id', 'name', 'description', 'icon_url']);
 
         // Query base de productos visibles
         $query = Product::visibleInFront()
-            ->with(['featuredImage', 'categories', 'variants', 'images']);
+            ->with(['featuredImage', 'categories' => fn($q) => $q->publicVisible(), 'variants', 'images']);
 
         // Búsqueda por término
         $searchTerm = $request->get('search');

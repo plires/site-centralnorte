@@ -19,6 +19,7 @@ class Category extends Model
         'description',
         'icon_url',
         'show',
+        'hidden_in_public',
         'origin',
     ];
 
@@ -90,9 +91,10 @@ class Category extends Model
         return $query->where('origin', self::ORIGIN_LOCAL);
     }
 
-    // Cast para el campo boolean
+    // Cast para los campos boolean
     protected $casts = [
-        'show' => 'boolean',
+        'show'             => 'boolean',
+        'hidden_in_public' => 'boolean',
     ];
 
     public function products()
@@ -111,5 +113,12 @@ class Category extends Model
     public function scopeHidden($query)
     {
         return $query->where('categories.show', false);
+    }
+
+    // Scope para el sitio público: visible + no marcada como oculta en público
+    public function scopePublicVisible($query)
+    {
+        return $query->where('categories.show', true)
+            ->where('categories.hidden_in_public', false);
     }
 }
