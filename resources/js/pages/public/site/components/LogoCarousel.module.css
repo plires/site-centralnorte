@@ -29,6 +29,14 @@
     transition: opacity 0.3s ease;
 }
 
+.carouselImage.extraClass {
+    height: 25px;
+}
+
+.carouselImage.extraClass {
+    height: 25px;
+}
+
 .carouselImage:hover {
     opacity: 1;
 }
@@ -50,6 +58,10 @@
 
     .carouselImage {
         height: 35px;
+    }
+
+    .carouselImage.extraClass {
+        height: 25px;
     }
 }
 
