@@ -58,6 +58,18 @@ it('admin puede acceder a la gestión de usuarios', function () {
         ->assertOk();
 });
 
+it('el listado de usuarios incluye al usuario logueado', function () {
+    $admin = createAdmin();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/users/Index')
+            ->where('users.data', fn ($users) => collect($users)->pluck('id')->contains($admin->id))
+        );
+});
+
 it('admin puede acceder a la gestión de roles', function () {
     $admin = createAdmin();
 

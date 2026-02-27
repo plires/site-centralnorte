@@ -22,6 +22,7 @@ export default function Edit({ user, roles }) {
         password: '',
         password_confirmation: '',
         role_id: user.role_id?.toString() || '',
+        accepts_budget_assignments: user.accepts_budget_assignments ?? true,
     });
 
     const { handleResponse } = useInertiaResponse();

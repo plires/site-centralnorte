@@ -30,11 +30,12 @@ class SellerAssignment extends Model
      */
     public static function getNextSeller(string $type = 'merch_budget'): ?User
     {
-        // Obtener todos los vendedores activos (con rol vendedor y admin)
+        // Obtener todos los vendedores activos (con rol vendedor y admin) habilitados para recibir asignaciones
         $sellers = User::whereHas('role', function ($q) {
             $q->whereIn('name', ['vendedor', 'admin']);
         })
             ->whereNull('deleted_at')
+            ->where('accepts_budget_assignments', true)
             ->orderBy('id')
             ->get();
 

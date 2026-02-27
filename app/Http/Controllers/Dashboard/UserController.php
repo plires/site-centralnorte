@@ -28,7 +28,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
 
-        $query = User::withoutTrashed()->where('id', '!=', Auth::id());
+        $query = User::withoutTrashed();
 
         // Búsqueda
         if ($request->filled('search')) {
@@ -79,7 +79,8 @@ class UserController extends Controller
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
                 'role_id' => $validated['role_id'],
-                'email_verified_at' => now(), // O null si quieres que verifiquen email
+                'email_verified_at' => now(),
+                'accepts_budget_assignments' => $validated['accepts_budget_assignments'] ?? true,
             ]);
 
             return redirect()->back()->with('success', "Usuario '{$user->name}' creado correctamente.");
@@ -110,6 +111,7 @@ class UserController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'role_id' => $validated['role_id'],
+                'accepts_budget_assignments' => $validated['accepts_budget_assignments'] ?? true,
             ];
 
             // Solo actualizar la contraseña si se proporciona

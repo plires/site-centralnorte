@@ -25,7 +25,8 @@ class User extends Authenticatable
         'email',
         'password',
         'role_id',
-        'email_verified_at'
+        'email_verified_at',
+        'accepts_budget_assignments',
     ];
 
     /**
@@ -48,7 +49,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'deleted_at' => 'datetime', // Para soft deletes
+            'deleted_at' => 'datetime',
+            'accepts_budget_assignments' => 'boolean',
         ];
     }
 

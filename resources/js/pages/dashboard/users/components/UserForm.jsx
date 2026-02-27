@@ -4,6 +4,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Lock, Mail, Save, Shield, User, UserPlus } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,6 +12,9 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
     const [showPassword, setShowPassword] = useState(false);
     const isEmailVerified = data?.email_verified_at;
     const showVerificationOption = isEditing && !isEmailVerified;
+
+    const selectedRole = roles.find((r) => r.id.toString() === data.role_id?.toString());
+    const isAssignableRole = selectedRole?.name === 'admin' || selectedRole?.name === 'vendedor';
 
     const handleManualVerificationChange = (checked) => {
         setData('manual_verification', checked);
@@ -161,6 +165,27 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
                                         </Select>
                                         {errors.role_id && <span className="text-xs text-red-500">{errors.role_id}</span>}
                                     </div>
+
+                                    {/* Asignación automática de presupuestos */}
+                                    {isAssignableRole && (
+                                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                                            <div className="flex items-center justify-between">
+                                                <div className="space-y-1">
+                                                    <Label htmlFor="accepts_budget_assignments" className="cursor-pointer text-sm font-medium">
+                                                        Recibir asignaciones automáticas de presupuestos
+                                                    </Label>
+                                                    <p className="text-xs text-gray-500">
+                                                        Si está habilitado, este usuario puede recibir presupuestos de merch asignados automáticamente desde el sitio público.
+                                                    </p>
+                                                </div>
+                                                <Switch
+                                                    id="accepts_budget_assignments"
+                                                    checked={data.accepts_budget_assignments ?? true}
+                                                    onCheckedChange={(checked) => setData('accepts_budget_assignments', checked)}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Botones */}
                                     <div className="flex items-center justify-end space-x-4 pt-6">

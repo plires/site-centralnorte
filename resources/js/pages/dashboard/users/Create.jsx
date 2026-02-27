@@ -21,6 +21,7 @@ export default function Create({ roles }) {
         password: '',
         password_confirmation: '',
         role_id: '',
+        accepts_budget_assignments: true,
     });
 
     const { handleResponse } = useInertiaResponse();

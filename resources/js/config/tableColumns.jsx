@@ -5,7 +5,7 @@ import BudgetStatusBadge from '@/components/BudgetStatusBadge';
 import getExpiryBadge from '@/components/getExpiryBadge';
 import { Badge } from '@/components/ui/badge';
 import { timeAgo } from '@/utils/date';
-import { Eye, EyeOff, Images } from 'lucide-react';
+import { BellOff, BellRing, Eye, EyeOff, Images } from 'lucide-react';
 
 // Renderizador de badges/etiquetas reutilizable
 const StatusBadge = ({ value, type = 'default' }) => {
@@ -179,7 +179,7 @@ export const pickingBudgetsColumns = (actions, isDeleting = false) => [
     },
 ];
 
-export const userColumns = (actions, isDeleting = false) => [
+export const userColumns = (actions, isDeleting = false, currentUserId = null) => [
     {
         key: 'name',
         label: 'Nombre',
@@ -201,23 +201,39 @@ export const userColumns = (actions, isDeleting = false) => [
         render: (value, row) => <StatusBadge value={row.role?.name || 'Sin rol'} type={row.role?.name || 'default'} />,
     },
     {
-        key: 'created_at',
-        label: 'Registrado',
-        sortable: true,
+        key: 'accepts_budget_assignments',
+        label: 'Asignación automática',
+        sortable: false,
         hideOnMobile: true,
-        render: (value) => timeAgo(value),
+        render: (value, row) => {
+            const isAssignableRole = row.role?.name === 'admin' || row.role?.name === 'vendedor';
+            if (!isAssignableRole) return <span className="text-gray-400 text-xs">—</span>;
+            return value ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                    <BellRing className="h-3 w-3" />
+                    Habilitado
+                </span>
+            ) : (
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
+                    <BellOff className="h-3 w-3" />
+                    Deshabilitado
+                </span>
+            );
+        },
     },
     {
         key: 'actions',
         label: 'Acciones',
         sortable: false,
-        render: (value, row) => (
-            <>
+        render: (value, row) => {
+            const isCurrentUser = currentUserId !== null && row.id === currentUserId;
+            const rowActions = isCurrentUser ? { view: actions.view, edit: actions.edit } : actions;
+            return (
                 <div className="text-center">
-                    <ActionsDropdown row={row} actions={actions} isDeleting={isDeleting} />
+                    <ActionsDropdown row={row} actions={rowActions} isDeleting={isDeleting} />
                 </div>
-            </>
-        ),
+            );
+        },
     },
 ];
 

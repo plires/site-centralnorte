@@ -80,3 +80,69 @@ it('getNextSeller mantiene estado independiente por tipo de asignación', functi
     expect($pickingFirst)->not->toBeNull();
     expect($merchSecond)->not->toBeNull();
 });
+
+// ─── Filtro por accepts_budget_assignments ────────────────────────────────────
+
+it('getNextSeller excluye usuarios con accepts_budget_assignments en false', function () {
+    $admin  = createAdmin();
+    $vendor = createVendor();
+
+    // Deshabilitar al admin para asignaciones
+    $admin->update(['accepts_budget_assignments' => false]);
+
+    $seller = SellerAssignment::getNextSeller('merch_budget');
+
+    expect($seller)->not->toBeNull();
+    expect($seller->id)->toBe($vendor->id);
+});
+
+it('getNextSeller devuelve null si todos los usuarios tienen accepts_budget_assignments en false', function () {
+    $admin  = createAdmin();
+    $vendor = createVendor();
+
+    $admin->update(['accepts_budget_assignments' => false]);
+    $vendor->update(['accepts_budget_assignments' => false]);
+
+    $seller = SellerAssignment::getNextSeller('merch_budget');
+
+    expect($seller)->toBeNull();
+});
+
+it('getNextSeller solo asigna a usuarios habilitados en el round-robin', function () {
+    $admin   = createAdmin();
+    $vendor1 = createVendor();
+    $vendor2 = createVendor();
+
+    // Deshabilitar vendor1 para asignaciones
+    $vendor1->update(['accepts_budget_assignments' => false]);
+
+    $first  = SellerAssignment::getNextSeller('merch_budget');
+    $second = SellerAssignment::getNextSeller('merch_budget');
+    $third  = SellerAssignment::getNextSeller('merch_budget');
+
+    // Solo admin y vendor2 son elegibles
+    $eligibleIds = [$admin->id, $vendor2->id];
+    expect($first->id)->toBeIn($eligibleIds);
+    expect($second->id)->toBeIn($eligibleIds);
+    expect($third->id)->toBeIn($eligibleIds);
+
+    // vendor1 nunca debe ser asignado
+    expect($first->id)->not->toBe($vendor1->id);
+    expect($second->id)->not->toBe($vendor1->id);
+    expect($third->id)->not->toBe($vendor1->id);
+});
+
+it('getNextSeller asigna correctamente cuando solo hay un usuario habilitado', function () {
+    $admin  = createAdmin();
+    $vendor = createVendor();
+
+    // Deshabilitar al vendedor para asignaciones
+    $vendor->update(['accepts_budget_assignments' => false]);
+
+    $first  = SellerAssignment::getNextSeller('merch_budget');
+    $second = SellerAssignment::getNextSeller('merch_budget');
+
+    // Siempre debe asignarse al admin (el único habilitado)
+    expect($first->id)->toBe($admin->id);
+    expect($second->id)->toBe($admin->id);
+});
