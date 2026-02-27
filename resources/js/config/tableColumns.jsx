@@ -207,7 +207,7 @@ export const userColumns = (actions, isDeleting = false, currentUserId = null) =
         hideOnMobile: true,
         render: (value, row) => {
             const isAssignableRole = row.role?.name === 'admin' || row.role?.name === 'vendedor';
-            if (!isAssignableRole) return <span className="text-gray-400 text-xs">—</span>;
+            if (!isAssignableRole) return <span className="text-xs text-gray-400">—</span>;
             return value ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                     <BellRing className="h-3 w-3" />
@@ -266,13 +266,6 @@ export const clientsColumns = (actions, isDeleting = false) => [
         align: 'left',
         hideOnMobile: true,
         render: (value) => value || '-',
-    },
-    {
-        key: 'created_at',
-        label: 'Registrado',
-        sortable: true,
-        hideOnMobile: true,
-        render: (value) => timeAgo(value),
     },
     {
         key: 'active_budgets_count',
