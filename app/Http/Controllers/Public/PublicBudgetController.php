@@ -203,6 +203,11 @@ class PublicBudgetController extends Controller
                 abort(404, 'Presupuesto vencido');
             }
 
+            // Verificar que ningún producto de los items esté eliminado
+            if ($budget->items->contains(fn ($item) => $item->product === null)) {
+                abort(404, 'Presupuesto no disponible');
+            }
+
             // Obtener variantes seleccionadas desde la request
             $selectedVariants = $this->parseSelectedVariants($request);
 
