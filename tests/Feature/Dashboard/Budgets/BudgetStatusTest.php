@@ -3,6 +3,7 @@
 use App\Enums\BudgetStatus;
 use App\Models\Budget;
 use App\Models\Client;
+use App\Models\Product;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Support\Facades\Mail;
@@ -259,4 +260,120 @@ it('checkExpiredBudgets NO expira presupuestos en estado approved o rejected', f
 
     expect($approved->fresh()->status)->toBe(BudgetStatus::APPROVED);
     expect($rejected->fresh()->status)->toBe(BudgetStatus::REJECTED);
+});
+
+// ─── Restricciones por entidades eliminadas ───────────────────────────────────
+
+it('sendEmail falla si el cliente del presupuesto está eliminado', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+    $budget = Budget::factory()->unsent()->create([
+        'user_id'     => $admin->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->actingAs($admin)
+        ->post(route('dashboard.budgets.send-email', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('dashboard downloadPdf falla si el cliente del presupuesto está eliminado', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+    $budget = Budget::factory()->unsent()->create([
+        'user_id'     => $admin->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.budgets.pdf', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+});
+
+it('sendEmail falla si el vendedor del presupuesto está eliminado', function () {
+    $requestingAdmin = createAdmin();
+    $budgetSeller    = createAdmin();
+    $client          = Client::factory()->create();
+    $budget          = Budget::factory()->unsent()->create([
+        'user_id'     => $budgetSeller->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budgetSeller->delete();
+
+    $this->actingAs($requestingAdmin)
+        ->post(route('dashboard.budgets.send-email', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('dashboard downloadPdf falla si el vendedor del presupuesto está eliminado', function () {
+    $requestingAdmin = createAdmin();
+    $budgetSeller    = createAdmin();
+    $client          = Client::factory()->create();
+    $budget          = Budget::factory()->unsent()->create([
+        'user_id'     => $budgetSeller->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budgetSeller->delete();
+
+    $this->actingAs($requestingAdmin)
+        ->get(route('dashboard.budgets.pdf', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+});
+
+it('sendEmail falla si un producto de los items está eliminado', function () {
+    $admin   = createAdmin();
+    $client  = Client::factory()->create();
+    $product = Product::factory()->create();
+    $budget  = Budget::factory()->unsent()->create([
+        'user_id'     => $admin->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budget->items()->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100]);
+    $product->delete();
+
+    $this->actingAs($admin)
+        ->post(route('dashboard.budgets.send-email', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('dashboard downloadPdf falla si un producto de los items está eliminado', function () {
+    $admin   = createAdmin();
+    $client  = Client::factory()->create();
+    $product = Product::factory()->create();
+    $budget  = Budget::factory()->unsent()->create([
+        'user_id'     => $admin->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budget->items()->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100]);
+    $product->delete();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.budgets.pdf', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\BudgetStatus;
+use App\Models\Client;
 use App\Models\PickingBudget;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -165,4 +166,80 @@ it('checkExpiredBudgets NO expira picking budgets en estado approved', function 
     $this->artisan('budgets:check-expired')->assertExitCode(0);
 
     expect($approved->fresh()->status)->toBe(BudgetStatus::APPROVED);
+});
+
+// ─── Restricciones por entidades eliminadas ───────────────────────────────────
+
+it('send falla si el cliente del picking budget está eliminado', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+    $budget = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $admin->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->actingAs($admin)
+        ->post(route('dashboard.picking.budgets.send', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('dashboard downloadPdf picking falla si el cliente está eliminado', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+    $budget = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $admin->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.picking.budgets.pdf', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+});
+
+it('send falla si el vendor del picking budget está eliminado', function () {
+    $requestingAdmin = createAdmin();
+    $budgetVendor    = createAdmin();
+    $client          = Client::factory()->create();
+    $budget          = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $budgetVendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budgetVendor->delete();
+
+    $this->actingAs($requestingAdmin)
+        ->post(route('dashboard.picking.budgets.send', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('dashboard downloadPdf picking falla si el vendor está eliminado', function () {
+    $requestingAdmin = createAdmin();
+    $budgetVendor    = createAdmin();
+    $client          = Client::factory()->create();
+    $budget          = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $budgetVendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budgetVendor->delete();
+
+    $this->actingAs($requestingAdmin)
+        ->get(route('dashboard.picking.budgets.pdf', $budget))
+        ->assertRedirect()
+        ->assertSessionHas('error');
 });

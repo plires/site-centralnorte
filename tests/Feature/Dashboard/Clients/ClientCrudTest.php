@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\BudgetStatus;
+use App\Models\Budget;
 use App\Models\Client;
+use App\Models\PickingBudget;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 
@@ -86,6 +89,66 @@ it('admin puede actualizar un cliente', function () {
 it('admin puede eliminar un cliente (soft delete)', function () {
     $admin  = createAdmin();
     $client = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->delete(route('dashboard.clients.destroy', $client))
+        ->assertRedirect();
+
+    $this->assertSoftDeleted('clients', ['id' => $client->id]);
+});
+
+it('admin NO puede eliminar un cliente con presupuestos merch vigentes', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+
+    Budget::factory()->sent()->create([
+        'user_id'   => $admin->id,
+        'client_id' => $client->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->delete(route('dashboard.clients.destroy', $client))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('clients', ['id' => $client->id, 'deleted_at' => null]);
+});
+
+it('admin NO puede eliminar un cliente con presupuestos picking vigentes', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+
+    PickingBudget::factory()->sent()->create([
+        'vendor_id' => $admin->id,
+        'client_id' => $client->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->delete(route('dashboard.clients.destroy', $client))
+        ->assertRedirect()
+        ->assertSessionHas('error');
+
+    $this->assertDatabaseHas('clients', ['id' => $client->id, 'deleted_at' => null]);
+});
+
+it('admin puede eliminar un cliente cuyos presupuestos están todos expirados o rechazados', function () {
+    $admin  = createAdmin();
+    $client = Client::factory()->create();
+
+    Budget::factory()->create([
+        'user_id'   => $admin->id,
+        'client_id' => $client->id,
+        'status'    => BudgetStatus::EXPIRED,
+    ]);
+    Budget::factory()->rejected()->create([
+        'user_id'   => $admin->id,
+        'client_id' => $client->id,
+    ]);
+    PickingBudget::factory()->create([
+        'vendor_id' => $admin->id,
+        'client_id' => $client->id,
+        'status'    => BudgetStatus::EXPIRED,
+    ]);
 
     $this->actingAs($admin)
         ->delete(route('dashboard.clients.destroy', $client))

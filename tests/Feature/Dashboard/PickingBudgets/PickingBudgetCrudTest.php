@@ -83,6 +83,26 @@ it('puede duplicar un picking budget → nuevo en estado draft', function () {
     ]);
 });
 
+// ─── Campos de fecha ───────────────────────────────────────────────────────────
+
+it('picking budget puede tener issue_date explícita y se persiste correctamente', function () {
+    $admin     = createAdmin();
+    $issueDate = now()->subDays(5)->format('Y-m-d');
+
+    $budget = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $admin->id,
+        'issue_date'  => $issueDate,
+        'valid_until' => now()->addDays(30)->format('Y-m-d'),
+    ]);
+
+    $this->assertDatabaseHas('picking_budgets', [
+        'id'         => $budget->id,
+        'issue_date' => $issueDate,
+    ]);
+
+    expect($budget->fresh()->issue_date->format('Y-m-d'))->toBe($issueDate);
+});
+
 // ─── Destroy ───────────────────────────────────────────────────────────────────
 
 it('admin puede soft-deletear un picking budget', function () {

@@ -2,6 +2,8 @@
 
 use App\Enums\BudgetStatus;
 use App\Models\Budget;
+use App\Models\Client;
+use App\Models\Product;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 
@@ -165,4 +167,56 @@ it('la vista recibe grouped_items con regulares y variantes', function () {
         ->assertInertia(fn ($page) => $page
             ->has('budget.grouped_items.regular')
             ->has('budget.grouped_items.variants'));
+});
+
+// ─── Fallback por entidades eliminadas ────────────────────────────────────────
+
+it('la vista pública sigue cargando aunque el cliente esté eliminado (muestra fallback)', function () {
+    $vendor = createAdmin();
+    $client = Client::factory()->create();
+    $budget = Budget::factory()->sent()->create([
+        'user_id'     => $vendor->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->get(route('public.budget.show', $budget->token))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/budgets/Budget'));
+});
+
+it('la vista pública sigue cargando aunque el vendedor esté eliminado (muestra fallback)', function () {
+    $vendor = createAdmin();
+    $client = Client::factory()->create();
+    $budget = Budget::factory()->sent()->create([
+        'user_id'     => $vendor->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $vendor->delete();
+
+    $this->get(route('public.budget.show', $budget->token))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/budgets/Budget'));
+});
+
+it('la vista pública sigue cargando aunque un producto de los items esté eliminado (muestra fallback)', function () {
+    $vendor  = createAdmin();
+    $client  = Client::factory()->create();
+    $product = Product::factory()->create();
+    $budget  = Budget::factory()->sent()->create([
+        'user_id'     => $vendor->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $budget->items()->create(['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 100]);
+    $product->delete();
+
+    $this->get(route('public.budget.show', $budget->token))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/budgets/Budget'));
 });

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\BudgetStatus;
+use App\Models\Client;
 use App\Models\PickingBudget;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
@@ -131,4 +132,38 @@ it('la vista de picking recibe businessConfig con iva_rate y apply_iva', functio
         ->assertInertia(fn ($page) => $page
             ->has('businessConfig.iva_rate')
             ->has('businessConfig.apply_iva'));
+});
+
+// ─── Fallback por entidades eliminadas ────────────────────────────────────────
+
+it('la vista pública de picking sigue cargando aunque el cliente esté eliminado (muestra fallback)', function () {
+    $vendor = createAdmin();
+    $client = Client::factory()->create();
+    $budget = PickingBudget::factory()->sent()->create([
+        'vendor_id'   => $vendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $client->delete();
+
+    $this->get(route('public.picking.budget.show', $budget->token))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/picking/PickingBudget'));
+});
+
+it('la vista pública de picking sigue cargando aunque el vendor esté eliminado (muestra fallback)', function () {
+    $vendor = createAdmin();
+    $client = Client::factory()->create();
+    $budget = PickingBudget::factory()->sent()->create([
+        'vendor_id'   => $vendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $vendor->delete();
+
+    $this->get(route('public.picking.budget.show', $budget->token))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('public/picking/PickingBudget'));
 });
