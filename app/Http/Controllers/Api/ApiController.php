@@ -7,7 +7,6 @@ use App\Models\Client;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Http;
 
 class ApiController extends Controller
 {
@@ -166,28 +165,6 @@ class ApiController extends Controller
                 'message' => 'Cliente no encontrado'
             ], 404);
         }
-    }
-
-    /**
-     * Acortar una URL usando la API gratuita de TinyURL
-     */
-    public function shortenUrl(Request $request)
-    {
-        $request->validate(['url' => 'required|url']);
-
-        $url = $request->input('url');
-
-        try {
-            $response = Http::timeout(5)->get('https://tinyurl.com/api-create.php', ['url' => $url]);
-
-            if ($response->successful() && str_starts_with($response->body(), 'https://tinyurl.com/')) {
-                return response()->json(['success' => true, 'short_url' => trim($response->body())]);
-            }
-        } catch (\Exception) {
-            // Si falla, devolvemos la URL original
-        }
-
-        return response()->json(['success' => false, 'short_url' => $url]);
     }
 
     /**

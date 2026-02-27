@@ -82,33 +82,15 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
         window.open(publicUrl, '_blank');
     };
 
-    const getShortUrl = async (url) => {
-        try {
-            const xsrfToken = decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
-            const response = await fetch(route('api.shorten-url'), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrfToken },
-                body: JSON.stringify({ url }),
-            });
-            const data = await response.json();
-            if (data.success) return data.short_url;
-        } catch {
-            // Fallback a URL original si falla
-        }
-        return url;
-    };
-
-    const handleWhatsapp = async () => {
+    const handleWhatsapp = () => {
         const publicUrl = route('public.picking.budget.show', budget.token);
-        const shortUrl = await getShortUrl(publicUrl);
-        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_number}):\n${shortUrl}`;
+        const msg = `Hola! Te comparto el presupuesto *${budget.title}* (N° ${budget.budget_number}):\n${publicUrl}`;
         window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
     };
 
     const handleCopyLink = async () => {
         const publicUrl = route('public.picking.budget.show', budget.token);
-        const shortUrl = await getShortUrl(publicUrl);
-        await navigator.clipboard.writeText(shortUrl);
+        await navigator.clipboard.writeText(publicUrl);
     };
 
     // Hook para manejar respuestas de Inertia
