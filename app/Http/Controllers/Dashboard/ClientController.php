@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreClientRequest;
+use App\Enums\BudgetStatus;
 use App\Http\Requests\UpdateClientRequest;
 
 class ClientController extends Controller
@@ -18,8 +19,15 @@ class ClientController extends Controller
 
     public function index()
     {
+        $nonVigenteStatuses = [BudgetStatus::EXPIRED->value, BudgetStatus::REJECTED->value];
+
+        $clients = Client::withCount([
+            'budgets as active_merch_count' => fn($q) => $q->whereNotIn('status', $nonVigenteStatuses),
+            'pickingBudgets as active_picking_count' => fn($q) => $q->whereNotIn('status', $nonVigenteStatuses),
+        ])->get();
+
         return Inertia::render('dashboard/clients/Index', [
-            'clients' => Client::all()
+            'clients' => $clients,
         ]);
     }
 
@@ -73,14 +81,18 @@ class ClientController extends Controller
     public function destroy(Client $client)
     {
         try {
-            // Verificar si el cliente  tiene presupuestos asociados
-            // TODO: agregar esta logica cuando existan las relaciones correspondientes
-            // if ($client->presupuestos()->exists()) {
-            //     return redirect()->back()->with(
-            //         'error',
-            //         "No se puede eliminar el cliente '{$client->name}' porque esta asociado a uno o mas presupuestos."
-            //     );
-            // }
+            // Verificar si el cliente tiene presupuestos vigentes asociados
+            $nonVigenteStatuses = [BudgetStatus::EXPIRED->value, BudgetStatus::REJECTED->value];
+
+            $hasActiveBudgets = $client->budgets()->whereNotIn('status', $nonVigenteStatuses)->exists()
+                || $client->pickingBudgets()->whereNotIn('status', $nonVigenteStatuses)->exists();
+
+            if ($hasActiveBudgets) {
+                return redirect()->back()->with(
+                    'error',
+                    "No se puede eliminar el cliente '{$client->name}' porque tiene presupuestos vigentes asociados."
+                );
+            }
 
             // Eliminar el cliente
             $client->delete();
