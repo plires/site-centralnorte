@@ -890,6 +890,7 @@ class BudgetController extends Controller
             'payment_condition' => $budget->paymentCondition ? [
                 'description' => $budget->payment_condition_description,
                 'percentage' => $budget->payment_condition_percentage,
+                'amount'     => $budget->payment_condition_amount,
             ] : null,
             'client' => [
                 'name' => $budget->client->name,
