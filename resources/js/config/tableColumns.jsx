@@ -259,6 +259,20 @@ export const clientsColumns = (actions, isDeleting = false) => [
         render: (value) => timeAgo(value),
     },
     {
+        key: 'active_budgets_count',
+        label: 'Presupuestos Vigentes',
+        sortable: false,
+        hideOnMobile: true,
+        render: (value, row) => {
+            const total = (row.active_merch_count || 0) + (row.active_picking_count || 0);
+            return (
+                <Badge variant="outline" className={`rounded-full ${total > 0 ? 'border-blue-300 bg-blue-50 text-blue-700' : 'text-gray-400'}`}>
+                    {total}
+                </Badge>
+            );
+        },
+    },
+    {
         key: 'actions',
         label: 'Acciones',
         sortable: false,
