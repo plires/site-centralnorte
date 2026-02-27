@@ -480,23 +480,9 @@
 
         {{-- Información de condición de pago --}}
         @if (isset($budget['payment_condition']) && $budget['payment_condition'] !== null)
-            <div class="info-box">
-                <strong>Condición de Pago:</strong> {{ $budget['payment_condition']['description'] }}<br>
-                <small style="color: #6b7280;">
-                    @php
-                        $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
-                    @endphp
-                    @if ($paymentPercentage > 0)
-                        Se ha aplicado un <strong style="color: #dc2626;">recargo del
-                            {{ number_format($paymentPercentage, 2) }}%</strong> sobre el subtotal.
-                    @elseif ($paymentPercentage < 0)
-                        Se ha aplicado un <strong style="color: #16a34a;">descuento del
-                            {{ number_format(abs($paymentPercentage), 2) }}%</strong> sobre el subtotal.
-                    @else
-                        Sin ajuste adicional.
-                    @endif
-                </small>
-            </div>
+            @php
+                $paymentPercentage = floatval($budget['payment_condition']['percentage'] ?? 0);
+            @endphp
         @endif
 
         <!-- COMENTARIOS -->
