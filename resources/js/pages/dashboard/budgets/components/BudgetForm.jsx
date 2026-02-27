@@ -97,7 +97,7 @@ export default function BudgetForm({
 
                 <form onSubmit={handleFormSubmit} className="space-y-6 p-6">
                     {/* Información básica del presupuesto */}
-                    <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} user={user} isEditing={isEditing} />
+                    <BudgetBasicInfo data={data} setData={setData} errors={errors} clients={clients} isAdmin={user?.role?.name === 'admin'} isEditing={isEditing} />
 
                     {/* Fechas del presupuesto */}
                     <BudgetDateSection data={data} setData={setData} errors={errors} user={user} vendors={vendors} isEditing={isEditing} />

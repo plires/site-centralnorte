@@ -9,10 +9,12 @@ import ClientCombobox from '@/pages/dashboard/budgets/components/ClientCombobox'
  * Componente para seleccionar el cliente en un presupuesto de picking.
  * El vendedor se gestiona en PickingDateSection.
  */
-export default function PickingClientSection({ data, setData, clients, errors, processing }) {
+export default function PickingClientSection({ data, setData, clients, errors, processing, isAdmin = false }) {
     const handleClientSelect = (clientId) => {
         setData('client_id', clientId);
     };
+
+    const emptyText = isAdmin ? 'Sin clientes.' : 'Sin clientes asociados.';
 
     return (
         <Card>
@@ -42,6 +44,7 @@ export default function PickingClientSection({ data, setData, clients, errors, p
                         onChange={handleClientSelect}
                         error={errors.client_id}
                         placeholder="Seleccionar cliente..."
+                        emptyText={emptyText}
                         disabled={processing}
                     />
                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}

@@ -377,3 +377,52 @@ it('dashboard downloadPdf falla si un producto de los items está eliminado', fu
         ->assertRedirect()
         ->assertSessionHas('error');
 });
+
+// ─── Restricciones vendor / cliente ajeno ─────────────────────────────────────
+
+it('vendedor no puede enviar email de presupuesto de un cliente ajeno', function () {
+    $vendor      = createVendor();
+    $otherVendor = createVendor();
+    $client      = Client::factory()->create(['user_id' => $otherVendor->id]);
+    $budget      = Budget::factory()->unsent()->create([
+        'user_id'     => $vendor->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($vendor)
+        ->post(route('dashboard.budgets.send-email', $budget))
+        ->assertForbidden();
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('vendedor no puede descargar PDF de un presupuesto ajeno', function () {
+    $vendor  = createVendor();
+    $admin   = createAdmin();
+    $client  = Client::factory()->create(['user_id' => $admin->id]);
+    $budget  = Budget::factory()->unsent()->create([
+        'user_id'     => $admin->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.budgets.pdf', $budget))
+        ->assertForbidden();
+});
+
+it('vendedor no puede descargar PDF de presupuesto propio con cliente ajeno', function () {
+    $vendor      = createVendor();
+    $otherVendor = createVendor();
+    $client      = Client::factory()->create(['user_id' => $otherVendor->id]);
+    $budget      = Budget::factory()->unsent()->create([
+        'user_id'     => $vendor->id,
+        'client_id'   => $client->id,
+        'expiry_date' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.budgets.pdf', $budget))
+        ->assertForbidden();
+});

@@ -243,3 +243,37 @@ it('dashboard downloadPdf picking falla si el vendor está eliminado', function 
         ->assertRedirect()
         ->assertSessionHas('error');
 });
+
+// ─── Restricciones vendor / cliente ajeno ─────────────────────────────────────
+
+it('vendedor no puede enviar picking budget de un cliente ajeno', function () {
+    $vendor      = createVendor();
+    $otherVendor = createVendor();
+    $client      = Client::factory()->create(['user_id' => $otherVendor->id]);
+    $budget      = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $vendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($vendor)
+        ->post(route('dashboard.picking.budgets.send', $budget))
+        ->assertForbidden();
+
+    expect($budget->fresh()->status)->toBe(BudgetStatus::UNSENT);
+});
+
+it('vendedor no puede descargar PDF de picking budget con cliente ajeno', function () {
+    $vendor      = createVendor();
+    $otherVendor = createVendor();
+    $client      = Client::factory()->create(['user_id' => $otherVendor->id]);
+    $budget      = PickingBudget::factory()->unsent()->create([
+        'vendor_id'   => $vendor->id,
+        'client_id'   => $client->id,
+        'valid_until' => now()->addDays(15)->format('Y-m-d'),
+    ]);
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.picking.budgets.pdf', $budget))
+        ->assertForbidden();
+});

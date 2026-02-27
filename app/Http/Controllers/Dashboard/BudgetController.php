@@ -107,16 +107,18 @@ class BudgetController extends Controller
     {
         $user = Auth::user();
 
-        $clients = Client::orderBy('name')
-            ->get()
-            ->map(function ($client) {
-                return [
-                    'value' => $client->id,
-                    'label' => $client->company
-                        ? "{$client->name} ({$client->company})"
-                        : $client->name,
-                ];
-            });
+        $clientQuery = Client::orderBy('name');
+        if ($user->role->name !== 'admin') {
+            $clientQuery->where('user_id', $user->id);
+        }
+        $clients = $clientQuery->get()->map(function ($client) {
+            return [
+                'value' => $client->id,
+                'label' => $client->company
+                    ? "{$client->name} ({$client->company})"
+                    : $client->name,
+            ];
+        });
 
         // Cargar condiciones de pago activas
         $paymentConditions = PickingPaymentCondition::active()
@@ -352,11 +354,19 @@ class BudgetController extends Controller
             }
         }
 
-        // 3. Cargar lista de CLIENTES (Activos + Actual)
+        // 3. Cargar lista de CLIENTES (Activos según rol + Actual del presupuesto aunque esté borrado)
         $clients = Client::query()
             ->withTrashed()
-            ->where(function ($q) use ($budget) {
-                $q->whereNull('deleted_at')->orWhere('id', $budget->client_id);
+            ->where(function ($q) use ($budget, $user) {
+                // Siempre incluir el cliente actual del presupuesto (puede estar eliminado)
+                $q->where('id', $budget->client_id);
+                // Clientes activos, filtrados por rol
+                $q->orWhere(function ($sq) use ($user) {
+                    $sq->whereNull('deleted_at');
+                    if ($user->role->name !== 'admin') {
+                        $sq->where('user_id', $user->id);
+                    }
+                });
             })
             ->orderBy('name')
             ->get()
@@ -614,13 +624,20 @@ class BudgetController extends Controller
 
     public function sendEmail(Budget $budget)
     {
-        try {
-            $user = Auth::user();
+        $user = Auth::user();
 
-            if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
-                abort(403, 'No tienes permisos para enviar este presupuesto.');
+        if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+            abort(403, 'No tienes permisos para enviar este presupuesto.');
+        }
+
+        if ($user->role->name !== 'admin') {
+            $budget->loadMissing('client');
+            if (! $budget->client || $budget->client->user_id !== $user->id) {
+                abort(403, 'No tienes permiso para enviar un presupuesto de un cliente que no te pertenece.');
             }
+        }
 
+        try {
             if ($this->hasInvalidEntitiesForPdf($budget)) {
                 return redirect()->back()->with('error', 'No se puede enviar el email: el presupuesto tiene entidades faltantes o eliminadas.');
             }
@@ -765,6 +782,19 @@ class BudgetController extends Controller
      */
     public function downloadPdf(Budget $budget)
     {
+        $user = Auth::user();
+
+        if ($user->role->name === 'vendedor' && $budget->user_id !== $user->id) {
+            abort(403, 'No tienes permisos para descargar este presupuesto.');
+        }
+
+        if ($user->role->name !== 'admin') {
+            $budget->loadMissing('client');
+            if (! $budget->client || $budget->client->user_id !== $user->id) {
+                abort(403, 'No tienes permiso para descargar el PDF de un presupuesto de un cliente que no te pertenece.');
+            }
+        }
+
         if ($this->hasInvalidEntitiesForPdf($budget)) {
             return redirect()->back()->with('error', 'No se puede generar el PDF: el presupuesto tiene entidades faltantes o eliminadas.');
         }

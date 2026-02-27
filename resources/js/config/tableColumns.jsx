@@ -237,7 +237,7 @@ export const userColumns = (actions, isDeleting = false, currentUserId = null) =
     },
 ];
 
-export const clientsColumns = (actions, isDeleting = false) => [
+export const clientsColumns = (actions, isDeleting = false, isAdmin = false) => [
     {
         key: 'name',
         label: 'Nombre',
@@ -259,14 +259,24 @@ export const clientsColumns = (actions, isDeleting = false) => [
         align: 'left',
         hideOnMobile: true,
     },
-    {
-        key: 'phone',
-        label: 'Teléfono',
-        sortable: false,
-        align: 'left',
-        hideOnMobile: true,
-        render: (value) => value || '-',
-    },
+    ...(isAdmin
+        ? [
+              {
+                  key: 'user.name',
+                  label: 'Vendedor',
+                  sortable: false,
+                  hideOnMobile: true,
+                  render: (value, row) =>
+                      row.user ? (
+                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                              {row.user.name}
+                          </span>
+                      ) : (
+                          <span className="text-xs text-gray-400">Sin asignar</span>
+                      ),
+              },
+          ]
+        : []),
     {
         key: 'active_budgets_count',
         label: 'Presupuestos Vigentes',

@@ -41,9 +41,11 @@ it('devuelve 403 a un usuario sin permiso gestionar_roles', function () {
 });
 
 it('devuelve 403 a un usuario sin permiso gestionar_clientes', function () {
-    $vendor = createVendor();
+    // El rol design no tiene gestionar_clientes
+    $design = \App\Models\Role::where('name', 'design')->firstOrFail();
+    $user   = \App\Models\User::factory()->create(['role_id' => $design->id]);
 
-    $this->actingAs($vendor)
+    $this->actingAs($user)
         ->get(route('dashboard.clients.index'))
         ->assertForbidden();
 });
@@ -104,12 +106,12 @@ it('vendedor puede acceder a la gestión de productos', function () {
         ->assertOk();
 });
 
-it('vendedor no puede acceder a la gestión de clientes', function () {
+it('vendedor puede acceder a la gestión de clientes (solo los propios)', function () {
     $vendor = createVendor();
 
     $this->actingAs($vendor)
         ->get(route('dashboard.clients.index'))
-        ->assertForbidden();
+        ->assertOk();
 });
 
 it('vendedor no puede acceder a la gestión de usuarios', function () {

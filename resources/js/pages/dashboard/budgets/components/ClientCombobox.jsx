@@ -8,7 +8,7 @@ import { useState } from 'react';
 /**
  * Componente de búsqueda de clientes con autocompletado
  */
-export default function ClientCombobox({ clients, value, onChange, error, placeholder = 'Seleccionar cliente...' }) {
+export default function ClientCombobox({ clients, value, onChange, error, placeholder = 'Seleccionar cliente...', emptyText = 'No se encontraron clientes.' }) {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
@@ -56,7 +56,7 @@ export default function ClientCombobox({ clients, value, onChange, error, placeh
             <PopoverContent className="w-full p-0" align="start">
                 <Command>
                     <CommandInput placeholder="Buscar cliente..." value={searchTerm} onValueChange={setSearchTerm} />
-                    <CommandEmpty>No se encontraron clientes.</CommandEmpty>
+                    <CommandEmpty>{emptyText}</CommandEmpty>
                     <CommandGroup className="max-h-64 overflow-auto">
                         {filteredClients?.map((client) => {
                             const isSelected = value?.toString() === client.value?.toString();

@@ -14,13 +14,14 @@ const breadcrumbs = [
     },
 ];
 
-export default function Create({ roles }) {
+export default function Create({ sellers }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         company: '',
         email: '',
         phone: '',
         address: '',
+        user_id: '',
     });
 
     const { handleResponse } = useInertiaResponse();
@@ -31,7 +32,6 @@ export default function Create({ roles }) {
         post(
             route('dashboard.clients.store'),
             handleResponse(() => {
-                // Callback de éxito: limpiar formulario
                 reset();
             }),
         );
@@ -41,7 +41,15 @@ export default function Create({ roles }) {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Crear Cliente" />
 
-            <ClientForm data={data} setData={setData} handleSubmit={handleSubmit} processing={processing} errors={errors} isEditing={false} />
+            <ClientForm
+                data={data}
+                setData={setData}
+                handleSubmit={handleSubmit}
+                processing={processing}
+                errors={errors}
+                isEditing={false}
+                sellers={sellers}
+            />
         </AppLayout>
     );
 }

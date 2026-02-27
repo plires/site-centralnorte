@@ -396,6 +396,7 @@ export default function PickingBudgetForm({
                         clients={clients}
                         errors={errors}
                         processing={processing}
+                        isAdmin={user?.role?.name === 'admin'}
                     />
 
                     {/* Fechas y Vendedor */}

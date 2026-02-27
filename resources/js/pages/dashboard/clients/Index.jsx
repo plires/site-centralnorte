@@ -54,7 +54,7 @@ export default function Index({ auth, clients }) {
     };
 
     const actions = { view: handleView, edit: handleEdit, delete: handleDelete };
-    const columns = clientsColumns(actions, isDeleting);
+    const columns = clientsColumns(actions, isDeleting, isAdmin);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs} user={auth.user}>

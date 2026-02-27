@@ -4,10 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import ClientCombobox from './ClientCombobox';
 
-export default function BudgetBasicInfo({ data, setData, errors, clients, isEditing = false }) {
+export default function BudgetBasicInfo({ data, setData, errors, clients, isEditing = false, isAdmin = false }) {
     const handleClientSelect = (clientId) => {
         setData('client_id', clientId);
     };
+
+    const emptyText = isAdmin ? 'Sin clientes.' : 'Sin clientes asociados.';
 
     return (
         <Card>
@@ -35,6 +37,7 @@ export default function BudgetBasicInfo({ data, setData, errors, clients, isEdit
                         onChange={handleClientSelect}
                         error={errors.client_id}
                         placeholder="Seleccionar cliente..."
+                        emptyText={emptyText}
                     />
                     {errors.client_id && <p className="mt-1 text-sm text-red-600">{errors.client_id}</p>}
                 </div>

@@ -2,9 +2,10 @@ import ButtonCustom from '@/components/ButtonCustom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Save, Shield, UserPlus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ArrowLeft, Save, Shield, User, UserPlus } from 'lucide-react';
 
-export default function ClientForm({ data, setData, handleSubmit, processing, errors, isEditing = false }) {
+export default function ClientForm({ data, setData, handleSubmit, processing, errors, isEditing = false, sellers = null }) {
     return (
         <div className="py-12">
             <div className="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -101,6 +102,32 @@ export default function ClientForm({ data, setData, handleSubmit, processing, er
                                         />
                                         {errors.address && <span className="text-xs text-red-500">{errors.address}</span>}
                                     </div>
+
+                                    {/* Vendedor asignado — solo para admin */}
+                                    {sellers && (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="user_id" className="flex items-center">
+                                                <User className="mr-2 h-4 w-4" />
+                                                Vendedor asignado
+                                            </Label>
+                                            <Select
+                                                value={data.user_id?.toString() || ''}
+                                                onValueChange={(value) => setData('user_id', value)}
+                                            >
+                                                <SelectTrigger className={errors.user_id ? 'border-red-500' : ''}>
+                                                    <SelectValue placeholder="Selecciona un vendedor" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {sellers.map((seller) => (
+                                                        <SelectItem key={seller.id} value={seller.id.toString()}>
+                                                            {seller.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            {errors.user_id && <span className="text-xs text-red-500">{errors.user_id}</span>}
+                                        </div>
+                                    )}
 
                                     {/* Botones */}
                                     <div className="flex items-center justify-end space-x-4 pt-6">

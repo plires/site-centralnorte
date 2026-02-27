@@ -1,3 +1,4 @@
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Mail, MapPinHouse, Phone, User } from 'lucide-react';
@@ -49,6 +50,22 @@ export default function ClientPersonalInfoCard({ client }) {
                         <span className="text-sm font-medium text-gray-700">Dirección</span>
                     </div>
                     <p className="text-sm text-gray-900">{client.address}</p>
+                </div>
+
+                <Separator />
+
+                <div>
+                    <div className="mb-2 flex items-center">
+                        <User className="mr-2 h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700">Vendedor asignado</span>
+                    </div>
+                    {client.user ? (
+                        <Badge variant="outline" className="text-sm">
+                            {client.user.name}
+                        </Badge>
+                    ) : (
+                        <span className="text-sm text-gray-400">Sin asignar</span>
+                    )}
                 </div>
             </CardContent>
         </Card>

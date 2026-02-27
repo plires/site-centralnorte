@@ -184,3 +184,90 @@ it('admin puede soft-deletear un presupuesto', function () {
 
     $this->assertSoftDeleted('budgets', ['id' => $budget->id]);
 });
+
+// ─── Scope de clientes en Create ───────────────────────────────────────────────
+
+it('vendedor solo ve sus propios clientes en la página de crear presupuesto', function () {
+    $vendor      = createVendor();
+    $ownClient   = Client::factory()->create(['user_id' => $vendor->id]);
+    $otherClient = Client::factory()->create(); // sin asignar a este vendedor
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.budgets.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/budgets/Create')
+            ->where('clients', fn ($clients) =>
+                collect($clients)->pluck('value')->contains($ownClient->id) &&
+                !collect($clients)->pluck('value')->contains($otherClient->id)
+            )
+        );
+});
+
+it('admin ve todos los clientes en la página de crear presupuesto', function () {
+    $admin   = createAdmin();
+    $client1 = Client::factory()->create();
+    $client2 = Client::factory()->create();
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.budgets.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/budgets/Create')
+            ->where('clients', fn ($clients) =>
+                collect($clients)->pluck('value')->contains($client1->id) &&
+                collect($clients)->pluck('value')->contains($client2->id)
+            )
+        );
+});
+
+it('vendedor ve lista vacía de clientes si no tiene ninguno asignado al crear presupuesto', function () {
+    $vendor = createVendor();
+    Client::factory()->create(); // cliente de otro usuario
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.budgets.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/budgets/Create')
+            ->where('clients', fn ($clients) => count($clients) === 0)
+        );
+});
+
+// ─── Scope de clientes en Edit ─────────────────────────────────────────────────
+
+it('vendedor solo ve sus propios clientes en la página de editar presupuesto', function () {
+    $vendor      = createVendor();
+    $ownClient   = Client::factory()->create(['user_id' => $vendor->id]);
+    $otherClient = Client::factory()->create();
+    $budget      = Budget::factory()->unsent()->create(['user_id' => $vendor->id, 'client_id' => $ownClient->id]);
+
+    $this->actingAs($vendor)
+        ->get(route('dashboard.budgets.edit', $budget))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/budgets/Edit')
+            ->where('clients', fn ($clients) =>
+                collect($clients)->pluck('value')->contains($ownClient->id) &&
+                !collect($clients)->pluck('value')->contains($otherClient->id)
+            )
+        );
+});
+
+it('admin ve todos los clientes en la página de editar presupuesto', function () {
+    $admin   = createAdmin();
+    $client1 = Client::factory()->create();
+    $client2 = Client::factory()->create();
+    $budget  = Budget::factory()->unsent()->create(['user_id' => $admin->id, 'client_id' => $client1->id]);
+
+    $this->actingAs($admin)
+        ->get(route('dashboard.budgets.edit', $budget))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('dashboard/budgets/Edit')
+            ->where('clients', fn ($clients) =>
+                collect($clients)->pluck('value')->contains($client1->id) &&
+                collect($clients)->pluck('value')->contains($client2->id)
+            )
+        );
+});

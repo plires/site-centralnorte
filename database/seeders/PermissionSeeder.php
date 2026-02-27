@@ -40,6 +40,7 @@ class PermissionSeeder extends Seeder
 
         $seller = Role::where('name', 'vendedor')->first();
         $seller->permissions()->syncWithoutDetaching([
+            $permClientes->id,
             $permProducts->id,
             $permCategories->id,
             $permProductImages->id,

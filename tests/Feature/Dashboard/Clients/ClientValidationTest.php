@@ -60,3 +60,17 @@ it('se puede crear un cliente con nombre y email sin otros campos opcionales', f
 
     $this->assertDatabaseHas('clients', ['name' => 'Solo Nombre', 'email' => 'solo@ejemplo.com']);
 });
+
+// ─── user_id inválido ─────────────────────────────────────────────────────────
+
+it('falla si el user_id no existe en la base de datos', function () {
+    $admin = createAdmin();
+
+    $this->actingAs($admin)
+        ->post(route('dashboard.clients.store'), [
+            'name'    => 'Test',
+            'email'   => 'test@test.com',
+            'user_id' => 99999,
+        ])
+        ->assertSessionHasErrors('user_id');
+});

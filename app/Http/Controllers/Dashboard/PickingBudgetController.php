@@ -100,7 +100,11 @@ class PickingBudgetController extends Controller
         $scales = PickingCostScale::active()->orderBy('quantity_from')->get();
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        $clients = Client::orderBy('name')->get()->map(fn($client) => [
+        $clientQuery = Client::orderBy('name');
+        if ($user->role->name !== 'admin') {
+            $clientQuery->where('user_id', $user->id);
+        }
+        $clients = $clientQuery->get()->map(fn($client) => [
             'value' => $client->id,
             'label' => $client->company ? "{$client->name} ({$client->company})" : $client->name,
         ]);
@@ -353,12 +357,19 @@ class PickingBudgetController extends Controller
         // 4. Cargar INCREMENTS (activos)
         $increments = PickingComponentIncrement::active()->orderBy('components_from')->get();
 
-        // 5. Cargar CLIENTES (activos + el cliente actual si fue borrado)
+        // 5. Cargar CLIENTES (activos según rol + el cliente actual aunque esté borrado)
         $clients = Client::query()
             ->withTrashed()
-            ->where(function ($query) use ($pickingBudget) {
-                $query->whereNull('deleted_at')
-                    ->orWhere('id', $pickingBudget->client_id);
+            ->where(function ($query) use ($pickingBudget, $user) {
+                // Siempre incluir el cliente actual del presupuesto (puede estar eliminado)
+                $query->where('id', $pickingBudget->client_id);
+                // Clientes activos, filtrados por rol
+                $query->orWhere(function ($sq) use ($user) {
+                    $sq->whereNull('deleted_at');
+                    if ($user->role->name !== 'admin') {
+                        $sq->where('user_id', $user->id);
+                    }
+                });
             })
             ->orderBy('name')
             ->get()
@@ -649,6 +660,13 @@ class PickingBudgetController extends Controller
             abort(403, 'No tienes permiso para enviar este presupuesto.');
         }
 
+        if ($user->role->name !== 'admin') {
+            $pickingBudget->loadMissing('client');
+            if (! $pickingBudget->client || $pickingBudget->client->user_id !== $user->id) {
+                abort(403, 'No tienes permiso para enviar un presupuesto de un cliente que no te pertenece.');
+            }
+        }
+
         if (!$pickingBudget->canBeSent() && $pickingBudget->status !== BudgetStatus::SENT) {
             return back()->withErrors(['error' => 'Este presupuesto no puede ser enviado.']);
         }
@@ -692,7 +710,7 @@ class PickingBudgetController extends Controller
         try {
             $user = Auth::user();
 
-            if ($user->role->name === 'vendedor' && $pickingBudget->user_id !== $user->id) {
+            if ($user->role->name === 'vendedor' && $pickingBudget->vendor_id !== $user->id) {
                 abort(403, 'No tienes permisos para modificar este presupuesto.');
             }
             $oldStatus = $pickingBudget->status;
@@ -744,6 +762,13 @@ class PickingBudgetController extends Controller
 
         if ($user->role->name !== 'admin' && $pickingBudget->vendor_id !== Auth::id()) {
             abort(403, 'No tienes permiso para descargar este presupuesto.');
+        }
+
+        if ($user->role->name !== 'admin') {
+            $pickingBudget->loadMissing('client');
+            if (! $pickingBudget->client || $pickingBudget->client->user_id !== $user->id) {
+                abort(403, 'No tienes permiso para descargar el PDF de un presupuesto de un cliente que no te pertenece.');
+            }
         }
 
         if ($this->hasInvalidEntitiesForPdf($pickingBudget)) {

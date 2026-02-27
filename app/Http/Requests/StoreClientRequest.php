@@ -27,6 +27,7 @@ class StoreClientRequest extends FormRequest
             'company' => 'max:255|nullable|string',
             'phone' => 'max:255|nullable|string',
             'address' => 'max:255|nullable|string',
+            'user_id' => 'nullable|exists:users,id',
         ];
     }
 
