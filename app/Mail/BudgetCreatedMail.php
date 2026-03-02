@@ -4,15 +4,16 @@ namespace App\Mail;
 
 use App\Models\Budget;
 use App\Models\User;
+use App\Services\BudgetPdfService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Str;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class BudgetCreatedMail extends Mailable
+class BudgetCreatedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -20,18 +21,16 @@ class BudgetCreatedMail extends Mailable
     public User $user;
     public string $publicUrl;
     public bool $isResend;
-    public $pdf;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Budget $budget, User $user, string $publicUrl, bool $isResend = false, $pdf = null)
+    public function __construct(Budget $budget, User $user, string $publicUrl, bool $isResend = false)
     {
-        $this->budget = $budget;
-        $this->user = $user;
+        $this->budget   = $budget;
+        $this->user     = $user;
         $this->publicUrl = $publicUrl;
-        $this->isResend = $isResend;
-        $this->pdf = $pdf;
+        $this->isResend  = $isResend;
     }
 
     /**
@@ -76,24 +75,22 @@ class BudgetCreatedMail extends Mailable
 
     /**
      * Get the attachments for the message.
+     * El PDF se genera aquí (en tiempo de ejecución del job) para evitar
+     * problemas de serialización del objeto DomPDF en la cola.
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {
-        // Si hay PDF, adjuntarlo
-        if ($this->pdf) {
-            $safeTitle = Str::slug($this->budget->title, '-');
-            $filename = "presupuesto-merch-{$this->budget->budget_merch_number}-{$safeTitle}.pdf";
+        $pdfService = new BudgetPdfService();
+        $pdf        = $pdfService->generate($this->budget);
+        $filename   = $pdfService->filename($this->budget);
 
-            return [
-                Attachment::fromData(
-                    fn() => $this->pdf->output(),
-                    $filename
-                )->withMime('application/pdf'),
-            ];
-        }
-
-        return [];
+        return [
+            Attachment::fromData(
+                fn () => $pdf->output(),
+                $filename
+            )->withMime('application/pdf'),
+        ];
     }
 }

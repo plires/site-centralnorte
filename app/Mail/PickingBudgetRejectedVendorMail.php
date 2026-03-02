@@ -4,12 +4,13 @@ namespace App\Mail;
 
 use App\Models\PickingBudget;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PickingBudgetRejectedVendorMail extends Mailable
+class PickingBudgetRejectedVendorMail extends Mailable implements ShouldQueue
 {
   use Queueable, SerializesModels;
 

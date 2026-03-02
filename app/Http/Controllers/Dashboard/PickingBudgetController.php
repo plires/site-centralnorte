@@ -11,16 +11,15 @@ use App\Traits\ExportsToExcel;
 use App\Models\PickingBudget;
 use App\Enums\BudgetStatus;
 use App\Mail\PickingBudgetSent;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\PickingBudgetBox;
 use App\Models\PickingCostScale;
+use App\Services\PickingBudgetPdfService;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\PickingBudgetService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use App\Models\PickingPaymentCondition;
 use App\Models\PickingComponentIncrement;
 use App\Http\Requests\Picking\StorePickingBudgetRequest;
@@ -684,12 +683,10 @@ class PickingBudgetController extends Controller
         try {
             $isResend = $pickingBudget->email_sent;
 
-            $pdf = $this->generatePdf($pickingBudget);
-
             $publicUrl = route('public.picking.budget.show', $pickingBudget->token);
 
             Mail::to($pickingBudget->client->email)
-                ->send(new PickingBudgetSent($pickingBudget, $publicUrl, $pdf));
+                ->send(new PickingBudgetSent($pickingBudget, $publicUrl));
 
             $pickingBudget->markAsSent();
 
@@ -775,11 +772,9 @@ class PickingBudgetController extends Controller
             return redirect()->back()->with('error', 'No se puede generar el PDF: el presupuesto tiene entidades faltantes o eliminadas.');
         }
 
-        $pickingBudget->load(['client', 'vendor', 'services', 'boxes']);
-        $pdf = $this->generatePdf($pickingBudget);
-
-        $safeTitle = Str::slug($pickingBudget->title, '-');
-        $filename = "presupuesto-picking-{$pickingBudget->budget_number}-{$safeTitle}.pdf";
+        $pdfService = new PickingBudgetPdfService();
+        $pdf = $pdfService->generate($pickingBudget);
+        $filename = $pdfService->filename($pickingBudget);
 
         return $pdf->download($filename);
     }
@@ -809,23 +804,6 @@ class PickingBudgetController extends Controller
         }
 
         return false;
-    }
-
-    private function generatePdf(PickingBudget $pickingBudget)
-    {
-        $pickingBudget->load(['client', 'vendor', 'services', 'boxes', 'paymentCondition']);
-
-        $pdf = Pdf::loadView('pdf.picking-budget', [
-            'budget' => $pickingBudget,
-            'businessConfig' => [
-                'iva_rate' => config('business.tax.iva_rate', 0.21),
-                'apply_iva' => config('business.tax.apply_iva', true),
-            ],
-        ]);
-
-        $pdf->setPaper('a4', 'portrait');
-
-        return $pdf;
     }
 
     public function calculateTotals(Request $request)

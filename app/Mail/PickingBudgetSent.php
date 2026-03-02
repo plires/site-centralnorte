@@ -3,8 +3,9 @@
 namespace App\Mail;
 
 use App\Models\PickingBudget;
+use App\Services\PickingBudgetPdfService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Str;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Attachment;
@@ -12,7 +13,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-class PickingBudgetSent extends Mailable
+class PickingBudgetSent extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -22,7 +23,6 @@ class PickingBudgetSent extends Mailable
     public function __construct(
         public PickingBudget $budget,
         public string $publicUrl,
-        public $pdf,
     ) {}
 
     /**
@@ -56,14 +56,22 @@ class PickingBudgetSent extends Mailable
 
     /**
      * Get the attachments for the message.
+     * El PDF se genera aquí (en tiempo de ejecución del job) para evitar
+     * problemas de serialización del objeto DomPDF en la cola.
      *
      * @return array<int, \Illuminate\Mail\Mailables\Attachment>
      */
     public function attachments(): array
     {
+        $pdfService = new PickingBudgetPdfService();
+        $pdf        = $pdfService->generate($this->budget);
+        $filename   = $pdfService->filename($this->budget);
+
         return [
-            Attachment::fromData(fn() => $this->pdf->output(), 'presupuesto-picking-' . $this->budget->budget_number . '-' . Str::slug($this->budget->title, '-') . '.pdf')
-                ->withMime('application/pdf'),
+            Attachment::fromData(
+                fn () => $pdf->output(),
+                $filename
+            )->withMime('application/pdf'),
         ];
     }
 }
