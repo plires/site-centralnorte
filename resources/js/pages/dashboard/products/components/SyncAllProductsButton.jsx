@@ -40,7 +40,7 @@ export function SyncAllProductsButton({ lastSyncInfo, showSyncButton = true, pro
     return (
         <>
             <SyncLoadingOverlay isLoading={loading} title="Sincronizando productos..." subtitle="Esta operación puede tardar varios minutos." />
-            <Alert className="mb-4">
+            <Alert className="mt-4">
                 <Info className="h-4 w-4" />
                 <AlertTitle>Algunos productos se sincronizan desde una API externa</AlertTitle>
                 <AlertDescription className="mt-2 flex items-center justify-between">

@@ -58,7 +58,6 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
             <Head title="Productos" />
             <div className="py-12">
                 <div className="max-w-8xl mx-auto sm:px-6 lg:px-8">
-                    {isAdmin && <SyncAllProductsButton lastSyncInfo={last_sync_info} />}
                     <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                         <div className="p-6 text-gray-900">
                             <div className="mb-6 flex items-center justify-between">
@@ -96,6 +95,7 @@ export default function Index({ auth, products, filters = {}, last_sync_info }) 
                             <DeleteConfirmationDialog />
                         </div>
                     </div>
+                    {isAdmin && <SyncAllProductsButton lastSyncInfo={last_sync_info} />}
                 </div>
             </div>
         </AppLayout>
