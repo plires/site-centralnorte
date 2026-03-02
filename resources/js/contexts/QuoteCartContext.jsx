@@ -28,51 +28,48 @@ export const QuoteCartProvider = ({ children }) => {
     }, [items]);
 
     // Agregar item al carrito
-    const addItem = useCallback(
-        (product, variant, quantity, image) => {
-            const variantId = variant?.id || null;
+    const addItem = useCallback((product, variant, quantity, image) => {
+        const variantId = variant?.id || null;
 
-            setItems((prev) => {
-                // Verificar si ya existe este producto + variante
-                const existingIndex = prev.findIndex((item) => item.productId === product.id && item.variantId === variantId);
+        setItems((prev) => {
+            // Verificar si ya existe este producto + variante
+            const existingIndex = prev.findIndex((item) => item.productId === product.id && item.variantId === variantId);
 
-                if (existingIndex >= 0) {
-                    // Actualizar cantidad del existente
-                    const updated = [...prev];
-                    const maxQty = variant?.stock > 0 ? variant.stock : 100;
-                    const newQty = Math.min(updated[existingIndex].quantity + quantity, maxQty);
-                    updated[existingIndex] = {
-                        ...updated[existingIndex],
-                        quantity: newQty,
-                    };
-                    return updated;
-                }
+            if (existingIndex >= 0) {
+                // Actualizar cantidad del existente
+                const updated = [...prev];
+                const maxQty = variant?.stock > 0 ? variant.stock : 100;
+                const newQty = Math.min(updated[existingIndex].quantity + quantity, maxQty);
+                updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    quantity: newQty,
+                };
+                return updated;
+            }
 
-                // Agregar nuevo item
-                return [
-                    ...prev,
-                    {
-                        id: `${product.id}-${variantId || 'no-variant'}-${Date.now()}`,
-                        productId: product.id,
-                        productName: product.name,
-                        productSku: product.sku,
-                        variantId: variantId,
-                        variantSku: variant?.sku || null,
-                        variantDescription: variant?.description || null,
-                        variantStock: variant?.stock ?? 0,
-                        primaryColor: variant?.primary_color || null,
-                        secondaryColor: variant?.secondary_color || null,
-                        quantity,
-                        image: image || null,
-                    },
-                ];
-            });
+            // Agregar nuevo item
+            return [
+                ...prev,
+                {
+                    id: `${product.id}-${variantId || 'no-variant'}-${Date.now()}`,
+                    productId: product.id,
+                    productName: product.name,
+                    productSku: product.sku,
+                    variantId: variantId,
+                    variantSku: variant?.sku || null,
+                    variantDescription: variant?.description || null,
+                    variantStock: variant?.stock ?? 0,
+                    primaryColor: variant?.primary_color || null,
+                    secondaryColor: variant?.secondary_color || null,
+                    quantity,
+                    image: image || null,
+                },
+            ];
+        });
 
-            // Abrir el drawer al agregar
-            setIsDrawerOpen(true);
-        },
-        [],
-    );
+        // Abrir el drawer al agregar
+        setIsDrawerOpen(true);
+    }, []);
 
     // Actualizar cantidad de un item
     const updateQuantity = useCallback((itemId, quantity) => {

@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { FileEdit, FileText, Send, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock, FileEdit, FileText, Send, XCircle } from 'lucide-react';
 
 /**
  * Configuración de estados de presupuesto
@@ -41,7 +41,7 @@ const statusConfig = {
 
 /**
  * Badge de estado para presupuestos
- * 
+ *
  * @param {Object} props
  * @param {string} props.status - Estado del presupuesto (unsent, draft, sent, approved, rejected, expired)
  * @param {string} [props.label] - Etiqueta personalizada (opcional, usa la del config si no se provee)
@@ -49,16 +49,10 @@ const statusConfig = {
  * @param {string} [props.size='default'] - Tamaño: 'sm', 'default', 'lg'
  * @param {string} [props.className] - Clases adicionales
  */
-export function BudgetStatusBadge({ 
-    status, 
-    label, 
-    showIcon = true, 
-    size = 'default',
-    className 
-}) {
+export function BudgetStatusBadge({ status, label, showIcon = true, size = 'default', className }) {
     const config = statusConfig[status] || statusConfig.unsent;
     const Icon = config.icon;
-    
+
     const sizeClasses = {
         sm: 'px-2 py-0.5 text-xs',
         default: 'px-2.5 py-1 text-xs',
@@ -72,15 +66,7 @@ export function BudgetStatusBadge({
     };
 
     return (
-        <Badge 
-            variant="outline"
-            className={cn(
-                'inline-flex items-center gap-1.5 font-medium border',
-                config.color,
-                sizeClasses[size],
-                className
-            )}
-        >
+        <Badge variant="outline" className={cn('inline-flex items-center gap-1.5 border font-medium', config.color, sizeClasses[size], className)}>
             {showIcon && <Icon className={iconSizes[size]} />}
             {label || config.label}
         </Badge>

@@ -300,8 +300,8 @@ const SolicitarPresupuesto = () => {
                         </button>
 
                         <p className={styles.disclaimer}>
-                            Al enviar este formulario, un vendedor recibirá tu solicitud y preparará un presupuesto personalizado. Te
-                            contactaremos a la brevedad.
+                            Al enviar este formulario, un vendedor recibirá tu solicitud y preparará un presupuesto personalizado. Te contactaremos a
+                            la brevedad.
                         </p>
                     </form>
 

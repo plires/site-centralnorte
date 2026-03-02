@@ -216,7 +216,10 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                         {isApparelLocked ? (
                             <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
                                 <AlertCircle className="h-4 w-4 shrink-0" />
-                                <span>No se pueden agregar variantes Apparel porque ya existen variantes Standard. Eliminá las variantes Standard primero.</span>
+                                <span>
+                                    No se pueden agregar variantes Apparel porque ya existen variantes Standard. Eliminá las variantes Standard
+                                    primero.
+                                </span>
                             </div>
                         ) : (
                             <Button type="button" variant="outline" onClick={() => addVariant('apparel')} className="w-full">
@@ -380,7 +383,10 @@ export default function ProductVariantsSection({ variants, onChange, errors = {}
                         {isStandardLocked ? (
                             <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
                                 <AlertCircle className="h-4 w-4 shrink-0" />
-                                <span>No se pueden agregar variantes Standard porque ya existen variantes Apparel. Eliminá las variantes Apparel primero.</span>
+                                <span>
+                                    No se pueden agregar variantes Standard porque ya existen variantes Apparel. Eliminá las variantes Apparel
+                                    primero.
+                                </span>
                             </div>
                         ) : (
                             <Button type="button" variant="outline" onClick={() => addVariant('standard')} className="w-full">

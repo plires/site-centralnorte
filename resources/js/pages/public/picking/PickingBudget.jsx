@@ -4,8 +4,8 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 
-import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
+import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
 import BudgetUnavailableActionsBlock from '@/pages/public/components/BudgetUnavailableActionsBlock';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
@@ -110,13 +110,9 @@ export default function PickingBudget({ budget, businessConfig }) {
                 <PickingBudgetComments budget={budget} />
 
                 {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
-                {(allowsAction || isSent) && (
-                    hasCriticalIssues ? (
-                        <BudgetUnavailableActionsBlock
-                            vendor={budget.vendor}
-                            businessConfig={businessConfig}
-                            reasons={criticalIssueReasons}
-                        />
+                {(allowsAction || isSent) &&
+                    (hasCriticalIssues ? (
+                        <BudgetUnavailableActionsBlock vendor={budget.vendor} businessConfig={businessConfig} reasons={criticalIssueReasons} />
                     ) : (
                         <div className="mt-8 mb-8">
                             <ClientBudgetActions
@@ -126,8 +122,7 @@ export default function PickingBudget({ budget, businessConfig }) {
                                 currentStatus={budget.status}
                             />
                         </div>
-                    )
-                )}
+                    ))}
             </div>
         </div>
     );

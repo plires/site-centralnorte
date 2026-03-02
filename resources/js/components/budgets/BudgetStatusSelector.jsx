@@ -1,12 +1,3 @@
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,12 +8,15 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { BudgetStatusBadge, budgetStatusOptions } from './BudgetStatusBadge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { router } from '@inertiajs/react';
 import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
+import { BudgetStatusBadge, budgetStatusOptions } from './BudgetStatusBadge';
 
 /**
  * Selector de estado para presupuestos (uso del vendedor/admin en dashboard)
- * 
+ *
  * @param {Object} props
  * @param {number} props.budgetId - ID del presupuesto
  * @param {string} props.currentStatus - Estado actual
@@ -30,13 +24,7 @@ import { Loader2 } from 'lucide-react';
  * @param {boolean} [props.confirmChange=true] - Mostrar confirmación antes de cambiar
  * @param {function} [props.onStatusChange] - Callback después de cambiar estado
  */
-export function BudgetStatusSelector({
-    budgetId,
-    currentStatus,
-    routeName,
-    confirmChange = true,
-    onStatusChange,
-}) {
+export function BudgetStatusSelector({ budgetId, currentStatus, routeName, confirmChange = true, onStatusChange }) {
     const [isLoading, setIsLoading] = useState(false);
     const [pendingStatus, setPendingStatus] = useState(null);
     const [showConfirm, setShowConfirm] = useState(false);
@@ -54,7 +42,7 @@ export function BudgetStatusSelector({
 
     const submitStatusChange = (newStatus) => {
         setIsLoading(true);
-        
+
         router.patch(
             route(routeName, budgetId),
             { status: newStatus },
@@ -73,22 +61,18 @@ export function BudgetStatusSelector({
                     setShowConfirm(false);
                     setPendingStatus(null);
                 },
-            }
+            },
         );
     };
 
     const getStatusLabel = (status) => {
-        const option = budgetStatusOptions.find(o => o.value === status);
+        const option = budgetStatusOptions.find((o) => o.value === status);
         return option?.label || status;
     };
 
     return (
         <>
-            <Select
-                value={currentStatus}
-                onValueChange={handleStatusChange}
-                disabled={isLoading}
-            >
+            <Select value={currentStatus} onValueChange={handleStatusChange} disabled={isLoading}>
                 <SelectTrigger className="w-[180px]">
                     {isLoading ? (
                         <div className="flex items-center gap-2">
@@ -115,27 +99,19 @@ export function BudgetStatusSelector({
                     <AlertDialogHeader>
                         <AlertDialogTitle>¿Cambiar estado del presupuesto?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Estás por cambiar el estado de{' '}
-                            <strong>{getStatusLabel(currentStatus)}</strong> a{' '}
+                            Estás por cambiar el estado de <strong>{getStatusLabel(currentStatus)}</strong> a{' '}
                             <strong>{getStatusLabel(pendingStatus)}</strong>.
                             {pendingStatus === 'sent' && (
-                                <span className="block mt-2 text-blue-600">
-                                    Nota: Esto hará el presupuesto visible para el cliente.
-                                </span>
+                                <span className="mt-2 block text-blue-600">Nota: Esto hará el presupuesto visible para el cliente.</span>
                             )}
                             {pendingStatus === 'expired' && (
-                                <span className="block mt-2 text-orange-600">
-                                    Nota: El cliente ya no podrá ver el presupuesto.
-                                </span>
+                                <span className="mt-2 block text-orange-600">Nota: El cliente ya no podrá ver el presupuesto.</span>
                             )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => submitStatusChange(pendingStatus)}
-                            disabled={isLoading}
-                        >
+                        <AlertDialogAction onClick={() => submitStatusChange(pendingStatus)} disabled={isLoading}>
                             {isLoading ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

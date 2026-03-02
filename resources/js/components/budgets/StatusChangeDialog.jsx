@@ -1,6 +1,6 @@
 // resources/js/components/budgets/StatusChangeDialog.jsx
 
-import { Loader2 } from 'lucide-react';
+import { budgetStatusOptions } from '@/components/BudgetStatusBadge';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,7 +11,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { budgetStatusOptions } from '@/components/BudgetStatusBadge';
+import { Loader2 } from 'lucide-react';
 
 function getStatusLabel(status) {
     const option = budgetStatusOptions.find((o) => o.value === status);
@@ -42,12 +42,8 @@ export function StatusChangeDialog({ open, onOpenChange, onConfirm, currentStatu
                                 Estás por cambiar el estado de <strong>{getStatusLabel(currentStatus)}</strong> a{' '}
                                 <strong>{getStatusLabel(pendingStatus)}</strong>.
                             </p>
-                            {pendingStatus === 'sent' && (
-                                <p className="mt-2 text-blue-600">Esto hará el presupuesto visible para el cliente.</p>
-                            )}
-                            {pendingStatus === 'expired' && (
-                                <p className="mt-2 text-orange-600">El cliente ya no podrá ver el presupuesto.</p>
-                            )}
+                            {pendingStatus === 'sent' && <p className="mt-2 text-blue-600">Esto hará el presupuesto visible para el cliente.</p>}
+                            {pendingStatus === 'expired' && <p className="mt-2 text-orange-600">El cliente ya no podrá ver el presupuesto.</p>}
                             {pendingStatus === 'approved' && (
                                 <p className="mt-2 text-green-600">Esto marcará el presupuesto como aprobado manualmente.</p>
                             )}

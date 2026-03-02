@@ -1,8 +1,9 @@
 // resources/js/pages/dashboard/picking/Show.jsx
 
+import { SendEmailDialog, StatusChangeDialog } from '@/components/budgets';
+import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
 import ContextualInformationOfTheState from '@/components/budgets/ContextualInformationOfTheState';
 import StatusBudget from '@/components/budgets/StatusBudget';
-import { SendEmailDialog, StatusChangeDialog } from '@/components/budgets';
 import { canSendStatus, isEditableStatus, isPubliclyVisibleStatus } from '@/components/BudgetStatusBadge';
 import GlobalWarningsBanner from '@/components/GlobalWarningsBanner';
 import {
@@ -15,17 +16,15 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
 import { Head, router, usePage } from '@inertiajs/react';
-import BudgetActionButtons from '@/components/budgets/BudgetActionButtons';
-import PickingInfoSection from './components/PickingInfoSection';
-import { Box, DollarSign, Loader2, Package } from 'lucide-react';
+import { Box, DollarSign, Package } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import PickingBudgetTotalsSection from './components/PickingBudgetTotalsSection';
+import PickingInfoSection from './components/PickingInfoSection';
 
 export default function Show({ auth, budget, warnings, businessConfig }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);

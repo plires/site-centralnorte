@@ -110,10 +110,7 @@ export default function ClientForm({ data, setData, handleSubmit, processing, er
                                                 <User className="mr-2 h-4 w-4" />
                                                 Vendedor asignado
                                             </Label>
-                                            <Select
-                                                value={data.user_id?.toString() || ''}
-                                                onValueChange={(value) => setData('user_id', value)}
-                                            >
+                                            <Select value={data.user_id?.toString() || ''} onValueChange={(value) => setData('user_id', value)}>
                                                 <SelectTrigger className={errors.user_id ? 'border-red-500' : ''}>
                                                     <SelectValue placeholder="Selecciona un vendedor" />
                                                 </SelectTrigger>

@@ -27,8 +27,8 @@ const PresupuestoEnviado = ({ budgetNumber }) => {
 
                         {/* Message */}
                         <p className={styles.message}>
-                            Tu solicitud de presupuesto fue recibida correctamente. Un vendedor la revisará y te enviará el presupuesto
-                            personalizado a tu email.
+                            Tu solicitud de presupuesto fue recibida correctamente. Un vendedor la revisará y te enviará el presupuesto personalizado
+                            a tu email.
                         </p>
 
                         {/* Info Cards */}

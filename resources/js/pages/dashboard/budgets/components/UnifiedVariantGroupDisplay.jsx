@@ -21,11 +21,7 @@ export default function UnifiedVariantGroupDisplay({ group, items, selectedVaria
                     <CardTitle className="flex items-center gap-3 text-lg">
                         {/* Imagen del producto */}
                         {productImage ? (
-                            <img
-                                src={productImage}
-                                alt={firstVariant.product.name}
-                                className="h-16 w-16 rounded object-cover"
-                            />
+                            <img src={productImage} alt={firstVariant.product.name} className="h-16 w-16 rounded object-cover" />
                         ) : (
                             <div className="flex h-16 w-16 items-center justify-center rounded border bg-gray-100">
                                 <Package className="h-8 w-8 text-gray-400" />

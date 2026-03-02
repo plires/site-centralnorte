@@ -24,8 +24,8 @@ export default function BudgetUnavailableActionsBlock({ vendor, businessConfig, 
                 <div>
                     <h3 className="text-base font-semibold text-red-800">Presupuesto con información incompleta</h3>
                     <p className="mt-1 text-sm text-red-700">
-                        Este presupuesto no puede ser aprobado ni descargado en este momento porque contiene información que ya no está disponible en el sistema. Por favor,
-                        contactate con nosotros para resolverlo.
+                        Este presupuesto no puede ser aprobado ni descargado en este momento porque contiene información que ya no está disponible en
+                        el sistema. Por favor, contactate con nosotros para resolverlo.
                     </p>
                 </div>
             </div>
@@ -41,9 +41,7 @@ export default function BudgetUnavailableActionsBlock({ vendor, businessConfig, 
 
             {/* Bloque de contacto */}
             <div className="ml-9 rounded-lg border border-red-200 bg-white p-4">
-                <p className="mb-3 text-sm font-medium text-gray-700">
-                    {contactName ? `Contactá a ${contactName}:` : 'Contactate con nosotros:'}
-                </p>
+                <p className="mb-3 text-sm font-medium text-gray-700">{contactName ? `Contactá a ${contactName}:` : 'Contactate con nosotros:'}</p>
                 <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                     {contactEmail && (
                         <a

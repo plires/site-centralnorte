@@ -1,11 +1,11 @@
 // Componentes de presupuestos unificados
 
-export { 
-    BudgetStatusBadge, 
+export {
+    BudgetStatusBadge,
     budgetStatusOptions,
+    canSendStatus,
     getStatusConfig,
     isEditableStatus,
-    canSendStatus,
     isPubliclyVisibleStatus,
 } from './BudgetStatusBadge';
 

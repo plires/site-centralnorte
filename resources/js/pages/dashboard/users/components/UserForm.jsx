@@ -175,7 +175,8 @@ export default function UserForm({ data, setData, handleSubmit, processing, erro
                                                         Recibir asignaciones automáticas de presupuestos
                                                     </Label>
                                                     <p className="text-xs text-gray-500">
-                                                        Si está habilitado, este usuario puede recibir presupuestos de merch asignados automáticamente desde el sitio público.
+                                                        Si está habilitado, este usuario puede recibir presupuestos de merch asignados automáticamente
+                                                        desde el sitio público.
                                                     </p>
                                                 </div>
                                                 <Switch

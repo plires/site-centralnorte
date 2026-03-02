@@ -329,7 +329,6 @@ export default function ComponentIncrements({ increments }) {
                     </div>
                 </div>
             </div>
-
         </AppLayout>
     );
 }

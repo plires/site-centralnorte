@@ -8,7 +8,14 @@ import { useState } from 'react';
 /**
  * Componente de búsqueda de clientes con autocompletado
  */
-export default function ClientCombobox({ clients, value, onChange, error, placeholder = 'Seleccionar cliente...', emptyText = 'No se encontraron clientes.' }) {
+export default function ClientCombobox({
+    clients,
+    value,
+    onChange,
+    error,
+    placeholder = 'Seleccionar cliente...',
+    emptyText = 'No se encontraron clientes.',
+}) {
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 

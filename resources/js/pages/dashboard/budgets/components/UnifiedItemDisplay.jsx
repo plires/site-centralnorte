@@ -26,11 +26,7 @@ export default function UnifiedItemDisplay({ item, showActions = false, onEdit, 
                 <div className="flex flex-1 gap-4">
                     {/* Imagen del producto */}
                     {productImageUrl ? (
-                        <img
-                            src={productImageUrl}
-                            alt={item.product?.name ?? 'Producto'}
-                            className="h-16 w-16 rounded object-cover"
-                        />
+                        <img src={productImageUrl} alt={item.product?.name ?? 'Producto'} className="h-16 w-16 rounded object-cover" />
                     ) : (
                         <div className="flex h-16 w-16 items-center justify-center rounded border bg-gray-100">
                             <Package className="h-8 w-8 text-gray-400" />

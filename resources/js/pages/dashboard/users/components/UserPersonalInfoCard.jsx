@@ -81,12 +81,12 @@ export default function UserPersonalInfoCard({ user }) {
                                 <span className="text-sm font-medium text-gray-700">Asignación automática de presupuestos</span>
                             </div>
                             {user.accepts_budget_assignments ? (
-                                <Badge className="inline-flex items-center bg-green-100 text-green-800 border-green-200">
+                                <Badge className="inline-flex items-center border-green-200 bg-green-100 text-green-800">
                                     <BellRing className="mr-1 h-3 w-3" />
                                     Habilitado
                                 </Badge>
                             ) : (
-                                <Badge className="inline-flex items-center bg-gray-100 text-gray-600 border-gray-200">
+                                <Badge className="inline-flex items-center border-gray-200 bg-gray-100 text-gray-600">
                                     <BellOff className="mr-1 h-3 w-3" />
                                     Deshabilitado
                                 </Badge>

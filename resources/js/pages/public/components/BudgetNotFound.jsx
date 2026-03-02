@@ -1,19 +1,9 @@
 // resources/js/pages/public/components/BudgetNotFound.jsx
 
-import { Head } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { 
-    FileX, 
-    Clock, 
-    XCircle, 
-    CheckCircle, 
-    FileEdit, 
-    Send,
-    Home,
-    RefreshCcw,
-    Mail
-} from 'lucide-react';
+import { Head } from '@inertiajs/react';
+import { CheckCircle, Clock, FileEdit, FileX, Home, Mail, RefreshCcw, Send, XCircle } from 'lucide-react';
 
 /**
  * Configuración de estados para la página de "no encontrado"
@@ -98,7 +88,7 @@ const statusConfig = {
 /**
  * Componente unificado para presupuestos no disponibles
  * Funciona tanto para presupuestos de Merch como de Picking
- * 
+ *
  * @param {Object} props
  * @param {string} props.message - Mensaje personalizado (opcional)
  * @param {string} props.reason - Razón del estado (not_found, expired, rejected, approved, etc.)
@@ -138,14 +128,10 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
                             </div>
 
                             {/* Título */}
-                            <h2 className={`mb-3 text-2xl font-bold ${config.isSuccess ? 'text-green-700' : 'text-gray-900'}`}>
-                                {config.title}
-                            </h2>
+                            <h2 className={`mb-3 text-2xl font-bold ${config.isSuccess ? 'text-green-700' : 'text-gray-900'}`}>{config.title}</h2>
 
                             {/* Descripción */}
-                            <p className="mb-4 text-gray-600">
-                                {displayMessage}
-                            </p>
+                            <p className="mb-4 text-gray-600">{displayMessage}</p>
 
                             {/* Sugerencia adicional */}
                             {config.suggestion && (
@@ -166,21 +152,13 @@ export default function BudgetNotFound({ message, reason = 'not_found', status }
 
                             {/* Botones de acción */}
                             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-                                <Button
-                                    variant="outline"
-                                    onClick={() => window.location.href = '/'}
-                                    className="flex items-center gap-2"
-                                >
+                                <Button variant="outline" onClick={() => (window.location.href = '/')} className="flex items-center gap-2">
                                     <Home className="h-4 w-4" />
                                     Ir al inicio
                                 </Button>
 
                                 {!config.isSuccess && (
-                                    <Button
-                                        variant="default"
-                                        onClick={() => window.location.reload()}
-                                        className="flex items-center gap-2"
-                                    >
+                                    <Button variant="default" onClick={() => window.location.reload()} className="flex items-center gap-2">
                                         <RefreshCcw className="h-4 w-4" />
                                         Reintentar
                                     </Button>

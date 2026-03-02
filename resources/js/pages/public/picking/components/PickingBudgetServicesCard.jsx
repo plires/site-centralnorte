@@ -45,18 +45,10 @@ export default function PickingBudgetServicesCard({ services = [] }) {
                         <TableBody>
                             {services.map((service, index) => (
                                 <TableRow key={index}>
-                                    <TableCell className="font-medium">
-                                        {service.service_description || 'Servicio sin descripción'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {service.quantity?.toLocaleString('es-AR') || 0}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {formatCurrency(service.unit_cost)}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                        {formatCurrency(service.subtotal)}
-                                    </TableCell>
+                                    <TableCell className="font-medium">{service.service_description || 'Servicio sin descripción'}</TableCell>
+                                    <TableCell className="text-right">{service.quantity?.toLocaleString('es-AR') || 0}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(service.unit_cost)}</TableCell>
+                                    <TableCell className="text-right font-medium">{formatCurrency(service.subtotal)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

@@ -46,11 +46,7 @@ export default function BudgetActionButtons({
     return (
         <div className="mb-6 flex flex-wrap gap-2">
             {(hasWarnings || isEditable) && (
-                <Button
-                    variant={hasWarnings ? 'destructive' : 'outline'}
-                    size="sm"
-                    onClick={onEdit}
-                >
+                <Button variant={hasWarnings ? 'destructive' : 'outline'} size="sm" onClick={onEdit}>
                     <Edit className="mr-2 h-4 w-4" />
                     Editar
                 </Button>

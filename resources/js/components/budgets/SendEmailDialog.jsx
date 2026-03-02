@@ -1,6 +1,5 @@
 // resources/js/components/budgets/SendEmailDialog.jsx
 
-import { AlertTriangle } from 'lucide-react';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,6 +10,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { AlertTriangle } from 'lucide-react';
 
 /**
  * Dialog de confirmación de envío/reenvío de presupuesto por email.
@@ -51,8 +51,7 @@ export function SendEmailDialog({ open, onOpenChange, onConfirm, budget, budgetN
                             ) : (
                                 <div>
                                     <p>
-                                        ¿Estás seguro de que quieres enviar el email del presupuesto {budgetNumber} a{' '}
-                                        <strong>{clientEmail}</strong>?
+                                        ¿Estás seguro de que quieres enviar el email del presupuesto {budgetNumber} a <strong>{clientEmail}</strong>?
                                     </p>
                                     <p className="mt-2">El cliente recibirá un link para visualizar el presupuesto online.</p>
                                     {budget.status !== 'sent' && (

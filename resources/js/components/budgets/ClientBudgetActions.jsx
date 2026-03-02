@@ -1,7 +1,3 @@
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -12,24 +8,23 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { router } from '@inertiajs/react';
+import { CheckCircle, Loader2, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Botones de acción del cliente para aprobar/rechazar presupuesto
  * Se usa en la vista pública del presupuesto
- * 
+ *
  * @param {Object} props
  * @param {string} props.token - Token del presupuesto
  * @param {string} props.approveRoute - Nombre de la ruta para aprobar
  * @param {string} props.rejectRoute - Nombre de la ruta para rechazar
  * @param {boolean} [props.allowsAction=true] - Si el presupuesto permite acciones
  */
-export function ClientBudgetActions({
-    token,
-    approveRoute,
-    rejectRoute,
-    allowsAction = true,
-}) {
+export function ClientBudgetActions({ token, approveRoute, rejectRoute, allowsAction = true }) {
     const [isApproving, setIsApproving] = useState(false);
     const [isRejecting, setIsRejecting] = useState(false);
     const [showApproveDialog, setShowApproveDialog] = useState(false);
@@ -47,7 +42,7 @@ export function ClientBudgetActions({
                     setIsApproving(false);
                     setShowApproveDialog(false);
                 },
-            }
+            },
         );
     };
 
@@ -63,7 +58,7 @@ export function ClientBudgetActions({
                     setShowRejectDialog(false);
                     setRejectReason('');
                 },
-            }
+            },
         );
     };
 
@@ -72,11 +67,11 @@ export function ClientBudgetActions({
     }
 
     return (
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
             {/* Botón Aprobar */}
             <Button
                 onClick={() => setShowApproveDialog(true)}
-                className="bg-green-600 hover:bg-green-700 text-white flex-1"
+                className="flex-1 bg-green-600 text-white hover:bg-green-700"
                 disabled={isApproving || isRejecting}
             >
                 <CheckCircle className="mr-2 h-5 w-5" />
@@ -87,7 +82,7 @@ export function ClientBudgetActions({
             <Button
                 onClick={() => setShowRejectDialog(true)}
                 variant="outline"
-                className="border-red-300 text-red-600 hover:bg-red-50 flex-1"
+                className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
                 disabled={isApproving || isRejecting}
             >
                 <XCircle className="mr-2 h-5 w-5" />
@@ -103,20 +98,13 @@ export function ClientBudgetActions({
                             ¿Aprobar este presupuesto?
                         </AlertDialogTitle>
                         <AlertDialogDescription>
-                            Al aprobar este presupuesto, nos pondremos en contacto contigo
-                            para coordinar los siguientes pasos. Esta acción confirmará
+                            Al aprobar este presupuesto, nos pondremos en contacto contigo para coordinar los siguientes pasos. Esta acción confirmará
                             tu aceptación de los términos y condiciones presentados.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isApproving}>
-                            Cancelar
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleApprove}
-                            disabled={isApproving}
-                            className="bg-green-600 hover:bg-green-700"
-                        >
+                        <AlertDialogCancel disabled={isApproving}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleApprove} disabled={isApproving} className="bg-green-600 hover:bg-green-700">
                             {isApproving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -143,9 +131,8 @@ export function ClientBudgetActions({
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             <p className="mb-4">
-                                Si este presupuesto no cumple con tus expectativas,
-                                puedes rechazarlo. Opcionalmente, puedes indicarnos
-                                el motivo para mejorar futuras propuestas.
+                                Si este presupuesto no cumple con tus expectativas, puedes rechazarlo. Opcionalmente, puedes indicarnos el motivo para
+                                mejorar futuras propuestas.
                             </p>
                             <Textarea
                                 placeholder="Motivo del rechazo (opcional)"
@@ -157,14 +144,8 @@ export function ClientBudgetActions({
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isRejecting}>
-                            Cancelar
-                        </AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleReject}
-                            disabled={isRejecting}
-                            className="bg-red-600 hover:bg-red-700"
-                        >
+                        <AlertDialogCancel disabled={isRejecting}>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleReject} disabled={isRejecting} className="bg-red-600 hover:bg-red-700">
                             {isRejecting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

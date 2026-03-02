@@ -7,7 +7,7 @@ const RseIntro = () => {
         <section className={styles.section}>
             <div className="container">
                 <div className="row justify-content-center">
-                    <div className="col-12 col-lg-8">
+                    <div className="col-lg-8 col-12">
                         <p className={styles.text}>
                             En <strong>Central Norte SRL</strong> sabemos que nuestra tarea no termina cuando entregamos un producto. Creemos que cada
                             paso que damos puede sumar a un <strong>mundo más justo, solidario y con más oportunidades para todos.</strong> Por eso,
@@ -27,7 +27,7 @@ const RseIntro = () => {
 
             <div className="container">
                 <div className="row justify-content-center">
-                    <div className="col-12 col-lg-8">
+                    <div className="col-lg-8 col-12">
                         <p className={styles.text}>
                             Ese compromiso también lo vivimos puertas adentro:{' '}
                             <strong>valoramos a cada uno de nuestros colaboradores, porque son el corazón de lo que hacemos.</strong> Apostamos a la

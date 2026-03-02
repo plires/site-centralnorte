@@ -1,15 +1,7 @@
 // resources/js/pages/public/budgets/components/BudgetStatusAlert.jsx
 
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-    Clock, 
-    AlertTriangle, 
-    CheckCircle, 
-    XCircle, 
-    Send, 
-    FileEdit,
-    CalendarClock
-} from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle, Clock, FileEdit, Send, XCircle } from 'lucide-react';
 
 /**
  * Obtiene información del estado del presupuesto

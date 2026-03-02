@@ -1,9 +1,5 @@
 // resources/js/pages/public/components/ClientBudgetActions.jsx
 
-import { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,24 +10,23 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { router } from '@inertiajs/react';
 import { CheckCircle, Clock, Loader2, MessageSquare } from 'lucide-react';
+import { useState } from 'react';
 
 /**
  * Botones de acción del cliente para aprobar o poner en evaluación un presupuesto
  * Se usa en la vista pública del presupuesto
- * 
+ *
  * @param {Object} props
  * @param {string} props.token - Token del presupuesto
  * @param {string} props.approveRoute - Nombre de la ruta para aprobar
  * @param {string} props.inReviewRoute - Nombre de la ruta para poner en evaluación
  * @param {string} props.currentStatus - Estado actual del presupuesto
  */
-export default function ClientBudgetActions({
-    token,
-    approveRoute,
-    inReviewRoute,
-    currentStatus = 'sent',
-}) {
+export default function ClientBudgetActions({ token, approveRoute, inReviewRoute, currentStatus = 'sent' }) {
     const [isApproving, setIsApproving] = useState(false);
     const [isSettingReview, setIsSettingReview] = useState(false);
     const [showApproveDialog, setShowApproveDialog] = useState(false);
@@ -51,7 +46,7 @@ export default function ClientBudgetActions({
                     setIsApproving(false);
                     setShowApproveDialog(false);
                 },
-            }
+            },
         );
     };
 
@@ -66,7 +61,7 @@ export default function ClientBudgetActions({
                     setIsSettingReview(false);
                     setShowReviewDialog(false);
                 },
-            }
+            },
         );
     };
 
@@ -81,20 +76,16 @@ export default function ClientBudgetActions({
             <CardContent>
                 {isInReview ? (
                     <>
-                        <div className="mb-4 rounded-lg bg-yellow-50 border border-yellow-200 p-4">
-                            <p className="text-sm font-medium text-yellow-800 mb-2">
-                                📋 Este presupuesto está en evaluación
-                            </p>
+                        <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                            <p className="mb-2 text-sm font-medium text-yellow-800">📋 Este presupuesto está en evaluación</p>
                             <p className="text-sm text-yellow-700">
-                                Ya marcaste este presupuesto como "En Evaluación". 
-                                Cuando estés listo, puedes aprobarlo directamente desde aquí.
+                                Ya marcaste este presupuesto como "En Evaluación". Cuando estés listo, puedes aprobarlo directamente desde aquí.
                             </p>
                         </div>
                     </>
                 ) : (
                     <p className="mb-4 text-sm text-gray-600">
-                        Revisa los detalles del presupuesto y selecciona una opción. 
-                        Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
+                        Revisa los detalles del presupuesto y selecciona una opción. Tu respuesta nos ayudará a procesar tu solicitud más rápidamente.
                     </p>
                 )}
 
@@ -131,16 +122,13 @@ export default function ClientBudgetActions({
                                         ¿Estás seguro de que deseas aprobar este presupuesto?
                                         <br />
                                         <br />
-                                        Al confirmar, notificaremos al vendedor que has aceptado la propuesta
-                                        y nos pondremos en contacto contigo para coordinar los siguientes pasos.
+                                        Al confirmar, notificaremos al vendedor que has aceptado la propuesta y nos pondremos en contacto contigo para
+                                        coordinar los siguientes pasos.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction
-                                        onClick={handleApprove}
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
+                                    <AlertDialogAction onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
                                         Sí, aprobar
                                     </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -180,16 +168,13 @@ export default function ClientBudgetActions({
                                             ¿Estás seguro de que deseas aprobar este presupuesto?
                                             <br />
                                             <br />
-                                            Al confirmar, notificaremos al vendedor que has aceptado la propuesta
-                                            y nos pondremos en contacto contigo para coordinar los siguientes pasos.
+                                            Al confirmar, notificaremos al vendedor que has aceptado la propuesta y nos pondremos en contacto contigo
+                                            para coordinar los siguientes pasos.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleApprove}
-                                            className="bg-green-600 hover:bg-green-700"
-                                        >
+                                        <AlertDialogAction onClick={handleApprove} className="bg-green-600 hover:bg-green-700">
                                             Sí, aprobar
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -228,16 +213,13 @@ export default function ClientBudgetActions({
                                             ¿Necesitas más tiempo para revisar este presupuesto?
                                             <br />
                                             <br />
-                                            Al marcar como "En Evaluación", el vendedor sabrá que estás considerando
-                                            la propuesta y nos comunicaremos contigo para resolver cualquier duda.
+                                            Al marcar como "En Evaluación", el vendedor sabrá que estás considerando la propuesta y nos comunicaremos
+                                            contigo para resolver cualquier duda.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleInReview}
-                                            className="bg-yellow-600 hover:bg-yellow-700"
-                                        >
+                                        <AlertDialogAction onClick={handleInReview} className="bg-yellow-600 hover:bg-yellow-700">
                                             Sí, poner en evaluación
                                         </AlertDialogAction>
                                     </AlertDialogFooter>

@@ -72,7 +72,7 @@ export default function Login({ status, canResetPassword }) {
                                 type="button"
                                 tabIndex={-1}
                                 onClick={() => setShowPassword((prev) => !prev)}
-                                className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground"
+                                className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex items-center px-3"
                                 aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                             >
                                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

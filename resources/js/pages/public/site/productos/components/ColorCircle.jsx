@@ -8,11 +8,12 @@ const ColorCircle = ({ primaryColor, secondaryColor, title, stock, isActive, onC
     const tooltipRef = useRef(null);
 
     // Sanitizar el título para el tooltip: eliminar "." y "..." y limpiar separadores vacíos
-    const sanitizedTitle = title
-        ?.split(' / ')
-        .map((part) => part.trim())
-        .filter((part) => part && part !== '.' && part !== '...')
-        .join(' / ') || '';
+    const sanitizedTitle =
+        title
+            ?.split(' / ')
+            .map((part) => part.trim())
+            .filter((part) => part && part !== '.' && part !== '...')
+            .join(' / ') || '';
 
     const isSameColor = primaryColor === secondaryColor || !secondaryColor;
 

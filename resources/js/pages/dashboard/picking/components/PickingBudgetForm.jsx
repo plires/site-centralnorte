@@ -400,14 +400,7 @@ export default function PickingBudgetForm({
                     />
 
                     {/* Fechas y Vendedor */}
-                    <PickingDateSection
-                        data={data}
-                        setData={setData}
-                        errors={errors}
-                        user={user}
-                        vendors={vendors}
-                        isEditing={isEditing}
-                    />
+                    <PickingDateSection data={data} setData={setData} errors={errors} user={user} vendors={vendors} isEditing={isEditing} />
 
                     {/* Cantidades */}
                     <PickingQuantitiesSection

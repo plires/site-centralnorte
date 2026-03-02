@@ -111,13 +111,15 @@ export default function PickingBudgetTotalsCard({ budget, ivaRate, applyIva, bus
                         <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                             <span className="mt-0.5 flex-shrink-0">⚠️</span>
                             <span>
-                                La condición de pago aplicada a este presupuesto ya no se encuentra disponible en el sistema. Los montos reflejados son los acordados originalmente.{' '}
+                                La condición de pago aplicada a este presupuesto ya no se encuentra disponible en el sistema. Los montos reflejados
+                                son los acordados originalmente.{' '}
                                 {companyEmail && (
                                     <>
                                         Ante cualquier duda consultá a{' '}
                                         <a href={`mailto:${companyEmail}`} className="font-medium underline hover:text-amber-900">
                                             {companyEmail}
-                                        </a>.
+                                        </a>
+                                        .
                                     </>
                                 )}
                             </span>

@@ -45,18 +45,10 @@ export default function PickingBudgetBoxesCard({ boxes = [] }) {
                         <TableBody>
                             {boxes.map((box, index) => (
                                 <TableRow key={index}>
-                                    <TableCell className="font-medium">
-                                        {box.box_dimensions || 'Sin dimensiones'}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {box.quantity?.toLocaleString('es-AR') || 0}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {formatCurrency(box.box_unit_cost)}
-                                    </TableCell>
-                                    <TableCell className="text-right font-medium">
-                                        {formatCurrency(box.subtotal)}
-                                    </TableCell>
+                                    <TableCell className="font-medium">{box.box_dimensions || 'Sin dimensiones'}</TableCell>
+                                    <TableCell className="text-right">{box.quantity?.toLocaleString('es-AR') || 0}</TableCell>
+                                    <TableCell className="text-right">{formatCurrency(box.box_unit_cost)}</TableCell>
+                                    <TableCell className="text-right font-medium">{formatCurrency(box.subtotal)}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>

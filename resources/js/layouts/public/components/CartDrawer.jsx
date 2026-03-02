@@ -76,7 +76,11 @@ const CartDrawer = () => {
                     <div className={styles.headerTitle}>
                         <FiShoppingCart className={styles.headerIcon} />
                         <span>Tu pedido</span>
-                        {totalItems > 0 && <span className={styles.itemCount}>({totalItems} {totalItems === 1 ? 'producto' : 'productos'})</span>}
+                        {totalItems > 0 && (
+                            <span className={styles.itemCount}>
+                                ({totalItems} {totalItems === 1 ? 'producto' : 'productos'})
+                            </span>
+                        )}
                     </div>
                     <button className={styles.closeButton} onClick={closeDrawer} aria-label="Cerrar carrito">
                         <FiX strokeWidth={1.5} />

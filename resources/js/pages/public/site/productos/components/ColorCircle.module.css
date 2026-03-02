@@ -14,23 +14,31 @@
     border: none;
     cursor: pointer;
     flex-shrink: 0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
     outline: none;
     box-shadow: 0 0 0 1px #e0e0e0;
 }
 
 .circle:hover {
     transform: scale(1.15);
-    box-shadow: 0 0 0 1px var(--primary-color), 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow:
+        0 0 0 1px var(--primary-color),
+        0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .circle:focus {
-    box-shadow: 0 0 0 1px var(--primary-color), 0 0 0 3px rgba(61, 80, 149, 0.25);
+    box-shadow:
+        0 0 0 1px var(--primary-color),
+        0 0 0 3px rgba(61, 80, 149, 0.25);
 }
 
 .circle.active {
     transform: scale(1.15);
-    box-shadow: 0 0 0 2px var(--primary-color), 0 2px 8px rgba(61, 80, 149, 0.3);
+    box-shadow:
+        0 0 0 2px var(--primary-color),
+        0 2px 8px rgba(61, 80, 149, 0.3);
 }
 
 /* Tooltip base */

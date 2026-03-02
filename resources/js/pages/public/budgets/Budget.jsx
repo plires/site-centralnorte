@@ -4,8 +4,8 @@ import { Head, usePage } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 
-import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetHeader from '@/pages/public/components/BudgetHeader';
+import BudgetNotFound from '@/pages/public/components/BudgetNotFound';
 import BudgetStatusAlert from '@/pages/public/components/BudgetStatusAlert';
 import BudgetUnavailableActionsBlock from '@/pages/public/components/BudgetUnavailableActionsBlock';
 import ClientBudgetActions from '@/pages/public/components/ClientBudgetActions';
@@ -46,7 +46,7 @@ export default function Budget({ budget, businessConfig }) {
     }, [props.flash]);
 
     // Verificación de seguridad - El presupuesto debe estar visible públicamente
-   const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
+    const isPubliclyVisible = budget.is_publicly_visible === true || budget.is_publicly_visible === 1;
 
     if (!isPubliclyVisible) {
         let message = 'Este presupuesto no está disponible para visualización.';
@@ -80,10 +80,7 @@ export default function Budget({ budget, businessConfig }) {
     if (!budget.client) {
         criticalIssueReasons.push('Los datos del cliente ya no están disponibles en el sistema.');
     }
-    const allItems = [
-        ...(budget.grouped_items?.regular || []),
-        ...Object.values(budget.grouped_items?.variants || {}).flat(),
-    ];
+    const allItems = [...(budget.grouped_items?.regular || []), ...Object.values(budget.grouped_items?.variants || {}).flat()];
     if (allItems.some((item) => !item.product)) {
         criticalIssueReasons.push('Uno o más productos de este presupuesto ya no están disponibles en el catálogo.');
     }
@@ -131,19 +128,21 @@ export default function Budget({ budget, businessConfig }) {
                 />
 
                 {/* Totales */}
-                <BudgetTotalsCard budget={budget} calculatedTotals={calculatedTotals} ivaRate={ivaRate} applyIva={applyIva} businessConfig={businessConfig} />
+                <BudgetTotalsCard
+                    budget={budget}
+                    calculatedTotals={calculatedTotals}
+                    ivaRate={ivaRate}
+                    applyIva={applyIva}
+                    businessConfig={businessConfig}
+                />
 
                 {/* Comentarios del pie */}
                 <BudgetComments budget={budget} />
 
                 {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
-                {budget.allows_client_action && (
-                    hasCriticalIssues ? (
-                        <BudgetUnavailableActionsBlock
-                            vendor={budget.user}
-                            businessConfig={businessConfig}
-                            reasons={criticalIssueReasons}
-                        />
+                {budget.allows_client_action &&
+                    (hasCriticalIssues ? (
+                        <BudgetUnavailableActionsBlock vendor={budget.user} businessConfig={businessConfig} reasons={criticalIssueReasons} />
                     ) : (
                         <div className="mt-8 mb-8">
                             <ClientBudgetActions
@@ -153,8 +152,7 @@ export default function Budget({ budget, businessConfig }) {
                                 currentStatus={budget.status}
                             />
                         </div>
-                    )
-                )}
+                    ))}
 
                 {selectedVariants && Object.keys(selectedVariants).length > 0 && budget.allows_client_action && !hasCriticalIssues && (
                     <>

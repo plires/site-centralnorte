@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 /**
  * Hook personalizado para manejar la lógica de cálculos de presupuestos de picking
  * Similar a useBudgetLogic pero adaptado para picking
- * 
+ *
  * @param {Object} data - Datos del formulario de Inertia
  * @param {Object} businessConfig - Configuración del negocio (IVA, etc.)
  * @param {Array} costScales - Escalas de costos disponibles
@@ -13,14 +13,7 @@ import { useEffect, useState } from 'react';
  * @param {string|null} paymentConditionId - ID de la condición de pago seleccionada
  * @param {Array} paymentConditions - Lista de condiciones de pago disponibles
  */
-export function usePickingBudgetLogic(
-    data,
-    businessConfig,
-    costScales,
-    componentIncrements,
-    paymentConditionId = null,
-    paymentConditions = []
-) {
+export function usePickingBudgetLogic(data, businessConfig, costScales, componentIncrements, paymentConditionId = null, paymentConditions = []) {
     const [currentScale, setCurrentScale] = useState(null);
     const [currentIncrement, setCurrentIncrement] = useState(null);
     const [selectedPaymentCondition, setSelectedPaymentCondition] = useState(null);
@@ -53,7 +46,7 @@ export function usePickingBudgetLogic(
         if (data.total_components_per_kit && componentIncrements) {
             const components = parseInt(data.total_components_per_kit);
             const increment = componentIncrements.find(
-                (inc) => inc.components_from <= components && (inc.components_to === null || inc.components_to >= components)
+                (inc) => inc.components_from <= components && (inc.components_to === null || inc.components_to >= components),
             );
             setCurrentIncrement(increment || null);
         } else {

@@ -77,7 +77,8 @@ export default function BudgetVariantGroups({
                                 <div className="flex items-start gap-2 rounded-md border border-red-200 bg-red-100 px-3 py-2 text-sm text-red-700">
                                     <span className="mt-0.5 flex-shrink-0">⚠️</span>
                                     <span>
-                                        <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos para más información.
+                                        <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos
+                                        para más información.
                                     </span>
                                 </div>
                             )}
@@ -147,7 +148,9 @@ export default function BudgetVariantGroups({
                                     {/* Información básica del producto */}
                                     <div className="flex-1 text-center sm:text-left">
                                         <div className="mb-2">
-                                            <h3 className={`mb-1 text-lg font-semibold ${firstItem.product ? 'text-gray-900' : 'text-red-500 italic'}`}>
+                                            <h3
+                                                className={`mb-1 text-lg font-semibold ${firstItem.product ? 'text-gray-900' : 'text-red-500 italic'}`}
+                                            >
                                                 {firstItem.product?.name ?? 'Producto eliminado'}
                                             </h3>
                                             {firstItem.product?.description && (

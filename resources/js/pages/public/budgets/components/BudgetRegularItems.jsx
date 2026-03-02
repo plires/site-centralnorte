@@ -34,7 +34,9 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
     // Obtener datos del modal actual
     const modalImages = selectedImageKey ? imageGalleries[selectedImageKey] || [] : [];
     const modalCurrentIndex = selectedImageKey ? currentImageIndexes[selectedImageKey] || 0 : 0;
-    const modalProductName = selectedImageKey ? (items.find((item) => `regular-${item.id}` === selectedImageKey)?.product?.name ?? 'Producto eliminado') : '';
+    const modalProductName = selectedImageKey
+        ? (items.find((item) => `regular-${item.id}` === selectedImageKey)?.product?.name ?? 'Producto eliminado')
+        : '';
 
     return (
         <Card className="mb-6">
@@ -58,7 +60,8 @@ export default function BudgetRegularItems({ items, imageGalleries, currentImage
                                     <div className="mb-3 flex items-start gap-2 rounded-md border border-red-200 bg-red-100 px-3 py-2 text-sm text-red-700">
                                         <span className="mt-0.5 flex-shrink-0">⚠️</span>
                                         <span>
-                                            <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos para más información.
+                                            <strong>Producto no disponible.</strong> Este artículo ya no se encuentra en nuestro catálogo. Contactanos
+                                            para más información.
                                         </span>
                                     </div>
                                 )}
