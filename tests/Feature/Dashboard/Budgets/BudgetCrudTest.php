@@ -109,7 +109,7 @@ it('crear con send_email_to_client → estado sent y email en cola', function ()
         'status' => BudgetStatus::SENT->value,
     ]);
 
-    Mail::assertSent(BudgetCreatedMail::class);
+    Mail::assertQueued(BudgetCreatedMail::class);
 });
 
 // ─── Update ────────────────────────────────────────────────────────────────────

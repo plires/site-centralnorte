@@ -56,7 +56,7 @@ it('aprobar envía email al vendedor', function () {
 
     $this->post(route('public.budget.approve', $budget->token));
 
-    Mail::assertSent(BudgetApprovedVendorMail::class, function ($mail) use ($vendor) {
+    Mail::assertQueued(BudgetApprovedVendorMail::class, function ($mail) use ($vendor) {
         return $mail->hasTo($vendor->email);
     });
 });
@@ -132,7 +132,7 @@ it('en evaluación envía email al vendedor', function () {
 
     $this->post(route('public.budget.in_review', $budget->token));
 
-    Mail::assertSent(BudgetInReviewVendorMail::class, function ($mail) use ($vendor) {
+    Mail::assertQueued(BudgetInReviewVendorMail::class, function ($mail) use ($vendor) {
         return $mail->hasTo($vendor->email);
     });
 });
