@@ -8,8 +8,8 @@ use App\Services\BudgetPdfService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
@@ -34,6 +34,21 @@ class BudgetCreatedMail extends Mailable implements ShouldQueue
     }
 
     /**
+     * Set the from address to the assigned seller (or fallback to global config).
+     * Uses build() because Envelope::from does not override the mailer's global from.
+     */
+    public function build(): static
+    {
+        $seller = $this->budget->user;
+        $this->from(
+            $seller ? $seller->email : config('mail.from.address'),
+            $seller ? $seller->name : config('mail.from.name'),
+        );
+
+        return $this;
+    }
+
+    /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
@@ -43,12 +58,13 @@ class BudgetCreatedMail extends Mailable implements ShouldQueue
             ? 'Reenvío de Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte'
             : 'Nuevo Presupuesto: ' . $this->budget->budget_merch_number . ' - Central Norte';
 
+        $seller = $this->budget->user;
         $envelope = new Envelope(subject: $subject);
 
-        if ($this->budget->user) {
+        if ($seller) {
             $envelope->replyTo(
-                address: $this->budget->user->email,
-                name: $this->budget->user->name,
+                address: $seller->email,
+                name: $seller->name,
             );
         }
 

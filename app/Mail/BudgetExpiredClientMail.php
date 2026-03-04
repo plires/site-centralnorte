@@ -24,10 +24,26 @@ class BudgetExpiredClientMail extends Mailable implements ShouldQueue
     $this->publicUrl = $publicUrl;
   }
 
+  /**
+   * Set the from address to the assigned seller (or fallback to global config).
+   * Uses build() because Envelope::from does not override the mailer's global from.
+   */
+  public function build(): static
+  {
+    $seller = $this->budget->user;
+    $this->from(
+      $seller ? $seller->email : config('mail.from.address'),
+      $seller ? $seller->name : config('mail.from.name'),
+    );
+
+    return $this;
+  }
+
   public function envelope(): Envelope
   {
-    $replyTo = $this->budget->user
-      ? [new Address($this->budget->user->email, $this->budget->user->name)]
+    $seller = $this->budget->user;
+    $replyTo = $seller
+      ? [new Address($seller->email, $seller->name)]
       : [];
 
     return new Envelope(

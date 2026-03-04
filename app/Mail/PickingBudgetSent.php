@@ -26,12 +26,28 @@ class PickingBudgetSent extends Mailable implements ShouldQueue
     ) {}
 
     /**
+     * Set the from address to the assigned vendor (or fallback to global config).
+     * Uses build() because Envelope::from does not override the mailer's global from.
+     */
+    public function build(): static
+    {
+        $vendor = $this->budget->vendor;
+        $this->from(
+            $vendor ? $vendor->email : config('mail.from.address'),
+            $vendor ? $vendor->name : config('mail.from.name'),
+        );
+
+        return $this;
+    }
+
+    /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
     {
-        $replyTo = $this->budget->vendor
-            ? [new Address($this->budget->vendor->email, $this->budget->vendor->name)]
+        $vendor = $this->budget->vendor;
+        $replyTo = $vendor
+            ? [new Address($vendor->email, $vendor->name)]
             : [];
 
         return new Envelope(
