@@ -19,7 +19,7 @@ const acciones = [
     },
     {
         image: plantamosImg,
-        title: 'Plantamos árboles en parque.',
+        title: 'Plantamos árboles en parques.',
         description: 'Ciudad Autónoma de Buenos Aires.',
     },
 ];

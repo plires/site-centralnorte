@@ -42,7 +42,7 @@ const ContactoForm = () => {
 
                 <div className="container">
                     <div className={styles.formWrapper}>
-                        <h2 className={styles.formTitle}>¿Tenés dudas?</h2>
+                        <h2 className={styles.formTitle}>¿Querés conocernos más?<br />Escribínos.</h2>
                         <p className={styles.formDescription}>
                             Es tan simple como hacer clic y te respondemos a la brevedad con todas nuestras soluciones.
                         </p>

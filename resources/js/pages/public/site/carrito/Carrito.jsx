@@ -133,7 +133,7 @@ const Carrito = () => {
                                                 {renderColorCircle(item)}
                                                 <span>{item.variantDescription}</span>
                                             </div>
-                                            {item.variantStock <= 0 && <span className={styles.onDemand}>A pedido</span>}
+                                            {item.variantStock <= 0 && <span className={styles.onDemand}>Sujeto a disponibilidad de stock</span>}
                                         </div>
                                     </div>
 
