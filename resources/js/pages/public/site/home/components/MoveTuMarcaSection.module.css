@@ -92,7 +92,6 @@
     }
 
     .productImage {
-        max-width: 100%;
         position: absolute;
         height: 260px;
         object-fit: contain;
@@ -124,6 +123,7 @@
     }
 
     .productImage {
+        max-width: 365px;
         height: 375px;
     }
 
@@ -156,6 +156,7 @@
 
     .productImage {
         height: 440px;
+        max-width: 445px;
     }
 }
 
@@ -166,6 +167,7 @@
     }
 
     .productImage {
+        max-width: 545px;
         height: 540px;
     }
 
