@@ -19,11 +19,13 @@ function VariantForm({
     // Verificar errores específicos para esta variante
     const hasQuantityError = hasVariantError(index, 'quantity');
     const hasPriceError = hasVariantError(index, 'price');
-    const hasAnyError = hasQuantityError || hasPriceError;
+    const hasProductionTimeError = hasVariantError(index, 'production_time_days');
+    const hasAnyError = hasQuantityError || hasPriceError || hasProductionTimeError;
 
     // Obtener mensajes de error específicos
     const quantityError = getVariantError(index, 'quantity');
     const priceError = getVariantError(index, 'price');
+    const productionTimeError = getVariantError(index, 'production_time_days');
 
     const lineTotal = calculateLineTotal(variant.quantity, variant.unit_price);
 
@@ -75,12 +77,18 @@ function VariantForm({
                     <Label htmlFor={`production_time_${variant.id}`}>Tiempo de Producción (días)</Label>
                     <Input
                         id={`production_time_${variant.id}`}
-                        type="number"
-                        min="1"
+                        type="text"
+                        inputMode="numeric"
                         value={variant.production_time_days}
                         onChange={(e) => onUpdate(variant.id, 'production_time_days', e.target.value)}
                         placeholder="Ej: 15"
+                        className={hasProductionTimeError ? 'border-red-500' : ''}
                     />
+                    {productionTimeError ? (
+                        <p className="mt-1 text-sm text-red-600">{productionTimeError}</p>
+                    ) : (
+                        <span className="text-xs text-gray-400">*Ingresar números enteros</span>
+                    )}
                 </div>
 
                 {/* Campo de impresión de logo */}
@@ -92,6 +100,7 @@ function VariantForm({
                         onChange={(e) => onUpdate(variant.id, 'logo_printing', e.target.value)}
                         placeholder="Ej: Serigrafía 1 color"
                     />
+                    <span className='text-xs text-gray-400'>opcional, descripción del logo</span>
                 </div>
             </div>
 

@@ -352,6 +352,20 @@ export default function ProductModal({ initialProducts = [], existingItems = [],
                     });
                 }
             }
+
+            // 3c. Validar tiempo de producción (opcional, pero si se ingresó debe ser entero >= 1)
+            const productionTimeDays = variant.production_time_days?.toString().trim();
+            if (productionTimeDays && productionTimeDays !== '') {
+                const isValidInteger = /^\d+$/.test(productionTimeDays) && parseInt(productionTimeDays, 10) >= 1;
+                if (!isValidInteger) {
+                    newErrors.push({
+                        field: `variant_${index}_production_time_days`,
+                        message: isVariantMode
+                            ? `Tiempo de producción en variante ${index + 1} debe ser un número entero mayor a 0`
+                            : 'El tiempo de producción debe ser un número entero mayor a 0',
+                    });
+                }
+            }
         });
 
         // 4. Validaciones específicas para modo variante

@@ -460,7 +460,7 @@
                                 </td>
                                 <td class="text-center">
                                     @if (isset($item['logo_printing']))
-                                        {{ $item['logo_printing'] ? 'Sí' : 'No' }}
+                                        {{ $item['logo_printing'] }}
                                     @else
                                         -
                                     @endif
