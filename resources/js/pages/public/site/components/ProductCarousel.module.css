@@ -48,21 +48,32 @@
     overflow: hidden;
 }
 
+/*
+ * Embla requiere que el gap entre slides se maneje con padding-left en el slide
+ * y margin-left negativo en el track (NO con gap CSS).
+ * Con gap CSS, Embla calcula posiciones incorrectamente en el loop,
+ * provocando el salto visible en cada transición.
+ */
 .track {
     display: flex;
-    gap: 16px;
+    margin-left: -16px; /* base: compensa el padding-left del primer slide */
 }
 
 .slide {
-    flex: 0 0 calc(50% - 8px);
+    /* 2 slides por fila en móvil */
+    flex: 0 0 50%;
     min-width: 0;
+    padding-left: 16px; /* gap entre slides — reemplaza gap CSS */
+}
+
+.slideContent {
     text-align: center;
     padding: 10px;
     transition: transform 0.3s ease;
     -webkit-transition: transform 0.3s ease;
 }
 
-.slide:hover {
+.slideContent:hover {
     transform: translateY(-5px);
 }
 
@@ -84,7 +95,7 @@
     transition: box-shadow 0.3s ease;
 }
 
-.slide:hover .imageWrapper {
+.slideContent:hover .imageWrapper {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
@@ -116,7 +127,7 @@
     word-break: break-word;
 }
 
-.slide:hover .name {
+.slideContent:hover .name {
     color: var(--secondary-color);
 }
 
@@ -176,18 +187,15 @@
     right: 0;
 }
 
-/* sm - Small devices (≥576px) */
+/* sm - Small devices (≥576px): 3 slides por fila */
 @media (min-width: 576px) {
     .title {
         text-align: left;
     }
 
     .slide {
-        flex: 0 0 calc(33.333% - 11px);
-    }
-
-    .track {
-        gap: 16px;
+        flex: 0 0 33.333%;
+        /* padding-left y track margin-left se mantienen en 16px */
     }
 
     .name {
@@ -195,19 +203,24 @@
     }
 }
 
-/* md - Medium devices (≥768px) */
+/* md - Medium devices (≥768px): 4 slides por fila, gap 24px */
 @media (min-width: 768px) {
     .carouselContainer {
         padding: 0 55px;
-    }
-
-    .slide {
-        flex: 0 0 calc(25% - 18px);
-        padding: 12px;
+        padding-top: 3rem;
     }
 
     .track {
-        gap: 24px;
+        margin-left: -24px;
+    }
+
+    .slide {
+        flex: 0 0 25%;
+        padding-left: 24px;
+    }
+
+    .slideContent {
+        padding: 12px;
     }
 
     .name {
@@ -224,7 +237,7 @@
     }
 }
 
-/* lg - Large devices (≥992px) */
+/* lg - Large devices (≥992px): 4 slides por fila, gap 32px */
 @media (min-width: 992px) {
     .section {
         padding-bottom: 70px;
@@ -236,16 +249,20 @@
 
     .carouselContainer {
         padding: 0 65px;
-    }
-
-    .slide {
-        /* 4 slides por fila: 5 slides = 125% del viewport → siempre desborda → loop funciona */
-        flex: 0 0 calc(25% - 24px);
-        padding: 14px;
+        padding-top: 3rem;
     }
 
     .track {
-        gap: 32px;
+        margin-left: -32px;
+    }
+
+    .slide {
+        /* flex se mantiene en 0 0 25% */
+        padding-left: 32px;
+    }
+
+    .slideContent {
+        padding: 14px;
     }
 
     .imageWrapper {
@@ -266,22 +283,19 @@
     }
 }
 
-/* xl - Extra large devices (≥1200px) */
+/* xl - Extra large devices (≥1200px): 4 slides por fila, gap 32px (sin cambios) */
 @media (min-width: 1200px) {
     .carouselContainer {
         padding: 0 75px;
-    }
-
-    .slide {
-        /* Mantiene 4 slides por fila para garantizar overflow con pocos productos */
-        flex: 0 0 calc(25% - 27px);
+        padding-top: 3rem;
     }
 }
 
-/* xxl - Extra extra large devices (≥1400px): pasa a 5 slides por fila */
+/* xxl - Extra extra large devices (≥1400px): 5 slides por fila, gap 32px */
 @media (min-width: 1400px) {
     .slide {
-        flex: 0 0 calc(20% - 32px);
+        flex: 0 0 20%;
+        /* padding-left se mantiene en 32px, track margin-left se mantiene en -32px */
     }
 
     .title {

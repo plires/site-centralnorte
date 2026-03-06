@@ -80,23 +80,25 @@ const ProductCarousel = ({ title, products = [] }) => {
                             <div className={styles.track}>
                                 {products.map((product) => (
                                     <div key={product.id} className={styles.slide}>
-                                        <a href={`/products/${product.id}`} className={styles.slideLink}>
-                                            <div className={styles.imageWrapper}>
-                                                {product.image ? (
-                                                    <img
-                                                        src={product.image}
-                                                        alt={product.name}
-                                                        className={styles.image}
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                    />
-                                                ) : (
-                                                    <FaImage className={styles.imageNoProduct} aria-hidden="true" />
-                                                )}
-                                            </div>
-                                            <h3 className={styles.name}>{product.name}</h3>
-                                            {product.description && <p className={styles.description}>{product.description}</p>}
-                                        </a>
+                                        <div className={styles.slideContent}>
+                                            <a href={`/products/${product.id}`} className={styles.slideLink}>
+                                                <div className={styles.imageWrapper}>
+                                                    {product.image ? (
+                                                        <img
+                                                            src={product.image}
+                                                            alt={product.name}
+                                                            className={styles.image}
+                                                            loading="lazy"
+                                                            decoding="async"
+                                                        />
+                                                    ) : (
+                                                        <FaImage className={styles.imageNoProduct} aria-hidden="true" />
+                                                    )}
+                                                </div>
+                                                <h3 className={styles.name}>{product.name}</h3>
+                                                {product.description && <p className={styles.description}>{product.description}</p>}
+                                            </a>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
