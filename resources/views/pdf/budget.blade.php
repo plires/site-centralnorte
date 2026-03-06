@@ -103,14 +103,14 @@
         }
 
         .product-image img {
-            width: 120px !important;
-            height: 120px !important;
+            width: 150px !important;
+            height: 150px !important;
             object-fit: contain;
         }
 
         .product-image-placeholder {
-            width: 120px !important;
-            height: 120px !important;
+            width: 150px !important;
+            height: 150px !important;
             background-color: #f0f0f0;
             display: flex;
             align-items: center;
@@ -358,7 +358,7 @@
             <table class="products-table">
                 <thead>
                     <tr>
-                        <th style="width: 125px;">Imagen</th>
+                        <th style="width: 155px;">Imagen</th>
                         <th style="width: 40px;">Cant.</th>
                         <th>Producto</th>
                         <th style="width: 80px;">Precio Unit.</th>
@@ -384,6 +384,7 @@
                                 @if (isset($item['product']['category_display']) && !empty($item['product']['category_display']))
                                     <br><small style="color: #666;">{{ $item['product']['category_display'] }}</small>
                                 @endif
+                                
                                 @if (isset($item['description']))
                                     <br><small>{{ $item['description'] }}</small>
                                 @endif
