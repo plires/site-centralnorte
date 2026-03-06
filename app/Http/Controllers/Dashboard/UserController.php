@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers\Dashboard;
 
+use App\Models\Budget;
+use App\Models\Client;
+use App\Models\PickingBudget;
 use App\Models\Role;
 use App\Models\User;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
@@ -47,15 +51,31 @@ class UserController extends Controller
             $query->orderBy('created_at', 'desc'); // Orden por defecto
         }
 
-        $users = $query->with('role')->paginate(10)->withQueryString();
+        $users = $query
+            ->with('role')
+            ->withCount([
+                'budgets as merch_budget_count',
+                'pickingBudgets as picking_budget_count',
+                'clients as clients_count',
+            ])
+            ->paginate(10)
+            ->withQueryString();
+
+        // Vendedores activos disponibles para reasignación al eliminar un usuario
+        $availableSellers = User::withoutTrashed()
+            ->whereHas('role', fn($q) => $q->whereIn('name', ['vendedor', 'admin']))
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('dashboard/users/Index', [
-            'users' => $users,
-            'filters' => [
-                'search' => $request->search,
-                'sort' => $request->sort,
+            'users'            => $users,
+            'availableSellers' => $availableSellers,
+            'filters'          => [
+                'search'    => $request->search,
+                'sort'      => $request->sort,
                 'direction' => $request->direction,
-            ]
+            ],
         ]);
     }
 
@@ -134,7 +154,7 @@ class UserController extends Controller
         }
     }
 
-    public function destroy(User $user)
+    public function destroy(Request $request, User $user)
     {
         try {
             // Verificar que no sea el usuario actual
@@ -149,7 +169,51 @@ class UserController extends Controller
                 return redirect()->back()->with('error', 'No puedes eliminar el último administrador del sistema.');
             }
 
-            $user->delete();
+            // Verificar si el usuario tiene registros asignados
+            $hasMerch    = $user->budgets()->exists();
+            $hasPicking  = $user->pickingBudgets()->exists();
+            $hasClients  = $user->clients()->exists();
+
+            if ($hasMerch || $hasPicking || $hasClients) {
+                $reassignToId = (int) $request->input('reassign_to');
+
+                if (!$reassignToId) {
+                    return redirect()->back()->with('error', 'Debés seleccionar un vendedor para reasignar los registros antes de eliminar.');
+                }
+
+                $reassignTo = User::withoutTrashed()->find($reassignToId);
+
+                if (!$reassignTo || $reassignTo->id === $user->id) {
+                    return redirect()->back()->with('error', 'El vendedor seleccionado para reasignación no es válido.');
+                }
+
+                DB::transaction(function () use ($user, $reassignTo) {
+                    Budget::where('user_id', $user->id)
+                        ->update(['user_id' => $reassignTo->id]);
+
+                    PickingBudget::where('vendor_id', $user->id)
+                        ->update(['vendor_id' => $reassignTo->id]);
+
+                    Client::where('user_id', $user->id)
+                        ->update(['user_id' => $reassignTo->id]);
+
+                    $user->delete();
+                });
+
+                Log::info('Usuario eliminado con reasignación de registros', [
+                    'deleted_user_id'       => $user->id,
+                    'reassigned_to_user_id' => $reassignTo->id,
+                    'merch_budgets'         => $hasMerch,
+                    'picking_budgets'       => $hasPicking,
+                    'clients'               => $hasClients,
+                ]);
+            } else {
+                $user->delete();
+
+                Log::info('Usuario eliminado sin registros asignados', [
+                    'deleted_user_id' => $user->id,
+                ]);
+            }
 
             return redirect()->back()->with('success', "Usuario '{$user->name}' eliminado correctamente.");
         } catch (\Exception $e) {

@@ -1,6 +1,6 @@
 import ButtonCustom from '@/components/ButtonCustom';
 import DataTable from '@/components/DataTable';
-import { useDeleteConfirmation } from '@/components/DeleteConfirmationDialog';
+import { useUserDeleteDialog } from '@/components/UserDeleteDialog';
 import { userColumns } from '@/config/tableColumns';
 import { useInertiaResponse } from '@/hooks/use-inertia-response';
 import AppLayout from '@/layouts/app-layout';
@@ -15,37 +15,40 @@ const breadcrumbs = [
     },
 ];
 
-export default function Index({ auth, users, filters = {} }) {
-    const { confirmDelete, DeleteConfirmationDialog } = useDeleteConfirmation();
+export default function Index({ auth, users, availableSellers = [], filters = {} }) {
+    const { confirmDelete, UserDeleteDialog } = useUserDeleteDialog();
     const [isDeleting, setIsDeleting] = useState(false);
 
     const { handleCrudResponse } = useInertiaResponse();
 
     const handleView = (userId) => {
-        // Redirigir a la página de Show
         router.get(route('dashboard.users.show', userId));
     };
 
     const handleEdit = (userId) => {
-        // Redirigir a la página de edición
         router.get(route('dashboard.users.edit', userId));
     };
 
     const handleDelete = async (userId, userName) => {
-        const confirmed = await confirmDelete({
-            title: 'Eliminar usuario',
-            description:
-                'Esta acción no se puede deshacer. El usuario será eliminado permanentemente del sistema. Tené en cuenta que el usuario puede tener presupuestos asignados y deberán editarse si quieren mantenerse vigentes.',
-            itemName: userName,
+        // Buscar los datos del usuario (incluye conteos precargados desde el controller)
+        const userRecord = (users.data || users).find((u) => u.id === userId);
+
+        const result = await confirmDelete({
+            userName,
+            merchCount:   userRecord?.merch_budget_count   ?? 0,
+            pickingCount: userRecord?.picking_budget_count ?? 0,
+            clientsCount: userRecord?.clients_count        ?? 0,
+            // Excluir al propio usuario del listado de destino de reasignación
+            availableSellers: availableSellers.filter((s) => s.id !== userId),
         });
 
-        if (confirmed) {
+        if (result.confirmed) {
             setIsDeleting(true);
 
-            router.delete(
-                route('dashboard.users.destroy', userId),
-                handleCrudResponse(setIsDeleting), // Automáticamente maneja el setIsDeleting(false)
-            );
+            router.delete(route('dashboard.users.destroy', userId), {
+                data: { reassign_to: result.reassignTo },
+                ...handleCrudResponse(setIsDeleting),
+            });
         }
     };
 
@@ -74,7 +77,8 @@ export default function Index({ auth, users, filters = {} }) {
                                 filters={filters}
                                 onRowClick={(row) => router.visit(route('dashboard.users.show', row.id))}
                             />
-                            <DeleteConfirmationDialog />
+
+                            <UserDeleteDialog />
                         </div>
                     </div>
                 </div>

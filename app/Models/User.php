@@ -3,8 +3,10 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Models\Role;
+use App\Models\Budget;
+use App\Models\Client;
 use App\Models\PickingBudget;
+use App\Models\Role;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -71,7 +73,12 @@ class User extends Authenticatable
 
     public function pickingBudgets()
     {
-        return $this->hasMany(PickingBudget::class);
+        return $this->hasMany(PickingBudget::class, 'vendor_id');
+    }
+
+    public function clients()
+    {
+        return $this->hasMany(Client::class);
     }
 
     public function scopeVendedores($query)
