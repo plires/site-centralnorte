@@ -421,7 +421,7 @@
                 <table class="products-table">
                     <thead>
                         <tr>
-                            <th style="width: 85px;">Imagen</th>
+                            <th style="width: 155px;">Imagen</th>
                             <th style="width: 40px;">Cant.</th>
                             <th>Producto</th>
                             <th style="width: 80px;">Precio Unit.</th>
