@@ -187,7 +187,7 @@ class PublicBudgetController extends Controller
                     'paymentCondition:id,description,percentage',
                     'items' => function ($query) {
                         $query->with([
-                            'product:id,name',
+                            'product:id,name,description',
                             'product.categories:id,name',
                             'product.featuredImage:id,product_id,url,is_featured'
                         ]);
@@ -374,7 +374,7 @@ class PublicBudgetController extends Controller
                 'line_total' => $item->line_total,
                 'production_time_days' => $item->production_time_days,
                 'logo_printing' => $item->logo_printing,
-                'description' => $item->description,
+                'description' => $item->product->description ?? null,
                 'variant_group' => $item->variant_group,
                 'product' => [
                     'name' => $item->product->name ?? 'Producto',

@@ -121,6 +121,7 @@ class BudgetPdfService
                 'line_total'          => $item->line_total,
                 'production_time_days'=> $item->production_time_days,
                 'logo_printing'       => $item->logo_printing,
+                'description'         => $item->product->description ?? null,
                 'variant_group'       => $item->variant_group,
                 'is_variant'          => $item->is_variant,
                 'is_selected'         => $item->is_selected,
