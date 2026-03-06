@@ -27,25 +27,42 @@ class PublicQuoteService
     public function createQuoteFromCart(array $customerData, array $cartItems, ?string $comments = null): Budget
     {
         return DB::transaction(function () use ($customerData, $cartItems, $comments) {
-            // 1. Buscar o crear cliente
+            // 1. Buscar o crear/restaurar cliente
             $client = $this->findOrCreateClient($customerData);
 
-            // 2. Obtener vendedor usando round-robin
-            $seller = SellerAssignment::getNextSeller('merch_budget');
+            // 2. Determinar vendedor
+            //
+            // Si el cliente ya tiene un vendedor asignado y ese vendedor está activo
+            // (la relación user() aplica el scope de soft-delete automáticamente),
+            // se respeta la asignación existente.
+            //
+            // En cualquier otro caso (cliente nuevo, sin vendedor asignado, o con
+            // vendedor soft-deleted), se asigna mediante round-robin y se actualiza
+            // el user_id del cliente también.
+            $seller = $client->user_id ? $client->user : null;
 
             if (!$seller) {
-                throw new \Exception('No hay vendedores disponibles para asignar el presupuesto.');
+                $seller = SellerAssignment::getNextSeller('merch_budget');
+
+                if (!$seller) {
+                    throw new \Exception('No hay vendedores disponibles para asignar el presupuesto.');
+                }
+
+                $client->update(['user_id' => $seller->id]);
+                $sellerSource = 'round-robin';
+            } else {
+                $sellerSource = 'existing-assignment';
             }
 
             // 3. Crear el presupuesto
             $budget = Budget::create([
                 'budget_merch_number' => Budget::generateBudgetMerchNumber(),
-                'title' => $this->generateBudgetTitle($client),
-                'user_id' => $seller->id,
-                'client_id' => $client->id,
-                'issue_date' => now(),
-                'expiry_date' => now()->addDays(config('business.budget.default_validity_days', 15)),
-                'status' => BudgetStatus::UNSENT,
+                'title'          => $this->generateBudgetTitle($client),
+                'user_id'        => $seller->id,
+                'client_id'      => $client->id,
+                'issue_date'     => now(),
+                'expiry_date'    => now()->addDays(config('business.budget.default_validity_days', 15)),
+                'status'         => BudgetStatus::UNSENT,
                 'footer_comments' => $comments,
             ]);
 
@@ -59,10 +76,11 @@ class PublicQuoteService
             $this->notifySeller($budget, $seller);
 
             Log::info('Presupuesto creado desde sitio público', [
-                'budget_id' => $budget->id,
-                'client_id' => $client->id,
-                'seller_id' => $seller->id,
-                'items_count' => count($cartItems),
+                'budget_id'     => $budget->id,
+                'client_id'     => $client->id,
+                'seller_id'     => $seller->id,
+                'seller_source' => $sellerSource,
+                'items_count'   => count($cartItems),
             ]);
 
             return $budget;
