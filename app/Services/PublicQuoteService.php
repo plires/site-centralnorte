@@ -70,24 +70,46 @@ class PublicQuoteService
     }
 
     /**
-     * Buscar cliente por email o crear uno nuevo
-     * Si el cliente ya existe, se retorna sin modificar sus datos
+     * Buscar cliente por email (incluyendo soft-deleted) o crear uno nuevo.
+     *
+     * - Si existe y está activo: actualiza solo los campos que llegan con valor.
+     * - Si existe pero está soft-deleted: lo restaura y actualiza solo los campos con valor.
+     * - Si no existe: crea un nuevo registro.
+     *
+     * Esto evita duplicados de email y el error "Ya existe otro cliente con este correo".
      */
     private function findOrCreateClient(array $data): Client
     {
-        $client = Client::where('email', $data['email'])->first();
+        // withTrashed() para detectar también clientes soft-deleted
+        $client = Client::withTrashed()->where('email', $data['email'])->first();
 
         if ($client) {
-            // Cliente existente: retornar sin modificar
-            return $client;
+            // Si estaba borrado, restaurarlo antes de actualizar
+            if ($client->trashed()) {
+                $client->restore();
+            }
+
+            // Actualizar solo los campos que lleguen con un valor no nulo/vacío
+            $updates = array_filter([
+                'name'    => $data['name'] ?? null,
+                'company' => $data['company'] ?? null,
+                'phone'   => $data['phone'] ?? null,
+                'address' => $data['address'] ?? null,
+            ], fn($value) => $value !== null && $value !== '');
+
+            if (!empty($updates)) {
+                $client->update($updates);
+            }
+
+            return $client->fresh();
         }
 
         // Crear nuevo cliente
         return Client::create([
-            'name' => $data['name'],
+            'name'    => $data['name'],
             'company' => $data['company'] ?? null,
-            'email' => $data['email'],
-            'phone' => $data['phone'] ?? null,
+            'email'   => $data['email'],
+            'phone'   => $data['phone'] ?? null,
             'address' => $data['address'] ?? null,
         ]);
     }
