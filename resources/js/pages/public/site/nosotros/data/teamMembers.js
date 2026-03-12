@@ -18,7 +18,7 @@ import member14 from '@/../images/nosotros/team/victor-guaido.webp';
 const teamMembers = [
     { image: member12, name: 'Agustín Gallardo', role: 'Administración' },
     { image: member8, name: 'Agustina Bazterrechea', role: 'Marketing' },
-    { image: member7, name: 'Alan Parodi', role: 'Producción' },
+    { image: member7, name: 'Alan Parodi', role: 'Operaciones' },
     { image: member4, name: 'Andrea Ricco', role: 'Dirección' },
     { image: member15, name: 'Carmela Rojas', role: 'Marketing' },
     { image: member2, name: 'Cristian Quinteros', role: 'Operaciones' },
