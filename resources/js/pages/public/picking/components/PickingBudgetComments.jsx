@@ -19,7 +19,7 @@ export default function PickingBudgetComments({ budget }) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <MessageSquare className="h-5 w-5 text-blue-600" />
-                    Notas
+                    Comentarios / Legales
                 </CardTitle>
             </CardHeader>
             <CardContent>

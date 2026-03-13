@@ -14,6 +14,7 @@ import Header from '@/pages/public/components/Header';
 // Componentes UI especializados
 import PickingBudgetBoxesCard from './components/PickingBudgetBoxesCard';
 import PickingBudgetComments from './components/PickingBudgetComments';
+import PickingBudgetLegalesFijos from './components/PickingBudgetLegalesFijos';
 import PickingBudgetInfoCard from './components/PickingBudgetInfoCard';
 import PickingBudgetServicesCard from './components/PickingBudgetServicesCard';
 import PickingBudgetTotalsCard from './components/PickingBudgetTotalsCard';
@@ -106,8 +107,11 @@ export default function PickingBudget({ budget, businessConfig }) {
                 {/* Totales */}
                 <PickingBudgetTotalsCard budget={budget} ivaRate={ivaRate} applyIva={applyIva} businessConfig={businessConfig} />
 
-                {/* Comentarios/Notas */}
+                {/* Comentarios / Legales editables */}
                 <PickingBudgetComments budget={budget} />
+
+                {/* Legales Fijos */}
+                <PickingBudgetLegalesFijos />
 
                 {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
                 {(allowsAction || isSent) &&

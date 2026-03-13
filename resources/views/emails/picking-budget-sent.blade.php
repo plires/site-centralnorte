@@ -115,6 +115,7 @@
 
         .info-box p {
             margin: 5px 0;
+            font-size: 12px;
         }
 
         .info-box strong {
@@ -201,8 +202,8 @@
 
             @if ($budget->notes)
                 <div class="info-box">
-                    <p><strong>Notas:</strong></p>
-                    <p>{{ $budget->notes }}</p>
+                    <p><strong>Comentarios / Legales</strong></p>
+                    {!! '<p>' . nl2br(e($budget->notes)) . '</p>' !!}
                 </div>
             @endif
 

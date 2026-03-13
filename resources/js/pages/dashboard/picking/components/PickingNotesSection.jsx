@@ -10,7 +10,7 @@ export default function PickingNotesSection({ data, setData, errors, processing 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Notas (Opcional)</CardTitle>
+                <CardTitle>Comentarios / Legales</CardTitle>
             </CardHeader>
             <CardContent>
                 <Textarea

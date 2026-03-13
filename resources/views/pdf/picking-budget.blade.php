@@ -494,8 +494,8 @@
         <!-- NOTAS -->
         @if ($budget->notes)
             <div class="notes-box">
-                <strong>Notas:</strong><br>
-                {{ $budget->notes }}
+                <strong>Comentarios / Legales:</strong><br>
+                {!! nl2br(e($budget->notes)) !!}
             </div>
         @endif
 

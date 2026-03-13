@@ -428,7 +428,7 @@ export default function Show({ auth, budget, warnings, businessConfig }) {
                     {budget.notes && (
                         <Card className="mb-6">
                             <CardHeader>
-                                <CardTitle>Notas</CardTitle>
+                                <CardTitle>Comentarios / Legales</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="whitespace-pre-wrap text-gray-700">{budget.notes}</p>
