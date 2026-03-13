@@ -85,7 +85,7 @@
         .products-table th {
             background-color: {{ env('PRIMARY_COLOR', '#3d5095') }};
             color: white;
-            padding: 8px;
+            padding: 5px;
             text-align: left;
             font-size: 9px;
             font-weight: bold;
@@ -103,14 +103,14 @@
         }
 
         .product-image img {
-            width: 150px !important;
-            height: 150px !important;
+            width: 200px !important;
+            height: 200px !important;
             object-fit: contain;
         }
 
         .product-image-placeholder {
-            width: 150px !important;
-            height: 150px !important;
+            width: 200px !important;
+            height: 200px !important;
             background-color: #f0f0f0;
             display: flex;
             align-items: center;
@@ -358,13 +358,13 @@
             <table class="products-table">
                 <thead>
                     <tr>
-                        <th style="width: 155px;">Imagen</th>
+                        <th style="width: 205px;">Imagen</th>
                         <th style="width: 40px;">Cant.</th>
-                        <th>Producto</th>
-                        <th style="width: 80px;">Precio Unit.</th>
+                        <th style="width: 100px;">Producto</th>
+                        <th style="width: 60px;">Precio Unit.</th>
                         <th style="width: 60px;">Tiempo</th>
                         <th style="width: 60px;">Logo</th>
-                        <th style="width: 80px;">Total</th>
+                        <th style="width: 60px;">Total</th>
                     </tr>
                 </thead>
                 <tbody>
