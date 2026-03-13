@@ -38,7 +38,7 @@ const UbicacionSection = ({ mapSrc = '' }) => {
                 <div className="container">
                     <div className="row align-items-center">
                         {/* Columna título */}
-                        <div className="col-md-6 col-lg-3 col-12">
+                        <div className="col-md-6 col-lg-4 offset-lg-2 col-12">
                             <h2 className={styles.title}>
                                 <span className={styles.line1}>¿Dónde</span>
                                 <span className={styles.line2}>Estamos?</span>
@@ -46,7 +46,7 @@ const UbicacionSection = ({ mapSrc = '' }) => {
                         </div>
 
                         {/* Columna datos de contacto */}
-                        <div className={`col-md-6 col-lg-6 offset-lg-3 col-12 ${styles.contactBlock}`}>
+                        <div className={`col-md-6 col-lg-5 offset-lg-1 col-12 ${styles.contactBlock}`}>
                             <div className={styles.contactItem}>
                                 <FaLocationDot className={styles.contactIcon} />
                                 <address className={styles.address}>

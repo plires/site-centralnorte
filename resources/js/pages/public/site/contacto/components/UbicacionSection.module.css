@@ -143,7 +143,6 @@
 
     /* Separador vertical como borde izquierdo de la columna de contacto */
     .contactBlock {
-        border-left: 2px solid var(--secondary-color);
         padding-left: 1rem;
         gap: 1.25rem;
     }
@@ -165,11 +164,11 @@
     }
 
     .title {
-        font-size: 4.5rem;
+        font-size: 5.5rem;
     }
 
     .contactBlock {
-        gap: 1.5rem;
+        display: initial;
     }
 
     .contactIcon {
@@ -186,10 +185,6 @@
 @media (min-width: 1200px) {
     .mapWrapper {
         height: 520px;
-    }
-
-    .title {
-        font-size: 5rem;
     }
 }
 
