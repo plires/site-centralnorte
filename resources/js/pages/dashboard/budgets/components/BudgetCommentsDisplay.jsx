@@ -4,9 +4,9 @@ export default function BudgetCommentsDisplay({ budget }) {
     if (!budget.footer_comments) return null;
 
     return (
-        <Card>
+        <Card className="mb-6">
             <CardHeader>
-                <CardTitle>Comentarios Adicionales</CardTitle>
+                <CardTitle>Comentarios / Legales</CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="whitespace-pre-line text-gray-700">{budget.footer_comments}</p>

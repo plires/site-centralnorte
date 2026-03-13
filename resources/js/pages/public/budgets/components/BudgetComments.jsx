@@ -19,11 +19,14 @@ export default function BudgetComments({ budget }) {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <MessageSquareText className="h-5 w-5 text-blue-600" />
-                    Comentarios
+                    Comentarios / Legales
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <p className="text-gray-700">{budget.footer_comments}</p>
+                <p className="text-gray-700 whitespace-pre-line">
+                    {budget.footer_comments}
+                </p>
+                {/* <p className="text-gray-700">{budget.footer_comments}</p> */}
             </CardContent>
         </Card>
     );

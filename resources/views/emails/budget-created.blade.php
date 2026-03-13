@@ -117,6 +117,7 @@
 
         .info-box p {
             margin: 5px 0;
+            font-size: 12px;
         }
 
         .info-box strong {
@@ -200,8 +201,8 @@
 
             @if ($budget->footer_comments)
                 <div class="info-box">
-                    <p><strong>Notas:</strong></p>
-                    <p>{{ $budget->footer_comments }}</p>
+                    <p><strong>Comentarios / Legales:</strong></p>
+                    {!! '<p>' . nl2br(e($budget->footer_comments)) . '</p>' !!}
                 </div>
             @endif
 

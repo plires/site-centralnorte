@@ -489,8 +489,8 @@
         <!-- COMENTARIOS -->
         @if (!empty($budget['footer_comments']))
             <div class="comments">
-                <strong>Comentarios:</strong>
-                <small style="color: #6b7280;">{{ $budget['footer_comments'] }}</small>
+                <strong>Comentarios / Legales:</strong><br>
+                <small style="color: #6b7280;">{!! nl2br(e($budget['footer_comments'])) !!}</small>
             </div>
         @endif
 

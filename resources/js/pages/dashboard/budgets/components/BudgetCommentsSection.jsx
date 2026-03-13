@@ -5,11 +5,11 @@ export default function BudgetCommentsSection({ data, setData }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Comentarios</CardTitle>
+                <CardTitle>Comentarios / Legales</CardTitle>
             </CardHeader>
             <CardContent>
                 <Textarea
-                    placeholder="Comentarios adicionales para el pie del presupuesto..."
+                    placeholder="Comentarios legales adiconales para el pie del presupuesto..."
                     value={data.footer_comments}
                     onChange={(e) => setData('footer_comments', e.target.value)}
                     rows={4}

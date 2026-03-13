@@ -18,6 +18,7 @@ import { useBudgetVariants } from '@/hooks/public/useBudgetVariants';
 
 // Componentes UI especializados
 import BudgetComments from './components/BudgetComments';
+import BudgetLegalesFijos from './components/BudgetLegalesFijos';
 import BudgetDownloadButton from './components/BudgetDownloadButton';
 import BudgetInfoCard from './components/BudgetInfoCard';
 import BudgetRegularItems from './components/BudgetRegularItems';
@@ -138,6 +139,9 @@ export default function Budget({ budget, businessConfig }) {
 
                 {/* Comentarios del pie */}
                 <BudgetComments budget={budget} />
+
+                {/* Legales Fijos */}
+                <BudgetLegalesFijos />
 
                 {/* Acciones del cliente o bloque de contacto si hay entidades críticas faltantes */}
                 {budget.allows_client_action &&
