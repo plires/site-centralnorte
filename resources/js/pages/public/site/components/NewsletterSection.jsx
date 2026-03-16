@@ -6,7 +6,7 @@ const NewsletterSection = () => {
 
     const { data, setData, post, processing, reset } = useForm({
         email: '',
-        source: 'home',
+        source: window.location.pathname,
     });
 
     const handleSubmit = (e) => {

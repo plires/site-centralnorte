@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Public\Site;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\NewsletterSubscriber;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class NewsletterController extends Controller
@@ -14,6 +15,7 @@ class NewsletterController extends Controller
      */
     public function subscribe(Request $request)
     {
+        
         $validated = $request->validate([
             'email' => 'required|email|max:255',
             'source' => 'nullable|string|max:50',
@@ -22,14 +24,14 @@ class NewsletterController extends Controller
         try {
             // Verificar si ya existe
             $existing = NewsletterSubscriber::where('email', $validated['email'])->first();
-
+            
             if ($existing) {
                 // Si existe pero está inactivo, reactivar
                 if (!$existing->is_active) {
                     $existing->update(['is_active' => true]);
 
-                    // TODO: Sincronizar con Perfit
-                    // $this->syncToPerfit($existing);
+                    // Sincronizar con Perfit
+                    $this->syncToPerfit($existing);
 
                     return back()->with('success', '¡Te has suscripto nuevamente al newsletter!');
                 }
@@ -44,8 +46,8 @@ class NewsletterController extends Controller
                 'source' => $validated['source'] ?? 'home',
             ]);
 
-            // TODO: Sincronizar con Perfit
-            // $this->syncToPerfit($subscriber);
+            // Sincronizar con Perfit
+            $this->syncToPerfit($subscriber);
 
             return back()->with('success', '¡Gracias por suscribirte a nuestro newsletter!');
         } catch (\Exception $e) {
@@ -61,51 +63,47 @@ class NewsletterController extends Controller
     /**
      * Sincronizar suscriptor con Perfit (servicio externo de email marketing)
      *
-     * TODO: Implementar cuando se tenga acceso a la API de Perfit
-     *
      * @param NewsletterSubscriber $subscriber
      * @return bool
      */
-    // private function syncToPerfit(NewsletterSubscriber $subscriber): bool
-    // {
-    //     try {
-    //         // Configuración de Perfit desde .env
-    //         // $apiKey = config('services.perfit.api_key');
-    //         // $listId = config('services.perfit.list_id');
-    //         // $baseUrl = config('services.perfit.base_url', 'https://api.perfit.com.ar');
-    //
-    //         // Ejemplo de payload para Perfit
-    //         // $payload = [
-    //         //     'email' => $subscriber->email,
-    //         //     'list_id' => $listId,
-    //         //     'source' => $subscriber->source,
-    //         //     'subscribed_at' => $subscriber->created_at->toIso8601String(),
-    //         // ];
-    //
-    //         // Realizar request HTTP a Perfit
-    //         // $response = Http::withHeaders([
-    //         //     'Authorization' => 'Bearer ' . $apiKey,
-    //         //     'Content-Type' => 'application/json',
-    //         // ])->post("{$baseUrl}/v1/contacts", $payload);
-    //
-    //         // if ($response->successful()) {
-    //         //     $subscriber->markAsSynced();
-    //         //     return true;
-    //         // }
-    //
-    //         // Log::warning('Error al sincronizar con Perfit', [
-    //         //     'email' => $subscriber->email,
-    //         //     'response' => $response->body(),
-    //         // ]);
-    //
-    //         return false;
-    //     } catch (\Exception $e) {
-    //         // Log::error('Excepción al sincronizar con Perfit', [
-    //         //     'email' => $subscriber->email,
-    //         //     'error' => $e->getMessage(),
-    //         // ]);
-    //
-    //         return false;
-    //     }
-    // }
+    private function syncToPerfit(NewsletterSubscriber $subscriber): bool
+    {
+        try {
+            $apiKey  = config('services.perfit.api_key');
+            $account = config('services.perfit.account');
+            $listId  = config('services.perfit.list_id');
+            $baseUrl = config('services.perfit.base_url');
+
+            $payload = [
+                'email'        => $subscriber->email,
+                'customFields' => [
+                    ['id' => (int) config('services.perfit.custom_field_source_id'), 'value' => $subscriber->source],
+                ],
+            ];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type'  => 'application/json',
+            ])->post("{$baseUrl}/{$account}/lists/{$listId}/contacts", $payload);
+
+            if ($response->successful()) {
+                $subscriber->markAsSynced();
+                return true;
+            }
+    
+            Log::warning('Error al sincronizar con Perfit', [
+                'email' => $subscriber->email,
+                'response' => $response->body(),
+            ]);
+    
+            return false;
+        } catch (\Exception $e) {
+            Log::error('Excepción al sincronizar con Perfit', [
+                'email' => $subscriber->email,
+                'error' => $e->getMessage(),
+            ]);
+    
+            return false;
+        }
+    }
 }

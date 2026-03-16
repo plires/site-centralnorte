@@ -4,7 +4,6 @@ import styles from './LogoCarousel.module.css';
 const LogoCarousel = ({ background, brandLogos }) => {
     // Duplicamos los logos para crear el efecto de loop infinito
     const duplicatedLogos = [...brandLogos, ...brandLogos];
-    console.log(duplicatedLogos);
 
     return (
         <section className={styles.carouselSection} style={{ backgroundColor: background }}>

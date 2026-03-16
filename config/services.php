@@ -58,4 +58,20 @@ return [
         'sync_interval' => env('EXTERNAL_PRODUCTS_SYNC_INTERVAL', 3600), // en segundos (1 hora por defecto)
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | API Perfit
+    |--------------------------------------------------------------------------
+    |
+    | Configuración para la API de perfit
+    |
+    */
+    'perfit' => [
+        'api_key'               => env('PERFIT_API_KEY'),
+        'account'               => env('PERFIT_ACCOUNT'),
+        'list_id'               => env('PERFIT_LIST_ID'),
+        'base_url'              => env('PERFIT_BASE_URL', 'https://api.myperfit.com/v2'),
+        'custom_field_source_id' => env('PERFIT_CUSTOM_FIELD_SOURCE_ID'),
+    ],
+
 ];
