@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BudgetStatus;
+use App\Mail\NewQuoteRequestClientMail;
 use App\Mail\NewQuoteRequestMail;
 use App\Models\Budget;
 use App\Models\BudgetItem;
@@ -72,8 +73,9 @@ class PublicQuoteService
             // 5. Calcular totales
             $budget->calculateTotals();
 
-            // 6. Enviar notificación al vendedor
+            // 6. Enviar notificación al vendedor y confirmación al cliente
             $this->notifySeller($budget, $seller);
+            $this->notifyClient($budget);
 
             Log::info('Presupuesto creado desde sitio público', [
                 'budget_id'     => $budget->id,
@@ -172,6 +174,30 @@ class PublicQuoteService
                 'variant_group' => null,
                 'is_variant' => false,
                 'is_selected' => true,
+            ]);
+        }
+    }
+
+    /**
+     * Enviar confirmación de recepción al cliente que originó la solicitud
+     */
+    private function notifyClient(Budget $budget): void
+    {
+        try {
+            Mail::to($budget->client->email)->send(
+                new NewQuoteRequestClientMail($budget)
+            );
+
+            Log::info('Confirmación de solicitud enviada al cliente', [
+                'budget_id'    => $budget->id,
+                'client_email' => $budget->client->email,
+            ]);
+        } catch (\Exception $e) {
+            // No lanzar excepción si falla el envío de email
+            // El presupuesto ya fue creado y el vendedor ya fue notificado
+            Log::error('Error al enviar confirmación al cliente', [
+                'budget_id' => $budget->id,
+                'error'     => $e->getMessage(),
             ]);
         }
     }
