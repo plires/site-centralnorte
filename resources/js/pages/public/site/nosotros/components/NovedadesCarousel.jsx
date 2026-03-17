@@ -1,14 +1,17 @@
 import Autoplay from 'embla-carousel-autoplay';
 import useEmblaCarousel from 'embla-carousel-react';
-import { Images } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa6';
+import { FaChevronLeft, FaChevronRight, FaImage } from 'react-icons/fa6';
 import styles from './NovedadesCarousel.module.css';
 
 const NovedadesCarousel = ({ novedades = [] }) => {
+    // Loop solo cuando hay suficientes productos para desbordar el viewport en todos los breakpoints
+    // (xl muestra 6 por fila → necesitamos más de 6 para garantizar overflow)
+    const shouldLoop = novedades.length > 6;
+
     const [emblaRef, emblaApi] = useEmblaCarousel(
         {
-            loop: true,
+            loop: shouldLoop,
             align: 'start',
             slidesToScroll: 1,
         },
@@ -63,19 +66,19 @@ const NovedadesCarousel = ({ novedades = [] }) => {
                     <div className={styles.track}>
                         {novedades.map((product) => (
                             <div key={product.id} className={styles.slide}>
-                                <a href={`/products/${product.id}`} className={styles.slideLink}>
-                                    <div className={styles.imageWrapper}>
-                                        {product.image ? (
-                                            <img src={product.image} alt={product.name} className={styles.image} loading="lazy" decoding="async" />
-                                        ) : (
-                                            <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-100">
-                                                <Images className={`${styles.imageNoProduct} h-5 w-5`} />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3 className={styles.name}>{product.name}</h3>
-                                    {product.description && <p className={styles.description}>{product.description}</p>}
-                                </a>
+                                <div className={styles.slideContent}>
+                                    <a href={`/products/${product.id}`} className={styles.slideLink}>
+                                        <div className={styles.imageWrapper}>
+                                            {product.image ? (
+                                                <img src={product.image} alt={product.name} className={styles.image} loading="lazy" decoding="async" />
+                                            ) : (
+                                                <FaImage className={styles.imageNoProduct} aria-hidden="true" />
+                                            )}
+                                        </div>
+                                        <h3 className={styles.name}>{product.name}</h3>
+                                        {product.description && <p className={styles.description}>{product.description}</p>}
+                                    </a>
+                                </div>
                             </div>
                         ))}
                     </div>

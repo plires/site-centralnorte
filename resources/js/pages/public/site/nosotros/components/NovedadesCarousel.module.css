@@ -21,25 +21,33 @@
     overflow: hidden;
 }
 
+/*
+ * Embla requiere que el gap entre slides se maneje con padding-left en el slide
+ * y margin-left negativo en el track (NO con gap CSS).
+ * Con gap CSS, Embla calcula posiciones incorrectamente en el loop,
+ * provocando el salto visible en cada transición.
+ */
 .track {
     display: flex;
-    gap: 20px;
+    margin-left: -16px; /* compensa el padding-left del primer slide */
 }
 
 .slide {
-    flex: 0 0 calc(50% - 10px);
+    flex: 0 0 50%; /* 2 slides en móvil */
     min-width: 0;
+    padding-left: 16px; /* gap entre slides — reemplaza gap CSS */
+}
+
+/* Wrapper interior: recibe el hover para no interferir con las transformaciones de Embla */
+.slideContent {
     text-align: center;
     padding: 10px;
     transition: transform 0.3s ease;
+    -webkit-transition: transform 0.3s ease;
 }
 
-.slide:hover {
-    transform: translateY(-5px) !important;
-    -webkit-transform: translateY(-5px) !important;
-    -moz-transform: translateY(-5px) !important;
-    -ms-transform: translateY(-5px) !important;
-    -o-transform: translateY(-5px) !important;
+.slideContent:hover {
+    transform: translateY(-5px);
 }
 
 .slideLink {
@@ -57,14 +65,11 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    transition: all 0.3s ease;
-    -webkit-transition: all 0.3s ease;
-    -moz-transition: all 0.3s ease;
-    -ms-transition: all 0.3s ease;
-    -o-transition: all 0.3s ease;
+    transition: box-shadow 0.3s ease;
+    -webkit-transition: box-shadow 0.3s ease;
 }
 
-.slide:hover .imageWrapper {
+.slideContent:hover .imageWrapper {
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.15);
 }
 
@@ -73,7 +78,6 @@
     max-height: 100%;
     object-fit: contain;
     display: block;
-    transition: transform 0.3s ease;
 }
 
 .imageNoProduct {
@@ -81,7 +85,6 @@
     height: 100px;
     display: block;
     color: var(--neutral-color);
-    transition: transform 0.3s ease;
 }
 
 .name {
@@ -91,7 +94,6 @@
     color: var(--primary-color);
     margin: 0 0 4px 0;
     transition: color 0.3s ease;
-    /* clamp a 3 líneas */
     display: -webkit-box;
     -webkit-box-orient: vertical;
     line-clamp: 2;
@@ -100,7 +102,7 @@
     word-break: break-word;
 }
 
-.slide:hover .name {
+.slideContent:hover .name {
     color: var(--secondary-color);
 }
 
@@ -109,7 +111,6 @@
     font-weight: 300;
     font-size: 0.75rem;
     margin: 0;
-    /* clamp a 3 líneas */
     display: -webkit-box;
     -webkit-box-orient: vertical;
     line-clamp: 2;
@@ -133,7 +134,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem;
     transition:
         background-color 0.3s ease,
         opacity 0.3s ease;
@@ -161,14 +161,10 @@
     right: 1rem;
 }
 
-/* sm - Small devices (≥576px) */
+/* sm - Small devices (≥576px): 3 slides */
 @media (min-width: 576px) {
     .slide {
-        flex: 0 0 calc(33.333% - 14px);
-    }
-
-    .track {
-        gap: 25px;
+        flex: 0 0 33.333%;
     }
 
     .name {
@@ -180,19 +176,23 @@
     }
 }
 
-/* md - Medium devices (≥768px) */
+/* md - Medium devices (≥768px): 4 slides, gap 24px */
 @media (min-width: 768px) {
     .carouselContainer {
         padding: 0 60px;
     }
 
-    .slide {
-        flex: 0 0 calc(25% - 23px);
-        padding: 15px;
+    .track {
+        margin-left: -24px;
     }
 
-    .track {
-        gap: 30px;
+    .slide {
+        flex: 0 0 25%;
+        padding-left: 24px;
+    }
+
+    .slideContent {
+        padding: 15px;
     }
 
     .name {
@@ -204,7 +204,7 @@
     }
 }
 
-/* lg - Large devices (≥992px) */
+/* lg - Large devices (≥992px): 5 slides, gap 32px */
 @media (min-width: 992px) {
     .section {
         padding: 20px 0 80px 0;
@@ -219,13 +219,17 @@
         padding: 0 70px;
     }
 
-    .slide {
-        flex: 0 0 calc(20% - 32px);
-        padding: 15px;
+    .track {
+        margin-left: -32px;
     }
 
-    .track {
-        gap: 40px;
+    .slide {
+        flex: 0 0 20%;
+        padding-left: 32px;
+    }
+
+    .slideContent {
+        padding: 15px;
     }
 
     .imageWrapper {
@@ -242,14 +246,14 @@
     }
 }
 
-/* xl - Extra large devices (≥1200px) */
+/* xl - Extra large devices (≥1200px): 6 slides */
 @media (min-width: 1200px) {
     .carouselContainer {
         padding: 0 80px;
     }
 
     .slide {
-        flex: 0 0 calc(16.666% - 34px);
+        flex: 0 0 16.666%;
     }
 }
 
