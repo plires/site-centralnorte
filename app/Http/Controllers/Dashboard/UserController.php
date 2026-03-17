@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Mail\NewUserWelcomeMail;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -102,6 +104,11 @@ class UserController extends Controller
                 'email_verified_at' => now(),
                 'accepts_budget_assignments' => $validated['accepts_budget_assignments'] ?? true,
             ]);
+
+            $user->load('role');
+
+            Mail::to($user->email)
+                ->send(new NewUserWelcomeMail($user, $validated['password']));
 
             return redirect()->back()->with('success', "Usuario '{$user->name}' creado correctamente.");
         } catch (\Exception $e) {
