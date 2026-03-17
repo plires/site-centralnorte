@@ -41,6 +41,8 @@ jobs:
 
       - name: Build Assets
         run: npm run build
+        env:
+          VITE_APP_NAME: ${{ secrets.VITE_APP_NAME }}
 
       - name: Setup SSH
         run: |
