@@ -556,7 +556,14 @@
             <li>Sujeto a disponibilidad de stock disponible al momento de la confirmación.</li>
             <li>Incluye envío y entrega a domicilio según la dirección especificada dentro del ámbito de CABA y GBA
                 hasta 30
-                kms.</li>
+                kms.
+            </li>
+            <li>
+                El cliente declara haber recibido y aprobado previamente las especificaciones, medidas, diseño y características del producto.
+                Por tratarse de un producto personalizado, no se admiten cambios ni devoluciones una vez aceptada la cotización.
+                Los reclamos solo serán válidos en caso de fallas de calidad o defectos comprobables, quedando excluidos aquellos derivados de error de elección, cambios de criterio o condiciones previamente aceptadas.
+                La aprobación de la presente cotización implica la aceptación íntegra de esta cláusula.
+            </li>
         </ul>
     </div>
 
