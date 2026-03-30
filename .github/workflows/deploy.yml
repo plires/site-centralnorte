@@ -89,8 +89,8 @@ jobs:
               -o StrictHostKeyChecking=no \
               ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
               "cd ${{ secrets.DEPLOY_PATH }} && \
-               php artisan migrate --force && \
-               php artisan config:cache && \
-               php artisan route:cache && \
-               php artisan view:cache && \
-               php artisan optimize"
+               /usr/local/bin/ea-php83 artisan migrate --force && \
+               /usr/local/bin/ea-php83 artisan config:cache && \
+               /usr/local/bin/ea-php83 artisan route:cache && \
+               /usr/local/bin/ea-php83 artisan view:cache && \
+               /usr/local/bin/ea-php83 artisan optimize"
